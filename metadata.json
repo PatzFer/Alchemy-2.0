@@ -1,0 +1,6 @@
+{
+  "name": "P & M Alchemy",
+  "description": "A quiet-luxury personal AI operating system balancing Personal life, Cycle intelligence, and Mariluna Studio enterprise.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

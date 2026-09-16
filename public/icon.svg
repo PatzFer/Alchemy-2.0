@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="ivoryBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FDFBF7"/>
+      <stop offset="100%" stop-color="#F2EFE9"/>
+    </linearGradient>
+    <linearGradient id="champagneGold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#D8C39E"/>
+      <stop offset="50%" stop-color="#BFA57B"/>
+      <stop offset="100%" stop-color="#9E8256"/>
+    </linearGradient>
+  </defs>
+  <!-- Background with subtle border -->
+  <rect width="512" height="512" rx="128" fill="url(#ivoryBg)"/>
+  <rect x="16" y="16" width="480" height="480" rx="116" fill="none" stroke="#E5DFC5" stroke-width="2" opacity="0.6"/>
+  
+  <!-- Subtle circular halo -->
+  <circle cx="256" cy="256" r="160" fill="none" stroke="url(#champagneGold)" stroke-width="1.5" stroke-dasharray="4 8" opacity="0.5"/>
+  <circle cx="256" cy="256" r="144" fill="none" stroke="#2C2825" stroke-width="0.75" opacity="0.2"/>
+
+  <!-- Elegant Crescent & Star / Monogram motif for Mariluna -->
+  <path d="M260 148 C196 148 144 200 144 264 C144 328 196 380 260 380 C290 380 318 368 338 348 C292 344 256 306 256 258 C256 210 292 172 338 168 C318 148 290 148 260 148 Z" fill="url(#champagneGold)"/>
+  
+  <!-- Modernist Solstice / Star Point -->
+  <circle cx="340" cy="204" r="5" fill="#2C2825"/>
+  <path d="M340 188 L340 220 M324 204 L356 204" stroke="#2C2825" stroke-width="1.5" stroke-linecap="round" opacity="0.6"/>
+
+  <!-- Typography Monogram M subtle detail -->
+  <text x="256" y="435" font-family="'Cormorant Garamond', Georgia, serif" font-size="28" letter-spacing="8" fill="#5A524A" text-anchor="middle" font-weight="400">MARILUNA</text>
+</svg>
