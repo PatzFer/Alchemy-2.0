@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Calendar,
   CheckCircle2,
@@ -9,6 +9,10 @@ import {
   Plus,
   X,
   ExternalLink,
+  Activity,
+  Heart,
+  Sun,
+  Moon,
 } from 'lucide-react';
 import {
   Task,
@@ -19,9 +23,13 @@ import {
   CycleProfile,
   DailyCheckIn,
   ProactiveSuggestion,
+  WellbeingState,
+  FoundationData,
+  Language,
 } from '../../types';
 import { calculateDayCapacity } from '../../lib/planningEngine';
 import { calculateCycleStatus } from '../../lib/cycleUtils';
+import { DailyCheckInModal } from '../DailyCheckInModal';
 
 interface TodayViewProps {
   tasks: Task[];
@@ -42,6 +50,9 @@ interface TodayViewProps {
   onDismissSuggestion?: (id: string) => void;
   onSelectTab?: (tab: any) => void;
   onOpenAssistantWithPrompt?: (prompt: string) => void;
+  wellbeing?: WellbeingState;
+  foundation?: FoundationData;
+  lang?: Language;
 }
 
 export const TodayView: React.FC<TodayViewProps> = ({
@@ -54,34 +65,48 @@ export const TodayView: React.FC<TodayViewProps> = ({
   onOpenTaskModal,
   cycleProfile,
   dailyCheckIns = [],
+  onSaveDailyCheckIn,
   proactiveSuggestions = [],
   onDismissSuggestion,
   onSelectTab,
   onOpenAssistantWithPrompt,
+  wellbeing,
+  foundation,
+  lang = 'nl',
 }) => {
+  const [isCheckInModalOpen, setIsCheckInModalOpen] = useState(false);
+
+  const isNl = lang === 'nl';
   const todayStr = new Date().toISOString().split('T')[0];
   const dateObj = new Date();
-  const dayName = dateObj.toLocaleDateString('en-US', { weekday: 'long' });
-  const formattedDate = dateObj.toLocaleDateString('en-US', {
+
+  const dayName = dateObj.toLocaleDateString(isNl ? 'nl-NL' : 'en-US', { weekday: 'long' });
+  const formattedDate = dateObj.toLocaleDateString(isNl ? 'nl-NL' : 'en-US', {
     month: 'long',
     day: 'numeric',
     year: 'numeric',
   });
 
   const hour = dateObj.getHours();
-  const greeting =
+  const greetingPrefix =
     hour < 12
-      ? 'Good morning'
-      : hour < 17
-      ? 'Good afternoon'
-      : 'Good evening';
+      ? isNl ? 'Goedemorgen' : 'Good morning'
+      : hour < 18
+      ? isNl ? 'Goedemiddag' : 'Good afternoon'
+      : isNl ? 'Goedenavond' : 'Good evening';
 
-  // 1. Capacity calculation (used for compact capacity statement)
+  const userName = foundation?.aboutYou?.name?.trim();
+  const greeting = userName ? `${greetingPrefix}, ${userName}.` : `${greetingPrefix}.`;
+
+  // 1. Capacity calculation
   const capacity = calculateDayCapacity(tasks, calendarEvents, lifeProfile, todayStr);
 
-  // 2. Cycle & Energy status (used for compact single rhythm line)
+  // 2. Daily Check-in & Cycle status
   const todayCheckIn = dailyCheckIns.find((c) => c.date === todayStr);
-  const cycleStatus = cycleProfile ? calculateCycleStatus(cycleProfile, todayStr) : null;
+  const cycleEnabled = foundation?.cycle?.enabled ?? !!cycleProfile?.lastPeriodDate;
+  const cycleStatus = cycleEnabled && cycleProfile?.lastPeriodDate
+    ? calculateCycleStatus(cycleProfile, todayStr)
+    : null;
 
   // 3. TODAY'S FOCUS: Maximum 3 priorities for today
   const todayTasks = tasks.filter((t) => t.dueDate === todayStr);
@@ -90,18 +115,9 @@ export const TodayView: React.FC<TodayViewProps> = ({
       ? todayTasks
       : todayTasks.filter((t) => t.realm === activeWorld);
 
-  // Fallback to active uncompleted tasks in realm if none explicitly set with today's date
-  const poolTasks =
-    candidateTasks.length > 0
-      ? candidateTasks
-      : (activeWorld === 'all'
-          ? tasks
-          : tasks.filter((t) => t.realm === activeWorld)
-        ).filter((t) => t.status !== 'completed');
-
+  // Incomplete tasks first, strictly prioritizing today's explicitly planned tasks
   const priorityScore: Record<string, number> = { high: 3, medium: 2, low: 1 };
-  const sortedPriorities = [...poolTasks].sort((a, b) => {
-    // Incomplete tasks first
+  const sortedPriorities = [...candidateTasks].sort((a, b) => {
     if (a.status !== b.status) {
       return a.status === 'completed' ? 1 : -1;
     }
@@ -132,52 +148,83 @@ export const TodayView: React.FC<TodayViewProps> = ({
     }
   };
 
+  const getEnergyDisplay = (eLevel?: string) => {
+    switch (eLevel) {
+      case 'very_low':
+        return isNl ? 'Zeer laag' : 'Very low';
+      case 'low':
+        return isNl ? 'Rustig / Laag' : 'Low';
+      case 'normal':
+        return isNl ? 'Stabiel' : 'Normal';
+      case 'good':
+        return isNl ? 'Goed' : 'Good';
+      case 'high':
+        return isNl ? 'Hoog' : 'High';
+      default:
+        return isNl ? 'Evenwichtig' : 'Balanced';
+    }
+  };
+
   return (
     <div className="max-w-2xl mx-auto space-y-6 sm:space-y-7 px-3 sm:px-4 py-4 sm:py-6 pb-24 text-[#2C2825]">
       {/* 1. HEADER: Date + Personalized Greeting */}
       <header className="space-y-1.5 pt-1">
-        <div className="text-[11px] sm:text-xs uppercase tracking-[0.2em] font-medium text-[#8C8377] font-sans">
+        <div className="text-[11px] sm:text-xs uppercase tracking-[0.2em] font-medium text-[#8C8377] font-sans capitalize">
           {dayName}, {formattedDate}
         </div>
         <h1 className="font-serif text-3xl sm:text-4xl text-[#2C2825] font-normal tracking-tight">
-          {greeting}, Patricia.
+          {greeting}
         </h1>
       </header>
 
-      {/* 6. RHYTHM: Compact single-line indicator */}
+      {/* 2. RHYTHM & DAILY CHECK-IN BAR */}
       <div className="py-2.5 px-3.5 sm:px-4 rounded-xl bg-[#FAF6EE] border border-[#EAE1D3] flex items-center justify-between text-xs text-[#524B43]">
         <div className="flex items-center gap-2 flex-wrap">
           <span className="w-1.5 h-1.5 rounded-full bg-[#8E8478] shrink-0" />
-          <span className="font-medium text-[#2C2825]">
-            Day {cycleStatus?.cycleDay || 14} •{' '}
-            {cycleStatus
-              ? cycleStatus.activePhase.charAt(0).toUpperCase() + cycleStatus.activePhase.slice(1)
-              : 'Follicular'}{' '}
-            Phase
-          </span>
+          {cycleStatus ? (
+            <span className="font-medium text-[#2C2825]">
+              {isNl ? `Dag ${cycleStatus.cycleDay}` : `Day ${cycleStatus.cycleDay}`} •{' '}
+              {cycleStatus.activePhase.charAt(0).toUpperCase() + cycleStatus.activePhase.slice(1)}
+            </span>
+          ) : (
+            <span className="font-medium text-[#2C2825]">
+              {isNl ? 'Natuurlijk dagritme' : 'Natural Rhythm'}
+            </span>
+          )}
           <span className="text-[#D0C7B7] hidden xs:inline">•</span>
           <span>
-            Energy:{' '}
-            <strong className="font-medium text-[#2C2825] capitalize">
-              {todayCheckIn ? todayCheckIn.energy.replace('_', ' ') : 'Balanced'}
+            {isNl ? 'Energie:' : 'Energy:'}{' '}
+            <strong className="font-medium text-[#2C2825]">
+              {getEnergyDisplay(todayCheckIn?.energy)}
             </strong>
           </span>
         </div>
-        {onSelectTab && (
+
+        <div className="flex items-center gap-2 shrink-0">
           <button
-            onClick={() => onSelectTab('cycle')}
-            className="text-[11px] text-[#7E694E] hover:text-[#2C2825] font-medium transition cursor-pointer shrink-0 ml-2"
+            onClick={() => setIsCheckInModalOpen(true)}
+            className="text-[11px] px-2.5 py-1 rounded-lg bg-[#EFE8DC] text-[#6E5D47] hover:bg-[#E4DBCB] font-medium transition cursor-pointer"
           >
-            Cycle Details →
+            {todayCheckIn ? (isNl ? 'Check-in wijzigen' : 'Edit check-in') : (isNl ? 'Dagelijkse check-in' : 'Daily check-in')}
           </button>
-        )}
+          {cycleStatus && onSelectTab && (
+            <button
+              onClick={() => onSelectTab('cycle')}
+              className="text-[11px] text-[#7E694E] hover:text-[#2C2825] font-medium transition cursor-pointer shrink-0"
+            >
+              {isNl ? 'Cyclus →' : 'Cycle →'}
+            </button>
+          )}
+        </div>
       </div>
 
-      {/* 2. TODAY'S FOCUS: Maximum 3 Priorities */}
+      {/* 3. TODAY'S FOCUS: Maximum 3 Priorities */}
       <section className="space-y-3">
         <div className="flex items-center justify-between pb-1">
           <div className="flex items-center gap-2">
-            <h2 className="font-serif text-lg font-medium text-[#2C2825]">Today's Focus</h2>
+            <h2 className="font-serif text-lg font-medium text-[#2C2825]">
+              {isNl ? 'Focus voor vandaag' : "Today's Focus"}
+            </h2>
             <span className="text-[10px] uppercase tracking-wider text-[#8C8377] font-sans font-medium">
               (Max 3)
             </span>
@@ -189,14 +236,14 @@ export const TodayView: React.FC<TodayViewProps> = ({
               className="text-[#7E694E] hover:text-[#2C2825] font-medium transition cursor-pointer flex items-center gap-1"
             >
               <Plus className="w-3.5 h-3.5" />
-              <span>Add Focus</span>
+              <span>{isNl ? '+ Taak toevoegen' : 'Add Focus'}</span>
             </button>
             {onSelectTab && (
               <button
                 onClick={() => onSelectTab('tasks')}
                 className="text-[#8C8377] hover:text-[#2C2825] transition cursor-pointer"
               >
-                All Tasks →
+                {isNl ? 'Alle taken →' : 'All Tasks →'}
               </button>
             )}
           </div>
@@ -204,8 +251,16 @@ export const TodayView: React.FC<TodayViewProps> = ({
 
         {focusTasks.length === 0 ? (
           <div className="p-6 rounded-2xl border border-dashed border-[#DDD5C7] text-center bg-[#FAF8F3] space-y-1">
-            <p className="text-xs text-[#7A7167]">No high-leverage priorities assigned for today.</p>
-            <p className="text-[11px] text-[#A69C8E]">Enjoy the natural spaciousness, or choose one intentional task.</p>
+            <p className="text-xs text-[#7A7167]">
+              {isNl
+                ? 'Geen prioriteiten vastgelegd voor vandaag.'
+                : 'No high-leverage priorities assigned for today.'}
+            </p>
+            <p className="text-[11px] text-[#A69C8E]">
+              {isNl
+                ? 'Geniet van de natuurlijke ruimte, of voeg een bewuste taak toe.'
+                : 'Enjoy the natural spaciousness, or choose one intentional task.'}
+            </p>
           </div>
         ) : (
           <div className="space-y-2">
@@ -224,7 +279,7 @@ export const TodayView: React.FC<TodayViewProps> = ({
                     type="button"
                     onClick={() => onToggleTask(task.id)}
                     className="mt-0.5 text-[#8C7654] hover:text-[#2C2825] transition cursor-pointer shrink-0"
-                    title={isDone ? 'Mark uncompleted' : 'Mark completed'}
+                    title={isDone ? 'Markeer onvoltooid' : 'Markeer voltooid'}
                   >
                     {isDone ? (
                       <CheckCircle2 className="w-5 h-5 text-[#8C7654]" />
@@ -249,7 +304,7 @@ export const TodayView: React.FC<TodayViewProps> = ({
                             : 'bg-[#EAE3D4] text-[#554C42]'
                         }`}
                       >
-                        {task.realm === 'mariluna' ? 'Mariluna' : 'Personal'}
+                        {task.realm === 'mariluna' ? 'Mariluna' : (isNl ? 'Persoonlijk' : 'Personal')}
                       </span>
                     </div>
 
@@ -268,13 +323,15 @@ export const TodayView: React.FC<TodayViewProps> = ({
         )}
       </section>
 
-      {/* 3. NEXT: Only the Next Relevant Calendar Event */}
+      {/* 4. NEXT: Only the Next Relevant Calendar Event */}
       <section className="space-y-2">
         <div className="flex items-center justify-between pb-1">
           <div className="flex items-center gap-2">
-            <h2 className="font-serif text-lg font-medium text-[#2C2825]">Next</h2>
+            <h2 className="font-serif text-lg font-medium text-[#2C2825]">
+              {isNl ? 'Volgende afspraak' : 'Next'}
+            </h2>
             <span className="text-[10px] uppercase tracking-wider text-[#8C8377] font-sans font-medium">
-              Upcoming
+              {isNl ? 'Aankomend' : 'Upcoming'}
             </span>
           </div>
           {onSelectTab && (
@@ -282,7 +339,7 @@ export const TodayView: React.FC<TodayViewProps> = ({
               onClick={() => onSelectTab('calendar')}
               className="text-xs text-[#8C8377] hover:text-[#2C2825] transition cursor-pointer"
             >
-              Full Calendar →
+              {isNl ? 'Volledige agenda →' : 'Full Calendar →'}
             </button>
           )}
         </div>
@@ -323,20 +380,24 @@ export const TodayView: React.FC<TodayViewProps> = ({
           </div>
         ) : (
           <div className="p-4 rounded-2xl border border-[#E8E2D6] bg-[#FAF8F4] text-xs text-[#7A7167] flex items-center justify-between">
-            <span>No scheduled commitments remaining today.</span>
+            <span>
+              {isNl
+                ? 'Geen geplande afspraken meer voor vandaag.'
+                : 'No scheduled commitments remaining today.'}
+            </span>
             {onSelectTab && (
               <button
                 onClick={() => onSelectTab('calendar')}
                 className="text-[11px] text-[#7E694E] hover:text-[#2C2825] underline cursor-pointer"
               >
-                Schedule event
+                {isNl ? 'Afspraak inplannen' : 'Schedule event'}
               </button>
             )}
           </div>
         )}
       </section>
 
-      {/* 4. CAPACITY: One Compact Statement */}
+      {/* 5. CAPACITY: Compact Statement */}
       <section className="py-3 px-4 rounded-2xl bg-[#FFFFFF] border border-[#E6DFD4] shadow-xs flex items-center justify-between text-xs text-[#524B43]">
         <div className="flex items-center gap-2">
           <span
@@ -349,10 +410,14 @@ export const TodayView: React.FC<TodayViewProps> = ({
             }`}
           />
           <span className="font-medium text-[#2C2825]">
-            Capacity: ~{(capacity.availableFreeMinutes / 60).toFixed(1)} hrs realistic breathing room remaining
+            {isNl
+              ? `Capaciteit: ~${(capacity.availableFreeMinutes / 60).toFixed(1)} uur realistische ademruimte beschikbaar`
+              : `Capacity: ~${(capacity.availableFreeMinutes / 60).toFixed(1)} hrs realistic breathing room remaining`}
           </span>
           <span className="hidden sm:inline text-[#8C8377]">
-            before your {lifeProfile.workingHoursEnd || '16:30'} threshold
+            {isNl
+              ? `voor jouw rusttijd (${lifeProfile.workingHoursEnd || '17:00'})`
+              : `before your ${lifeProfile.workingHoursEnd || '17:00'} threshold`}
           </span>
         </div>
         <span className="text-[10px] uppercase font-semibold text-[#8C8377] tracking-wider shrink-0">
@@ -360,21 +425,21 @@ export const TodayView: React.FC<TodayViewProps> = ({
         </span>
       </section>
 
-      {/* 5. ONE AI INSIGHT: At most one observation */}
+      {/* 6. ONE AI INSIGHT */}
       {topAiInsight && (
         <section className="rounded-2xl border border-[#DCD3C2] bg-[#FAF6EE] p-4.5 sm:p-5 shadow-xs space-y-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-[#7E694E]">
               <Sparkles className="w-4 h-4" />
               <span className="text-[11px] font-semibold uppercase tracking-wider">
-                Alchemy Insight
+                {isNl ? 'Alchemy Inzicht' : 'Alchemy Insight'}
               </span>
             </div>
             {onDismissSuggestion && (
               <button
                 onClick={() => onDismissSuggestion(topAiInsight.id)}
                 className="text-[#A19586] hover:text-[#2C2825] transition cursor-pointer p-1"
-                title="Dismiss observation"
+                title="Sluit inzicht"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
@@ -396,7 +461,7 @@ export const TodayView: React.FC<TodayViewProps> = ({
                 onClick={() => handlePromptClick(topAiInsight.actionPrompt!)}
                 className="inline-flex items-center gap-1.5 text-xs font-medium text-[#7E694E] hover:text-[#2C2825] transition cursor-pointer"
               >
-                <span>{topAiInsight.actionLabel || 'Discuss with Alchemy'}</span>
+                <span>{topAiInsight.actionLabel || (isNl ? 'Bespreek met Alchemy' : 'Discuss with Alchemy')}</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </button>
             </div>
@@ -404,7 +469,7 @@ export const TodayView: React.FC<TodayViewProps> = ({
         </section>
       )}
 
-      {/* 7. ASK ALCHEMY: Prominent Elegant Action */}
+      {/* 7. ASK ALCHEMY */}
       <section className="rounded-2xl border border-[#DDD3C2] bg-gradient-to-b from-[#FAF7F0] to-[#F4EEE2] p-5 sm:p-6 shadow-xs space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
@@ -412,9 +477,11 @@ export const TodayView: React.FC<TodayViewProps> = ({
               <Sparkles className="w-3.5 h-3.5" />
             </div>
             <div>
-              <h3 className="font-serif text-base font-medium text-[#2C2825]">Ask Alchemy</h3>
+              <h3 className="font-serif text-base font-medium text-[#2C2825]">
+                {isNl ? 'Vraag Alchemy' : 'Ask Alchemy'}
+              </h3>
               <p className="text-[11px] text-[#7A7167] font-light">
-                Context-aware guidance for your day and energy
+                {isNl ? 'Contextbewuste rust en richting voor jouw dag' : 'Context-aware guidance for your day and energy'}
               </p>
             </div>
           </div>
@@ -423,19 +490,27 @@ export const TodayView: React.FC<TodayViewProps> = ({
             id="today-open-dialogue-btn"
             className="text-xs font-medium text-[#7E694E] hover:text-[#2C2825] transition cursor-pointer flex items-center gap-1"
           >
-            <span>Open Dialogue</span>
+            <span>{isNl ? 'Open Dialoog' : 'Open Dialogue'}</span>
             <ArrowRight className="w-3.5 h-3.5" />
           </button>
         </div>
 
-        {/* The 4 core prompts requested */}
+        {/* 4 core prompts in Dutch / English */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-          {[
-            'What should I focus on?',
-            'I have 30 minutes. What should I do?',
-            'Make my evening lighter.',
-            'What should I prepare for tomorrow?',
-          ].map((promptText) => (
+          {(isNl
+            ? [
+                'Waar moet ik me nu op richten?',
+                'Ik heb 30 minuten. Wat kan ik nu doen?',
+                'Maak mijn avond lichter.',
+                'Wat kan ik voorbereiden voor morgen?',
+              ]
+            : [
+                'What should I focus on?',
+                'I have 30 minutes. What should I do?',
+                'Make my evening lighter.',
+                'What should I prepare for tomorrow?',
+              ]
+          ).map((promptText) => (
             <button
               key={promptText}
               type="button"
@@ -448,6 +523,17 @@ export const TodayView: React.FC<TodayViewProps> = ({
           ))}
         </div>
       </section>
+
+      {/* Daily Check-in Modal */}
+      {onSaveDailyCheckIn && (
+        <DailyCheckInModal
+          isOpen={isCheckInModalOpen}
+          onClose={() => setIsCheckInModalOpen(false)}
+          onSaveCheckIn={onSaveDailyCheckIn}
+          existingCheckIn={todayCheckIn}
+          lang={lang}
+        />
+      )}
     </div>
   );
 };

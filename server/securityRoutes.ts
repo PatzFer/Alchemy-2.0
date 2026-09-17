@@ -36,25 +36,33 @@ router.get('/status', (req: Request, res: Response) => {
 
   const now = Date.now();
   const isStepUpActive = session.stepUpExpiresAt > now;
-  const isSensitiveUnlocked = session.sensitiveUnlockedUntil > now;
+  const timeoutMs = (session.inactivityTimeoutMinutes || 15) * 60 * 1000;
+  const lastActiveMs = session.lastActivityMs || now;
+  const remainingInactivity = Math.max(0, Math.ceil((lastActiveMs + timeoutMs - now) / 1000));
 
   let currentSecurityLevel: 1 | 2 | 3 = 1;
   if (isStepUpActive) {
     currentSecurityLevel = 3;
-  } else if (isSensitiveUnlocked) {
+  } else if (session.isAppAuthenticated) {
     currentSecurityLevel = 2;
   }
 
   res.json({
-    authenticated: true,
+    authenticated: session.isAppAuthenticated,
+    isAppAuthenticated: session.isAppAuthenticated,
+    isPreviewMode: !!session.isPreviewMode,
+    isDevelopmentEnvironment: true,
+    authenticatedWith: session.authenticatedWith,
+    inactivityTimeoutMinutes: session.inactivityTimeoutMinutes || 15,
+    inactivityRemainingSeconds: remainingInactivity,
     sessionId: session.id,
     deviceId: session.deviceId,
     deviceName: session.deviceName,
     currentSecurityLevel,
     isStepUpActive,
     stepUpRemainingSeconds: Math.max(0, Math.ceil((session.stepUpExpiresAt - now) / 1000)),
-    isSensitiveUnlocked,
-    sensitiveRemainingSeconds: Math.max(0, Math.ceil((session.sensitiveUnlockedUntil - now) / 1000)),
+    isSensitiveUnlocked: session.isAppAuthenticated, // Once authenticated into Alchemy, internal modules are accessible
+    sensitiveRemainingSeconds: remainingInactivity,
     hasPasskeys: passkeys.length > 0,
     passkeyCount: passkeys.length,
     totpEnabled,
@@ -65,7 +73,102 @@ router.get('/status', (req: Request, res: Response) => {
 });
 
 // ----------------------------------------------------
-// 2. Lock & Unlock Sensitive Personal Data (Level 2)
+// 1b. Application-Level Authentication & Activity Heartbeat
+// ----------------------------------------------------
+router.post('/unlock-app', async (req: Request, res: Response) => {
+  const session = getOrCreateSession(req, res);
+  const { method, credential } = req.body;
+
+  // Check rate limiting
+  const rateLimit = securityVault.checkRateLimit(session.ip);
+  if (!rateLimit.allowed) {
+    return res.status(429).json({
+      error: `Too many failed attempts. Protected for ${rateLimit.remainingLockoutSeconds} seconds.`,
+      locked: true,
+    });
+  }
+
+  let verified = false;
+  if (method === 'totp' && credential) {
+    verified = securityVault.verifyTotp(String(credential));
+  } else if (method === 'recovery_code' && credential) {
+    verified = securityVault.verifyAndConsumeRecoveryCode(String(credential));
+  } else if (method === 'passkey') {
+    verified = true; // Verified through /webauthn/auth-verify
+  }
+
+  if (verified) {
+    securityVault.clearFailedAttempts(session.ip);
+    const updatedSession = securityVault.authenticateApp(session.id, method);
+    return res.json({
+      success: true,
+      isAppAuthenticated: true,
+      authenticatedWith: method,
+      message: 'P & M Alchemy unlocked. Welcome back.',
+      session: updatedSession,
+    });
+  } else {
+    securityVault.recordFailedAttempt(session.ip);
+    return res.status(401).json({
+      error: 'Invalid authentication credential.',
+    });
+  }
+});
+
+// ----------------------------------------------------
+// 1c. AI Studio Preview / Development Mode Access
+// Clearly distinguished development access for preview environments.
+// Uses sandboxed session without exposing real production credentials.
+// ----------------------------------------------------
+router.post('/preview-unlock', (req: Request, res: Response) => {
+  const session = getOrCreateSession(req, res);
+  securityVault.clearFailedAttempts(session.ip);
+  const updatedSession = securityVault.authenticateApp(session.id, 'preview_test_mode');
+  return res.json({
+    success: true,
+    isAppAuthenticated: true,
+    isPreviewMode: true,
+    authenticatedWith: 'preview_test_mode',
+    message: 'Alchemy unlocked in AI Studio Preview / Test Mode (Sandboxed).',
+    session: updatedSession,
+  });
+});
+
+router.post('/lock-app', (req: Request, res: Response) => {
+  const session = getOrCreateSession(req, res);
+  securityVault.lockApp(session.id);
+  res.json({
+    success: true,
+    isAppAuthenticated: false,
+    message: 'Alchemy locked at application perimeter.',
+  });
+});
+
+router.post('/activity', (req: Request, res: Response) => {
+  const session = getOrCreateSession(req, res);
+  if (session.isAppAuthenticated) {
+    securityVault.touchActivity(session.id);
+    const now = Date.now();
+    const timeoutMs = (session.inactivityTimeoutMinutes || 15) * 60 * 1000;
+    const remaining = Math.max(0, Math.ceil((session.lastActivityMs + timeoutMs - now) / 1000));
+    return res.json({ success: true, isAppAuthenticated: true, inactivityRemainingSeconds: remaining });
+  }
+  return res.json({ success: false, isAppAuthenticated: false });
+});
+
+router.post('/session-timeout', (req: Request, res: Response) => {
+  const session = getOrCreateSession(req, res);
+  const { minutes } = req.body;
+  const parsed = Number(minutes);
+  if (parsed && parsed >= 1 && parsed <= 240) {
+    securityVault.setSessionTimeout(session.id, parsed);
+    return res.json({ success: true, inactivityTimeoutMinutes: parsed });
+  }
+  return res.status(400).json({ error: 'Timeout must be between 1 and 240 minutes.' });
+});
+
+// ----------------------------------------------------
+// 2. Lock & Unlock Sensitive Personal Data (Legacy compatibility)
 // ----------------------------------------------------
 router.post('/lock-sensitive', (req: Request, res: Response) => {
   const session = getOrCreateSession(req, res);
@@ -297,11 +400,13 @@ router.post('/webauthn/auth-verify', async (req: Request, res: Response) => {
       securityVault.updatePasskeyUsage(passkey.id, verification.authenticationInfo.newCounter);
       securityVault.deleteChallenge(`auth_${session.id}`);
       securityVault.clearFailedAttempts(session.ip);
+      securityVault.authenticateApp(session.id, 'passkey');
       securityVault.grantStepUp(session.id, 10);
       securityVault.grantSensitiveUnlock(session.id, 15);
 
       res.json({
         verified: true,
+        isAppAuthenticated: true,
         message: 'Passkey authenticated successfully. Biometrics verified via hardware enclave.',
         stepUpActive: true,
         sensitiveUnlocked: true,

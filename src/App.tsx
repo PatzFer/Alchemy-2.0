@@ -13,10 +13,12 @@ import { GoalsView } from './components/views/GoalsView';
 import { IdeasView } from './components/views/IdeasView';
 import { MarilunaHubView } from './components/views/MarilunaHubView';
 import { CycleView } from './components/views/CycleView';
+import { WellbeingView } from './components/views/WellbeingView';
 import { MyLifeView } from './components/views/MyLifeView';
 import { SettingsView } from './components/views/SettingsView';
-import { SensitiveSanctuaryGuard } from './components/SensitiveSanctuaryGuard';
 import { SecurityPrivacyCenter } from './components/views/SecurityPrivacyCenter';
+import { AppAuthLockScreen } from './components/AppAuthLockScreen';
+import { FirstTimeSetup } from './components/onboarding/FirstTimeSetup';
 import {
   loadState,
   saveState,
@@ -39,8 +41,10 @@ import {
   NotificationSettings,
   SmartNotification,
   ProactiveSuggestion,
+  FoundationData,
 } from './types';
 import { evaluateSmartNotifications } from './lib/notificationEngine';
+import { applyFoundationToAppState } from './lib/foundationDefaults';
 import { Sparkles } from 'lucide-react';
 
 export default function App() {
@@ -51,6 +55,9 @@ export default function App() {
   const [isNotificationCenterOpen, setIsNotificationCenterOpen] = useState(false);
 
   // Security & Privacy Architecture state
+  const [isAppAuthenticated, setIsAppAuthenticated] = useState<boolean | null>(null); // null = verifying
+  const [inactivityRemainingSeconds, setInactivityRemainingSeconds] = useState<number>(900);
+  const [inactivityLocked, setInactivityLocked] = useState<boolean>(false);
   const [securityLevel, setSecurityLevel] = useState<1 | 2 | 3>(1);
   const [isSensitiveUnlocked, setIsSensitiveUnlocked] = useState(false);
   const [sensitiveRemainingSeconds, setSensitiveRemainingSeconds] = useState(0);
@@ -61,36 +68,86 @@ export default function App() {
       const res = await fetch('/api/auth/status');
       if (res.ok) {
         const data = await res.json();
+        setIsAppAuthenticated(!!data.isAppAuthenticated);
         setSecurityLevel(data.currentSecurityLevel || 1);
-        setIsSensitiveUnlocked(data.isSensitiveUnlocked || false);
-        setSensitiveRemainingSeconds(data.sensitiveRemainingSeconds || 0);
+        setIsSensitiveUnlocked(data.isAppAuthenticated || false);
+        setSensitiveRemainingSeconds(data.inactivityRemainingSeconds || 900);
+        setInactivityRemainingSeconds(data.inactivityRemainingSeconds || 900);
         setIsStepUpActive(data.isStepUpActive || false);
+      } else {
+        setIsAppAuthenticated(false);
       }
     } catch (err) {
       console.error('Failed to sync security status:', err);
+      setIsAppAuthenticated(false);
     }
   };
 
   useEffect(() => {
     fetchAuthStatus();
+  }, []);
+
+  // Inactivity countdown timer
+  useEffect(() => {
+    if (!isAppAuthenticated) return;
     const interval = setInterval(() => {
-      setSensitiveRemainingSeconds((prev) => {
+      setInactivityRemainingSeconds((prev) => {
         if (prev <= 1) {
-          if (prev === 1) fetchAuthStatus();
+          // Inactivity timeout reached! Lock application perimeter
+          setIsAppAuthenticated(false);
+          setInactivityLocked(true);
           return 0;
         }
         return prev - 1;
       });
     }, 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, [isAppAuthenticated]);
 
-  const handleLockSensitive = async () => {
+  // Throttled heartbeat to maintain session on active user interaction
+  useEffect(() => {
+    if (!isAppAuthenticated) return;
+    let lastPing = Date.now();
+
+    const handleUserActivity = () => {
+      const now = Date.now();
+      if (now - lastPing > 20000) {
+        // ping at most every 20 seconds
+        lastPing = now;
+        fetch('/api/auth/activity', { method: 'POST' })
+          .then((r) => r.json())
+          .then((data) => {
+            if (data.isAppAuthenticated && data.inactivityRemainingSeconds) {
+              setInactivityRemainingSeconds(data.inactivityRemainingSeconds);
+            } else if (data.isAppAuthenticated === false) {
+              setIsAppAuthenticated(false);
+              setInactivityLocked(true);
+            }
+          })
+          .catch(() => {});
+      }
+    };
+
+    window.addEventListener('mousemove', handleUserActivity, { passive: true });
+    window.addEventListener('keydown', handleUserActivity, { passive: true });
+    window.addEventListener('touchstart', handleUserActivity, { passive: true });
+    window.addEventListener('click', handleUserActivity, { passive: true });
+
+    return () => {
+      window.removeEventListener('mousemove', handleUserActivity);
+      window.removeEventListener('keydown', handleUserActivity);
+      window.removeEventListener('touchstart', handleUserActivity);
+      window.removeEventListener('click', handleUserActivity);
+    };
+  }, [isAppAuthenticated]);
+
+  const handleLockApp = async () => {
     try {
-      await fetch('/api/auth/lock-sensitive', { method: 'POST' });
+      await fetch('/api/auth/lock-app', { method: 'POST' });
+      setIsAppAuthenticated(false);
+      setInactivityLocked(false);
+      setIsStepUpActive(false);
       setIsSensitiveUnlocked(false);
-      setSensitiveRemainingSeconds(0);
-      setSecurityLevel(1);
     } catch (err) {
       console.error(err);
     }
@@ -482,6 +539,96 @@ export default function App() {
     handleAddAssistantMessage(userMsg);
   };
 
+  const handleUpdateFoundation = (updatedFoundation: FoundationData) => {
+    setState((prev) => {
+      const synced = applyFoundationToAppState(prev, updatedFoundation);
+      const nextState: AppState = {
+        ...synced,
+        foundation: {
+          ...updatedFoundation,
+          isCompleted: true,
+        },
+        setupStatus: 'completed',
+      };
+      saveState(nextState);
+      return nextState;
+    });
+  };
+
+  const handleCompleteSetup = (completedFoundation: FoundationData) => {
+    setState((prev) => {
+      const synced = applyFoundationToAppState(prev, completedFoundation);
+      const nextState: AppState = {
+        ...synced,
+        foundation: {
+          ...completedFoundation,
+          isCompleted: true,
+        },
+        setupStatus: 'completed',
+      };
+      saveState(nextState);
+      return nextState;
+    });
+  };
+
+  const handleSkipSetup = () => {
+    setState((prev) => {
+      const nextState: AppState = {
+        ...prev,
+        foundation: {
+          ...prev.foundation,
+          isSkipped: true,
+        },
+        setupStatus: 'skipped',
+      };
+      saveState(nextState);
+      return nextState;
+    });
+  };
+
+  // Initializing auth check state
+  if (isAppAuthenticated === null) {
+    return (
+      <div className="min-h-screen bg-[#FAF8F3] flex items-center justify-center text-[#7E694E]">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-10 h-10 rounded-full border border-[#D5CCBE] bg-[#F3EDE2] flex items-center justify-center animate-pulse shadow-xs">
+            <span className="font-serif text-xs font-semibold text-[#7E694E]">P&M</span>
+          </div>
+          <span className="text-[11px] uppercase tracking-widest text-[#8C8377] font-medium">
+            Verifying Perimeter Authentication...
+          </span>
+        </div>
+      </div>
+    );
+  }
+
+  // Application perimeter lock screen
+  if (!isAppAuthenticated) {
+    return (
+      <AppAuthLockScreen
+        inactivityLocked={inactivityLocked}
+        onAuthenticated={() => {
+          setIsAppAuthenticated(true);
+          setInactivityLocked(false);
+          fetchAuthStatus();
+        }}
+      />
+    );
+  }
+
+  // Check if first-time foundation setup is required
+  if (state.setupStatus !== 'completed' && state.setupStatus !== 'skipped') {
+    return (
+      <FirstTimeSetup
+        onCompleteSetup={handleCompleteSetup}
+        onSkipSetup={handleSkipSetup}
+        initialData={state.foundation}
+      />
+    );
+  }
+
+  const userLang = state.foundation?.aboutYou?.preferredLanguage || 'nl';
+
   return (
     <div className="min-h-screen bg-[#FAF8F4] text-[#2C2825] font-sans antialiased selection:bg-[#E2D8C7] selection:text-[#2C2825]">
       {/* Offline Status Badge */}
@@ -500,6 +647,8 @@ export default function App() {
         onOpenNotifications={() => setIsNotificationCenterOpen(true)}
         securityLevel={securityLevel}
         isSensitiveUnlocked={isSensitiveUnlocked}
+        onLockApp={handleLockApp}
+        lang={userLang}
       />
 
       {/* Main Content Area */}
@@ -524,6 +673,9 @@ export default function App() {
             onDismissSuggestion={handleDismissSuggestion}
             onSelectTab={setCurrentTab}
             onOpenAssistantWithPrompt={openAssistantWithPrompt}
+            wellbeing={state.wellbeing}
+            foundation={state.foundation}
+            lang={userLang}
           />
         )}
 
@@ -579,24 +731,25 @@ export default function App() {
         )}
 
         {currentTab === 'cycle' && (
-          <SensitiveSanctuaryGuard
-            isUnlocked={isSensitiveUnlocked}
-            remainingSeconds={sensitiveRemainingSeconds}
-            onLock={handleLockSensitive}
-            onUnlockSuccess={fetchAuthStatus}
-            domainName="Cycle Intelligence & Biological Rhythms"
-            domainDescription="Cycle tracking, energetic phases, and intimate hormonal rhythms are Level 2 sensitive personal data. Re-authentication is required to access."
-          >
-            <CycleView
-              cycleProfile={state.cycleProfile}
-              onUpdateCycleProfile={handleUpdateCycleProfile}
-              dailyCheckIns={state.dailyCheckIns}
-              onSaveDailyCheckIn={handleSaveDailyCheckIn}
-              tasks={state.tasks}
-              calendarEvents={state.calendarEvents}
-              onOpenAssistantWithPrompt={openAssistantWithPrompt}
-            />
-          </SensitiveSanctuaryGuard>
+          <CycleView
+            cycleProfile={state.cycleProfile}
+            onUpdateCycleProfile={handleUpdateCycleProfile}
+            dailyCheckIns={state.dailyCheckIns}
+            onSaveDailyCheckIn={handleSaveDailyCheckIn}
+            tasks={state.tasks}
+            calendarEvents={state.calendarEvents}
+            onOpenAssistantWithPrompt={openAssistantWithPrompt}
+          />
+        )}
+
+        {currentTab === 'wellbeing' && (
+          <WellbeingView
+            wellbeing={state.wellbeing}
+            onUpdateWellbeing={(updater) =>
+              setState((prev) => ({ ...prev, wellbeing: updater(prev.wellbeing) }))
+            }
+            onOpenAssistantWithPrompt={openAssistantWithPrompt}
+          />
         )}
 
         {currentTab === 'mylife' && (
@@ -623,6 +776,8 @@ export default function App() {
             notificationSettings={state.notificationSettings}
             onUpdateNotificationSettings={handleUpdateNotificationSettings}
             cycleProfile={state.cycleProfile}
+            foundation={state.foundation}
+            onUpdateFoundation={handleUpdateFoundation}
           />
         )}
 
@@ -635,6 +790,7 @@ export default function App() {
             }}
             onExportCompleteData={handleExportData}
             onResetCompleteData={handleResetData}
+            onLockApp={handleLockApp}
           />
         )}
       </main>
@@ -678,6 +834,7 @@ export default function App() {
         memories={state.memories}
         activeWorld={activeWorld}
         onExecuteAction={handleExecuteAssistantAction}
+        wellbeing={state.wellbeing}
       />
 
       {/* Quick Add Task Modal */}

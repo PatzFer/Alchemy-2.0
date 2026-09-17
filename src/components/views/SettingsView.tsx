@@ -19,11 +19,14 @@ import {
   Clock,
   Activity,
   Lock,
+  Layers,
 } from 'lucide-react';
-import { MemoryItem, Realm, NotificationSettings, CycleProfile } from '../../types';
+import { MemoryItem, Realm, NotificationSettings, CycleProfile, FoundationData } from '../../types';
 import { AppState } from '../../lib/storage';
 import { requestPushPermission, sendBrowserNotification } from '../../lib/notificationEngine';
 import { SecurityPrivacyCenter } from './SecurityPrivacyCenter';
+import { FoundationSettingsView } from './FoundationSettingsView';
+import { DEFAULT_FOUNDATION_DATA } from '../../lib/foundationDefaults';
 
 interface SettingsViewProps {
   memories: MemoryItem[];
@@ -37,7 +40,9 @@ interface SettingsViewProps {
   notificationSettings?: NotificationSettings;
   onUpdateNotificationSettings?: (settings: NotificationSettings) => void;
   cycleProfile?: CycleProfile;
-  initialTab?: 'memory' | 'notifications' | 'security' | 'data';
+  initialTab?: 'foundation' | 'memory' | 'notifications' | 'security' | 'data';
+  foundation?: FoundationData;
+  onUpdateFoundation?: (data: FoundationData) => void;
 }
 
 export const SettingsView: React.FC<SettingsViewProps> = ({
@@ -52,14 +57,18 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   notificationSettings,
   onUpdateNotificationSettings,
   cycleProfile,
-  initialTab = 'memory',
+  initialTab = 'foundation',
+  foundation = DEFAULT_FOUNDATION_DATA,
+  onUpdateFoundation,
 }) => {
-  const [activeTab, setActiveTab] = useState<'memory' | 'notifications' | 'security' | 'data'>(initialTab);
+  const [activeTab, setActiveTab] = useState<'foundation' | 'memory' | 'notifications' | 'security' | 'data'>(initialTab);
   const [newMemoryContent, setNewMemoryContent] = useState('');
   const [newMemoryCategory, setNewMemoryCategory] = useState('Lifestyle & Energy');
   const [newMemoryRealm, setNewMemoryRealm] = useState<Realm>('personal');
   const [backendHealth, setBackendHealth] = useState<{ status: string; hasApiKey: boolean } | null>(null);
   const [pushStatus, setPushStatus] = useState<string>('default');
+
+  const isNl = foundation.aboutYou.preferredLanguage !== 'en';
 
   useEffect(() => {
     fetch('/api/health')
@@ -118,6 +127,18 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         {/* Tab switch */}
         <div className="mt-5 flex items-center gap-2 text-xs flex-wrap">
           <button
+            onClick={() => setActiveTab('foundation')}
+            id="settings-tab-foundation"
+            className={`px-3.5 py-1.5 rounded-full transition cursor-pointer flex items-center gap-1.5 ${
+              activeTab === 'foundation'
+                ? 'bg-[#2C2825] text-[#F9F7F2] font-medium shadow-xs'
+                : 'bg-[#FFFFFF] border border-[#E3DCD1] text-[#695F54] hover:bg-[#F2ECE1]'
+            }`}
+          >
+            <Layers className="w-3.5 h-3.5 text-[#C5A880]" />
+            <span>{isNl ? 'Fundament (10 gebieden)' : 'Foundation (10 areas)'}</span>
+          </button>
+          <button
             onClick={() => setActiveTab('memory')}
             className={`px-3.5 py-1.5 rounded-full transition cursor-pointer ${
               activeTab === 'memory'
@@ -125,7 +146,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 : 'bg-[#FFFFFF] border border-[#E3DCD1] text-[#695F54] hover:bg-[#F2ECE1]'
             }`}
           >
-            Transparent AI Memory ({memories.length})
+            {isNl ? `AI Geheugen (${memories.length})` : `Transparent AI Memory (${memories.length})`}
           </button>
           <button
             onClick={() => setActiveTab('notifications')}
@@ -136,7 +157,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             }`}
           >
             <Bell className="w-3.5 h-3.5" />
-            <span>Smart Notifications & Quiet Hours</span>
+            <span>{isNl ? 'Meldingen & Stille Uren' : 'Smart Notifications & Quiet Hours'}</span>
           </button>
           <button
             onClick={() => setActiveTab('security')}
@@ -146,7 +167,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 : 'bg-[#FFFFFF] border border-[#E3DCD1] text-[#695F54] hover:bg-[#F2ECE1]'
             }`}
           >
-            Assistant Intelligence
+            {isNl ? 'Veiligheid & Intelligentie' : 'Assistant Intelligence'}
           </button>
           <button
             onClick={() => setActiveTab('data')}
@@ -156,10 +177,18 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 : 'bg-[#FFFFFF] border border-[#E3DCD1] text-[#695F54] hover:bg-[#F2ECE1]'
             }`}
           >
-            Data Sovereignty & Backups
+            {isNl ? 'Data Soevereiniteit & Backups' : 'Data Sovereignty & Backups'}
           </button>
         </div>
       </div>
+
+      {/* Tab 0: Foundation Settings */}
+      {activeTab === 'foundation' && onUpdateFoundation && (
+        <FoundationSettingsView
+          foundation={foundation}
+          onUpdateFoundation={onUpdateFoundation}
+        />
+      )}
 
       {/* Tab 1: Transparent Memory */}
       {activeTab === 'memory' && (

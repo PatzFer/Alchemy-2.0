@@ -41,10 +41,15 @@ interface SecurityPrivacyCenterProps {
   onClearAllMemories: () => void;
   onExportCompleteData: () => void;
   onResetCompleteData: () => void;
+  onLockApp?: () => void;
 }
 
 interface SecurityStatusResponse {
   authenticated: boolean;
+  isAppAuthenticated: boolean;
+  authenticatedWith?: string;
+  inactivityTimeoutMinutes?: number;
+  inactivityRemainingSeconds?: number;
   sessionId: string;
   deviceId: string;
   deviceName: string;
@@ -68,6 +73,7 @@ interface SecurityStatusResponse {
     allowPersonalDataToAI: boolean;
     allowMarilunaDataToAI: boolean;
     allowFinancialDataToAI: boolean;
+    allowWellbeingDataToAI: boolean;
     activeAiProvider: 'gemini-server' | 'local-rules';
   };
 }
@@ -97,6 +103,7 @@ export const SecurityPrivacyCenter: React.FC<SecurityPrivacyCenterProps> = ({
   onClearAllMemories,
   onExportCompleteData,
   onResetCompleteData,
+  onLockApp,
 }) => {
   const [status, setStatus] = useState<SecurityStatusResponse | null>(null);
   const [sessions, setSessions] = useState<ActiveSessionItem[]>([]);
@@ -181,6 +188,34 @@ export const SecurityPrivacyCenter: React.FC<SecurityPrivacyCenterProps> = ({
     if (pendingAction) {
       pendingAction();
       setPendingAction(null);
+    }
+  };
+
+  // Manual perimeter lock
+  const handleManualLockApp = () => {
+    if (onLockApp) {
+      onLockApp();
+    } else {
+      fetch('/api/auth/lock-app', { method: 'POST' }).then(() => {
+        window.location.reload();
+      });
+    }
+  };
+
+  // Configure inactivity timeout period
+  const handleUpdateTimeout = async (minutes: number) => {
+    try {
+      const res = await fetch('/api/auth/session-timeout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ minutes }),
+      });
+      if (res.ok) {
+        fetchSecurityData();
+        setNotificationMsg({ type: 'success', text: `Inactivity lock timeout set to ${minutes} minutes.` });
+      }
+    } catch (err: any) {
+      setNotificationMsg({ type: 'error', text: err.message });
     }
   };
 
@@ -504,87 +539,109 @@ export const SecurityPrivacyCenter: React.FC<SecurityPrivacyCenterProps> = ({
         </div>
       )}
 
-      {/* Section 1: Security Hierarchy & Quick Actions */}
+      {/* Section 1: Security Architecture & Session Controls */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Level 1 Card */}
+        {/* Perimeter Protection Card */}
         <div className="p-5 rounded-2xl border border-[#E3D9C9] bg-[#FFFFFF] shadow-xs space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-[10px] uppercase tracking-wider text-[#8C8377] font-semibold">
-              Level 1: Standard Access
+              Perimeter Protection
             </span>
             <ShieldCheck className="w-4 h-4 text-[#7E694E]" />
           </div>
-          <h3 className="font-serif text-base font-medium text-[#2C2825]">Passkeys / WebAuthn</h3>
+          <h3 className="font-serif text-base font-medium text-[#2C2825]">Hardware Boundary</h3>
           <p className="text-[11px] text-[#6E655A] font-light leading-relaxed">
-            Primary authentication powered by your device platform authenticator. Biometrics remain inside hardware enclave.
+            Strong authentication (Passkeys / WebAuthn, TOTP, or Recovery) required at entry. Biometrics remain strictly in your device enclave.
           </p>
-          <div className="pt-2 flex items-center gap-2 text-xs">
-            <span className="font-medium text-[#2C2825]">{status?.passkeyCount || 0} enrolled passkeys</span>
+          <div className="pt-2 flex flex-col gap-1 text-xs border-t border-[#F0EAE0]">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] text-[#8C8377]">Status</span>
+              <span className="text-[11px] font-medium text-[#2F562B] flex items-center gap-1">
+                <CheckCircle2 className="w-3 h-3 text-[#3A6B35]" /> Perimeter Unlocked
+              </span>
+            </div>
+            <div className="flex items-center justify-between text-[10px] text-[#8C8377]">
+              <span>Enrolled Credentials</span>
+              <span>{status?.passkeyCount || 0} Passkeys • {status?.totpEnabled ? 'TOTP Active' : 'TOTP Inactive'}</span>
+            </div>
           </div>
         </div>
 
-        {/* Level 2 Card */}
+        {/* Authenticated Session & Free Navigation Card */}
         <div className="p-5 rounded-2xl border border-[#E3D9C9] bg-[#FFFFFF] shadow-xs space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-[10px] uppercase tracking-wider text-[#8C8377] font-semibold">
-              Level 2: Personal Sanctuary
+              Sovereign Session
             </span>
-            {status?.isSensitiveUnlocked ? (
-              <Unlock className="w-4 h-4 text-[#3A6B35]" />
-            ) : (
-              <Lock className="w-4 h-4 text-[#8C7654]" />
-            )}
+            <Unlock className="w-4 h-4 text-[#3A6B35]" />
           </div>
-          <h3 className="font-serif text-base font-medium text-[#2C2825]">Cycle & Sensitive Data</h3>
+          <h3 className="font-serif text-base font-medium text-[#2C2825]">Free Internal Navigation</h3>
           <p className="text-[11px] text-[#6E655A] font-light leading-relaxed">
-            Biological rhythms and intimate personal entries require re-authentication. Auto-locks after 15 minutes of inactivity.
+            Inside Alchemy, navigate freely across Today, Tasks, Wellbeing, Cycle, and Mariluna without module-level lock screens.
           </p>
-          <div className="pt-2 flex items-center justify-between text-xs">
-            {status?.isSensitiveUnlocked ? (
+          <div className="pt-2 space-y-2 text-xs border-t border-[#F0EAE0]">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] text-[#8C8377]">Inactivity Timeout</span>
+              <div className="flex items-center gap-1">
+                {[5, 15, 30, 60].map((mins) => (
+                  <button
+                    key={mins}
+                    onClick={() => handleUpdateTimeout(mins)}
+                    className={`px-1.5 py-0.5 rounded text-[10px] font-mono transition cursor-pointer ${
+                      (status?.inactivityTimeoutMinutes || 15) === mins
+                        ? 'bg-[#2C2825] text-[#FAF8F3] font-semibold'
+                        : 'bg-[#F2ECE1] text-[#6D6356] hover:bg-[#E6DEC8]'
+                    }`}
+                  >
+                    {mins}m
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between pt-1">
               <button
-                onClick={handleLockSensitive}
-                className="px-3 py-1.5 rounded-lg bg-[#FAF8F4] border border-[#DDD4C5] text-[11px] font-medium text-[#7A2A2A] hover:bg-[#FDF2F0] transition cursor-pointer"
+                onClick={handleManualLockApp}
+                className="px-3 py-1.5 rounded-lg bg-[#FAF8F4] border border-[#DDD4C5] text-[11px] font-medium text-[#9E362A] hover:bg-[#FDF2F0] transition cursor-pointer flex items-center gap-1.5 shadow-2xs"
               >
-                Lock Sanctuary Now
+                <Lock className="w-3 h-3" />
+                <span>Lock Alchemy Now</span>
               </button>
-            ) : (
-              <button
-                onClick={handleUnlockSensitiveWithPasskey}
-                className="px-3 py-1.5 rounded-lg bg-[#2C2825] text-[#F9F7F2] text-[11px] font-medium hover:bg-[#433D37] transition cursor-pointer"
-              >
-                Unlock with Biometrics
-              </button>
-            )}
-            <span className="text-[10px] text-[#8C8377]">
-              {status?.isSensitiveUnlocked ? 'Currently Unlocked' : 'Protected / Locked'}
-            </span>
+              <span className="text-[10px] text-[#8C8377] font-mono">
+                {status?.inactivityRemainingSeconds ? `${Math.floor(status.inactivityRemainingSeconds / 60)}m left` : 'Active'}
+              </span>
+            </div>
           </div>
         </div>
 
-        {/* Level 3 Card */}
+        {/* Step-Up Auth Card */}
         <div className="p-5 rounded-2xl border border-[#E3D9C9] bg-[#FFFFFF] shadow-xs space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-[10px] uppercase tracking-wider text-[#8C8377] font-semibold">
-              Level 3: Step-Up Auth
+              Step-Up Protection
             </span>
             <ShieldAlert className="w-4 h-4 text-[#9E5D2A]" />
           </div>
-          <h3 className="font-serif text-base font-medium text-[#2C2825]">Critical Operations</h3>
+          <h3 className="font-serif text-base font-medium text-[#2C2825]">Sensitive Actions Gate</h3>
           <p className="text-[11px] text-[#6E655A] font-light leading-relaxed">
-            Data destruction, exporting records, rotating passkeys, or altering AI permissions requires re-verifying biometric or TOTP identity.
+            Targeted re-authentication strictly for exports, permanent deletion, rotating credentials, or altering AI firewall scopes.
           </p>
-          <div className="pt-2 flex items-center justify-between text-xs">
+          <div className="pt-2 flex items-center justify-between text-xs border-t border-[#F0EAE0]">
             <span className="text-[11px] font-medium text-[#2C2825]">
-              {status?.isStepUpActive ? 'Elevated (Active)' : 'Standard Elevation'}
+              {status?.isStepUpActive ? (
+                <span className="text-[#2F562B] font-semibold">Level 3 Active ({status?.stepUpRemainingSeconds || 0}s)</span>
+              ) : (
+                <span className="text-[#6D6356]">Gated on Demand</span>
+              )}
             </span>
             {!status?.isStepUpActive && (
               <button
                 onClick={() =>
                   requireStepUp(() => {}, 'Pre-Authorize Elevated Session', 'Enables 10 minutes of uninterrupted administrative configuration.')
                 }
-                className="px-3 py-1.5 rounded-lg border border-[#DDD4C5] bg-[#FAF8F4] text-[11px] font-medium text-[#2C2825] hover:bg-[#EFE9DD] transition cursor-pointer"
+                className="px-3 py-1.5 rounded-lg border border-[#DDD4C5] bg-[#FAF8F4] text-[11px] font-medium text-[#2C2825] hover:bg-[#EFE9DD] transition cursor-pointer shadow-2xs"
               >
-                Elevate Now
+                Elevate 10 Min
               </button>
             )}
           </div>
@@ -975,6 +1032,31 @@ export const SecurityPrivacyCenter: React.FC<SecurityPrivacyCenterProps> = ({
             </div>
             <p className="text-[11px] text-[#6E655A] font-light leading-relaxed">
               When Quarantined, cycle markers, follicular/luteal phases, and symptoms are stripped on the server before AI context is formed.
+            </p>
+          </div>
+
+          {/* Wellbeing & Body Data Firewall */}
+          <div className="p-4 rounded-2xl border border-[#E3D9C9] bg-[#FAF8F4] space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-[#2C2825]">
+                Wellbeing & Body Data Firewall
+              </span>
+              <button
+                type="button"
+                onClick={() =>
+                  handleUpdatePermission('allowWellbeingDataToAI', !status?.permissions.allowWellbeingDataToAI)
+                }
+                className={`px-3 py-1 rounded-full text-[11px] font-medium transition cursor-pointer ${
+                  status?.permissions.allowWellbeingDataToAI
+                    ? 'bg-[#2C2825] text-[#F9F7F2]'
+                    : 'bg-[#EAE4D8] text-[#6A6054]'
+                }`}
+              >
+                {status?.permissions.allowWellbeingDataToAI ? 'Authorized for AI' : 'Strictly Quarantined (Default)'}
+              </button>
+            </div>
+            <p className="text-[11px] text-[#6E655A] font-light leading-relaxed">
+              When Quarantined, body measurements, weight records, progress photos, and meal logs remain private on your device.
             </p>
           </div>
 

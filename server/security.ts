@@ -30,7 +30,12 @@ export interface ActiveSession {
   userAgent: string;
   createdAt: string;
   lastActive: string;
-  authenticatedWith: 'passkey' | 'totp' | 'recovery_code' | 'platform_session';
+  lastActivityMs: number;
+  authenticatedWith: 'passkey' | 'totp' | 'recovery_code' | 'preview_test_mode' | 'unauthenticated';
+  isAppAuthenticated: boolean;
+  isPreviewMode?: boolean;
+  appAuthenticatedAt?: number;
+  inactivityTimeoutMinutes: number; // default 15
   stepUpExpiresAt: number; // epoch ms
   sensitiveUnlockedUntil: number; // epoch ms
   isCurrent?: boolean;
@@ -46,6 +51,7 @@ export interface SecurityPermissions {
   allowPersonalDataToAI: boolean;
   allowMarilunaDataToAI: boolean;
   allowFinancialDataToAI: boolean;
+  allowWellbeingDataToAI: boolean; // default FALSE - strictly quarantined
   activeAiProvider: 'gemini-server' | 'local-rules';
 }
 
@@ -83,6 +89,7 @@ class SecurityVault {
     allowPersonalDataToAI: true,
     allowMarilunaDataToAI: true,
     allowFinancialDataToAI: false,
+    allowWellbeingDataToAI: false, // Default quarantined: user explicitly permits in settings/module
     activeAiProvider: 'gemini-server',
   };
 
@@ -126,7 +133,8 @@ class SecurityVault {
   // ----------------------------------------------------
   public createSession(
     req: Request,
-    authMethod: ActiveSession['authenticatedWith'] = 'platform_session'
+    authMethod: ActiveSession['authenticatedWith'] = 'unauthenticated',
+    isAppAuthenticated: boolean = false
   ): ActiveSession {
     const sessionId = crypto.randomBytes(32).toString('hex');
     const ip = req.ip || req.socket.remoteAddress || '127.0.0.1';
@@ -140,6 +148,7 @@ class SecurityVault {
     else if (/windows/i.test(userAgent)) deviceName = 'Windows Workstation';
     else if (/linux/i.test(userAgent)) deviceName = 'Linux Client';
 
+    const now = Date.now();
     const session: ActiveSession = {
       id: sessionId,
       deviceId: crypto.createHash('sha256').update(ip + userAgent).digest('hex').substring(0, 12),
@@ -148,13 +157,15 @@ class SecurityVault {
       userAgent,
       createdAt: new Date().toISOString(),
       lastActive: new Date().toISOString(),
+      lastActivityMs: now,
       authenticatedWith: authMethod,
-      stepUpExpiresAt: authMethod === 'passkey' || authMethod === 'totp' || authMethod === 'recovery_code'
-        ? Date.now() + 10 * 60 * 1000 // 10 minutes step-up on fresh strong auth
+      isAppAuthenticated: isAppAuthenticated,
+      appAuthenticatedAt: isAppAuthenticated ? now : undefined,
+      inactivityTimeoutMinutes: 15,
+      stepUpExpiresAt: (authMethod === 'passkey' || authMethod === 'totp' || authMethod === 'recovery_code') && isAppAuthenticated
+        ? now + 10 * 60 * 1000 // 10 minutes step-up on fresh strong auth
         : 0,
-      sensitiveUnlockedUntil: authMethod === 'passkey' || authMethod === 'totp'
-        ? Date.now() + 15 * 60 * 1000 // 15 minutes sensitive unlock
-        : 0,
+      sensitiveUnlockedUntil: isAppAuthenticated ? now + 60 * 60 * 1000 : 0,
     };
 
     this.sessions.set(sessionId, session);
@@ -164,9 +175,64 @@ class SecurityVault {
   public getSession(sessionId: string): ActiveSession | undefined {
     const session = this.sessions.get(sessionId);
     if (session) {
+      const now = Date.now();
+      // Check inactivity timeout if app is authenticated
+      if (session.isAppAuthenticated) {
+        const timeoutMs = (session.inactivityTimeoutMinutes || 15) * 60 * 1000;
+        if (now - (session.lastActivityMs || now) > timeoutMs) {
+          session.isAppAuthenticated = false;
+          session.stepUpExpiresAt = 0;
+          session.sensitiveUnlockedUntil = 0;
+        }
+      }
       session.lastActive = new Date().toISOString();
     }
     return session;
+  }
+
+  public touchActivity(sessionId: string): void {
+    const session = this.sessions.get(sessionId);
+    if (session && session.isAppAuthenticated) {
+      session.lastActivityMs = Date.now();
+      session.lastActive = new Date().toISOString();
+    }
+  }
+
+  public authenticateApp(
+    sessionId: string,
+    method: 'passkey' | 'totp' | 'recovery_code' | 'preview_test_mode'
+  ): ActiveSession | undefined {
+    const session = this.sessions.get(sessionId);
+    if (session) {
+      const now = Date.now();
+      session.isAppAuthenticated = true;
+      session.authenticatedWith = method;
+      session.isPreviewMode = method === 'preview_test_mode';
+      session.appAuthenticatedAt = now;
+      session.lastActivityMs = now;
+      session.lastActive = new Date().toISOString();
+      session.stepUpExpiresAt = now + 10 * 60 * 1000; // 10 minutes grace for immediate administrative tasks
+      session.sensitiveUnlockedUntil = now + 60 * 60 * 1000;
+    }
+    return session;
+  }
+
+  public lockApp(sessionId: string): void {
+    const session = this.sessions.get(sessionId);
+    if (session) {
+      session.isAppAuthenticated = false;
+      session.isPreviewMode = false;
+      session.stepUpExpiresAt = 0;
+      session.sensitiveUnlockedUntil = 0;
+      session.lastActive = new Date().toISOString();
+    }
+  }
+
+  public setSessionTimeout(sessionId: string, minutes: number): void {
+    const session = this.sessions.get(sessionId);
+    if (session && minutes >= 1 && minutes <= 240) {
+      session.inactivityTimeoutMinutes = minutes;
+    }
   }
 
   public getActiveSessions(currentSessionId: string): ActiveSession[] {
@@ -360,11 +426,44 @@ class SecurityVault {
   }
 
   // Server-side privacy firewall filter
-  public sanitizeContextForAi(rawContext: any): any {
+  public sanitizeContextForAi(rawContext: any, world?: string): any {
     if (!rawContext || typeof rawContext !== 'object') return rawContext;
     const sanitized = JSON.parse(JSON.stringify(rawContext));
 
-    // Firewall Rule 1: Cycle data isolation
+    // Domain Separation Principle:
+    // When operating in the Mariluna business realm, NEVER leak intimate personal sanctuary data
+    if (world === 'mariluna') {
+      delete sanitized.cycleProfile;
+      delete sanitized.cyclePhase;
+      delete sanitized.menstrual;
+      delete sanitized.follicular;
+      delete sanitized.luteal;
+      delete sanitized.ovulatory;
+      delete sanitized.currentPhase;
+      delete sanitized.symptoms;
+      delete sanitized.cycleDay;
+      delete sanitized.personalRoutines;
+      delete sanitized.lifestyle;
+      delete sanitized.dailyCheckIns;
+      delete sanitized.wellbeing;
+      delete sanitized.progressLogs;
+      delete sanitized.bodyMeasurements;
+      delete sanitized.measurements;
+      delete sanitized.bodyComposition;
+      delete sanitized.weightKg;
+      delete sanitized.movementHistory;
+      delete sanitized.currentWeeklyMovement;
+      delete sanitized.weeklyMenu;
+      delete sanitized.shoppingList;
+      if (Array.isArray(sanitized.tasks)) {
+        sanitized.tasks = sanitized.tasks.filter((t: any) => t.world !== 'personal' && t.realm !== 'personal');
+      }
+      if (Array.isArray(sanitized.goals)) {
+        sanitized.goals = sanitized.goals.filter((g: any) => g.world !== 'personal' && g.realm !== 'personal');
+      }
+    }
+
+    // Firewall Rule 1: Cycle data isolation (Never sent to AI unless explicit permission granted)
     if (!this.permissions.allowCycleDataToAI) {
       delete sanitized.cycleProfile;
       delete sanitized.cyclePhase;
@@ -383,10 +482,10 @@ class SecurityVault {
       delete sanitized.lifestyle;
       delete sanitized.dailyCheckIns;
       if (Array.isArray(sanitized.tasks)) {
-        sanitized.tasks = sanitized.tasks.filter((t: any) => t.world !== 'personal');
+        sanitized.tasks = sanitized.tasks.filter((t: any) => t.world !== 'personal' && t.realm !== 'personal');
       }
       if (Array.isArray(sanitized.goals)) {
-        sanitized.goals = sanitized.goals.filter((g: any) => g.world !== 'personal');
+        sanitized.goals = sanitized.goals.filter((g: any) => g.world !== 'personal' && g.realm !== 'personal');
       }
     }
 
@@ -394,11 +493,25 @@ class SecurityVault {
     if (!this.permissions.allowMarilunaDataToAI) {
       delete sanitized.marilunaData;
       if (Array.isArray(sanitized.tasks)) {
-        sanitized.tasks = sanitized.tasks.filter((t: any) => t.world !== 'mariluna');
+        sanitized.tasks = sanitized.tasks.filter((t: any) => t.world !== 'mariluna' && t.realm !== 'mariluna');
       }
       if (Array.isArray(sanitized.goals)) {
-        sanitized.goals = sanitized.goals.filter((g: any) => g.world !== 'mariluna');
+        sanitized.goals = sanitized.goals.filter((g: any) => g.world !== 'mariluna' && g.realm !== 'mariluna');
       }
+    }
+
+    // Firewall Rule 4: Wellbeing & body progress data quarantine (Never sent to AI unless explicit permission granted)
+    if (!this.permissions.allowWellbeingDataToAI) {
+      delete sanitized.wellbeing;
+      delete sanitized.progressLogs;
+      delete sanitized.bodyMeasurements;
+      delete sanitized.measurements;
+      delete sanitized.bodyComposition;
+      delete sanitized.weightKg;
+      delete sanitized.movementHistory;
+      delete sanitized.currentWeeklyMovement;
+      delete sanitized.weeklyMenu;
+      delete sanitized.shoppingList;
     }
 
     return sanitized;
@@ -419,7 +532,7 @@ export function getOrCreateSession(req: Request, res: Response): ActiveSession {
     }
   }
 
-  const newSession = securityVault.createSession(req, 'platform_session');
+  const newSession = securityVault.createSession(req, 'unauthenticated', false);
   res.cookie('pm_alchemy_session', newSession.id, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',

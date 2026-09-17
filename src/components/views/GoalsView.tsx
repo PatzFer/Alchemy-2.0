@@ -132,7 +132,15 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
       </div>
 
       {/* Goal Cards */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {filteredGoals.length === 0 ? (
+        <div className="p-12 text-center rounded-2xl border border-dashed border-[#DDD5C7] bg-[#FAF8F3] space-y-2">
+          <p className="font-serif text-base text-[#2C2825]">Geen doelen gevonden</p>
+          <p className="text-xs text-[#7A7167] font-light max-w-md mx-auto">
+            Alchemy ondersteunt een rustige, weloverwogen focus. Voeg doelen toe wanneer je heldere intenties wilt vastleggen.
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {filteredGoals.map((goal) => {
           const completedCount = goal.milestones.filter((m) => m.completed).length;
           const calculatedProgress =
@@ -235,7 +243,8 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
             </div>
           );
         })}
-      </div>
+        </div>
+      )}
 
       {/* Create Goal Modal with AI Breakdown */}
       {isModalOpen && (

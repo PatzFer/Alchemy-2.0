@@ -221,6 +221,9 @@ export interface DailyCheckIn {
   mood?: MoodState;
   hunger?: AppetiteLevel;
   physicalDiscomfort?: PhysicalComfort;
+  wakeTime?: string;
+  sleepTime?: string;
+  generalWellbeing?: 'great' | 'good' | 'neutral' | 'tired' | 'strained';
   notes?: string;
   timestamp: string;
 }
@@ -285,4 +288,343 @@ export interface ProactiveSuggestion {
   dismissed?: boolean;
   createdAt: string;
 }
+
+// -------------------------------------------------------------
+// Wellbeing & Sovereign Body Intelligence Architecture
+// -------------------------------------------------------------
+
+export interface BodyMeasurements {
+  waistCm?: number;
+  hipsCm?: number;
+  chestCm?: number;
+  thighCm?: number;
+  armCm?: number;
+  notes?: string;
+}
+
+export interface BodyComposition {
+  bodyFatPercentage?: number;
+  muscleMassPercentage?: number;
+  hydrationPercentage?: number;
+}
+
+export interface ProgressPhotoEntry {
+  id: string;
+  date: string;
+  pose: 'front' | 'side' | 'back' | 'custom';
+  photoUrl?: string;
+  notes?: string;
+}
+
+export interface ProgressLog {
+  id: string;
+  date: string; // YYYY-MM-DD
+  weightKg?: number;
+  measurements?: BodyMeasurements;
+  composition?: BodyComposition;
+  feelingNotes?: string;
+  recordedFact?: string; // Explicit empirical fact recorded
+  aiInterpretation?: string; // AI pattern insight (distinct from facts)
+}
+
+export interface WellbeingGoal {
+  id: string;
+  title: string;
+  targetMetric?: string;
+  targetValue?: string;
+  currentValue?: string;
+  deadline?: string;
+  status: 'active' | 'achieved' | 'paused';
+  notes?: string;
+}
+
+export interface WellbeingMilestone {
+  id: string;
+  title: string;
+  date: string;
+  category: 'movement' | 'strength' | 'habit' | 'body';
+  description?: string;
+  celebrated: boolean;
+}
+
+export interface CheckInConfig {
+  id: string;
+  title: string;
+  frequency: 'weekly' | 'biweekly' | 'monthly';
+  preferredDay: 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday';
+  includeWeight: boolean;
+  includeMeasurements: boolean;
+  includeComposition: boolean;
+  includePhotos: boolean;
+  includeReflection: boolean;
+  reflectionPrompt?: string;
+  active: boolean;
+  lastCompletedDate?: string;
+  nextDueDate: string;
+}
+
+export interface MovementExercise {
+  name: string;
+  sets?: number;
+  reps?: string;
+  durationMins?: number;
+  notes?: string;
+}
+
+export interface MovementSession {
+  id: string;
+  date: string; // YYYY-MM-DD
+  title: string;
+  type: 'pilates' | 'strength' | 'walking' | 'yoga_stretch' | 'dance' | 'cardio' | 'breathwork_restore';
+  plannedDurationMins: number;
+  actualDurationMins?: number;
+  intensity: 'gentle' | 'moderate' | 'energizing' | 'peak';
+  completed: boolean;
+  energyLevelAtStart?: EnergyLevel;
+  perceivedExertion?: 'effortless' | 'pleasantly_challenged' | 'heavy' | 'fatigued';
+  exercises: MovementExercise[];
+  notes?: string;
+  adaptationReason?: string; // e.g. "Adapted to 15m restorative due to evening transition"
+}
+
+export interface WeeklyMovementPlan {
+  weekStarting: string; // YYYY-MM-DD
+  targetWeeklySessions: number;
+  focusTheme: string;
+  sessions: MovementSession[];
+}
+
+export interface MealItem {
+  id: string;
+  name: string;
+  category: 'breakfast' | 'lunch' | 'dinner' | 'snack';
+  prepTimeMinutes: number;
+  cookingTimeMinutes: number;
+  diningSetting: 'solo' | 'shared_partner' | 'gathering';
+  ingredients: string[];
+  tags: string[];
+  instructions?: string;
+  pantryItemsUsed?: string[];
+  notes?: string;
+}
+
+export interface DailyMealPlan {
+  dayOfWeek: 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday' | 'Sunday';
+  date?: string;
+  isWorkday: boolean;
+  availablePrepTimeMinutes: number;
+  diningSettingDinner: 'solo' | 'shared_partner';
+  meals: {
+    breakfast: MealItem;
+    lunch: MealItem;
+    dinner: MealItem;
+    snack?: MealItem;
+  };
+}
+
+export interface WeeklyMenuPlan {
+  id: string;
+  weekStarting: string; // YYYY-MM-DD
+  theme?: string;
+  preferencesApplied: {
+    dietaryNotes: string;
+    exclusions: string[];
+    antiInflammatoryFocus: boolean;
+    cycleSyncEnabled: boolean;
+  };
+  days: DailyMealPlan[];
+}
+
+export interface ShoppingItem {
+  id: string;
+  name: string;
+  category: 'produce' | 'proteins' | 'pantry' | 'dairy_refrigerated' | 'herbs_spices' | 'other';
+  quantity: string;
+  inPantry: boolean;
+  checked: boolean;
+  fromMealId?: string;
+  isManual: boolean;
+}
+
+export interface WellbeingPreferences {
+  allowWellbeingDataToAI: boolean; // AI access permission toggle
+  preferredWeightUnit: 'kg' | 'lbs';
+  preferredMeasurementUnit: 'cm' | 'in';
+  foodPreferences: {
+    dietaryStyle: string;
+    exclusions: string[];
+    partnerSharedDinnerDays: string[];
+    quickPrepWeekdaysMaxMinutes: number;
+    pantryStaples: string[];
+    cycleSyncNutrition: boolean;
+  };
+  movementPreferences: {
+    preferredTypes: string[];
+    typicalSessionMinutes: number;
+    preferredTimeOfDay: 'morning' | 'lunch' | 'afternoon' | 'evening';
+    listenToCycleEnergy: boolean;
+  };
+}
+
+export interface WellbeingState {
+  progressLogs: ProgressLog[];
+  photos: ProgressPhotoEntry[];
+  goals: WellbeingGoal[];
+  milestones: WellbeingMilestone[];
+  checkInConfigs: CheckInConfig[];
+  movementHistory: MovementSession[];
+  currentWeeklyMovement: WeeklyMovementPlan;
+  weeklyMenu: WeeklyMenuPlan;
+  shoppingList: ShoppingItem[];
+  preferences: WellbeingPreferences;
+}
+
+// -------------------------------------------------------------
+// Language & Foundation System (First-Time Setup & Settings)
+// -------------------------------------------------------------
+
+export type Language = 'nl' | 'en';
+
+export interface FoundationAboutYou {
+  name: string;
+  dateOfBirth?: string;
+  preferredLanguage: Language;
+}
+
+export interface FoundationYourLife {
+  dailyRhythm: string;
+  typicalAvailableTime: string;
+  recurringCommitments: string[];
+  personalRoutines: string[];
+  planningRestPeriods: string[];
+  notes?: string;
+}
+
+export interface WorkContext {
+  id: string;
+  name: string;
+  workdays: string[]; // e.g. ['monday', 'tuesday', 'thursday']
+  startTime: string; // e.g. '09:00'
+  endTime: string; // e.g. '17:00'
+  location: string; // e.g. 'Thuis', 'Kantoor'
+  commuteMinutes?: number;
+  breakNotes?: string;
+}
+
+export interface FoundationWork {
+  workContexts: WorkContext[];
+}
+
+export interface FoundationGoalItem {
+  id: string;
+  name: string;
+  description?: string;
+  domain: 'personal' | 'wellbeing' | 'mariluna';
+  priority: 'high' | 'medium' | 'low';
+  targetDate?: string;
+}
+
+export interface FoundationGoals {
+  goals: FoundationGoalItem[];
+}
+
+export interface FoundationWellbeing {
+  currentWeightKg?: number;
+  waistCm?: number;
+  hipsCm?: number;
+  chestCm?: number;
+  measurementNotes?: string;
+  trackPhotos: boolean;
+  wellbeingGoals: string[];
+  movementPreferences: string[];
+  regularActivities: string[];
+  measurementFrequency: 'weekly' | 'biweekly' | 'monthly' | 'as_desired';
+}
+
+export interface FoundationNutrition {
+  enjoyedFoods: string[];
+  dislikedFoods: string[];
+  allergies: string[];
+  dietaryRestrictions: string[];
+  avoidedFoods: string[];
+  eatingPattern: string;
+  cookingTimeMinutes?: number;
+  diningSetting: 'alone' | 'with_partner' | 'family' | 'flexible';
+  kitchenNotes?: string;
+}
+
+export interface FoundationCycle {
+  enabled: boolean;
+  lastPeriodStart?: string;
+  averageCycleLength: number;
+  averagePeriodLength: number;
+  cycleHistoryNotes?: string;
+  cycleInfluencesPlanning: boolean;
+}
+
+export interface FoundationMariluna {
+  enabled: boolean;
+  businessGoals: string[];
+  services: string[];
+  products: string[];
+  projects: string[];
+  contentAreas: string[];
+  platforms: string[];
+  recurringActivities: string[];
+  importantDeadlines: string[];
+}
+
+export interface FoundationAI {
+  communicationStyle: 'short_direct' | 'warm_supportive' | 'strategic' | 'detailed';
+  proactivity: 'minimal' | 'balanced' | 'proactive';
+  suggestActions: boolean;
+  helpPrioritize: boolean;
+  challengeAssumptions: boolean;
+  rescheduleUnfinished: boolean;
+  surfacePatterns: boolean;
+}
+
+export interface FoundationNotifications {
+  categories: {
+    tasks: boolean;
+    calendar: boolean;
+    goals: boolean;
+    wellbeing: boolean;
+    nutrition: boolean;
+    cycle: boolean;
+    mariluna: boolean;
+    reviewsInsights: boolean;
+  };
+  quietHoursStart: string;
+  quietHoursEnd: string;
+  frequency: 'sparse' | 'moderate' | 'all';
+  permissions: {
+    calendarAccess: boolean;
+    externalAiAccess: boolean;
+    isolateMariluna: boolean;
+    requireStepUpSensitive: boolean;
+  };
+}
+
+export interface FoundationData {
+  isCompleted: boolean;
+  isSkipped: boolean;
+  currentStep: number;
+  completedSteps: number[];
+  configuredSections: string[];
+  skippedSections: string[];
+  lastUpdated?: string;
+  aboutYou: FoundationAboutYou;
+  yourLife: FoundationYourLife;
+  work: FoundationWork;
+  goals: FoundationGoals;
+  wellbeing: FoundationWellbeing;
+  nutrition: FoundationNutrition;
+  cycle: FoundationCycle;
+  mariluna: FoundationMariluna;
+  ai: FoundationAI;
+  notifications: FoundationNotifications;
+}
+
+
 

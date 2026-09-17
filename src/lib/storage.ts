@@ -15,8 +15,12 @@ import {
   NotificationSettings,
   SmartNotification,
   ProactiveSuggestion,
+  WellbeingState,
+  FoundationData,
 } from '../types';
 import { DEFAULT_NOTIFICATION_SETTINGS } from './notificationEngine';
+import { INITIAL_WELLBEING_STATE, EMPTY_WELLBEING_STATE } from './wellbeingData';
+import { DEFAULT_FOUNDATION_DATA } from './foundationDefaults';
 
 const STORAGE_KEY = 'pm_alchemy_os_data_v1';
 const LEGACY_STORAGE_KEY = 'mariluna_os_data_v1';
@@ -35,16 +39,90 @@ export interface AppState {
   nutrition: NutritionState;
   cycleProfile: CycleProfile;
   dailyCheckIns: DailyCheckIn[];
+  wellbeing: WellbeingState;
   notificationSettings: NotificationSettings;
   notifications: SmartNotification[];
   proactiveSuggestions: ProactiveSuggestion[];
   isSampleData: boolean;
+  foundation: FoundationData;
+  setupStatus: 'not_started' | 'in_progress' | 'skipped' | 'completed';
 }
 
 const todayStr = new Date().toISOString().split('T')[0];
 
 export const INITIAL_STATE: AppState = {
+  isSampleData: false,
+  setupStatus: 'not_started',
+  foundation: DEFAULT_FOUNDATION_DATA,
+  tasks: [],
+  goals: [],
+  ideas: [],
+  projects: [],
+  calendarEvents: [],
+  lifeProfile: {
+    workingDays: [],
+    workingHoursStart: '09:00',
+    workingHoursEnd: '17:00',
+    commuteTimeMinutes: 0,
+    routines: [],
+    commitments: [],
+    preferences: {
+      energyPeak: 'morning',
+      protectEvenings: true,
+      maxHighPriorityTasksPerDay: 3,
+      bufferTimeBetweenTasksMinutes: 15,
+      unhurriedMorningRitual: true,
+    },
+  },
+  memories: [],
+  contentPlan: {
+    quarterTheme: '',
+    monthlyTheme: '',
+    pillars: [],
+    monthlyTargetCount: 0,
+    posts: [],
+  },
+  chatHistory: [],
+  personalStyle: {
+    colorPalette: [],
+    preferredSilhouettes: [],
+    dislikedStyles: [],
+    measurementsNotes: '',
+    occasions: [],
+  },
+  nutrition: {
+    dietaryNotes: '',
+    dislikes: [],
+    partnerSharedDinners: [],
+    cookingTimeAvailableWeekdays: 30,
+  },
+  cycleProfile: {
+    lastPeriodStartDate: '',
+    averageCycleLength: 28,
+    averagePeriodLength: 5,
+    history: [],
+    trackingEnabled: false,
+    privacyLocked: true,
+    lastUpdated: new Date().toISOString(),
+  },
+  dailyCheckIns: [],
+  wellbeing: EMPTY_WELLBEING_STATE,
+  notificationSettings: DEFAULT_NOTIFICATION_SETTINGS,
+  notifications: [],
+  proactiveSuggestions: [],
+};
+
+export const SAMPLE_STATE: AppState = {
   isSampleData: true,
+  setupStatus: 'completed',
+  foundation: {
+    ...DEFAULT_FOUNDATION_DATA,
+    isCompleted: true,
+    aboutYou: {
+      name: 'Patricia',
+      preferredLanguage: 'nl',
+    },
+  },
   tasks: [
     {
       id: 't-1',
@@ -563,6 +641,7 @@ I've gently kept your active high-priority task list to just two items today so 
       createdAt: todayStr,
     },
   ],
+  wellbeing: INITIAL_WELLBEING_STATE,
 };
 
 export function loadState(): AppState {
@@ -574,10 +653,47 @@ export function loadState(): AppState {
     }
     if (!raw) return INITIAL_STATE;
     const parsed = JSON.parse(raw);
+
+    const foundation: FoundationData = {
+      ...DEFAULT_FOUNDATION_DATA,
+      ...(parsed.foundation || {}),
+      aboutYou: { ...DEFAULT_FOUNDATION_DATA.aboutYou, ...(parsed.foundation?.aboutYou || {}) },
+      yourLife: { ...DEFAULT_FOUNDATION_DATA.yourLife, ...(parsed.foundation?.yourLife || {}) },
+      work: { ...DEFAULT_FOUNDATION_DATA.work, ...(parsed.foundation?.work || {}) },
+      goals: { ...DEFAULT_FOUNDATION_DATA.goals, ...(parsed.foundation?.goals || {}) },
+      wellbeing: { ...DEFAULT_FOUNDATION_DATA.wellbeing, ...(parsed.foundation?.wellbeing || {}) },
+      nutrition: { ...DEFAULT_FOUNDATION_DATA.nutrition, ...(parsed.foundation?.nutrition || {}) },
+      cycle: { ...DEFAULT_FOUNDATION_DATA.cycle, ...(parsed.foundation?.cycle || {}) },
+      mariluna: { ...DEFAULT_FOUNDATION_DATA.mariluna, ...(parsed.foundation?.mariluna || {}) },
+      ai: { ...DEFAULT_FOUNDATION_DATA.ai, ...(parsed.foundation?.ai || {}) },
+      notifications: { ...DEFAULT_FOUNDATION_DATA.notifications, ...(parsed.foundation?.notifications || {}) },
+    };
+
+    const setupStatus =
+      parsed.setupStatus ||
+      (foundation.isCompleted ? 'completed' : foundation.isSkipped ? 'skipped' : 'not_started');
+
     return {
       ...INITIAL_STATE,
       ...parsed,
-      // Ensure newly added objects are properly defaulted if missing in stored state
+      foundation,
+      setupStatus,
+      wellbeing: {
+        ...EMPTY_WELLBEING_STATE,
+        ...(parsed.wellbeing || {}),
+        preferences: {
+          ...EMPTY_WELLBEING_STATE.preferences,
+          ...(parsed.wellbeing?.preferences || {}),
+          foodPreferences: {
+            ...EMPTY_WELLBEING_STATE.preferences.foodPreferences,
+            ...(parsed.wellbeing?.preferences?.foodPreferences || {}),
+          },
+          movementPreferences: {
+            ...EMPTY_WELLBEING_STATE.preferences.movementPreferences,
+            ...(parsed.wellbeing?.preferences?.movementPreferences || {}),
+          },
+        },
+      },
       cycleProfile: { ...INITIAL_STATE.cycleProfile, ...(parsed.cycleProfile || {}) },
       notificationSettings: {
         ...DEFAULT_NOTIFICATION_SETTINGS,
@@ -589,9 +705,9 @@ export function loadState(): AppState {
           ...(parsed.notificationSettings?.categories || {}),
         },
       },
-      dailyCheckIns: parsed.dailyCheckIns || INITIAL_STATE.dailyCheckIns,
-      notifications: parsed.notifications || INITIAL_STATE.notifications,
-      proactiveSuggestions: parsed.proactiveSuggestions || INITIAL_STATE.proactiveSuggestions,
+      dailyCheckIns: parsed.dailyCheckIns || [],
+      notifications: parsed.notifications || [],
+      proactiveSuggestions: parsed.proactiveSuggestions || [],
     };
   } catch (err) {
     console.error('Failed to load state from localStorage, falling back to default:', err);

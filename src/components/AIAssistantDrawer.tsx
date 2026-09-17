@@ -12,7 +12,7 @@ import {
   MessageSquare,
   ShieldCheck,
 } from 'lucide-react';
-import { AssistantMessage, Task, Goal, Idea, LifeProfile, MemoryItem, Realm } from '../types';
+import { AssistantMessage, Task, Goal, Idea, LifeProfile, MemoryItem, Realm, WellbeingState } from '../types';
 import { sendChatMessage } from '../lib/aiService';
 
 interface AIAssistantDrawerProps {
@@ -27,6 +27,7 @@ interface AIAssistantDrawerProps {
   memories: MemoryItem[];
   activeWorld: 'all' | 'personal' | 'mariluna';
   onExecuteAction: (action: any) => void;
+  wellbeing?: WellbeingState;
 }
 
 export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
@@ -41,6 +42,7 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
   memories,
   activeWorld,
   onExecuteAction,
+  wellbeing,
 }) => {
   const [inputText, setInputText] = useState('');
   const [isThinking, setIsThinking] = useState(false);
@@ -103,6 +105,15 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
       workingHours: `${lifeProfile.workingHoursStart} - ${lifeProfile.workingHoursEnd}`,
       preferences: lifeProfile.preferences,
       memoriesSample: memories.map((m) => m.content),
+      wellbeing:
+        wellbeing && wellbeing.preferences.allowWellbeingDataToAI
+          ? {
+              focusTheme: wellbeing.currentWeeklyMovement.focusTheme,
+              todaySession: wellbeing.currentWeeklyMovement.sessions[0]?.title,
+              dietaryStyle: wellbeing.preferences.foodPreferences.dietaryStyle,
+              allowedToAI: true,
+            }
+          : undefined,
     };
 
     const historyPayload = [...messages, userMessage].map((m) => ({

@@ -10,11 +10,14 @@ import {
   Settings,
   Bell,
   Activity,
+  Heart,
   SlidersHorizontal,
   Shield,
+  Lock,
 } from 'lucide-react';
-import { ActiveWorldFilter } from '../types';
+import { ActiveWorldFilter, Language } from '../types';
 import { PWAInstallButton } from './PWAInstallButton';
+import { t } from '../lib/i18n';
 
 export type NavTab =
   | 'today'
@@ -23,6 +26,7 @@ export type NavTab =
   | 'goals'
   | 'ideas'
   | 'mariluna'
+  | 'wellbeing'
   | 'cycle'
   | 'mylife'
   | 'settings'
@@ -40,6 +44,8 @@ interface NavigationProps {
   onOpenNotifications?: () => void;
   securityLevel?: 1 | 2 | 3;
   isSensitiveUnlocked?: boolean;
+  onLockApp?: () => void;
+  lang?: Language;
 }
 
 export const Navigation: React.FC<NavigationProps> = ({
@@ -54,18 +60,23 @@ export const Navigation: React.FC<NavigationProps> = ({
   onOpenNotifications,
   securityLevel = 1,
   isSensitiveUnlocked = false,
+  onLockApp,
+  lang = 'nl',
 }) => {
+  const isNl = lang === 'nl';
+
   const coreNavItems: { id: NavTab; label: string; icon: React.FC<{ className?: string }> }[] = [
-    { id: 'today', label: 'Today', icon: Calendar },
-    { id: 'tasks', label: 'Tasks', icon: CheckSquare },
-    { id: 'calendar', label: 'Calendar', icon: Calendar },
-    { id: 'goals', label: 'Goals', icon: Target },
-    { id: 'ideas', label: 'Ideas', icon: Lightbulb },
+    { id: 'today', label: isNl ? 'Vandaag' : 'Today', icon: Calendar },
+    { id: 'tasks', label: isNl ? 'Taken' : 'Tasks', icon: CheckSquare },
+    { id: 'calendar', label: isNl ? 'Agenda' : 'Calendar', icon: Calendar },
+    { id: 'goals', label: isNl ? 'Doelen' : 'Goals', icon: Target },
+    { id: 'ideas', label: isNl ? 'Ideeën' : 'Ideas', icon: Lightbulb },
   ];
 
   const personalNavItems: { id: NavTab; label: string; icon: React.FC<{ className?: string }> }[] = [
-    { id: 'cycle', label: 'Cycle', icon: Activity },
-    { id: 'mylife', label: 'My Life', icon: User },
+    { id: 'wellbeing', label: isNl ? 'Welzijn' : 'Wellbeing', icon: Heart },
+    { id: 'cycle', label: isNl ? 'Cyclus' : 'Cycle', icon: Activity },
+    { id: 'mylife', label: isNl ? 'Leven' : 'My Life', icon: User },
   ];
 
   const businessNavItems: { id: NavTab; label: string; icon: React.FC<{ className?: string }> }[] = [
@@ -74,12 +85,12 @@ export const Navigation: React.FC<NavigationProps> = ({
 
   // Combined for responsive mobile bottom bar
   const mobileNavItems: { id: NavTab; label: string; icon: React.FC<{ className?: string }> }[] = [
-    { id: 'today', label: 'Today', icon: Calendar },
-    { id: 'tasks', label: 'Tasks', icon: CheckSquare },
-    { id: 'cycle', label: 'Cycle', icon: Activity },
+    { id: 'today', label: isNl ? 'Vandaag' : 'Today', icon: Calendar },
+    { id: 'tasks', label: isNl ? 'Taken' : 'Tasks', icon: CheckSquare },
+    { id: 'wellbeing', label: isNl ? 'Welzijn' : 'Wellbeing', icon: Heart },
+    { id: 'cycle', label: isNl ? 'Cyclus' : 'Cycle', icon: Activity },
     { id: 'mariluna', label: 'Mariluna', icon: Briefcase },
-    { id: 'ideas', label: 'Ideas', icon: Lightbulb },
-    { id: 'mylife', label: 'Life', icon: User },
+    { id: 'ideas', label: isNl ? 'Ideeën' : 'Ideas', icon: Lightbulb },
   ];
 
   return (
@@ -126,7 +137,7 @@ export const Navigation: React.FC<NavigationProps> = ({
               }`}
             >
               <span className="w-1.5 h-1.5 rounded-full bg-[#8E8478]"></span>
-              Personal Sanctuary
+              {isNl ? 'Persoonlijk Domein' : 'Personal Sanctuary'}
             </button>
             <button
               onClick={() => onSelectWorld('mariluna')}
@@ -138,7 +149,7 @@ export const Navigation: React.FC<NavigationProps> = ({
               }`}
             >
               <span className="w-1.5 h-1.5 rounded-full bg-[#C5A880]"></span>
-              Mariluna Studio
+              {isNl ? 'Mariluna Studio' : 'Mariluna Studio'}
             </button>
           </div>
         </div>
@@ -279,6 +290,18 @@ export const Navigation: React.FC<NavigationProps> = ({
           >
             <Settings className="w-4 h-4" />
           </button>
+
+          {/* Lock Alchemy Session Button */}
+          {onLockApp && (
+            <button
+              onClick={onLockApp}
+              id="lock-alchemy-btn"
+              title="Lock Alchemy Session (Requires Biometric/TOTP Unlock)"
+              className="p-2 rounded-full border border-transparent text-[#7A7167] hover:text-[#9E362A] hover:bg-[#FDF2F0] transition cursor-pointer"
+            >
+              <Lock className="w-4 h-4" />
+            </button>
+          )}
         </div>
       </div>
 
