@@ -12,6 +12,7 @@ import { CalendarView } from './components/views/CalendarView';
 import { GoalsView } from './components/views/GoalsView';
 import { IdeasView } from './components/views/IdeasView';
 import { MarilunaHubView } from './components/views/MarilunaHubView';
+import { PriveDomainView } from './components/views/PriveDomainView';
 import { CycleView } from './components/views/CycleView';
 import { WellbeingView } from './components/views/WellbeingView';
 import { MyLifeView } from './components/views/MyLifeView';
@@ -31,6 +32,7 @@ import {
   Task,
   Goal,
   Idea,
+  Project,
   CalendarEvent,
   LifeProfile,
   MemoryItem,
@@ -54,103 +56,16 @@ export default function App() {
   const [isAssistantOpen, setIsAssistantOpen] = useState(false);
   const [isNotificationCenterOpen, setIsNotificationCenterOpen] = useState(false);
 
-  // Security & Privacy Architecture state
-  const [isAppAuthenticated, setIsAppAuthenticated] = useState<boolean | null>(null); // null = verifying
-  const [inactivityRemainingSeconds, setInactivityRemainingSeconds] = useState<number>(900);
-  const [inactivityLocked, setInactivityLocked] = useState<boolean>(false);
-  const [securityLevel, setSecurityLevel] = useState<1 | 2 | 3>(1);
-  const [isSensitiveUnlocked, setIsSensitiveUnlocked] = useState(false);
-  const [sensitiveRemainingSeconds, setSensitiveRemainingSeconds] = useState(0);
-  const [isStepUpActive, setIsStepUpActive] = useState(false);
+  // SECURITY ARCHITECTURE NOTE:
+  // Active perimeter locking, biometric lock screens, and inactivity timeouts are temporarily dormant
+  // during this development phase so the entire application is directly accessible.
+  // Full WebAuthn / FIDO2 security will be activated in the final development phase.
+  const [securityLevel] = useState<1 | 2 | 3>(2);
+  const [isSensitiveUnlocked] = useState<boolean>(true);
+  const [isSetupWizardOpen, setIsSetupWizardOpen] = useState<boolean>(false);
 
-  const fetchAuthStatus = async () => {
-    try {
-      const res = await fetch('/api/auth/status');
-      if (res.ok) {
-        const data = await res.json();
-        setIsAppAuthenticated(!!data.isAppAuthenticated);
-        setSecurityLevel(data.currentSecurityLevel || 1);
-        setIsSensitiveUnlocked(data.isAppAuthenticated || false);
-        setSensitiveRemainingSeconds(data.inactivityRemainingSeconds || 900);
-        setInactivityRemainingSeconds(data.inactivityRemainingSeconds || 900);
-        setIsStepUpActive(data.isStepUpActive || false);
-      } else {
-        setIsAppAuthenticated(false);
-      }
-    } catch (err) {
-      console.error('Failed to sync security status:', err);
-      setIsAppAuthenticated(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchAuthStatus();
-  }, []);
-
-  // Inactivity countdown timer
-  useEffect(() => {
-    if (!isAppAuthenticated) return;
-    const interval = setInterval(() => {
-      setInactivityRemainingSeconds((prev) => {
-        if (prev <= 1) {
-          // Inactivity timeout reached! Lock application perimeter
-          setIsAppAuthenticated(false);
-          setInactivityLocked(true);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [isAppAuthenticated]);
-
-  // Throttled heartbeat to maintain session on active user interaction
-  useEffect(() => {
-    if (!isAppAuthenticated) return;
-    let lastPing = Date.now();
-
-    const handleUserActivity = () => {
-      const now = Date.now();
-      if (now - lastPing > 20000) {
-        // ping at most every 20 seconds
-        lastPing = now;
-        fetch('/api/auth/activity', { method: 'POST' })
-          .then((r) => r.json())
-          .then((data) => {
-            if (data.isAppAuthenticated && data.inactivityRemainingSeconds) {
-              setInactivityRemainingSeconds(data.inactivityRemainingSeconds);
-            } else if (data.isAppAuthenticated === false) {
-              setIsAppAuthenticated(false);
-              setInactivityLocked(true);
-            }
-          })
-          .catch(() => {});
-      }
-    };
-
-    window.addEventListener('mousemove', handleUserActivity, { passive: true });
-    window.addEventListener('keydown', handleUserActivity, { passive: true });
-    window.addEventListener('touchstart', handleUserActivity, { passive: true });
-    window.addEventListener('click', handleUserActivity, { passive: true });
-
-    return () => {
-      window.removeEventListener('mousemove', handleUserActivity);
-      window.removeEventListener('keydown', handleUserActivity);
-      window.removeEventListener('touchstart', handleUserActivity);
-      window.removeEventListener('click', handleUserActivity);
-    };
-  }, [isAppAuthenticated]);
-
-  const handleLockApp = async () => {
-    try {
-      await fetch('/api/auth/lock-app', { method: 'POST' });
-      setIsAppAuthenticated(false);
-      setInactivityLocked(false);
-      setIsStepUpActive(false);
-      setIsSensitiveUnlocked(false);
-    } catch (err) {
-      console.error(err);
-    }
+  const handleLockApp = () => {
+    // Dormant during development phase
   };
 
   // Quick Task Modal from Today view
@@ -337,6 +252,37 @@ export default function App() {
     }));
 
     setCurrentTab('mariluna');
+  };
+
+  const handleSaveProject = (projectData: Partial<Project>) => {
+    setState((prev) => {
+      const existing = prev.projects.find((p) => p.id === projectData.id);
+      if (existing) {
+        return {
+          ...prev,
+          projects: prev.projects.map((p) =>
+            p.id === projectData.id ? ({ ...p, ...projectData } as Project) : p
+          ),
+        };
+      }
+      const newProj: Project = {
+        id: projectData.id || 'p-' + Date.now(),
+        title: projectData.title || 'Untitled Project',
+        description: projectData.description || '',
+        realm: projectData.realm || 'mariluna',
+        status: projectData.status || 'planning',
+        progress: projectData.progress || 0,
+        taskIds: projectData.taskIds || [],
+        ideaIds: projectData.ideaIds || [],
+        priority: projectData.priority || 'normal',
+        deadline: projectData.deadline,
+        notes: projectData.notes,
+      };
+      return {
+        ...prev,
+        projects: [...prev.projects, newProj],
+      };
+    });
   };
 
   const handleArchiveIdea = (ideaId: string) => {
@@ -586,44 +532,39 @@ export default function App() {
     });
   };
 
-  // Initializing auth check state
-  if (isAppAuthenticated === null) {
+  // Optional First-Time Setup Wizard (launched when requested by user)
+  if (isSetupWizardOpen) {
     return (
-      <div className="min-h-screen bg-[#FAF8F3] flex items-center justify-center text-[#7E694E]">
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-10 h-10 rounded-full border border-[#D5CCBE] bg-[#F3EDE2] flex items-center justify-center animate-pulse shadow-xs">
-            <span className="font-serif text-xs font-semibold text-[#7E694E]">P&M</span>
-          </div>
-          <span className="text-[11px] uppercase tracking-widest text-[#8C8377] font-medium">
-            Verifying Perimeter Authentication...
-          </span>
+      <div className="relative min-h-screen bg-[#FAF8F3]">
+        <div className="fixed top-4 right-4 z-50">
+          <button
+            type="button"
+            onClick={() => setIsSetupWizardOpen(false)}
+            className="px-4 py-2 rounded-full bg-[#FFFFFF] border border-[#DDD4C5] text-xs font-medium text-[#2C2825] hover:bg-[#F2ECE1] transition shadow-xs cursor-pointer flex items-center gap-1.5"
+          >
+            <span>✕</span>
+            <span>{state.foundation?.aboutYou?.preferredLanguage === 'nl' ? 'Terug naar Dashboard' : 'Back to Dashboard'}</span>
+          </button>
         </div>
+        <FirstTimeSetup
+          foundation={state.foundation}
+          onSaveFoundation={(nextFoundation) => {
+            setState((prev) => {
+              const nextState = { ...prev, foundation: nextFoundation };
+              saveState(nextState);
+              return nextState;
+            });
+          }}
+          onCompleteSetup={(completedFoundation) => {
+            handleCompleteSetup(completedFoundation);
+            setIsSetupWizardOpen(false);
+          }}
+          onSkipSetup={() => {
+            handleSkipSetup();
+            setIsSetupWizardOpen(false);
+          }}
+        />
       </div>
-    );
-  }
-
-  // Application perimeter lock screen
-  if (!isAppAuthenticated) {
-    return (
-      <AppAuthLockScreen
-        inactivityLocked={inactivityLocked}
-        onAuthenticated={() => {
-          setIsAppAuthenticated(true);
-          setInactivityLocked(false);
-          fetchAuthStatus();
-        }}
-      />
-    );
-  }
-
-  // Check if first-time foundation setup is required
-  if (state.setupStatus !== 'completed' && state.setupStatus !== 'skipped') {
-    return (
-      <FirstTimeSetup
-        onCompleteSetup={handleCompleteSetup}
-        onSkipSetup={handleSkipSetup}
-        initialData={state.foundation}
-      />
     );
   }
 
@@ -657,8 +598,11 @@ export default function App() {
           <TodayView
             tasks={state.tasks}
             onToggleTask={handleToggleTask}
+            onSaveTask={handleSaveTask}
             calendarEvents={state.calendarEvents}
+            onAddCalendarEvent={handleAddCalendarEvent}
             goals={state.goals}
+            projects={state.projects}
             lifeProfile={state.lifeProfile}
             activeWorld={activeWorld}
             onOpenAssistant={() => setIsAssistantOpen(true)}
@@ -675,7 +619,9 @@ export default function App() {
             onOpenAssistantWithPrompt={openAssistantWithPrompt}
             wellbeing={state.wellbeing}
             foundation={state.foundation}
+            onUpdateFoundation={handleUpdateFoundation}
             lang={userLang}
+            onOpenSetup={() => setIsSetupWizardOpen(true)}
           />
         )}
 
@@ -717,49 +663,133 @@ export default function App() {
             onConvertToProject={handleConvertToProject}
             onArchiveIdea={handleArchiveIdea}
             onDeleteIdea={handleDeleteIdea}
+            onOpenAssistantWithPrompt={openAssistantWithPrompt}
           />
         )}
 
         {currentTab === 'mariluna' && (
           <MarilunaHubView
             contentPlan={state.contentPlan}
-            projects={state.projects}
-            tasks={state.tasks}
             onAddContentPost={handleAddContentPost}
+            onUpdateContentPlan={(plan) => setState((prev) => ({ ...prev, contentPlan: plan }))}
+            projects={state.projects}
+            onSaveProject={handleSaveProject}
+            tasks={state.tasks}
+            onToggleTask={handleToggleTask}
+            onSaveTask={handleSaveTask}
+            ideas={state.ideas}
+            onSaveIdea={handleSaveIdea}
+            onArchiveIdea={handleArchiveIdea}
+            onConvertToProject={handleConvertToProject}
+            goals={state.goals}
+            onSaveGoal={handleSaveGoal}
+            onToggleMilestone={handleToggleMilestone}
+            adminState={state.marilunaAdmin}
+            onUpdateAdminState={(admin) => setState((prev) => ({ ...prev, marilunaAdmin: admin }))}
+            metricsState={state.marilunaMetrics}
+            onUpdateMetricsState={(metrics) => setState((prev) => ({ ...prev, marilunaMetrics: metrics }))}
+            offerings={state.marilunaOfferings}
+            onUpdateOfferings={(offerings) => setState((prev) => ({ ...prev, marilunaOfferings: offerings }))}
+            clients={state.marilunaClients}
+            onUpdateClients={(clients) => setState((prev) => ({ ...prev, marilunaClients: clients }))}
             onOpenAssistantWithPrompt={openAssistantWithPrompt}
+            lang={state.foundation?.aboutYou?.preferredLanguage || 'nl'}
           />
         )}
 
-        {currentTab === 'cycle' && (
-          <CycleView
+        {(currentTab === 'prive' || currentTab === 'mylife') && (
+          <PriveDomainView
+            initialSubTab="overview"
+            lifeProfile={state.lifeProfile}
+            onUpdateProfile={handleUpdateProfile}
+            personalStyle={state.personalStyle}
+            onUpdateStyle={(style) => setState((prev) => ({ ...prev, personalStyle: style }))}
+            nutrition={state.nutrition}
+            onUpdateNutrition={(nutrition) => setState((prev) => ({ ...prev, nutrition }))}
             cycleProfile={state.cycleProfile}
             onUpdateCycleProfile={handleUpdateCycleProfile}
             dailyCheckIns={state.dailyCheckIns}
             onSaveDailyCheckIn={handleSaveDailyCheckIn}
             tasks={state.tasks}
+            onToggleTask={handleToggleTask}
+            onSaveTask={handleSaveTask}
+            onDeleteTask={handleDeleteTask}
             calendarEvents={state.calendarEvents}
-            onOpenAssistantWithPrompt={openAssistantWithPrompt}
-          />
-        )}
-
-        {currentTab === 'wellbeing' && (
-          <WellbeingView
+            onAddCalendarEvent={handleAddCalendarEvent}
             wellbeing={state.wellbeing}
             onUpdateWellbeing={(updater) =>
               setState((prev) => ({ ...prev, wellbeing: updater(prev.wellbeing) }))
             }
+            goals={state.goals}
+            onSaveGoal={handleSaveGoal}
+            onToggleMilestone={handleToggleMilestone}
             onOpenAssistantWithPrompt={openAssistantWithPrompt}
+            onSelectTab={setCurrentTab}
+            lang={state.foundation?.aboutYou?.preferredLanguage || 'nl'}
           />
         )}
 
-        {currentTab === 'mylife' && (
-          <MyLifeView
+        {currentTab === 'cycle' && (
+          <PriveDomainView
+            initialSubTab="cycle"
             lifeProfile={state.lifeProfile}
-            personalStyle={state.personalStyle}
-            nutrition={state.nutrition}
             onUpdateProfile={handleUpdateProfile}
+            personalStyle={state.personalStyle}
             onUpdateStyle={(style) => setState((prev) => ({ ...prev, personalStyle: style }))}
+            nutrition={state.nutrition}
             onUpdateNutrition={(nutrition) => setState((prev) => ({ ...prev, nutrition }))}
+            cycleProfile={state.cycleProfile}
+            onUpdateCycleProfile={handleUpdateCycleProfile}
+            dailyCheckIns={state.dailyCheckIns}
+            onSaveDailyCheckIn={handleSaveDailyCheckIn}
+            tasks={state.tasks}
+            onToggleTask={handleToggleTask}
+            onSaveTask={handleSaveTask}
+            onDeleteTask={handleDeleteTask}
+            calendarEvents={state.calendarEvents}
+            onAddCalendarEvent={handleAddCalendarEvent}
+            wellbeing={state.wellbeing}
+            onUpdateWellbeing={(updater) =>
+              setState((prev) => ({ ...prev, wellbeing: updater(prev.wellbeing) }))
+            }
+            goals={state.goals}
+            onSaveGoal={handleSaveGoal}
+            onToggleMilestone={handleToggleMilestone}
+            onOpenAssistantWithPrompt={openAssistantWithPrompt}
+            onSelectTab={setCurrentTab}
+            lang={state.foundation?.aboutYou?.preferredLanguage || 'nl'}
+          />
+        )}
+
+        {currentTab === 'wellbeing' && (
+          <PriveDomainView
+            initialSubTab="wellbeing"
+            lifeProfile={state.lifeProfile}
+            onUpdateProfile={handleUpdateProfile}
+            personalStyle={state.personalStyle}
+            onUpdateStyle={(style) => setState((prev) => ({ ...prev, personalStyle: style }))}
+            nutrition={state.nutrition}
+            onUpdateNutrition={(nutrition) => setState((prev) => ({ ...prev, nutrition }))}
+            cycleProfile={state.cycleProfile}
+            onUpdateCycleProfile={handleUpdateCycleProfile}
+            dailyCheckIns={state.dailyCheckIns}
+            onSaveDailyCheckIn={handleSaveDailyCheckIn}
+            tasks={state.tasks}
+            onToggleTask={handleToggleTask}
+            onSaveTask={handleSaveTask}
+            onDeleteTask={handleDeleteTask}
+            calendarEvents={state.calendarEvents}
+            onAddCalendarEvent={handleAddCalendarEvent}
+            wellbeing={state.wellbeing}
+            onUpdateWellbeing={(updater) =>
+              setState((prev) => ({ ...prev, wellbeing: updater(prev.wellbeing) }))
+            }
+            goals={state.goals}
+            onSaveGoal={handleSaveGoal}
+            onToggleMilestone={handleToggleMilestone}
+            onOpenAssistantWithPrompt={openAssistantWithPrompt}
+            onSelectTab={setCurrentTab}
+            lang={state.foundation?.aboutYou?.preferredLanguage || 'nl'}
           />
         )}
 

@@ -49,19 +49,39 @@ export interface Goal {
   milestones: Milestone[];
 }
 
+export type IdeaStatus =
+  | 'new'
+  | 'raw'
+  | 'exploring'
+  | 'developing'
+  | 'ready_to_use'
+  | 'ready'
+  | 'parked'
+  | 'converted'
+  | 'converted_to_project'
+  | 'archived';
+
 export interface Idea {
   id: string;
   title: string;
   content: string;
   realm: Realm;
   category: string;
-  status: 'raw' | 'exploring' | 'converted_to_project' | 'archived';
+  status: IdeaStatus;
   createdAt: string;
   lastRevisitedAt: string;
   aiSummary?: string;
   suggestedNextStep?: string;
   followUpQuestions?: string[];
   connectedProjectId?: string;
+  contentPillar?: string;
+  assignedTaskId?: string;
+  relatedContentIds?: string[];
+  priority?: 'high' | 'normal' | 'low';
+  tags?: string[];
+  notes?: string;
+  sparringNotes?: string;
+  convertedToType?: 'content' | 'project' | 'task';
 }
 
 export interface Project {
@@ -73,9 +93,11 @@ export interface Project {
   status: 'active' | 'planning' | 'on_hold' | 'completed';
   deadline?: string;
   progress: number;
+  priority?: 'high' | 'normal' | 'low';
   notes?: string;
   taskIds: string[];
   ideaIds: string[];
+  relatedContent?: string;
 }
 
 export interface CalendarEvent {
@@ -135,20 +157,123 @@ export interface MemoryItem {
   source: 'user_stated' | 'ai_inferred';
 }
 
+export type ContentStatus =
+  | 'idea'
+  | 'draft'
+  | 'drafted'
+  | 'planned'
+  | 'ready'
+  | 'published'
+  | 'archived';
+
+export interface ContentPillar {
+  id: string;
+  name: string;
+  description?: string;
+  archived?: boolean;
+}
+
 export interface ContentPost {
   id: string;
   title: string;
-  platform: 'Instagram' | 'Newsletter' | 'Journal / Blog' | 'Podcast' | 'Special Edition';
-  status: 'idea' | 'drafted' | 'ready' | 'published';
+  description?: string;
+  platform: string; // Configurable: Instagram, Facebook, Website, Newsletter, LinkedIn, Podcast, Other, etc.
+  status: ContentStatus;
   scheduledDate?: string;
   pillar: string;
+  format?: string;
+  campaign?: string;
+  priority?: 'high' | 'normal' | 'low';
+  relatedProjectId?: string;
+  relatedIdeaId?: string;
   notes?: string;
+  recurring?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+// -------------------------------------------------------------
+// Mariluna Domain Architecture (Admin, Cijfers, Clients, Offerings)
+// -------------------------------------------------------------
+export interface MarilunaExpense {
+  id: string;
+  description: string;
+  amount: number;
+  date: string;
+  category: 'software' | 'materials' | 'marketing' | 'tax_social' | 'office' | 'other';
+  paid: boolean;
+  notes?: string;
+}
+
+export interface MarilunaInvoice {
+  id: string;
+  invoiceNumber: string;
+  clientName: string;
+  amount: number;
+  date: string;
+  dueDate: string;
+  status: 'draft' | 'sent' | 'paid' | 'overdue';
+  notes?: string;
+}
+
+export interface MarilunaTaxDeadline {
+  id: string;
+  title: string;
+  dueDate: string;
+  type: 'vat_btw' | 'income_tax' | 'social_contribution' | 'annual_accounts' | 'other';
+  completed: boolean;
+  notes?: string;
+}
+
+export interface MarilunaAdminState {
+  expenses: MarilunaExpense[];
+  invoices: MarilunaInvoice[];
+  deadlines: MarilunaTaxDeadline[];
+  notes?: string;
+}
+
+export interface MarilunaMetric {
+  id: string;
+  name: string;
+  value: number | string;
+  unit?: string;
+  period?: string;
+  notes?: string;
+}
+
+export interface MarilunaMetricsState {
+  revenueTargetYear?: number;
+  metrics: MarilunaMetric[];
+  notes?: string;
+}
+
+export interface MarilunaOffering {
+  id: string;
+  title: string;
+  type: 'service' | 'product' | 'workshop' | 'package' | 'bespoke';
+  price: number;
+  description?: string;
+  status: 'active' | 'draft' | 'archived';
+  deliverables?: string[];
+}
+
+export interface MarilunaClient {
+  id: string;
+  name: string;
+  company?: string;
+  email?: string;
+  phone?: string;
+  activeProjectIds?: string[];
+  status: 'lead' | 'active' | 'completed' | 'on_hold';
+  notes?: string;
+  createdAt: string;
 }
 
 export interface ContentPlan {
   quarterTheme: string;
   monthlyTheme: string;
-  pillars: string[];
+  pillars: (string | ContentPillar)[];
+  platforms?: string[];
   monthlyTargetCount: number;
   posts: ContentPost[];
 }
@@ -210,6 +335,8 @@ export interface CycleProfile {
 // User-Reported Energy & Holistic Daily Check-In
 // -------------------------------------------------------------
 export type EnergyLevel = 'very_low' | 'low' | 'normal' | 'good' | 'high';
+export type CheckInFeeling = 'good' | 'lower' | 'sick' | 'mentally_heavy';
+export type CheckInDriver = 'poor_sleep' | 'low_energy' | 'cycle' | 'stress' | 'other';
 export type MoodState = 'calm' | 'focused' | 'reflective' | 'sensitive' | 'expansive' | 'overstimulated';
 export type AppetiteLevel = 'low' | 'normal' | 'increased';
 export type PhysicalComfort = 'comfortable' | 'mild_cramps' | 'fatigue' | 'tension' | 'restorative';
@@ -217,6 +344,8 @@ export type PhysicalComfort = 'comfortable' | 'mild_cramps' | 'fatigue' | 'tensi
 export interface DailyCheckIn {
   id: string;
   date: string; // YYYY-MM-DD
+  feeling?: CheckInFeeling;
+  feelingDriver?: CheckInDriver;
   energy: EnergyLevel;
   mood?: MoodState;
   hunger?: AppetiteLevel;
@@ -485,10 +614,19 @@ export interface WellbeingState {
 
 export type Language = 'nl' | 'en';
 
+export interface WeatherInfo {
+  temperature: number;
+  weatherCode: number;
+  description: string;
+  locationName: string;
+  isDay?: boolean;
+}
+
 export interface FoundationAboutYou {
   name: string;
   dateOfBirth?: string;
   preferredLanguage: Language;
+  location?: string;
 }
 
 export interface FoundationYourLife {

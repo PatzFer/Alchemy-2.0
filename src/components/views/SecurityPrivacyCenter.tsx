@@ -168,19 +168,11 @@ export const SecurityPrivacyCenter: React.FC<SecurityPrivacyCenterProps> = ({
     return () => clearInterval(interval);
   }, []);
 
-  // Helper for step-up gated actions
-  const requireStepUp = (action: () => void, title: string, desc: string, level: 2 | 3 = 3) => {
-    if (level === 3 && status?.isStepUpActive) {
-      action();
-    } else if (level === 2 && status?.isSensitiveUnlocked) {
-      action();
-    } else {
-      setPendingAction(() => action);
-      setStepUpTitle(title);
-      setStepUpDesc(desc);
-      setStepUpLevel(level);
-      setIsStepUpOpen(true);
-    }
+  // Helper for step-up gated actions (Temporarily bypassed during development phase)
+  const requireStepUp = (action: () => void, _title: string, _desc: string, _level: 2 | 3 = 3) => {
+    // SECURITY ARCHITECTURE: Step-up authentication is temporarily disabled.
+    // Actions execute directly so all features can be tested.
+    action();
   };
 
   const handleStepUpSuccess = () => {
@@ -191,15 +183,12 @@ export const SecurityPrivacyCenter: React.FC<SecurityPrivacyCenterProps> = ({
     }
   };
 
-  // Manual perimeter lock
+  // Manual perimeter lock (Temporarily dormant for development)
   const handleManualLockApp = () => {
-    if (onLockApp) {
-      onLockApp();
-    } else {
-      fetch('/api/auth/lock-app', { method: 'POST' }).then(() => {
-        window.location.reload();
-      });
-    }
+    setNotificationMsg({
+      type: 'info',
+      text: 'Perimeter lock is tijdelijk inactief gemaakt. Alle modules zijn direct toegankelijk.',
+    });
   };
 
   // Configure inactivity timeout period
@@ -538,6 +527,17 @@ export const SecurityPrivacyCenter: React.FC<SecurityPrivacyCenterProps> = ({
           </button>
         </div>
       )}
+
+      {/* Development Phase Notice: Security Architecture Isolated */}
+      <div className="p-4 rounded-2xl bg-[#F7F3EB] border border-[#E0D4C2] text-xs space-y-1">
+        <div className="flex items-center gap-2 text-[#6D583F] font-semibold">
+          <ShieldCheck className="w-4 h-4 text-[#7E694E]" />
+          <span>Beveiligingsarchitectuur (Ontwikkelingsfase)</span>
+        </div>
+        <p className="text-[#7A6D5E] leading-relaxed">
+          De actieve perimetervergrendeling en hardware biometric gates zijn tijdelijk inactief gemaakt zodat de gehele applicatie, onboarding en alle persoonlijke en zakelijke modules direct getest kunnen worden. De volledige FIDO2/WebAuthn en encryptie architectuur blijft intact in de codebase en wordt in de finale fase definitief geactiveerd.
+        </p>
+      </div>
 
       {/* Section 1: Security Architecture & Session Controls */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

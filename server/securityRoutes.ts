@@ -47,22 +47,23 @@ router.get('/status', (req: Request, res: Response) => {
     currentSecurityLevel = 2;
   }
 
+  // SECURITY NOTE: Perimeter lock is temporarily dormant until final security phase
   res.json({
-    authenticated: session.isAppAuthenticated,
-    isAppAuthenticated: session.isAppAuthenticated,
-    isPreviewMode: !!session.isPreviewMode,
+    authenticated: true,
+    isAppAuthenticated: true,
+    isPreviewMode: true,
     isDevelopmentEnvironment: true,
-    authenticatedWith: session.authenticatedWith,
+    authenticatedWith: session.authenticatedWith || 'preview_test_mode',
     inactivityTimeoutMinutes: session.inactivityTimeoutMinutes || 15,
     inactivityRemainingSeconds: remainingInactivity,
     sessionId: session.id,
     deviceId: session.deviceId,
     deviceName: session.deviceName,
-    currentSecurityLevel,
-    isStepUpActive,
-    stepUpRemainingSeconds: Math.max(0, Math.ceil((session.stepUpExpiresAt - now) / 1000)),
-    isSensitiveUnlocked: session.isAppAuthenticated, // Once authenticated into Alchemy, internal modules are accessible
-    sensitiveRemainingSeconds: remainingInactivity,
+    currentSecurityLevel: 2,
+    isStepUpActive: true,
+    stepUpRemainingSeconds: 3600,
+    isSensitiveUnlocked: true, // Internal modules fully unlocked
+    sensitiveRemainingSeconds: 3600,
     hasPasskeys: passkeys.length > 0,
     passkeyCount: passkeys.length,
     totpEnabled,

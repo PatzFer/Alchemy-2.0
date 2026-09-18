@@ -21,6 +21,7 @@ interface IdeasViewProps {
   onConvertToProject: (ideaId: string) => void;
   onArchiveIdea: (ideaId: string) => void;
   onDeleteIdea: (ideaId: string) => void;
+  onOpenAssistantWithPrompt?: (prompt: string) => void;
 }
 
 export const IdeasView: React.FC<IdeasViewProps> = ({
@@ -30,6 +31,7 @@ export const IdeasView: React.FC<IdeasViewProps> = ({
   onConvertToProject,
   onArchiveIdea,
   onDeleteIdea,
+  onOpenAssistantWithPrompt,
 }) => {
   const [quickIdeaText, setQuickIdeaText] = useState('');
   const [quickRealm, setQuickRealm] = useState<Realm>('mariluna');
@@ -270,9 +272,24 @@ export const IdeasView: React.FC<IdeasViewProps> = ({
 
               {/* Actions Footer */}
               <div className="mt-5 pt-3 border-t border-[#F0EBE1] flex items-center justify-between text-xs">
-                <span className="text-[10px] text-[#9E958B]">
-                  Logged {idea.createdAt}
-                </span>
+                {onOpenAssistantWithPrompt ? (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      onOpenAssistantWithPrompt(
+                        `Wil je dit idee verder uitwerken, er content van maken, er een project van maken of het voorlopig bewaren? Idee: "${idea.title}" - ${idea.content}`
+                      )
+                    }
+                    className="inline-flex items-center gap-1.5 text-xs text-[#8C7654] hover:text-[#2C2825] font-medium transition cursor-pointer"
+                  >
+                    <Sparkles className="w-3.5 h-3.5 text-[#8C7654]" />
+                    <span>Bespreek met Alchemy</span>
+                  </button>
+                ) : (
+                  <span className="text-[10px] text-[#9E958B]">
+                    Logged {idea.createdAt}
+                  </span>
+                )}
 
                 <div className="flex items-center gap-1">
                   <button

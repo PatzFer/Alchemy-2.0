@@ -455,6 +455,14 @@ class SecurityVault {
       delete sanitized.currentWeeklyMovement;
       delete sanitized.weeklyMenu;
       delete sanitized.shoppingList;
+      delete sanitized.personalStyle;
+      delete sanitized.nutrition;
+      delete sanitized.foodPreferences;
+      delete sanitized.dietaryNotes;
+      delete sanitized.lifeProfile;
+      delete sanitized.health;
+      delete sanitized.stylePreferences;
+      delete sanitized.partnerSharedDinners;
       if (Array.isArray(sanitized.tasks)) {
         sanitized.tasks = sanitized.tasks.filter((t: any) => t.world !== 'personal' && t.realm !== 'personal');
       }

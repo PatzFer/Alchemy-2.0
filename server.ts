@@ -60,7 +60,7 @@ app.post("/api/ai/chat", async (req: Request, res: Response) => {
     }
 
     // SERVER-SIDE PRIVACY FIREWALL: Sanitize context according to strict user permissions
-    const sanitizedContext = securityVault.sanitizeContextForAi(context);
+    const sanitizedContext = securityVault.sanitizeContextForAi(context, world);
 
     const ai = getAI();
 

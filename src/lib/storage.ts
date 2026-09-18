@@ -17,6 +17,10 @@ import {
   ProactiveSuggestion,
   WellbeingState,
   FoundationData,
+  MarilunaAdminState,
+  MarilunaMetricsState,
+  MarilunaOffering,
+  MarilunaClient,
 } from '../types';
 import { DEFAULT_NOTIFICATION_SETTINGS } from './notificationEngine';
 import { INITIAL_WELLBEING_STATE, EMPTY_WELLBEING_STATE } from './wellbeingData';
@@ -46,6 +50,10 @@ export interface AppState {
   isSampleData: boolean;
   foundation: FoundationData;
   setupStatus: 'not_started' | 'in_progress' | 'skipped' | 'completed';
+  marilunaAdmin?: MarilunaAdminState;
+  marilunaMetrics?: MarilunaMetricsState;
+  marilunaOfferings?: MarilunaOffering[];
+  marilunaClients?: MarilunaClient[];
 }
 
 const todayStr = new Date().toISOString().split('T')[0];
@@ -110,6 +118,16 @@ export const INITIAL_STATE: AppState = {
   notificationSettings: DEFAULT_NOTIFICATION_SETTINGS,
   notifications: [],
   proactiveSuggestions: [],
+  marilunaAdmin: {
+    expenses: [],
+    invoices: [],
+    deadlines: [],
+  },
+  marilunaMetrics: {
+    metrics: [],
+  },
+  marilunaOfferings: [],
+  marilunaClients: [],
 };
 
 export const SAMPLE_STATE: AppState = {

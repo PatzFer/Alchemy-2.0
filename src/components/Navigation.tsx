@@ -21,11 +21,12 @@ import { t } from '../lib/i18n';
 
 export type NavTab =
   | 'today'
+  | 'mariluna'
+  | 'prive'
+  | 'ideas'
   | 'tasks'
   | 'calendar'
   | 'goals'
-  | 'ideas'
-  | 'mariluna'
   | 'wellbeing'
   | 'cycle'
   | 'mylife'
@@ -65,32 +66,29 @@ export const Navigation: React.FC<NavigationProps> = ({
 }) => {
   const isNl = lang === 'nl';
 
-  const coreNavItems: { id: NavTab; label: string; icon: React.FC<{ className?: string }> }[] = [
+  // Primary 4 Main Experiences as requested
+  const primaryDomainNavItems: { id: NavTab; label: string; icon: React.FC<{ className?: string }> }[] = [
     { id: 'today', label: isNl ? 'Vandaag' : 'Today', icon: Calendar },
-    { id: 'tasks', label: isNl ? 'Taken' : 'Tasks', icon: CheckSquare },
-    { id: 'calendar', label: isNl ? 'Agenda' : 'Calendar', icon: Calendar },
-    { id: 'goals', label: isNl ? 'Doelen' : 'Goals', icon: Target },
+    { id: 'mariluna', label: 'Mariluna', icon: Briefcase },
+    { id: 'prive', label: isNl ? 'Privé' : 'Private Life', icon: Heart },
     { id: 'ideas', label: isNl ? 'Ideeën' : 'Ideas', icon: Lightbulb },
   ];
 
-  const personalNavItems: { id: NavTab; label: string; icon: React.FC<{ className?: string }> }[] = [
-    { id: 'wellbeing', label: isNl ? 'Welzijn' : 'Wellbeing', icon: Heart },
+  // Retained Direct Access modules
+  const secondaryNavItems: { id: NavTab; label: string; icon: React.FC<{ className?: string }> }[] = [
+    { id: 'tasks', label: isNl ? 'Taken' : 'Tasks', icon: CheckSquare },
     { id: 'cycle', label: isNl ? 'Cyclus' : 'Cycle', icon: Activity },
-    { id: 'mylife', label: isNl ? 'Leven' : 'My Life', icon: User },
+    { id: 'wellbeing', label: isNl ? 'Welzijn' : 'Wellbeing', icon: Heart },
+    { id: 'calendar', label: isNl ? 'Agenda' : 'Calendar', icon: Calendar },
   ];
 
-  const businessNavItems: { id: NavTab; label: string; icon: React.FC<{ className?: string }> }[] = [
-    { id: 'mariluna', label: 'Mariluna', icon: Briefcase },
-  ];
-
-  // Combined for responsive mobile bottom bar
+  // Mobile clean 5-tab bar: Vandaag, Mariluna, Privé, Ideeën, Taken
   const mobileNavItems: { id: NavTab; label: string; icon: React.FC<{ className?: string }> }[] = [
     { id: 'today', label: isNl ? 'Vandaag' : 'Today', icon: Calendar },
-    { id: 'tasks', label: isNl ? 'Taken' : 'Tasks', icon: CheckSquare },
-    { id: 'wellbeing', label: isNl ? 'Welzijn' : 'Wellbeing', icon: Heart },
-    { id: 'cycle', label: isNl ? 'Cyclus' : 'Cycle', icon: Activity },
     { id: 'mariluna', label: 'Mariluna', icon: Briefcase },
+    { id: 'prive', label: isNl ? 'Privé' : 'Privé', icon: Heart },
     { id: 'ideas', label: isNl ? 'Ideeën' : 'Ideas', icon: Lightbulb },
+    { id: 'tasks', label: isNl ? 'Taken' : 'Tasks', icon: CheckSquare },
   ];
 
   return (
@@ -154,72 +152,60 @@ export const Navigation: React.FC<NavigationProps> = ({
           </div>
         </div>
 
-        {/* Desktop Primary Nav items */}
-        <nav className="hidden lg:flex items-center gap-1">
-          {/* Core modules */}
-          {coreNavItems.map((item) => {
+        {/* Desktop Primary Nav items: Clearly distinguishing Vandaag, Mariluna, Privé, Ideeën */}
+        <nav className="hidden lg:flex items-center gap-1.5" aria-label="Main Navigation">
+          {primaryDomainNavItems.map((item) => {
             const isActive = currentTab === item.id;
+            const isMariluna = item.id === 'mariluna';
+            const isPrive = item.id === 'prive';
             return (
               <button
                 key={item.id}
                 onClick={() => onSelectTab(item.id)}
                 id={`nav-tab-${item.id}`}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
                   isActive
-                    ? 'bg-[#EDE7DC] text-[#1F1C19] shadow-xs font-semibold'
+                    ? isMariluna
+                      ? 'bg-[#2C2825] text-[#F9F7F2] shadow-xs font-semibold'
+                      : isPrive
+                      ? 'bg-[#3D3730] text-[#FAF8F5] shadow-xs font-semibold'
+                      : 'bg-[#EDE7DC] text-[#1F1C19] shadow-xs font-semibold'
+                    : isMariluna
+                    ? 'text-[#4A3E31] bg-[#F3ECE0] hover:bg-[#EAE1D3] hover:text-[#2C2825]'
+                    : isPrive
+                    ? 'text-[#50473D] bg-[#F1EBE0] hover:bg-[#E8E1D5] hover:text-[#2C2825]'
                     : 'text-[#6C6358] hover:text-[#2C2825] hover:bg-[#F2ECE1]'
                 }`}
               >
-                {item.label}
+                {isMariluna && <span className="w-1.5 h-1.5 rounded-full bg-[#C5A880]" />}
+                {isPrive && <span className="w-1.5 h-1.5 rounded-full bg-[#8E8478]" />}
+                <span>{item.label}</span>
               </button>
             );
           })}
 
           <div className="h-4 w-px bg-[#E3DCD1] mx-1"></div>
 
-          {/* Personal Group (Cycle & My Life) */}
-          <div className="flex items-center gap-0.5 rounded-lg bg-[#F3EDE2]/60 p-0.5 border border-[#E8E1D4]">
-            {personalNavItems.map((item) => {
+          {/* Retained direct access modules: Taken, Cyclus, Welzijn, Agenda */}
+          <div className="flex items-center gap-0.5">
+            {secondaryNavItems.map((item) => {
               const isActive = currentTab === item.id;
               return (
                 <button
                   key={item.id}
                   onClick={() => onSelectTab(item.id)}
                   id={`nav-tab-${item.id}`}
-                  className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium transition-all cursor-pointer ${
+                  className={`px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
                     isActive
-                      ? 'bg-[#FFFFFF] text-[#2C2825] shadow-xs font-semibold'
-                      : 'text-[#6C6358] hover:text-[#2C2825]'
+                      ? 'bg-[#EAE4D7] text-[#2C2825] font-semibold'
+                      : 'text-[#7A7167] hover:text-[#2C2825] hover:bg-[#F2ECE1]'
                   }`}
                 >
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#8E8478]"></span>
-                  <span>{item.label}</span>
+                  {item.label}
                 </button>
               );
             })}
           </div>
-
-          <div className="h-4 w-px bg-[#E3DCD1] mx-1"></div>
-
-          {/* Mariluna Business Group */}
-          {businessNavItems.map((item) => {
-            const isActive = currentTab === item.id;
-            return (
-              <button
-                key={item.id}
-                onClick={() => onSelectTab(item.id)}
-                id={`nav-tab-${item.id}`}
-                className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
-                  isActive
-                    ? 'bg-[#2C2825] text-[#F9F7F2] shadow-xs font-medium'
-                    : 'text-[#5A4E3F] hover:text-[#2C2825] bg-[#F1E8DC] hover:bg-[#EAE0D3]'
-                }`}
-              >
-                <span className="w-1.5 h-1.5 rounded-full bg-[#C5A880]"></span>
-                <span>{item.label}</span>
-              </button>
-            );
-          })}
         </nav>
 
         {/* Right Actions: Notifications, AI Assistant, PWA Install, Settings */}
@@ -290,18 +276,6 @@ export const Navigation: React.FC<NavigationProps> = ({
           >
             <Settings className="w-4 h-4" />
           </button>
-
-          {/* Lock Alchemy Session Button */}
-          {onLockApp && (
-            <button
-              onClick={onLockApp}
-              id="lock-alchemy-btn"
-              title="Lock Alchemy Session (Requires Biometric/TOTP Unlock)"
-              className="p-2 rounded-full border border-transparent text-[#7A7167] hover:text-[#9E362A] hover:bg-[#FDF2F0] transition cursor-pointer"
-            >
-              <Lock className="w-4 h-4" />
-            </button>
-          )}
         </div>
       </div>
 
