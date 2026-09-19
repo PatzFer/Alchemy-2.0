@@ -195,9 +195,45 @@ export default function App() {
 
   // Goals handlers
   const handleSaveGoal = (goalPayload: Partial<Goal>) => {
+    setState((prev) => {
+      const existing = prev.goals.find((g) => g.id === goalPayload.id);
+      if (existing) {
+        return {
+          ...prev,
+          goals: prev.goals.map((g) =>
+            g.id === goalPayload.id ? ({ ...g, ...goalPayload } as Goal) : g
+          ),
+        };
+      }
+      const newGoal: Goal = {
+        id: goalPayload.id || 'g-' + Date.now(),
+        title: goalPayload.title || 'Nieuw Doel',
+        description: goalPayload.description || '',
+        realm: goalPayload.realm || 'mariluna',
+        timeframe: goalPayload.timeframe || 'quarter',
+        status: goalPayload.status || 'active',
+        priority: goalPayload.priority || 'normal',
+        progress: goalPayload.progress || 0,
+        targetDate: goalPayload.targetDate,
+        notes: goalPayload.notes,
+        connectedProjectIds: goalPayload.connectedProjectIds || [],
+        connectedTaskIds: goalPayload.connectedTaskIds || [],
+        connectedContentIds: goalPayload.connectedContentIds || [],
+        milestones: goalPayload.milestones || [],
+        measurableTarget: goalPayload.measurableTarget,
+        createdAt: new Date().toISOString(),
+      };
+      return {
+        ...prev,
+        goals: [newGoal, ...prev.goals],
+      };
+    });
+  };
+
+  const handleDeleteGoal = (goalId: string) => {
     setState((prev) => ({
       ...prev,
-      goals: [goalPayload as Goal, ...prev.goals],
+      goals: prev.goals.filter((g) => g.id !== goalId),
     }));
   };
 
@@ -232,15 +268,17 @@ export default function App() {
     const idea = state.ideas.find((i) => i.id === ideaId);
     if (!idea) return;
 
-    const newProject = {
+    const newProject: Project = {
       id: 'p-' + Date.now(),
       title: idea.title,
       description: idea.content,
       realm: idea.realm,
-      status: 'planning' as const,
+      status: 'planning',
       progress: 0,
       taskIds: [],
       ideaIds: [idea.id],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     };
 
     setState((prev) => ({
@@ -261,7 +299,7 @@ export default function App() {
         return {
           ...prev,
           projects: prev.projects.map((p) =>
-            p.id === projectData.id ? ({ ...p, ...projectData } as Project) : p
+            p.id === projectData.id ? ({ ...p, ...projectData, updatedAt: new Date().toISOString() } as Project) : p
           ),
         };
       }
@@ -270,19 +308,31 @@ export default function App() {
         title: projectData.title || 'Untitled Project',
         description: projectData.description || '',
         realm: projectData.realm || 'mariluna',
+        goalId: projectData.goalId,
         status: projectData.status || 'planning',
         progress: projectData.progress || 0,
         taskIds: projectData.taskIds || [],
         ideaIds: projectData.ideaIds || [],
+        relatedContentIds: projectData.relatedContentIds || [],
         priority: projectData.priority || 'normal',
+        startDate: projectData.startDate,
         deadline: projectData.deadline,
         notes: projectData.notes,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       };
       return {
         ...prev,
         projects: [...prev.projects, newProj],
       };
     });
+  };
+
+  const handleDeleteProject = (projectId: string) => {
+    setState((prev) => ({
+      ...prev,
+      projects: prev.projects.filter((p) => p.id !== projectId),
+    }));
   };
 
   const handleArchiveIdea = (ideaId: string) => {
@@ -674,6 +724,7 @@ export default function App() {
             onUpdateContentPlan={(plan) => setState((prev) => ({ ...prev, contentPlan: plan }))}
             projects={state.projects}
             onSaveProject={handleSaveProject}
+            onDeleteProject={handleDeleteProject}
             tasks={state.tasks}
             onToggleTask={handleToggleTask}
             onSaveTask={handleSaveTask}
@@ -683,6 +734,7 @@ export default function App() {
             onConvertToProject={handleConvertToProject}
             goals={state.goals}
             onSaveGoal={handleSaveGoal}
+            onDeleteGoal={handleDeleteGoal}
             onToggleMilestone={handleToggleMilestone}
             adminState={state.marilunaAdmin}
             onUpdateAdminState={(admin) => setState((prev) => ({ ...prev, marilunaAdmin: admin }))}

@@ -36,17 +36,49 @@ export interface Milestone {
   durationMins?: number;
 }
 
+export type GoalTimeframe =
+  | 'year'
+  | 'quarter'
+  | 'month'
+  | 'custom'
+  | 'daily'
+  | 'weekly'
+  | 'monthly'
+  | 'quarterly'
+  | 'yearly';
+
+export type GoalStatus =
+  | 'active'
+  | 'achieved'
+  | 'paused'
+  | 'archived'
+  | 'completed';
+
+export interface GoalMeasurableTarget {
+  type: 'revenue' | 'clients' | 'bookings' | 'posts' | 'products_sold' | 'custom';
+  targetValue: number;
+  currentValue: number;
+  unit?: string;
+  customLabel?: string;
+}
+
 export interface Goal {
   id: string;
   title: string;
   description: string;
   realm: Realm;
-  timeframe: 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'yearly';
+  timeframe: GoalTimeframe;
   progress: number; // 0 - 100
-  targetDate: string;
+  targetDate?: string;
+  status?: GoalStatus;
+  priority?: 'high' | 'normal' | 'low';
+  notes?: string;
   connectedTaskIds: string[];
   connectedProjectIds: string[];
+  connectedContentIds?: string[];
   milestones: Milestone[];
+  measurableTarget?: GoalMeasurableTarget;
+  createdAt?: string;
 }
 
 export type IdeaStatus =
@@ -84,13 +116,22 @@ export interface Idea {
   convertedToType?: 'content' | 'project' | 'task';
 }
 
+export type ProjectStatus =
+  | 'idea'
+  | 'planning'
+  | 'active'
+  | 'on_hold'
+  | 'completed'
+  | 'archived';
+
 export interface Project {
   id: string;
   title: string;
   description: string;
   realm: Realm;
   goalId?: string;
-  status: 'active' | 'planning' | 'on_hold' | 'completed';
+  status: ProjectStatus;
+  startDate?: string;
   deadline?: string;
   progress: number;
   priority?: 'high' | 'normal' | 'low';
@@ -98,6 +139,9 @@ export interface Project {
   taskIds: string[];
   ideaIds: string[];
   relatedContent?: string;
+  relatedContentIds?: string[];
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface CalendarEvent {
@@ -195,14 +239,53 @@ export interface ContentPost {
 // -------------------------------------------------------------
 // Mariluna Domain Architecture (Admin, Cijfers, Clients, Offerings)
 // -------------------------------------------------------------
+export type AdminItemFrequency =
+  | 'none'
+  | 'weekly'
+  | 'monthly'
+  | 'quarterly'
+  | 'yearly'
+  | 'custom';
+
+export type AdminItemStatus =
+  | 'todo'
+  | 'in_progress'
+  | 'completed'
+  | 'cancelled';
+
+export interface MarilunaAdminItem {
+  id: string;
+  title: string;
+  description?: string;
+  category: string; // e.g. 'ADMIN' | 'INVOICE' | 'EXPENSE' | 'TAX' | 'SOCIAL CONTRIBUTIONS' | 'DOCUMENT' | 'DEADLINE' | 'OTHER'
+  priority: 'high' | 'normal' | 'low';
+  dueDate?: string; // YYYY-MM-DD
+  recurring: AdminItemFrequency;
+  customRecurringInterval?: string; // e.g. "Elke 2 maanden"
+  status: AdminItemStatus;
+  notes?: string;
+  amount?: number;
+  reference?: string;
+  projectId?: string;
+  goalId?: string;
+  linkedTaskId?: string; // Central task sync ID
+  lastCompletedDate?: string;
+  createdAt?: string;
+}
+
 export interface MarilunaExpense {
   id: string;
   description: string;
   amount: number;
-  date: string;
-  category: 'software' | 'materials' | 'marketing' | 'tax_social' | 'office' | 'other';
+  vatAmount?: number;
+  date: string; // YYYY-MM-DD
+  category: string; // e.g. 'software' | 'materials' | 'marketing' | 'tax_social' | 'office' | 'subscriptions' | 'equipment' | 'other'
   paid: boolean;
   notes?: string;
+  projectId?: string;
+  goalId?: string;
+  reference?: string;
+  receiptRef?: string;
 }
 
 export interface MarilunaInvoice {
@@ -212,23 +295,66 @@ export interface MarilunaInvoice {
   amount: number;
   date: string;
   dueDate: string;
-  status: 'draft' | 'sent' | 'paid' | 'overdue';
+  status: 'draft' | 'sent' | 'paid' | 'overdue' | 'cancelled';
   notes?: string;
+  projectId?: string;
+  goalId?: string;
+  reference?: string;
 }
 
 export interface MarilunaTaxDeadline {
   id: string;
   title: string;
   dueDate: string;
-  type: 'vat_btw' | 'income_tax' | 'social_contribution' | 'annual_accounts' | 'other';
+  type:
+    | 'vat_btw'
+    | 'income_tax'
+    | 'social_contribution'
+    | 'annual_accounts'
+    | 'subscription'
+    | 'insurance'
+    | 'domain'
+    | 'appointment'
+    | 'other';
   completed: boolean;
   notes?: string;
+  amount?: number;
+  reference?: string;
+  recurring?: AdminItemFrequency;
+  projectId?: string;
+  goalId?: string;
 }
 
 export interface MarilunaAdminState {
+  items?: MarilunaAdminItem[];
   expenses: MarilunaExpense[];
   invoices: MarilunaInvoice[];
   deadlines: MarilunaTaxDeadline[];
+  notes?: string;
+}
+
+export interface MarilunaMetricRecord {
+  id: string;
+  metricId?: string;
+  name: string; // e.g. "Omzet", "Kosten", "Winst", "Aantal klanten", "Boekingen", "Instagram followers"
+  category?:
+    | 'revenue'
+    | 'expense'
+    | 'profit'
+    | 'clients'
+    | 'bookings'
+    | 'products'
+    | 'services'
+    | 'content'
+    | 'followers'
+    | 'visits'
+    | 'custom';
+  value: number;
+  unit?: string; // e.g. "€", "klanten", "boekingen", "volgers", "stuks"
+  period: string; // e.g. "September 2026", "2026-09", "Q3 2026"
+  recordedAt: string;
+  projectId?: string;
+  goalId?: string;
   notes?: string;
 }
 
@@ -239,11 +365,14 @@ export interface MarilunaMetric {
   unit?: string;
   period?: string;
   notes?: string;
+  category?: string;
+  target?: number;
 }
 
 export interface MarilunaMetricsState {
   revenueTargetYear?: number;
   metrics: MarilunaMetric[];
+  records?: MarilunaMetricRecord[];
   notes?: string;
 }
 
@@ -298,6 +427,9 @@ export interface PersonalStyleState {
   dislikedStyles: string[];
   measurementsNotes: string;
   occasions: string[];
+  bodyShape?: string;
+  calculatedBodyShape?: string;
+  shapePromptDismissed?: boolean;
 }
 
 export interface NutritionState {
@@ -428,8 +560,76 @@ export interface BodyMeasurements {
   chestCm?: number;
   thighCm?: number;
   armCm?: number;
+  // Exact 11 body measurements (in centimeters)
+  shoulder?: number;
+  bicepLeft?: number;
+  bicepRight?: number;
+  chest?: number;
+  waist?: number;
+  abdomen?: number;
+  hip?: number;
+  thighLeft?: number;
+  thighRight?: number;
+  calfLeft?: number;
+  calfRight?: number;
+  unit?: 'cm' | 'in';
   notes?: string;
 }
+
+export interface BodyMeasurementEntry {
+  id: string;
+  date: string; // YYYY-MM-DD
+  unit: 'cm' | 'in';
+  notes?: string;
+  shoulder?: number;
+  bicepLeft?: number;
+  bicepRight?: number;
+  chest?: number;
+  waist?: number;
+  abdomen?: number;
+  hip?: number;
+  thighLeft?: number;
+  thighRight?: number;
+  calfLeft?: number;
+  calfRight?: number;
+}
+
+export interface WaterLogEntry {
+  date: string; // YYYY-MM-DD
+  bottles: number; // 1 tap = 1 bottle (750ml)
+  volumeMl: number; // bottles * 750
+  targetBottles?: number;
+  notes?: string;
+}
+
+export interface WaterTrackerState {
+  bottleVolumeMl: number; // 750
+  defaultTargetBottles: number; // default 4 (3.0L)
+  history: WaterLogEntry[];
+}
+
+export interface WeeklyBodyCheckReminder {
+  enabled: boolean;
+  dayOfWeek: 'sunday' | 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday';
+  preferredTime: string; // e.g. "09:00"
+  snoozedUntil?: string | null; // ISO timestamp string
+  lastSkippedWeek?: string; // e.g. "2026-W38"
+  lastCompletedDate?: string;
+}
+
+export type MovementActivityType =
+  | 'home_workout'
+  | 'walking'
+  | 'swimming'
+  | 'paddling'
+  | 'yoga'
+  | 'pilates'
+  | 'strength'
+  | 'yoga_stretch'
+  | 'dance'
+  | 'cardio'
+  | 'breathwork_restore'
+  | 'other';
 
 export interface BodyComposition {
   bodyFatPercentage?: number;
@@ -505,13 +705,16 @@ export interface MovementSession {
   date: string; // YYYY-MM-DD
   title: string;
   type: 'pilates' | 'strength' | 'walking' | 'yoga_stretch' | 'dance' | 'cardio' | 'breathwork_restore';
+  activityType?: MovementActivityType;
   plannedDurationMins: number;
   actualDurationMins?: number;
+  durationMins?: number;
   intensity: 'gentle' | 'moderate' | 'energizing' | 'peak';
   completed: boolean;
   energyLevelAtStart?: EnergyLevel;
   perceivedExertion?: 'effortless' | 'pleasantly_challenged' | 'heavy' | 'fatigued';
   exercises: MovementExercise[];
+  equipment?: string[];
   notes?: string;
   adaptationReason?: string; // e.g. "Adapted to 15m restorative due to evening transition"
 }
@@ -606,6 +809,10 @@ export interface WellbeingState {
   weeklyMenu: WeeklyMenuPlan;
   shoppingList: ShoppingItem[];
   preferences: WellbeingPreferences;
+  waterTracker?: WaterTrackerState;
+  bodyMeasurementHistory?: BodyMeasurementEntry[];
+  weeklyBodyCheckReminder?: WeeklyBodyCheckReminder;
+  calculatedBodyShape?: string;
 }
 
 // -------------------------------------------------------------

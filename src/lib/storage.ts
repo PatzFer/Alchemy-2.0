@@ -119,12 +119,14 @@ export const INITIAL_STATE: AppState = {
   notifications: [],
   proactiveSuggestions: [],
   marilunaAdmin: {
+    items: [],
     expenses: [],
     invoices: [],
     deadlines: [],
   },
   marilunaMetrics: {
     metrics: [],
+    records: [],
   },
   marilunaOfferings: [],
   marilunaClients: [],

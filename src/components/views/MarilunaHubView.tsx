@@ -45,6 +45,10 @@ import {
 import { MarilunaContentSection } from '../mariluna/MarilunaContentSection';
 import { MarilunaIdeaSanctuary } from '../mariluna/MarilunaIdeaSanctuary';
 import { MarilunaIdeaSparringModal } from '../mariluna/MarilunaIdeaSparringModal';
+import { MarilunaProjectsSection } from '../mariluna/MarilunaProjectsSection';
+import { MarilunaStrategySection } from '../mariluna/MarilunaStrategySection';
+import { MarilunaAdminSection } from '../mariluna/MarilunaAdminSection';
+import { MarilunaMetricsSection } from '../mariluna/MarilunaMetricsSection';
 import {
   ConvertToContentModal,
   ConvertToProjectModal,
@@ -68,6 +72,7 @@ interface MarilunaHubViewProps {
   onUpdateContentPlan?: (plan: ContentPlan) => void;
   projects: Project[];
   onSaveProject?: (project: Partial<Project>) => void;
+  onDeleteProject?: (projectId: string) => void;
   tasks: Task[];
   onToggleTask?: (taskId: string) => void;
   onSaveTask?: (task: Partial<Task>) => void;
@@ -77,6 +82,7 @@ interface MarilunaHubViewProps {
   onConvertToProject?: (ideaId: string) => void;
   goals?: Goal[];
   onSaveGoal?: (goal: Partial<Goal>) => void;
+  onDeleteGoal?: (goalId: string) => void;
   onToggleMilestone?: (goalId: string, milestoneId: string) => void;
   adminState?: MarilunaAdminState;
   onUpdateAdminState?: (admin: MarilunaAdminState) => void;
@@ -96,6 +102,7 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
   onUpdateContentPlan,
   projects,
   onSaveProject,
+  onDeleteProject,
   tasks,
   onToggleTask,
   onSaveTask,
@@ -105,10 +112,11 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
   onConvertToProject,
   goals = [],
   onSaveGoal,
+  onDeleteGoal,
   onToggleMilestone,
-  adminState = { expenses: [], invoices: [], deadlines: [] },
+  adminState = { items: [], expenses: [], invoices: [], deadlines: [] } as MarilunaAdminState,
   onUpdateAdminState,
-  metricsState = { metrics: [] },
+  metricsState = { metrics: [], records: [] } as MarilunaMetricsState,
   onUpdateMetricsState,
   offerings = [],
   onUpdateOfferings,
@@ -128,6 +136,57 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
   const marilunaProjects = projects.filter((p) => p.realm === 'mariluna');
   const marilunaIdeas = ideas.filter((i) => i.realm === 'mariluna' && i.status !== 'archived');
   const marilunaGoals = goals.filter((g) => g.realm === 'mariluna');
+
+  // Mariluna 3.0: Strategic Horizon Items (Only actual data, strictly no fictional items)
+  const upcomingAdminDates = [
+    ...(adminState.deadlines || [])
+      .filter((d) => !d.completed && d.dueDate)
+      .map((d) => ({
+        id: 'dl-' + d.id,
+        title: d.title,
+        dueDate: d.dueDate,
+        type: 'deadline' as const,
+      })),
+    ...(adminState.items || [])
+      .filter((i) => i.status !== 'completed' && i.dueDate)
+      .map((i) => ({
+        id: 'item-' + i.id,
+        title: i.title,
+        dueDate: i.dueDate!,
+        type: 'admin_item' as const,
+      })),
+  ].sort((a, b) => a.dueDate.localeCompare(b.dueDate));
+
+  const earliestAdminDeadline = upcomingAdminDates[0] || null;
+
+  const unpaidInvoices = (adminState.invoices || []).filter(
+    (i) => i.status === 'sent' || i.status === 'overdue'
+  );
+  const earliestUnpaidInvoice =
+    [...unpaidInvoices].sort((a, b) => a.dueDate.localeCompare(b.dueDate))[0] || null;
+
+  const recentMetric =
+    metricsState.records && metricsState.records.length > 0
+      ? metricsState.records[0]
+      : metricsState.metrics && metricsState.metrics.length > 0
+      ? metricsState.metrics[metricsState.metrics.length - 1]
+      : null;
+
+  const activeProject = marilunaProjects.find((p) => p.status === 'active') || null;
+  const currentStrategicGoal =
+    marilunaGoals.find((g) => g.status === 'active') || marilunaGoals[0] || null;
+  const attentionContent =
+    contentPlan.posts.find(
+      (p) => p.status === 'draft' || p.status === 'idea' || p.status === 'in_progress'
+    ) || null;
+
+  const hasAnyStrategicAttention =
+    !!earliestAdminDeadline ||
+    !!earliestUnpaidInvoice ||
+    !!recentMetric ||
+    !!activeProject ||
+    !!currentStrategicGoal ||
+    !!attentionContent;
 
   // Subsections definition
   const subTabs: { id: MarilunaSubTab; label: string; icon: React.FC<{ className?: string }> }[] = [
@@ -550,57 +609,213 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
       {activeSubTab === 'overview' && (
         <div className="space-y-6">
           {/* Top Business Pulse Bar */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div
               onClick={() => setActiveSubTab('projects')}
-              className="p-4 rounded-2xl border border-[#E3D9C9] bg-[#FAF8F3] hover:border-[#8C7654] transition cursor-pointer space-y-1 shadow-xs"
+              className="p-3.5 rounded-2xl border border-[#E3D9C9] bg-[#FAF8F3] hover:border-[#8C7654] transition cursor-pointer space-y-1 shadow-xs"
             >
-              <div className="flex items-center justify-between text-[11px] text-[#8C7654] font-medium uppercase tracking-wider">
-                <span>{isNl ? 'Actieve Projecten' : 'Active Projects'}</span>
+              <div className="flex items-center justify-between text-[10px] text-[#8C7654] font-medium uppercase tracking-wider">
+                <span>{isNl ? 'Projecten' : 'Projects'}</span>
                 <Briefcase className="w-3.5 h-3.5" />
               </div>
               <div className="font-serif text-lg text-[#2C2825]">
-                {marilunaProjects.filter((p) => p.status === 'active').length} {isNl ? 'lopend' : 'active'}
+                {marilunaProjects.filter((p) => p.status === 'active').length} {isNl ? 'actief' : 'active'}
               </div>
-              <p className="text-[11px] text-[#7A7167]">
+              <p className="text-[10px] text-[#7A7167]">
                 {marilunaProjects.length === 0
-                  ? isNl ? 'Nog geen projecten' : 'No projects yet'
-                  : `${marilunaProjects.length} ${isNl ? 'projecten in totaal' : 'total projects'}`}
+                  ? isNl ? 'Nog geen projecten' : 'No projects'
+                  : `${marilunaProjects.length} ${isNl ? 'in totaal' : 'total'}`}
               </p>
             </div>
 
             <div
               onClick={() => setActiveSubTab('content')}
-              className="p-4 rounded-2xl border border-[#E3D9C9] bg-[#FAF8F3] hover:border-[#8C7654] transition cursor-pointer space-y-1 shadow-xs"
+              className="p-3.5 rounded-2xl border border-[#E3D9C9] bg-[#FAF8F3] hover:border-[#8C7654] transition cursor-pointer space-y-1 shadow-xs"
             >
-              <div className="flex items-center justify-between text-[11px] text-[#8C7654] font-medium uppercase tracking-wider">
-                <span>{isNl ? 'Content Pijplijn' : 'Content Pipeline'}</span>
+              <div className="flex items-center justify-between text-[10px] text-[#8C7654] font-medium uppercase tracking-wider">
+                <span>{isNl ? 'Content' : 'Content'}</span>
                 <FileText className="w-3.5 h-3.5" />
               </div>
               <div className="font-serif text-lg text-[#2C2825]">
-                {contentPlan.posts.length} {isNl ? 'stukken vastgelegd' : 'pieces captured'}
+                {contentPlan.posts.length} {isNl ? 'posts' : 'posts'}
               </div>
-              <p className="text-[11px] text-[#7A7167]">
+              <p className="text-[10px] text-[#7A7167]">
                 {contentPlan.posts.filter((p) => p.status === 'ready').length} {isNl ? 'klaar voor publicatie' : 'ready to publish'}
               </p>
             </div>
 
             <div
               onClick={() => setActiveSubTab('admin')}
-              className="p-4 rounded-2xl border border-[#E3D9C9] bg-[#FAF8F3] hover:border-[#8C7654] transition cursor-pointer space-y-1 shadow-xs"
+              className="p-3.5 rounded-2xl border border-[#E3D9C9] bg-[#FAF8F3] hover:border-[#8C7654] transition cursor-pointer space-y-1 shadow-xs"
             >
-              <div className="flex items-center justify-between text-[11px] text-[#8C7654] font-medium uppercase tracking-wider">
-                <span>{isNl ? 'Boekhouding & Deadlines' : 'Admin Deadlines'}</span>
+              <div className="flex items-center justify-between text-[10px] text-[#8C7654] font-medium uppercase tracking-wider">
+                <span>{isNl ? 'Admin & Facturen' : 'Admin & Invoices'}</span>
                 <Receipt className="w-3.5 h-3.5" />
               </div>
               <div className="font-serif text-lg text-[#2C2825]">
-                {adminState.deadlines.filter((d) => !d.completed).length} {isNl ? 'deadlines komend' : 'deadlines upcoming'}
+                {unpaidInvoices.length} {isNl ? 'open facturen' : 'open invoices'}
               </div>
-              <p className="text-[11px] text-[#7A7167]">
-                {adminState.invoices.filter((i) => i.status === 'sent').length} {isNl ? 'openstaande facturen' : 'open invoices'}
+              <p className="text-[10px] text-[#7A7167]">
+                {upcomingAdminDates.length} {isNl ? 'komende deadlines' : 'upcoming deadlines'}
+              </p>
+            </div>
+
+            <div
+              onClick={() => setActiveSubTab('metrics')}
+              className="p-3.5 rounded-2xl border border-[#E3D9C9] bg-[#FAF8F3] hover:border-[#8C7654] transition cursor-pointer space-y-1 shadow-xs"
+            >
+              <div className="flex items-center justify-between text-[10px] text-[#8C7654] font-medium uppercase tracking-wider">
+                <span>{isNl ? 'Cijfers & KPI’s' : 'Metrics'}</span>
+                <TrendingUp className="w-3.5 h-3.5" />
+              </div>
+              <div className="font-serif text-lg text-[#2C2825]">
+                {recentMetric
+                  ? recentMetric.unit === '€'
+                    ? `€${Number(recentMetric.value).toLocaleString('nl-NL')}`
+                    : `${recentMetric.value} ${recentMetric.unit || ''}`
+                  : '—'}
+              </div>
+              <p className="text-[10px] text-[#7A7167] truncate">
+                {recentMetric
+                  ? `${recentMetric.name}`
+                  : isNl ? 'Nog geen cijfers' : 'No metrics yet'}
               </p>
             </div>
           </div>
+
+          {/* Business Attention Horizon (Only showing items that actually exist) */}
+          {hasAnyStrategicAttention && (
+            <div className="rounded-2xl border border-[#E3D9C9] bg-[#FAF8F3] p-4 sm:p-5 space-y-3 shadow-xs">
+              <div className="flex items-center justify-between pb-2 border-b border-[#ECE3D4]">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-[#8C7654]" />
+                  <h3 className="font-serif text-base text-[#2C2825] font-medium">
+                    {isNl ? 'Belangrijke Zakelijke Aandachtspunten' : 'Key Business Focus Items'}
+                  </h3>
+                </div>
+                <span className="text-[10px] text-[#8C7654] uppercase tracking-wider font-semibold">
+                  {isNl ? 'Horizon' : 'Horizon'}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {/* 1. Upcoming Admin Deadline */}
+                {earliestAdminDeadline && (
+                  <div
+                    onClick={() => setActiveSubTab('admin')}
+                    className="p-3 rounded-xl bg-[#FFFFFF] border border-[#E8E1D3] hover:border-[#8C7654] transition cursor-pointer space-y-1"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-[9px] uppercase font-semibold tracking-wider text-[#8C7654]">
+                        {isNl ? 'Fiscale / Admin Deadline' : 'Admin Deadline'}
+                      </span>
+                      <span className="text-[10px] font-mono text-[#7A7167]">{earliestAdminDeadline.dueDate}</span>
+                    </div>
+                    <div className="text-xs font-medium text-[#2C2825] truncate">
+                      {earliestAdminDeadline.title}
+                    </div>
+                  </div>
+                )}
+
+                {/* 2. Unpaid / Overdue Invoice */}
+                {earliestUnpaidInvoice && (
+                  <div
+                    onClick={() => setActiveSubTab('admin')}
+                    className="p-3 rounded-xl bg-[#FFFFFF] border border-[#E8E1D3] hover:border-[#8C7654] transition cursor-pointer space-y-1"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-[9px] uppercase font-semibold tracking-wider text-[#A64A38]">
+                        {isNl ? 'Openstaande Factuur' : 'Unpaid Invoice'}
+                      </span>
+                      <span className="text-xs font-mono font-medium text-[#2C2825]">
+                        €{earliestUnpaidInvoice.amount.toLocaleString('nl-NL')}
+                      </span>
+                    </div>
+                    <div className="text-xs font-medium text-[#2C2825] truncate">
+                      {earliestUnpaidInvoice.clientName} ({earliestUnpaidInvoice.invoiceNumber})
+                    </div>
+                  </div>
+                )}
+
+                {/* 3. Recent Business Figure */}
+                {recentMetric && (
+                  <div
+                    onClick={() => setActiveSubTab('metrics')}
+                    className="p-3 rounded-xl bg-[#FFFFFF] border border-[#E8E1D3] hover:border-[#8C7654] transition cursor-pointer space-y-1"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-[9px] uppercase font-semibold tracking-wider text-[#8C7654]">
+                        {isNl ? 'Recent Cijfer' : 'Recent Metric'}
+                      </span>
+                      <span className="text-[10px] text-[#7A7167]">{recentMetric.period}</span>
+                    </div>
+                    <div className="text-xs font-medium text-[#2C2825] truncate">
+                      {recentMetric.name}:{' '}
+                      {recentMetric.unit === '€'
+                        ? `€${Number(recentMetric.value).toLocaleString('nl-NL')}`
+                        : `${recentMetric.value} ${recentMetric.unit || ''}`}
+                    </div>
+                  </div>
+                )}
+
+                {/* 4. Active Project */}
+                {activeProject && (
+                  <div
+                    onClick={() => setActiveSubTab('projects')}
+                    className="p-3 rounded-xl bg-[#FFFFFF] border border-[#E8E1D3] hover:border-[#8C7654] transition cursor-pointer space-y-1"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-[9px] uppercase font-semibold tracking-wider text-[#8C7654]">
+                        {isNl ? 'Lopend Project' : 'Active Project'}
+                      </span>
+                      {activeProject.deadline && (
+                        <span className="text-[10px] font-mono text-[#7A7167]">{activeProject.deadline}</span>
+                      )}
+                    </div>
+                    <div className="text-xs font-medium text-[#2C2825] truncate">
+                      {activeProject.title}
+                    </div>
+                  </div>
+                )}
+
+                {/* 5. Current Strategic Goal */}
+                {currentStrategicGoal && (
+                  <div
+                    onClick={() => setActiveSubTab('strategy')}
+                    className="p-3 rounded-xl bg-[#FFFFFF] border border-[#E8E1D3] hover:border-[#8C7654] transition cursor-pointer space-y-1"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-[9px] uppercase font-semibold tracking-wider text-[#8C7654]">
+                        {isNl ? 'Strategisch Doel' : 'Strategic Goal'}
+                      </span>
+                      <span className="text-[10px] capitalize text-[#7A7167]">{currentStrategicGoal.timeHorizon}</span>
+                    </div>
+                    <div className="text-xs font-medium text-[#2C2825] truncate">
+                      {currentStrategicGoal.title}
+                    </div>
+                  </div>
+                )}
+
+                {/* 6. Content Needing Attention */}
+                {attentionContent && (
+                  <div
+                    onClick={() => setActiveSubTab('content')}
+                    className="p-3 rounded-xl bg-[#FFFFFF] border border-[#E8E1D3] hover:border-[#8C7654] transition cursor-pointer space-y-1"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-[9px] uppercase font-semibold tracking-wider text-[#8C7654]">
+                        {isNl ? 'Content Aandacht' : 'Content Focus'}
+                      </span>
+                      <span className="text-[10px] text-[#7A7167] capitalize">{attentionContent.status}</span>
+                    </div>
+                    <div className="text-xs font-medium text-[#2C2825] truncate">
+                      {attentionContent.title}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Two Columns: Today's Mariluna Tasks & Upcoming Deadlines */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -784,484 +999,50 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
       {/* 3. PROJECTEN                                                 */}
       {/* ============================================================ */}
       {activeSubTab === 'projects' && (
-        <div className="space-y-5">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="font-serif text-xl font-normal text-[#2C2825]">
-                {isNl ? 'Zakelijke Projecten' : 'Studio Projects'}
-              </h2>
-              <p className="text-xs text-[#7A7167] mt-0.5">
-                {isNl ? 'Strategische lanceringen en klantopdrachten.' : 'Active ventures and client engagements.'}
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() => setIsProjectModalOpen(true)}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#2C2825] text-[#FAF8F3] text-xs font-medium hover:bg-[#433D37] transition shadow-xs cursor-pointer"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>{isNl ? 'Nieuw Project' : 'New Project'}</span>
-            </button>
-          </div>
-
-          {marilunaProjects.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-[#DCD3C4] p-10 text-center space-y-2">
-              <p className="text-xs text-[#7A7167] italic">
-                {isNl ? 'Nog geen projecten.' : 'No projects recorded yet.'}
-              </p>
-              <button
-                type="button"
-                onClick={() => setIsProjectModalOpen(true)}
-                className="text-xs text-[#8C7654] font-medium hover:underline cursor-pointer"
-              >
-                {isNl ? '+ Start je eerste project' : '+ Start your first project'}
-              </button>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {marilunaProjects.map((proj) => (
-                <div
-                  key={proj.id}
-                  className="rounded-2xl border border-[#E3D9C9] bg-[#FAF8F3] p-5 space-y-3 shadow-xs"
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <h4 className="font-serif text-base font-medium text-[#2C2825]">{proj.title}</h4>
-                      {proj.description && (
-                        <p className="text-xs text-[#7A7167] mt-0.5 leading-relaxed">
-                          {proj.description}
-                        </p>
-                      )}
-                    </div>
-                    <span className="text-[10px] uppercase font-semibold px-2 py-0.5 rounded-md bg-[#EAE2D3] text-[#554C42] shrink-0">
-                      {proj.status}
-                    </span>
-                  </div>
-
-                  {proj.deadline && (
-                    <div className="flex items-center gap-1.5 text-xs text-[#8C7654]">
-                      <Calendar className="w-3.5 h-3.5" />
-                      <span>{isNl ? 'Deadline' : 'Deadline'}: {proj.deadline}</span>
-                    </div>
-                  )}
-
-                  {/* Progress bar */}
-                  <div className="space-y-1 pt-1">
-                    <div className="flex items-center justify-between text-[10px] text-[#7A7167]">
-                      <span>{isNl ? 'Voortgang' : 'Progress'}</span>
-                      <span>{proj.progress}%</span>
-                    </div>
-                    <div className="w-full h-1.5 rounded-full bg-[#E5DFD3] overflow-hidden">
-                      <div
-                        className="h-full bg-[#7E694E] rounded-full transition-all"
-                        style={{ width: `${proj.progress}%` }}
-                      />
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Project Modal */}
-          {isProjectModalOpen && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs">
-              <div className="bg-[#FAF8F3] border border-[#DDD4C5] rounded-3xl max-w-sm w-full p-6 space-y-4 shadow-xl text-[#2C2825]">
-                <h3 className="font-serif text-lg text-[#2C2825]">
-                  {isNl ? 'Nieuw Mariluna Project' : 'New Project'}
-                </h3>
-                <form onSubmit={handleCreateProject} className="space-y-3">
-                  <input
-                    type="text"
-                    placeholder={isNl ? 'Projectnaam' : 'Project title'}
-                    value={newProjectTitle}
-                    onChange={(e) => setNewProjectTitle(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl bg-[#FFFFFF] border border-[#DDD4C5] text-xs text-[#2C2825]"
-                    autoFocus
-                  />
-                  <textarea
-                    rows={2}
-                    placeholder={isNl ? 'Korte beschrijving van doel en scope...' : 'Short description...'}
-                    value={newProjectDesc}
-                    onChange={(e) => setNewProjectDesc(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl bg-[#FFFFFF] border border-[#DDD4C5] text-xs text-[#2C2825]"
-                  />
-                  <input
-                    type="date"
-                    value={newProjectDeadline}
-                    onChange={(e) => setNewProjectDeadline(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl bg-[#FFFFFF] border border-[#DDD4C5] text-xs text-[#2C2825]"
-                  />
-                  <div className="flex justify-end gap-2 pt-2">
-                    <button
-                      type="button"
-                      onClick={() => setIsProjectModalOpen(false)}
-                      className="px-3 py-1.5 rounded-xl text-xs text-[#7A7167]"
-                    >
-                      {isNl ? 'Annuleren' : 'Cancel'}
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={!newProjectTitle.trim()}
-                      className="px-4 py-1.5 rounded-xl bg-[#2C2825] text-[#FAF8F3] text-xs font-medium disabled:opacity-40"
-                    >
-                      {isNl ? 'Aanmaken' : 'Create'}
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </div>
-          )}
-        </div>
+        <MarilunaProjectsSection
+          projects={projects}
+          tasks={tasks}
+          goals={goals}
+          ideas={ideas}
+          contentPosts={contentPlan.posts}
+          onSaveProject={onSaveProject || (() => {})}
+          onDeleteProject={onDeleteProject}
+          onSaveTask={onSaveTask || (() => {})}
+          onToggleTask={onToggleTask || (() => {})}
+          onAddContentPost={onAddContentPost}
+          onOpenAssistantWithPrompt={onOpenAssistantWithPrompt}
+          isNl={isNl}
+        />
       )}
 
       {/* ============================================================ */}
-      {/* 4. ADMIN & BOEKHOUDING                                       */}
+      {/* 4. ADMIN & BOEKHOUDING (Mariluna 3.0 Operating Layer)        */}
       {/* ============================================================ */}
       {activeSubTab === 'admin' && (
-        <div className="space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <h2 className="font-serif text-xl font-normal text-[#2C2825]">
-                {isNl ? 'Admin & Boekhouding' : 'Bookkeeping & Administrative Horizon'}
-              </h2>
-              <p className="text-xs text-[#7A7167] mt-0.5">
-                {isNl
-                  ? 'Handmatig vastgelegde facturen, uitgaven en fiscale deadlines zonder fictieve schattingen.'
-                  : 'Manually tracked invoices, expenses, and tax deadlines.'}
-              </p>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => setIsAdminModalOpen(true)}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#2C2825] text-[#FAF8F3] text-xs font-medium hover:bg-[#433D37] transition shadow-xs cursor-pointer w-fit"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>{isNl ? 'Boeking of Deadline Toevoegen' : 'Add Entry'}</span>
-            </button>
-          </div>
-
-          {/* Three Cards: Invoices, Expenses, Deadlines */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Invoices */}
-            <div className="rounded-2xl border border-[#E3D9C9] bg-[#FAF8F3] p-4 space-y-3">
-              <div className="flex items-center justify-between pb-2 border-b border-[#ECE3D4]">
-                <span className="text-xs font-semibold text-[#2C2825] uppercase tracking-wider">
-                  {isNl ? 'Facturen' : 'Invoices'}
-                </span>
-                <span className="text-[11px] px-2 py-0.5 rounded-full bg-[#EAE2D3] text-[#554C42]">
-                  {adminState.invoices.length}
-                </span>
-              </div>
-              {adminState.invoices.length === 0 ? (
-                <p className="text-xs text-[#8C8377] italic py-6 text-center">
-                  {isNl ? 'Nog geen facturen geregistreerd.' : 'No invoices recorded.'}
-                </p>
-              ) : (
-                <div className="space-y-2">
-                  {adminState.invoices.map((inv) => (
-                    <div
-                      key={inv.id}
-                      className="p-2.5 rounded-xl bg-[#FFFFFF] border border-[#E8E1D3] text-xs flex justify-between items-center"
-                    >
-                      <div>
-                        <div className="font-medium text-[#2C2825]">{inv.clientName}</div>
-                        <div className="text-[10px] text-[#7A7167]">{inv.invoiceNumber}</div>
-                      </div>
-                      <span className="font-mono font-medium text-[#2C2825]">€{inv.amount}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Expenses */}
-            <div className="rounded-2xl border border-[#E3D9C9] bg-[#FAF8F3] p-4 space-y-3">
-              <div className="flex items-center justify-between pb-2 border-b border-[#ECE3D4]">
-                <span className="text-xs font-semibold text-[#2C2825] uppercase tracking-wider">
-                  {isNl ? 'Uitgaven' : 'Expenses'}
-                </span>
-                <span className="text-[11px] px-2 py-0.5 rounded-full bg-[#EAE2D3] text-[#554C42]">
-                  {adminState.expenses.length}
-                </span>
-              </div>
-              {adminState.expenses.length === 0 ? (
-                <p className="text-xs text-[#8C8377] italic py-6 text-center">
-                  {isNl ? 'Nog geen uitgaven geregistreerd.' : 'No expenses recorded.'}
-                </p>
-              ) : (
-                <div className="space-y-2">
-                  {adminState.expenses.map((exp) => (
-                    <div
-                      key={exp.id}
-                      className="p-2.5 rounded-xl bg-[#FFFFFF] border border-[#E8E1D3] text-xs flex justify-between items-center"
-                    >
-                      <div>
-                        <div className="font-medium text-[#2C2825]">{exp.description}</div>
-                        <div className="text-[10px] text-[#7A7167] capitalize">{exp.category}</div>
-                      </div>
-                      <span className="font-mono text-[#A64A38]">-€{exp.amount}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Tax & Legal Deadlines */}
-            <div className="rounded-2xl border border-[#E3D9C9] bg-[#FAF8F3] p-4 space-y-3">
-              <div className="flex items-center justify-between pb-2 border-b border-[#ECE3D4]">
-                <span className="text-xs font-semibold text-[#2C2825] uppercase tracking-wider">
-                  {isNl ? 'Fiscale Deadlines' : 'Tax Deadlines'}
-                </span>
-                <span className="text-[11px] px-2 py-0.5 rounded-full bg-[#EAE2D3] text-[#554C42]">
-                  {adminState.deadlines.length}
-                </span>
-              </div>
-              {adminState.deadlines.length === 0 ? (
-                <p className="text-xs text-[#8C8377] italic py-6 text-center">
-                  {isNl ? 'Nog geen deadlines vastgelegd.' : 'No tax deadlines recorded.'}
-                </p>
-              ) : (
-                <div className="space-y-2">
-                  {adminState.deadlines.map((d) => (
-                    <div
-                      key={d.id}
-                      className="p-2.5 rounded-xl bg-[#FFFFFF] border border-[#E8E1D3] text-xs flex justify-between items-center"
-                    >
-                      <span className="font-medium text-[#2C2825]">{d.title}</span>
-                      <span className="text-[10px] font-mono text-[#7A7167] bg-[#F5EFE5] px-2 py-0.5 rounded-md">
-                        {d.dueDate}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Admin Modal */}
-          {isAdminModalOpen && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs">
-              <div className="bg-[#FAF8F3] border border-[#DDD4C5] rounded-3xl max-w-sm w-full p-6 space-y-4 shadow-xl text-[#2C2825]">
-                <h3 className="font-serif text-lg text-[#2C2825]">
-                  {isNl ? 'Nieuwe Boeking of Deadline' : 'Add Financial Entry'}
-                </h3>
-                <div className="flex rounded-xl bg-[#EFE9DD] p-1 text-xs">
-                  {(['invoice', 'expense', 'deadline'] as const).map((type) => (
-                    <button
-                      key={type}
-                      type="button"
-                      onClick={() => setAdminType(type)}
-                      className={`flex-1 py-1 rounded-lg transition capitalize ${
-                        adminType === type
-                          ? 'bg-[#FFFFFF] text-[#2C2825] font-medium shadow-xs'
-                          : 'text-[#7A7167]'
-                      }`}
-                    >
-                      {type === 'invoice' ? (isNl ? 'Factuur' : 'Invoice') : type === 'expense' ? (isNl ? 'Uitgave' : 'Expense') : 'Deadline'}
-                    </button>
-                  ))}
-                </div>
-                <form onSubmit={handleSaveAdminEntry} className="space-y-3">
-                  {adminType === 'invoice' && (
-                    <>
-                      <input
-                        type="text"
-                        placeholder={isNl ? 'Klantnaam' : 'Client name'}
-                        value={invoiceClient}
-                        onChange={(e) => setInvoiceClient(e.target.value)}
-                        className="w-full px-3 py-2 rounded-xl bg-[#FFFFFF] border border-[#DDD4C5] text-xs text-[#2C2825]"
-                        autoFocus
-                      />
-                      <input
-                        type="number"
-                        placeholder={isNl ? 'Bedrag in €' : 'Amount in €'}
-                        value={invoiceAmount}
-                        onChange={(e) => setInvoiceAmount(e.target.value === '' ? '' : Number(e.target.value))}
-                        className="w-full px-3 py-2 rounded-xl bg-[#FFFFFF] border border-[#DDD4C5] text-xs text-[#2C2825]"
-                      />
-                      <input
-                        type="date"
-                        value={invoiceDueDate}
-                        onChange={(e) => setInvoiceDueDate(e.target.value)}
-                        className="w-full px-3 py-2 rounded-xl bg-[#FFFFFF] border border-[#DDD4C5] text-xs text-[#2C2825]"
-                      />
-                    </>
-                  )}
-
-                  {adminType === 'expense' && (
-                    <>
-                      <input
-                        type="text"
-                        placeholder={isNl ? 'Omschrijving (bijv. Hosting, Software)' : 'Description'}
-                        value={expenseDesc}
-                        onChange={(e) => setExpenseDesc(e.target.value)}
-                        className="w-full px-3 py-2 rounded-xl bg-[#FFFFFF] border border-[#DDD4C5] text-xs text-[#2C2825]"
-                        autoFocus
-                      />
-                      <input
-                        type="number"
-                        placeholder={isNl ? 'Bedrag in €' : 'Amount in €'}
-                        value={expenseAmount}
-                        onChange={(e) => setExpenseAmount(e.target.value === '' ? '' : Number(e.target.value))}
-                        className="w-full px-3 py-2 rounded-xl bg-[#FFFFFF] border border-[#DDD4C5] text-xs text-[#2C2825]"
-                      />
-                    </>
-                  )}
-
-                  {adminType === 'deadline' && (
-                    <>
-                      <input
-                        type="text"
-                        placeholder={isNl ? 'Titel deadline (bijv. BTW Aangifte Q3)' : 'Deadline title'}
-                        value={deadlineTitle}
-                        onChange={(e) => setDeadlineTitle(e.target.value)}
-                        className="w-full px-3 py-2 rounded-xl bg-[#FFFFFF] border border-[#DDD4C5] text-xs text-[#2C2825]"
-                        autoFocus
-                      />
-                      <input
-                        type="date"
-                        value={deadlineDate}
-                        onChange={(e) => setDeadlineDate(e.target.value)}
-                        className="w-full px-3 py-2 rounded-xl bg-[#FFFFFF] border border-[#DDD4C5] text-xs text-[#2C2825]"
-                      />
-                    </>
-                  )}
-
-                  <div className="flex justify-end gap-2 pt-2">
-                    <button
-                      type="button"
-                      onClick={() => setIsAdminModalOpen(false)}
-                      className="px-3 py-1.5 rounded-xl text-xs text-[#7A7167]"
-                    >
-                      {isNl ? 'Annuleren' : 'Cancel'}
-                    </button>
-                    <button
-                      type="submit"
-                      className="px-4 py-1.5 rounded-xl bg-[#2C2825] text-[#FAF8F3] text-xs font-medium"
-                    >
-                      {isNl ? 'Opslaan' : 'Save'}
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </div>
-          )}
-        </div>
+        <MarilunaAdminSection
+          adminState={adminState}
+          onUpdateAdminState={onUpdateAdminState}
+          projects={marilunaProjects}
+          goals={marilunaGoals}
+          tasks={marilunaTasks}
+          onSaveTask={onSaveTask}
+          onOpenAssistantWithPrompt={onOpenAssistantWithPrompt}
+          isNl={isNl}
+        />
       )}
 
       {/* ============================================================ */}
-      {/* 5. CIJFERS (Modular Business Metrics Area)                   */}
+      {/* 5. CIJFERS (Business Figures, Metrics & Trends)              */}
       {/* ============================================================ */}
       {activeSubTab === 'metrics' && (
-        <div className="space-y-5">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="font-serif text-xl font-normal text-[#2C2825]">
-                {isNl ? 'Zakelijke Cijfers & KPI’s' : 'Business Metrics & Insights'}
-              </h2>
-              <p className="text-xs text-[#7A7167] mt-0.5">
-                {isNl
-                  ? 'Modulair en optioneel. Voer uitsluitend getallen in die voor jou betekenisvol zijn.'
-                  : 'Modular and optional business key numbers.'}
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() => setIsMetricModalOpen(true)}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#2C2825] text-[#FAF8F3] text-xs font-medium hover:bg-[#433D37] transition shadow-xs cursor-pointer"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>{isNl ? 'Cijfer Toevoegen' : 'Add Metric'}</span>
-            </button>
-          </div>
-
-          {metricsState.metrics.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-[#DCD3C4] p-10 text-center space-y-2">
-              <p className="text-xs text-[#7A7167] italic">
-                {isNl ? 'Nog geen cijfers ingevoerd.' : 'No metrics entered yet.'}
-              </p>
-              <button
-                type="button"
-                onClick={() => setIsMetricModalOpen(true)}
-                className="text-xs text-[#8C7654] font-medium hover:underline cursor-pointer"
-              >
-                {isNl ? '+ Voer je eerste getal in (bijv. Omzetdoel, Boekingen)' : '+ Record your first metric'}
-              </button>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-              {metricsState.metrics.map((m) => (
-                <div
-                  key={m.id}
-                  className="rounded-2xl border border-[#E3D9C9] bg-[#FAF8F3] p-4 space-y-1.5 shadow-xs"
-                >
-                  <span className="text-[10px] uppercase font-semibold text-[#8C7654] tracking-wider block">
-                    {m.period || '2026'}
-                  </span>
-                  <div className="font-serif text-2xl text-[#2C2825]">
-                    {m.unit === '€' ? `€${m.value}` : `${m.value} ${m.unit || ''}`}
-                  </div>
-                  <div className="text-xs text-[#6B6154] font-medium">{m.name}</div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Metric Modal */}
-          {isMetricModalOpen && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs">
-              <div className="bg-[#FAF8F3] border border-[#DDD4C5] rounded-3xl max-w-sm w-full p-6 space-y-4 shadow-xl text-[#2C2825]">
-                <h3 className="font-serif text-lg text-[#2C2825]">
-                  {isNl ? 'Cijfer of KPI Toevoegen' : 'Add Metric'}
-                </h3>
-                <form onSubmit={handleSaveMetric} className="space-y-3">
-                  <input
-                    type="text"
-                    placeholder={isNl ? 'Metrieknaam (bijv. Kwartaalomzet, Boekingen)' : 'Metric name'}
-                    value={metricName}
-                    onChange={(e) => setMetricName(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl bg-[#FFFFFF] border border-[#DDD4C5] text-xs text-[#2C2825]"
-                    autoFocus
-                  />
-                  <div className="grid grid-cols-2 gap-2">
-                    <input
-                      type="text"
-                      placeholder={isNl ? 'Waarde (bijv. 4500)' : 'Value'}
-                      value={metricValue}
-                      onChange={(e) => setMetricValue(e.target.value)}
-                      className="w-full px-3 py-2 rounded-xl bg-[#FFFFFF] border border-[#DDD4C5] text-xs text-[#2C2825]"
-                    />
-                    <input
-                      type="text"
-                      placeholder="Eenheid (bijv. €, stuks)"
-                      value={metricUnit}
-                      onChange={(e) => setMetricUnit(e.target.value)}
-                      className="w-full px-3 py-2 rounded-xl bg-[#FFFFFF] border border-[#DDD4C5] text-xs text-[#2C2825]"
-                    />
-                  </div>
-                  <div className="flex justify-end gap-2 pt-2">
-                    <button
-                      type="button"
-                      onClick={() => setIsMetricModalOpen(false)}
-                      className="px-3 py-1.5 rounded-xl text-xs text-[#7A7167]"
-                    >
-                      {isNl ? 'Annuleren' : 'Cancel'}
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={!metricName.trim() || !metricValue.trim()}
-                      className="px-4 py-1.5 rounded-xl bg-[#2C2825] text-[#FAF8F3] text-xs font-medium disabled:opacity-40"
-                    >
-                      {isNl ? 'Opslaan' : 'Save'}
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </div>
-          )}
-        </div>
+        <MarilunaMetricsSection
+          metricsState={metricsState}
+          onUpdateMetricsState={onUpdateMetricsState}
+          projects={marilunaProjects}
+          goals={marilunaGoals}
+          onOpenAssistantWithPrompt={onOpenAssistantWithPrompt}
+          isNl={isNl}
+        />
       )}
 
       {/* ============================================================ */}
@@ -1287,46 +1068,22 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
       {/* 7. DOELEN & STRATEGIE                                        */}
       {/* ============================================================ */}
       {activeSubTab === 'strategy' && (
-        <div className="space-y-5">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="font-serif text-xl font-normal text-[#2C2825]">
-                {isNl ? 'Strategische Doelen & Focus' : 'Strategic Horizon & Goals'}
-              </h2>
-              <p className="text-xs text-[#7A7167] mt-0.5">
-                {isNl ? 'Jaardoelen, kwartaaldoelen en zakelijke focus.' : 'Yearly objectives and strategic quarters.'}
-              </p>
-            </div>
-          </div>
-
-          {marilunaGoals.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-[#DCD3C4] p-10 text-center space-y-2">
-              <p className="text-xs text-[#7A7167] italic">
-                {isNl ? 'Nog geen zakelijke doelen gedefinieerd.' : 'No business goals recorded yet.'}
-              </p>
-              <p className="text-xs text-[#8C8377]">
-                {isNl ? 'Voeg zakelijke doelen toe via de Doelen-tab of bespreek ze met Alchemy.' : 'Add goals via Goals tab or discuss with Alchemy.'}
-              </p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {marilunaGoals.map((g) => (
-                <div
-                  key={g.id}
-                  className="rounded-2xl border border-[#E3D9C9] bg-[#FAF8F3] p-4 space-y-2.5 shadow-xs"
-                >
-                  <h4 className="font-serif text-base text-[#2C2825] font-medium">{g.title}</h4>
-                  {g.description && <p className="text-xs text-[#7A7167]">{g.description}</p>}
-                  {g.targetDate && (
-                    <div className="text-[10px] font-mono text-[#8C7654]">
-                      {isNl ? 'Doeldatum' : 'Target'}: {g.targetDate}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+        <MarilunaStrategySection
+          goals={goals}
+          projects={projects}
+          tasks={tasks}
+          contentPosts={contentPlan.posts}
+          ideas={ideas}
+          contentPlan={contentPlan}
+          onSaveGoal={onSaveGoal || (() => {})}
+          onDeleteGoal={onDeleteGoal}
+          onSaveProject={onSaveProject || (() => {})}
+          onToggleTask={onToggleTask || (() => {})}
+          onUpdateContentPlan={onUpdateContentPlan}
+          onOpenAssistantWithPrompt={onOpenAssistantWithPrompt}
+          onSelectProject={(projId) => setActiveSubTab('projects')}
+          isNl={isNl}
+        />
       )}
 
       {/* ============================================================ */}

@@ -51,6 +51,18 @@ export const EMPTY_WELLBEING_STATE: WellbeingState = {
     days: [],
   },
   shoppingList: [],
+  waterTracker: {
+    bottleVolumeMl: 750,
+    defaultTargetBottles: 4,
+    history: [],
+  },
+  bodyMeasurementHistory: [],
+  weeklyBodyCheckReminder: {
+    enabled: true,
+    dayOfWeek: 'sunday',
+    preferredTime: '09:00',
+    snoozedUntil: null,
+  },
 };
 
 export const INITIAL_WELLBEING_STATE: WellbeingState = {
@@ -638,6 +650,58 @@ export const INITIAL_WELLBEING_STATE: WellbeingState = {
     { id: 'sl-15', name: 'Capers in sea salt', category: 'pantry', quantity: '1 small jar', inPantry: false, checked: false, isManual: false },
     { id: 'sl-16', name: 'Ceremonial grade matcha', category: 'other', quantity: '30g tin', inPantry: false, checked: false, isManual: true },
   ],
+  waterTracker: {
+    bottleVolumeMl: 750,
+    defaultTargetBottles: 4,
+    history: [
+      { date: '2026-09-18', bottles: 3, volumeMl: 2250, targetBottles: 4 },
+      { date: '2026-09-17', bottles: 4, volumeMl: 3000, targetBottles: 4 },
+      { date: '2026-09-16', bottles: 3, volumeMl: 2250, targetBottles: 4 },
+    ],
+  },
+  bodyMeasurementHistory: [
+    {
+      id: 'bm-1',
+      date: '2026-08-20',
+      unit: 'cm',
+      shoulder: 99,
+      bicepLeft: 27.5,
+      bicepRight: 27.8,
+      chest: 88,
+      waist: 68,
+      abdomen: 74,
+      hip: 96,
+      thighLeft: 54.5,
+      thighRight: 54.7,
+      calfLeft: 35.0,
+      calfRight: 35.1,
+      notes: 'Beginmeting ochtend nuchter',
+    },
+    {
+      id: 'bm-2',
+      date: '2026-09-13',
+      unit: 'cm',
+      shoulder: 99,
+      bicepLeft: 27.2,
+      bicepRight: 27.5,
+      chest: 87.5,
+      waist: 66.8,
+      abdomen: 72.5,
+      hip: 95.8,
+      thighLeft: 54.0,
+      thighRight: 54.2,
+      calfLeft: 34.8,
+      calfRight: 35.0,
+      notes: 'Zondagochtend lichaamscheck',
+    },
+  ],
+  weeklyBodyCheckReminder: {
+    enabled: true,
+    dayOfWeek: 'sunday',
+    preferredTime: '09:00',
+    snoozedUntil: null,
+    lastCompletedDate: '2026-09-13',
+  },
 };
 
 /**

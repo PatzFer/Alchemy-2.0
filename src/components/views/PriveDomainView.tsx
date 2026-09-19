@@ -17,6 +17,7 @@ import {
   Trash2,
   Smile,
   AlertCircle,
+  Droplet,
 } from 'lucide-react';
 import {
   LifeProfile,
@@ -35,6 +36,7 @@ import {
 import { CycleView } from './CycleView';
 import { WellbeingView } from './WellbeingView';
 import { calculateCycleStatus } from '../../lib/cycleUtils';
+import { calculateWaterStats } from '../../lib/healthUtils';
 
 export type PriveSubTab =
   | 'overview'
@@ -112,6 +114,7 @@ export const PriveDomainView: React.FC<PriveDomainViewProps> = ({
   // Cycle status for overview
   const cycleStatus = calculateCycleStatus(cycleProfile, todayStr);
   const todayCheckIn = dailyCheckIns.find((c) => c.date === todayStr);
+  const waterStats = calculateWaterStats(wellbeing.waterTracker);
 
   // Forms for Routines & Commitments
   const [newRoutineTitle, setNewRoutineTitle] = useState('');
@@ -248,7 +251,7 @@ export const PriveDomainView: React.FC<PriveDomainViewProps> = ({
       {activeSubTab === 'overview' && (
         <div className="space-y-6">
           {/* Quick Stats / Highlights */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             {/* Cycle Snapshot */}
             <div
               onClick={() => setActiveSubTab('cycle')}
@@ -295,6 +298,23 @@ export const PriveDomainView: React.FC<PriveDomainViewProps> = ({
               </div>
               <p className="text-[11px] text-[#7A7167]">
                 {todayCheckIn?.notes || (isNl ? 'Ingevuld via de Vandaag-pagina' : 'Recorded via Today screen')}
+              </p>
+            </div>
+
+            {/* Water Tracker Snapshot */}
+            <div
+              onClick={() => setActiveSubTab('wellbeing')}
+              className="p-4 rounded-2xl border border-[#E3D9C9] bg-[#FAF8F3] hover:border-[#8C7654] transition cursor-pointer space-y-1 shadow-xs"
+            >
+              <div className="flex items-center justify-between text-[11px] text-[#8C7654] font-medium uppercase tracking-wider">
+                <span>{isNl ? 'Water (750ml)' : 'Water (750ml)'}</span>
+                <Droplet className="w-3.5 h-3.5 text-[#3B82F6]" />
+              </div>
+              <div className="font-serif text-lg text-[#2C2825]">
+                {waterStats.todayVolumeL} L
+              </div>
+              <p className="text-[11px] text-[#7A7167]">
+                {waterStats.todayBottles} / {waterStats.targetBottles} {isNl ? 'flessen' : 'bottles'} ({waterStats.percentOfTarget}%)
               </p>
             </div>
 
@@ -470,6 +490,10 @@ export const PriveDomainView: React.FC<PriveDomainViewProps> = ({
           wellbeing={wellbeing}
           onUpdateWellbeing={onUpdateWellbeing}
           onOpenAssistantWithPrompt={onOpenAssistantWithPrompt}
+          personalStyle={personalStyle}
+          onUpdateStyle={onUpdateStyle}
+          dailyCheckIns={dailyCheckIns}
+          cycleProfile={cycleProfile}
         />
       )}
 

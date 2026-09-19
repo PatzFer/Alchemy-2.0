@@ -10,34 +10,61 @@ import {
   ShieldCheck,
   Shield,
   Layers,
+  Droplet,
 } from 'lucide-react';
-import { WellbeingState } from '../../types';
+import {
+  WellbeingState,
+  PersonalStyleState,
+  DailyCheckIn,
+  CycleProfile,
+  WaterTrackerState,
+} from '../../types';
 import { WellbeingProgressSection } from '../wellbeing/WellbeingProgressSection';
 import { WellbeingCheckInsSection } from '../wellbeing/WellbeingCheckInsSection';
 import { WellbeingMovementSection } from '../wellbeing/WellbeingMovementSection';
 import { WellbeingNutritionSection } from '../wellbeing/WellbeingNutritionSection';
 import { WellbeingShoppingSection } from '../wellbeing/WellbeingShoppingSection';
 import { WellbeingAiPromptsSection } from '../wellbeing/WellbeingAiPromptsSection';
+import { WaterTrackerSection } from '../health/WaterTrackerSection';
 
-export type WellbeingSubTab = 'progress' | 'checkins' | 'movement' | 'nutrition' | 'shopping' | 'ai';
+export type WellbeingSubTab =
+  | 'progress'
+  | 'movement'
+  | 'water'
+  | 'checkins'
+  | 'nutrition'
+  | 'shopping'
+  | 'ai';
 
 interface WellbeingViewProps {
   wellbeing: WellbeingState;
   onUpdateWellbeing: (updater: (prev: WellbeingState) => WellbeingState) => void;
   onOpenAssistantWithPrompt: (prompt: string) => void;
+  personalStyle?: PersonalStyleState;
+  onUpdateStyle?: (updater: (prev: PersonalStyleState) => PersonalStyleState) => void;
+  dailyCheckIns?: DailyCheckIn[];
+  cycleProfile?: CycleProfile;
 }
 
 export const WellbeingView: React.FC<WellbeingViewProps> = ({
   wellbeing,
   onUpdateWellbeing,
   onOpenAssistantWithPrompt,
+  personalStyle,
+  onUpdateStyle,
+  dailyCheckIns,
+  cycleProfile,
 }) => {
   const [activeSubTab, setActiveSubTab] = useState<WellbeingSubTab>('progress');
 
+  const todayStr = new Date().toISOString().split('T')[0];
+  const todayCheckIn = dailyCheckIns?.find((c) => c.date === todayStr);
+
   const tabs: { id: WellbeingSubTab; label: string; icon: React.FC<{ className?: string }> }[] = [
-    { id: 'progress', label: 'Progress & Trends', icon: TrendingUp },
+    { id: 'progress', label: 'Progress & Metingen', icon: TrendingUp },
+    { id: 'movement', label: 'Beweging', icon: Activity },
+    { id: 'water', label: 'Water (750ml)', icon: Droplet },
     { id: 'checkins', label: 'Check-Ins', icon: Clock },
-    { id: 'movement', label: 'Movement', icon: Activity },
     { id: 'nutrition', label: 'Nutrition & Menu', icon: Utensils },
     { id: 'shopping', label: 'Shopping List', icon: ShoppingBag },
     { id: 'ai', label: 'Wellbeing AI', icon: Sparkles },
@@ -124,14 +151,8 @@ export const WellbeingView: React.FC<WellbeingViewProps> = ({
             wellbeing={wellbeing}
             onUpdateWellbeing={onUpdateWellbeing}
             onOpenAssistantWithPrompt={onOpenAssistantWithPrompt}
-          />
-        )}
-
-        {activeSubTab === 'checkins' && (
-          <WellbeingCheckInsSection
-            wellbeing={wellbeing}
-            onUpdateWellbeing={onUpdateWellbeing}
-            onNavigateToProgress={() => setActiveSubTab('progress')}
+            personalStyle={personalStyle}
+            onUpdateStyle={onUpdateStyle}
           />
         )}
 
@@ -140,6 +161,29 @@ export const WellbeingView: React.FC<WellbeingViewProps> = ({
             wellbeing={wellbeing}
             onUpdateWellbeing={onUpdateWellbeing}
             onOpenAssistantWithPrompt={onOpenAssistantWithPrompt}
+            todayCheckIn={todayCheckIn}
+            cycleProfile={cycleProfile}
+          />
+        )}
+
+        {activeSubTab === 'water' && (
+          <WaterTrackerSection
+            waterTracker={wellbeing.waterTracker}
+            onUpdateWaterTracker={(updater) =>
+              onUpdateWellbeing((prev) => ({
+                ...prev,
+                waterTracker: updater(prev.waterTracker),
+              }))
+            }
+            lang="nl"
+          />
+        )}
+
+        {activeSubTab === 'checkins' && (
+          <WellbeingCheckInsSection
+            wellbeing={wellbeing}
+            onUpdateWellbeing={onUpdateWellbeing}
+            onNavigateToProgress={() => setActiveSubTab('progress')}
           />
         )}
 
