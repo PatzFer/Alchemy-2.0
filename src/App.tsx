@@ -26,6 +26,7 @@ import {
   resetState,
   AppState,
   INITIAL_STATE,
+  DEFAULT_INTEGRATIONS_STATE,
 } from './lib/storage';
 import {
   ActiveWorldFilter,
@@ -436,6 +437,13 @@ export default function App() {
     }));
   };
 
+  const handleUpdateMemories = (updater: (prev: MemoryItem[]) => MemoryItem[]) => {
+    setState((prev) => ({
+      ...prev,
+      memories: updater(prev.memories || []),
+    }));
+  };
+
   // Assistant messaging & structured actions
   const handleAddAssistantMessage = (msg: AssistantMessage) => {
     setState((prev) => ({
@@ -672,6 +680,9 @@ export default function App() {
             onUpdateFoundation={handleUpdateFoundation}
             lang={userLang}
             onOpenSetup={() => setIsSetupWizardOpen(true)}
+            integrations={state.integrations}
+            nutrition={state.nutrition}
+            onAddMemory={handleAddMemory}
           />
         )}
 
@@ -693,6 +704,7 @@ export default function App() {
             lifeProfile={state.lifeProfile}
             activeWorld={activeWorld}
             onAddEvent={handleAddCalendarEvent}
+            integrations={state.integrations}
           />
         )}
 
@@ -746,6 +758,7 @@ export default function App() {
             onUpdateClients={(clients) => setState((prev) => ({ ...prev, marilunaClients: clients }))}
             onOpenAssistantWithPrompt={openAssistantWithPrompt}
             lang={state.foundation?.aboutYou?.preferredLanguage || 'nl'}
+            integrations={state.integrations}
           />
         )}
 
@@ -778,6 +791,15 @@ export default function App() {
             onOpenAssistantWithPrompt={openAssistantWithPrompt}
             onSelectTab={setCurrentTab}
             lang={state.foundation?.aboutYou?.preferredLanguage || 'nl'}
+            foodProfile={state.foundation?.foodProfile}
+            foundationStyling={state.foundation?.personalStyling}
+            onUpdateFoundationStyling={(styling) =>
+              setState((prev) => ({
+                ...prev,
+                foundation: { ...prev.foundation, personalStyling: styling },
+              }))
+            }
+            integrations={state.integrations}
           />
         )}
 
@@ -810,6 +832,15 @@ export default function App() {
             onOpenAssistantWithPrompt={openAssistantWithPrompt}
             onSelectTab={setCurrentTab}
             lang={state.foundation?.aboutYou?.preferredLanguage || 'nl'}
+            foodProfile={state.foundation?.foodProfile}
+            foundationStyling={state.foundation?.personalStyling}
+            onUpdateFoundationStyling={(styling) =>
+              setState((prev) => ({
+                ...prev,
+                foundation: { ...prev.foundation, personalStyling: styling },
+              }))
+            }
+            integrations={state.integrations}
           />
         )}
 
@@ -842,6 +873,15 @@ export default function App() {
             onOpenAssistantWithPrompt={openAssistantWithPrompt}
             onSelectTab={setCurrentTab}
             lang={state.foundation?.aboutYou?.preferredLanguage || 'nl'}
+            foodProfile={state.foundation?.foodProfile}
+            foundationStyling={state.foundation?.personalStyling}
+            onUpdateFoundationStyling={(styling) =>
+              setState((prev) => ({
+                ...prev,
+                foundation: { ...prev.foundation, personalStyling: styling },
+              }))
+            }
+            integrations={state.integrations}
           />
         )}
 
@@ -850,6 +890,7 @@ export default function App() {
             memories={state.memories}
             onAddMemory={handleAddMemory}
             onDeleteMemory={handleDeleteMemory}
+            onUpdateMemories={handleUpdateMemories}
             isSampleData={state.isSampleData}
             onToggleSampleData={handleToggleSampleData}
             onExportData={handleExportData}
@@ -860,6 +901,18 @@ export default function App() {
             cycleProfile={state.cycleProfile}
             foundation={state.foundation}
             onUpdateFoundation={handleUpdateFoundation}
+            wellbeingState={state.wellbeing}
+            integrations={state.integrations}
+            onUpdateIntegrations={(updater) =>
+              setState((prev) => {
+                const nextState = {
+                  ...prev,
+                  integrations: updater(prev.integrations || DEFAULT_INTEGRATIONS_STATE),
+                };
+                saveState(nextState);
+                return nextState;
+              })
+            }
           />
         )}
 

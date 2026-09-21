@@ -191,6 +191,16 @@ export interface LifeProfile {
   };
 }
 
+export type MemoryType = 'explicit' | 'confirmed' | 'learned' | 'temporary';
+export type MemorySource =
+  | 'user_stated'
+  | 'foundation'
+  | 'user_confirmed'
+  | 'learned_pattern'
+  | 'temporary_context'
+  | 'ai_inferred';
+export type MemoryConfidence = 'high' | 'medium' | 'low';
+
 export interface MemoryItem {
   id: string;
   category: string;
@@ -198,7 +208,12 @@ export interface MemoryItem {
   realm: Realm;
   dateAdded: string;
   importance: 'high' | 'medium' | 'contextual';
-  source: 'user_stated' | 'ai_inferred';
+  source: MemorySource | 'user_stated' | 'ai_inferred';
+  type?: MemoryType;
+  confidence?: MemoryConfidence;
+  updatedAt?: string;
+  expiresAt?: string;
+  status?: 'active' | 'archived' | 'pending_confirmation';
 }
 
 export type ContentStatus =
@@ -389,13 +404,19 @@ export interface MarilunaOffering {
 export interface MarilunaClient {
   id: string;
   name: string;
+  firstName?: string;
+  lastName?: string;
   company?: string;
   email?: string;
+  countryCode?: string;
+  phoneNumber?: string;
+  phoneE164?: string;
   phone?: string;
   activeProjectIds?: string[];
   status: 'lead' | 'active' | 'completed' | 'on_hold';
   notes?: string;
   createdAt: string;
+  updatedAt?: string;
 }
 
 export interface ContentPlan {
@@ -430,6 +451,109 @@ export interface PersonalStyleState {
   bodyShape?: string;
   calculatedBodyShape?: string;
   shapePromptDismissed?: boolean;
+  bodyDivergenceDismissed?: boolean;
+  evaluations?: GarmentEvaluation[];
+  learnedFeedback?: StyleLearnedFeedback[];
+  activeMood?: string;
+  selectedOccasion?: string;
+}
+
+export type CuisineType = 'portuguese' | 'belgian' | 'italian' | 'other';
+export type DiningParticipantChoice = 'solo' | 'couple' | 'none'; // 👤 1 — alleen ik | 👥 2 — ik + Jeroen | 🍴 Geen maaltijd nodig
+export type MealStatus = 'planned' | 'cooked' | 'skipped' | 'replaced';
+export type MealFeedbackRating = 'love' | 'like' | 'neutral' | 'dislike';
+
+export interface RecipeIngredient {
+  id: string;
+  name: string;
+  amountPerPerson: number;
+  unit: string;
+  category: 'meat_fish' | 'dairy_chilled' | 'vegetables' | 'pantry' | 'spices_other';
+  notes?: string;
+  isCookedOrPureed?: boolean;
+}
+
+export interface Recipe {
+  id: string;
+  name: string;
+  cuisine: CuisineType;
+  shortDescription: string;
+  prepMinutes: number;
+  cookMinutes: number;
+  totalMinutes: number;
+  isSlowcooker: boolean;
+  proteinGramsPerPerson: number;
+  ingredients: RecipeIngredient[];
+  steps: string[];
+  substitutions?: string[];
+  storageNotes?: string;
+  mealPrepNotes?: string;
+  isCustom?: boolean;
+}
+
+export interface PlannedMealDay {
+  date: string; // YYYY-MM-DD
+  dayOfWeek: 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday';
+  diningChoice: DiningParticipantChoice;
+  estimatedAvailableCookingTimeMinutes?: number;
+  dayContextNote?: string;
+  recipeId?: string;
+  customMealName?: string;
+  status: MealStatus;
+  replacementMealId?: string;
+  skipReason?: string;
+  notes?: string;
+}
+
+export interface PriveWeeklyMenuPlan {
+  id: string;
+  weekStartDate: string; // Monday YYYY-MM-DD
+  plannedAt: string;
+  thursdayPromptDismissed?: boolean;
+  days: PlannedMealDay[];
+  notes?: string;
+}
+
+export interface KitchenInventoryItem {
+  id: string;
+  name: string;
+  quantity: string;
+  location: 'pantry' | 'refrigerator' | 'freezer';
+  category: 'meat_fish' | 'dairy_chilled' | 'vegetables' | 'pantry' | 'spices_other';
+  addedDate: string;
+  notes?: string;
+  isUsed?: boolean;
+}
+
+export interface ShoppingListItem {
+  id: string;
+  name: string;
+  quantity: string;
+  category: 'meat_fish' | 'dairy_chilled' | 'vegetables' | 'pantry' | 'spices_other';
+  checked: boolean;
+  alreadyInStock: boolean;
+  stockLocation?: 'pantry' | 'refrigerator' | 'freezer';
+  sourceRecipeNames?: string[];
+}
+
+export interface MealFeedbackEntry {
+  recipeId: string;
+  recipeName: string;
+  feedback: MealFeedbackRating;
+  date: string;
+  notes?: string;
+}
+
+export interface MealHistoryEntry {
+  id: string;
+  date: string;
+  recipeId: string;
+  recipeName: string;
+  cuisine: CuisineType;
+  participants: DiningParticipantChoice;
+  status: MealStatus;
+  cookedAt?: string;
+  feedback?: MealFeedbackRating;
 }
 
 export interface NutritionState {
@@ -437,6 +561,15 @@ export interface NutritionState {
   dislikes: string[];
   partnerSharedDinners: string[];
   cookingTimeAvailableWeekdays: number;
+  // Authoritative Meals & Menu Planning State
+  activeWeeklyPlan?: PriveWeeklyMenuPlan;
+  pastWeeklyPlans?: PriveWeeklyMenuPlan[];
+  inventory?: KitchenInventoryItem[];
+  shoppingList?: ShoppingListItem[];
+  feedbackHistory?: MealFeedbackEntry[];
+  mealHistory?: MealHistoryEntry[];
+  customRecipes?: Recipe[];
+  lastThursdayPromptCheck?: string;
 }
 
 // -------------------------------------------------------------
@@ -501,18 +634,32 @@ export type NotificationCategory =
   | 'goal_checkin'
   | 'cycle_insight'
   | 'weekly_planning'
-  | 'rescheduling_suggestion';
+  | 'rescheduling_suggestion'
+  | 'reminder_notifications'
+  | 'calendar_notifications'
+  | 'meal_planning_notifications'
+  | 'health_movement_reminders'
+  | 'mariluna_notifications'
+  | 'important_ai_suggestions';
 
 export interface NotificationSettings {
   enabled: boolean;
   browserPermission: 'default' | 'granted' | 'denied';
   browserPushEnabled?: boolean;
+  pushNotificationsEnabled?: boolean;
   inAppNotificationsEnabled?: boolean;
   quietHoursStart: string; // e.g. "21:00"
   quietHoursEnd: string;   // e.g. "08:30"
   maxDailyFrequency: number; // e.g. 2 or 3 notifications per day
   soundEnabled: boolean;
   categories: Record<NotificationCategory, boolean>;
+  // Granular Category Controls (Prompt 10)
+  reminderNotifications?: boolean;       // Sunday weekly measurement reminder
+  calendarNotifications?: boolean;       // Calendar upcoming appointments
+  mealPlanningNotifications?: boolean;   // Thursday 18:00 menu planning prompt
+  healthMovementReminders?: boolean;     // Gentle movement / steps context
+  marilunaNotifications?: boolean;       // Business follow-ups / client email review
+  importantAiSuggestions?: boolean;      // Capacity alerts & rescheduling proposals
   upcomingTaskReminders?: boolean;
   marilunaFollowUps?: boolean;
   forgottenIdeas?: boolean;
@@ -829,6 +976,180 @@ export interface WeatherInfo {
   isDay?: boolean;
 }
 
+export interface FoundationPatzIdentity {
+  name: string;
+  preferredName: string;
+  age: number;
+  heightMeters: number;
+  location: string;
+  primaryLanguage: Language;
+  bornIn: string;
+  heritage: string;
+  portugalConnectionNotes: string;
+}
+
+export interface FoundationAstrology {
+  sunSign: string;
+  frameworkRole: string;
+  notes?: string;
+}
+
+export interface FoundationCommunication {
+  primaryLanguage: Language;
+  preferredTone: string;
+  shortAnswers: boolean;
+  preferBulletPoints: boolean;
+  practicalAndDirect: boolean;
+  doNotOverExplain: boolean;
+  gentleCorrection: boolean;
+  constructiveChallenge: boolean;
+  avoidCorporateRobotic: boolean;
+  avoidGenericAiFiller: boolean;
+  supportiveNotPatronising: boolean;
+  epistemologyNotes: string;
+}
+
+export interface FoundationLifeWork {
+  workdays: string[]; // ['tuesday', 'wednesday', 'friday']
+  workHoursStart: string; // '08:00'
+  workHoursEnd: string; // '16:30'
+  businessName: string;
+  businessDescription: string;
+  protectedPersonalTime: string;
+  pacingPhilosophy: string;
+  recurringCommitments: string[];
+  personalRoutines: string[];
+}
+
+export interface FoundationPlanning {
+  helpSeeWhatMatters: boolean;
+  helpPrioritize: boolean;
+  avoidUnrealisticPlanning: boolean;
+  breakLargeProjectsIntoActions: boolean;
+  rememberImportantThings: boolean;
+  noticeConflicts: boolean;
+  suggestRealisticTiming: boolean;
+  keepSpaceForPersonalLife: boolean;
+  connectAreasIntelligently: boolean;
+  respectAutonomy: boolean;
+  avoidProductivityTrap: boolean;
+}
+
+export interface FoundationFoodProfile {
+  cuisineHierarchy: {
+    primary: string;
+    secondary: string;
+    tertiary: string;
+  };
+  likes: string[];
+  dislikes: string[];
+  noCouscousRule: boolean;
+  noQuinoaRule: boolean;
+  noRawVegetablesRule: boolean;
+  allergies: string[];
+  intolerances: string[];
+  kitchenNotes: string;
+}
+
+export interface StyleLearnedFeedback {
+  id: string;
+  itemTitle: string;
+  category: string;
+  rating?: 'love' | 'like' | 'neutral' | 'nah' | 'dislike';
+  reaction?: 'love' | 'loveee' | 'like' | 'neutral' | 'nah' | 'dislike'; // ❤️, 💕, 👍, 😐, 👎, ❌
+  reactionType?: 'mooi_bij_anderen' | 'zou_dragen' | 'voelt_als_mij' | 'gewenste_uitstraling';
+  elementsLiked?: string[];
+  elementsDisliked?: string[];
+  note?: string;
+  date: string;
+}
+
+export interface GarmentEvaluation {
+  id: string;
+  date: string;
+  itemTitle: string;
+  category: string;
+  imageUrl?: string;
+  brand?: string;
+  price?: string;
+  occasion?: string;
+  mood?: string;
+  styleMatchPercent: number;
+  silhouetteMatchPercent: number;
+  colourMatchPercent: number;
+  detailMatchPercent?: number;
+  moodMatchPercent?: number;
+  practicalityPercent?: number;
+  emotionalMatchPercent?: number;
+  overallMatchPercent: number;
+  fitConfidencePercent: number;
+  fitConfidenceReason?: string;
+  verdictNl: string;
+  keyObservations: string[];
+  pros?: string[];
+  considerations?: string[];
+  enhancements?: string[];
+  conclusion?: string;
+  alternatives?: string[];
+  userFeedback?: 'love' | 'like' | 'neutral' | 'nah' | 'dislike';
+  userReaction?: 'love' | 'loveee' | 'like' | 'neutral' | 'nah' | 'dislike';
+  reactionType?: 'mooi_bij_anderen' | 'zou_dragen' | 'voelt_als_mij' | 'gewenste_uitstraling';
+  wardrobeStatus?: 'none' | 'favorite' | 'wishlist' | 'owned' | 'reconsider';
+  notes?: string;
+}
+
+export interface FoundationPersonalStyling {
+  profileVersion: string;
+  silhouetteLabel: string;
+  heightMeters: number;
+  antiRigidDisclaimer: string;
+  bodyProportionsProfile: {
+    torsoProportion: string;
+    legLineEmphasis: string;
+    waistDefinition: string;
+    hipFlow: string;
+  };
+  bodyArchitecture: string;
+  styleDNA: {
+    essence: string;
+    signatureElements: string[];
+    preferredFabrics: string[];
+    unfavorableElements: string[];
+    coreKeywords?: string[];
+    strongAccents?: string[];
+    styleTensions?: string[];
+    styleDirections?: string[];
+  };
+  desiredPresence?: string;
+  clothingDetails?: string[];
+  sensualityDNA: {
+    philosophy: string;
+    preferredAccents: string[];
+  };
+  colourDNA: {
+    paletteName: string;
+    primaryColors: { name: string; hex: string; role: string }[];
+    colorsToAvoid: string[];
+  };
+  hairDNA: {
+    aesthetic: string;
+    notes: string;
+  };
+  accessoryDNA: {
+    metals: string[];
+    jewelleryStyle: string;
+    bagsFootwear: string;
+  };
+  styleFormula: string;
+  emotionalDressingMoods: string[];
+  philosophy: string;
+  posturePresence: string;
+  stylingLanguagePreferences: string;
+  evaluationLogicSummary: string;
+  learnedFeedback: StyleLearnedFeedback[];
+  recentEvaluations: GarmentEvaluation[];
+}
+
 export interface FoundationAboutYou {
   name: string;
   dateOfBirth?: string;
@@ -959,6 +1280,15 @@ export interface FoundationData {
   configuredSections: string[];
   skippedSections: string[];
   lastUpdated?: string;
+  // Authoritative Foundation & Patz Profile domains
+  patzIdentity: FoundationPatzIdentity;
+  astrology: FoundationAstrology;
+  communication: FoundationCommunication;
+  lifeWork: FoundationLifeWork;
+  planning: FoundationPlanning;
+  foodProfile: FoundationFoodProfile;
+  personalStyling: FoundationPersonalStyling;
+  // Domain contexts & configurations
   aboutYou: FoundationAboutYou;
   yourLife: FoundationYourLife;
   work: FoundationWork;
@@ -970,6 +1300,179 @@ export interface FoundationData {
   ai: FoundationAI;
   notifications: FoundationNotifications;
 }
+
+// -------------------------------------------------------------
+// Integrations 1.0 Architecture (Prompt 10)
+// -------------------------------------------------------------
+
+export type IntegrationServiceId =
+  | 'google_calendar'
+  | 'mariluna_gmail'
+  | 'health_connect'
+  | 'mariluna_instagram'
+  | 'push_notifications';
+
+export type IntegrationConnectionStatus =
+  | 'connected'
+  | 'not_connected'
+  | 'needs_attention'
+  | 'disconnected'
+  | 'unavailable';
+
+export interface GoogleCalendarIntegration {
+  status: IntegrationConnectionStatus;
+  accountEmail?: string;
+  lastSync?: string;
+  readOnly: boolean;
+  syncedEventsCount: number;
+  error?: string;
+  // Explicit distinction
+  isPatriciaOnlySchedule: boolean; // Always true: Never infer or retrieve Jeroen's schedule
+}
+
+export interface MarilunaGmailMessage {
+  id: string;
+  threadId: string;
+  sender: string;
+  senderEmail: string;
+  subject: string;
+  date: string;
+  snippet: string;
+  unread: boolean;
+  possibleClientMatchId?: string;
+  needsReview?: boolean;
+}
+
+export interface MarilunaGmailIntegration {
+  status: IntegrationConnectionStatus;
+  accountEmail?: string;
+  lastSync?: string;
+  readOnly: boolean;
+  businessOnly: boolean; // Strictly Mariluna business; never personal email
+  syncedThreadsCount: number;
+  messages: MarilunaGmailMessage[];
+  error?: string;
+}
+
+export interface HealthConnectIntegration {
+  status: IntegrationConnectionStatus;
+  platform: 'android' | 'web';
+  lastSync?: string;
+  stepsToday?: number;
+  todaySteps?: number;
+  activeMinutes?: number;
+  isStepsOnly: boolean; // Always true: strictly steps/activity; never heart rate, glucose, sleep, cycle, meds
+  isPrivateOnly: boolean; // Always true: never exposed to Mariluna or external marketing
+  error?: string;
+}
+
+export interface InstagramPostItem {
+  id: string;
+  caption: string;
+  mediaType: 'IMAGE' | 'VIDEO' | 'CAROUSEL_ALBUM' | 'REEL';
+  mediaUrl?: string;
+  permalink?: string;
+  timestamp: string;
+  likeCount?: number;
+  commentsCount?: number;
+  reach?: number;
+  matchedContentPostId?: string;
+  needsReview?: boolean;
+}
+
+export interface MarilunaInstagramIntegration {
+  status: IntegrationConnectionStatus;
+  accountUsername?: string;
+  accountType?: 'business' | 'creator';
+  lastSync?: string;
+  posts: InstagramPostItem[];
+  error?: string;
+}
+
+export interface PushNotificationIntegration {
+  enabled: boolean;
+  permission: 'default' | 'granted' | 'denied';
+  lastTested?: string;
+}
+
+export interface IntegrationsState {
+  calendar: GoogleCalendarIntegration;
+  gmail: MarilunaGmailIntegration;
+  healthConnect: HealthConnectIntegration;
+  instagram: MarilunaInstagramIntegration;
+  pushNotifications: PushNotificationIntegration;
+}
+
+// -------------------------------------------------------------
+// Alchemy Brain 1.0 Architecture (Prompt 11)
+// -------------------------------------------------------------
+
+export type BrainCapacityLevel = 'high' | 'normal' | 'reduced' | 'minimal';
+
+export interface BrainCapacityAssessment {
+  level: BrainCapacityLevel;
+  freeMinutes: number;
+  busyMinutes: number;
+  feeling?: CheckInFeeling;
+  reason: string;
+  recommendedTaskCount: number;
+  maxTaskMinutes: number;
+}
+
+export type BrainSuggestionPriority = 'high' | 'normal' | 'low';
+export type BrainSuggestionStatus = 'new' | 'seen' | 'accepted' | 'dismissed' | 'snoozed' | 'expired';
+
+export interface BrainSuggestionAction {
+  id: string;
+  label: string;
+  actionType: 'plan_meal' | 'split_task' | 'reschedule_task' | 'view_project' | 'view_content' | 'dismiss' | 'custom';
+  payload?: any;
+  isPrimary?: boolean;
+}
+
+export interface BrainSuggestion {
+  id: string;
+  sourceModule: 'today' | 'tasks' | 'calendar' | 'meals' | 'wellbeing' | 'movement' | 'mariluna' | 'content' | 'admin' | 'integrations';
+  title: string;
+  description: string;
+  reason: string; // Grounded, transparent explainability (no hidden chain-of-thought)
+  priority: BrainSuggestionPriority;
+  createdAt: string;
+  expiresAt?: string;
+  status: BrainSuggestionStatus;
+  fingerprint: string; // Deduplication hash
+  actions?: BrainSuggestionAction[];
+}
+
+export interface DailyAlchemyBrief {
+  id: string;
+  date: string; // YYYY-MM-DD
+  greeting: string;
+  bullets: string[];
+  focusAnchor: string;
+  capacityLevel: BrainCapacityLevel;
+  capacityReason: string;
+  suggestions: BrainSuggestion[];
+  generatedAt: string;
+  eveningReflection?: {
+    date: string;
+    feeling: 'good' | 'okay' | 'heavy' | 'productive' | 'chaotic' | 'calm';
+    reflectionNote?: string;
+    recordedAt: string;
+  };
+}
+
+export interface BrainState {
+  activeSuggestions: BrainSuggestion[];
+  lastBrief?: DailyAlchemyBrief;
+  lastBriefGeneratedDate?: string;
+  dismissedSuggestionIds?: string[];
+  acceptedSuggestionIds?: string[];
+  recentSplitTasks?: { originalTaskId: string; subtasksCount: number; timestamp: string }[];
+  lastUpdated?: string;
+}
+
+
 
 
 

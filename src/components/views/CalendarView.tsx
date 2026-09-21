@@ -10,13 +10,14 @@ import {
   ShieldCheck,
   Check,
 } from 'lucide-react';
-import { CalendarEvent, ActiveWorldFilter, Realm, LifeProfile } from '../../types';
+import { CalendarEvent, ActiveWorldFilter, Realm, LifeProfile, IntegrationsState } from '../../types';
 
 interface CalendarViewProps {
   events: CalendarEvent[];
   lifeProfile: LifeProfile;
   activeWorld: ActiveWorldFilter;
   onAddEvent: (event: Partial<CalendarEvent>) => void;
+  integrations?: IntegrationsState;
 }
 
 export const CalendarView: React.FC<CalendarViewProps> = ({
@@ -24,6 +25,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   lifeProfile,
   activeWorld,
   onAddEvent,
+  integrations,
 }) => {
   const [viewMode, setViewMode] = useState<'day' | 'week'>('day');
   const [currentDateStr, setCurrentDateStr] = useState(
@@ -100,11 +102,18 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
         </div>
 
         <div className="flex items-center gap-3">
-          {/* Real Google Calendar status badge */}
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#DCD3C4] bg-[#F7F3EA] text-[11px] text-[#695B49]">
-            <ShieldCheck className="w-3.5 h-3.5 text-[#8C7654]" />
-            <span>Local Engine Active • Google OAuth Ready</span>
-          </div>
+          {/* Google Calendar status badge */}
+          {integrations?.calendar?.status === 'connected' ? (
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#D0E2D4] bg-[#E8EFE9] text-[11px] text-[#2D5A3C]">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#2D5A3C] animate-pulse" />
+              <span>Google Agenda Gekoppeld • Alleen-lezen (Patricia)</span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#DCD3C4] bg-[#F7F3EA] text-[11px] text-[#695B49]">
+              <ShieldCheck className="w-3.5 h-3.5 text-[#8C7654]" />
+              <span>Lokale Agenda • Google Agenda niet verbonden</span>
+            </div>
+          )}
 
           <button
             onClick={() => setIsModalOpen(true)}

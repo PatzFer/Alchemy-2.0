@@ -21,13 +21,53 @@ import {
   MarilunaMetricsState,
   MarilunaOffering,
   MarilunaClient,
+  IntegrationsState,
+  BrainState,
 } from '../types';
 import { DEFAULT_NOTIFICATION_SETTINGS } from './notificationEngine';
 import { INITIAL_WELLBEING_STATE, EMPTY_WELLBEING_STATE } from './wellbeingData';
 import { DEFAULT_FOUNDATION_DATA } from './foundationDefaults';
+import { DEFAULT_BRAIN_STATE } from './brain/types';
 
 const STORAGE_KEY = 'pm_alchemy_os_data_v1';
 const LEGACY_STORAGE_KEY = 'mariluna_os_data_v1';
+
+export const DEFAULT_INTEGRATIONS_STATE: IntegrationsState = {
+  calendar: {
+    status: 'not_connected',
+    accountEmail: undefined,
+    lastSync: undefined,
+    readOnly: true,
+    syncedEventsCount: 0,
+    isPatriciaOnlySchedule: true,
+  },
+  gmail: {
+    status: 'not_connected',
+    accountEmail: undefined,
+    lastSync: undefined,
+    readOnly: true,
+    businessOnly: true,
+    syncedThreadsCount: 0,
+    messages: [],
+  },
+  healthConnect: {
+    status: typeof window !== 'undefined' && ('HealthConnect' in window || (typeof navigator !== 'undefined' && navigator.userAgent.includes('Android'))) ? 'not_connected' : 'unavailable',
+    platform: typeof window !== 'undefined' && typeof navigator !== 'undefined' && navigator.userAgent.includes('Android') ? 'android' : 'web',
+    isStepsOnly: true,
+    isPrivateOnly: true,
+    stepsToday: undefined,
+  },
+  instagram: {
+    status: 'not_connected',
+    accountUsername: undefined,
+    accountType: 'business',
+    posts: [],
+  },
+  pushNotifications: {
+    enabled: true,
+    permission: typeof window !== 'undefined' && 'Notification' in window ? (Notification.permission as 'default' | 'granted' | 'denied') : 'default',
+  },
+};
 
 export interface AppState {
   tasks: Task[];
@@ -54,6 +94,8 @@ export interface AppState {
   marilunaMetrics?: MarilunaMetricsState;
   marilunaOfferings?: MarilunaOffering[];
   marilunaClients?: MarilunaClient[];
+  integrations: IntegrationsState;
+  brain?: BrainState;
 }
 
 const todayStr = new Date().toISOString().split('T')[0];
@@ -103,6 +145,11 @@ export const INITIAL_STATE: AppState = {
     dislikes: [],
     partnerSharedDinners: [],
     cookingTimeAvailableWeekdays: 30,
+    inventory: [],
+    shoppingList: [],
+    feedbackHistory: [],
+    mealHistory: [],
+    pastWeeklyPlans: [],
   },
   cycleProfile: {
     lastPeriodStartDate: '',
@@ -130,6 +177,8 @@ export const INITIAL_STATE: AppState = {
   },
   marilunaOfferings: [],
   marilunaClients: [],
+  integrations: DEFAULT_INTEGRATIONS_STATE,
+  brain: DEFAULT_BRAIN_STATE,
 };
 
 export const SAMPLE_STATE: AppState = {
@@ -574,6 +623,11 @@ I've gently kept your active high-priority task list to just two items today so 
     dislikes: ['Heavy refined oils', 'Artificially sweetened beverages'],
     partnerSharedDinners: ['Wednesday', 'Friday', 'Sunday'],
     cookingTimeAvailableWeekdays: 35,
+    inventory: [],
+    shoppingList: [],
+    feedbackHistory: [],
+    mealHistory: [],
+    pastWeeklyPlans: [],
   },
 
   cycleProfile: {
@@ -662,6 +716,7 @@ I've gently kept your active high-priority task list to just two items today so 
     },
   ],
   wellbeing: INITIAL_WELLBEING_STATE,
+  integrations: DEFAULT_INTEGRATIONS_STATE,
 };
 
 export function loadState(): AppState {
@@ -677,6 +732,42 @@ export function loadState(): AppState {
     const foundation: FoundationData = {
       ...DEFAULT_FOUNDATION_DATA,
       ...(parsed.foundation || {}),
+      patzIdentity: { ...DEFAULT_FOUNDATION_DATA.patzIdentity, ...(parsed.foundation?.patzIdentity || {}) },
+      astrology: { ...DEFAULT_FOUNDATION_DATA.astrology, ...(parsed.foundation?.astrology || {}) },
+      communication: { ...DEFAULT_FOUNDATION_DATA.communication, ...(parsed.foundation?.communication || {}) },
+      lifeWork: { ...DEFAULT_FOUNDATION_DATA.lifeWork, ...(parsed.foundation?.lifeWork || {}) },
+      planning: { ...DEFAULT_FOUNDATION_DATA.planning, ...(parsed.foundation?.planning || {}) },
+      foodProfile: { ...DEFAULT_FOUNDATION_DATA.foodProfile, ...(parsed.foundation?.foodProfile || {}) },
+      personalStyling: {
+        ...DEFAULT_FOUNDATION_DATA.personalStyling,
+        ...(parsed.foundation?.personalStyling || {}),
+        bodyProportionsProfile: {
+          ...DEFAULT_FOUNDATION_DATA.personalStyling.bodyProportionsProfile,
+          ...(parsed.foundation?.personalStyling?.bodyProportionsProfile || {}),
+        },
+        styleDNA: {
+          ...DEFAULT_FOUNDATION_DATA.personalStyling.styleDNA,
+          ...(parsed.foundation?.personalStyling?.styleDNA || {}),
+        },
+        sensualityDNA: {
+          ...DEFAULT_FOUNDATION_DATA.personalStyling.sensualityDNA,
+          ...(parsed.foundation?.personalStyling?.sensualityDNA || {}),
+        },
+        colourDNA: {
+          ...DEFAULT_FOUNDATION_DATA.personalStyling.colourDNA,
+          ...(parsed.foundation?.personalStyling?.colourDNA || {}),
+        },
+        hairDNA: {
+          ...DEFAULT_FOUNDATION_DATA.personalStyling.hairDNA,
+          ...(parsed.foundation?.personalStyling?.hairDNA || {}),
+        },
+        accessoryDNA: {
+          ...DEFAULT_FOUNDATION_DATA.personalStyling.accessoryDNA,
+          ...(parsed.foundation?.personalStyling?.accessoryDNA || {}),
+        },
+        learnedFeedback: parsed.foundation?.personalStyling?.learnedFeedback || DEFAULT_FOUNDATION_DATA.personalStyling.learnedFeedback || [],
+        recentEvaluations: parsed.foundation?.personalStyling?.recentEvaluations || DEFAULT_FOUNDATION_DATA.personalStyling.recentEvaluations || [],
+      },
       aboutYou: { ...DEFAULT_FOUNDATION_DATA.aboutYou, ...(parsed.foundation?.aboutYou || {}) },
       yourLife: { ...DEFAULT_FOUNDATION_DATA.yourLife, ...(parsed.foundation?.yourLife || {}) },
       work: { ...DEFAULT_FOUNDATION_DATA.work, ...(parsed.foundation?.work || {}) },
@@ -715,6 +806,15 @@ export function loadState(): AppState {
         },
       },
       cycleProfile: { ...INITIAL_STATE.cycleProfile, ...(parsed.cycleProfile || {}) },
+      nutrition: {
+        ...INITIAL_STATE.nutrition,
+        ...(parsed.nutrition || {}),
+        inventory: parsed.nutrition?.inventory || [],
+        shoppingList: parsed.nutrition?.shoppingList || [],
+        feedbackHistory: parsed.nutrition?.feedbackHistory || [],
+        mealHistory: parsed.nutrition?.mealHistory || [],
+        pastWeeklyPlans: parsed.nutrition?.pastWeeklyPlans || [],
+      },
       notificationSettings: {
         ...DEFAULT_NOTIFICATION_SETTINGS,
         ...(INITIAL_STATE.notificationSettings || {}),
@@ -728,6 +828,41 @@ export function loadState(): AppState {
       dailyCheckIns: parsed.dailyCheckIns || [],
       notifications: parsed.notifications || [],
       proactiveSuggestions: parsed.proactiveSuggestions || [],
+      integrations: {
+        calendar: {
+          ...DEFAULT_INTEGRATIONS_STATE.calendar,
+          ...(parsed.integrations?.calendar || {}),
+        },
+        gmail: {
+          ...DEFAULT_INTEGRATIONS_STATE.gmail,
+          ...(parsed.integrations?.gmail || {}),
+        },
+        healthConnect: {
+          ...DEFAULT_INTEGRATIONS_STATE.healthConnect,
+          ...(parsed.integrations?.healthConnect || {}),
+        },
+        instagram: {
+          ...DEFAULT_INTEGRATIONS_STATE.instagram,
+          ...(parsed.integrations?.instagram || {}),
+        },
+        pushNotifications: {
+          ...DEFAULT_INTEGRATIONS_STATE.pushNotifications,
+          ...(parsed.integrations?.pushNotifications || {}),
+        },
+      },
+      marilunaClients: parsed.marilunaClients || [],
+      marilunaAdmin: {
+        items: parsed.marilunaAdmin?.items || [],
+        expenses: parsed.marilunaAdmin?.expenses || [],
+        invoices: parsed.marilunaAdmin?.invoices || [],
+        deadlines: parsed.marilunaAdmin?.deadlines || [],
+      },
+      marilunaMetrics: {
+        metrics: parsed.marilunaMetrics?.metrics || [],
+        records: parsed.marilunaMetrics?.records || [],
+      },
+      marilunaOfferings: parsed.marilunaOfferings || [],
+      brain: parsed.brain ? { ...DEFAULT_BRAIN_STATE, ...parsed.brain } : DEFAULT_BRAIN_STATE,
     };
   } catch (err) {
     console.error('Failed to load state from localStorage, falling back to default:', err);

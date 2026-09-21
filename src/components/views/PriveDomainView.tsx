@@ -32,9 +32,14 @@ import {
   Language,
   RoutineItem,
   LifeCommitment,
+  FoundationFoodProfile,
+  FoundationPersonalStyling,
+  IntegrationsState,
 } from '../../types';
 import { CycleView } from './CycleView';
 import { WellbeingView } from './WellbeingView';
+import { MealsAndMenuPlanningView } from '../meals/MealsAndMenuPlanningView';
+import { PersonalStylingView } from '../styling/PersonalStylingView';
 import { calculateCycleStatus } from '../../lib/cycleUtils';
 import { calculateWaterStats } from '../../lib/healthUtils';
 
@@ -73,6 +78,10 @@ interface PriveDomainViewProps {
   onOpenAssistantWithPrompt: (prompt: string) => void;
   onSelectTab?: (tab: any) => void;
   lang?: Language;
+  foodProfile?: FoundationFoodProfile;
+  foundationStyling?: FoundationPersonalStyling;
+  onUpdateFoundationStyling?: (styling: FoundationPersonalStyling) => void;
+  integrations?: IntegrationsState;
 }
 
 export const PriveDomainView: React.FC<PriveDomainViewProps> = ({
@@ -101,6 +110,10 @@ export const PriveDomainView: React.FC<PriveDomainViewProps> = ({
   onOpenAssistantWithPrompt,
   onSelectTab,
   lang = 'nl',
+  foodProfile,
+  foundationStyling,
+  onUpdateFoundationStyling,
+  integrations,
 }) => {
   const isNl = lang === 'nl';
   const [activeSubTab, setActiveSubTab] = useState<PriveSubTab>(initialSubTab);
@@ -338,6 +351,35 @@ export const PriveDomainView: React.FC<PriveDomainViewProps> = ({
             </div>
           </div>
 
+          {/* Personal Styling 2.0 Feature Banner */}
+          <div
+            onClick={() => setActiveSubTab('style')}
+            className="rounded-2xl border border-[#D5C7B3] bg-gradient-to-r from-[#FAF8F3] to-[#F4EFE6] p-5 hover:border-[#8C7654] transition cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs"
+          >
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] uppercase tracking-widest font-medium bg-[#EFE8DC] text-[#78664D]">
+                  Personal Styling 2.0
+                </span>
+                <span className="text-[11px] text-[#8C7654] font-serif italic">
+                  {foundationStyling?.silhouetteLabel || 'Waist-Defined Silhouette'} • 1.57m
+                </span>
+              </div>
+              <h3 className="font-serif text-base font-normal text-[#2C2825]">
+                {isNl ? '“Past dit bij mij?” & Emotional Dressing Studio' : '“Does this fit me?” & Emotional Dressing'}
+              </h3>
+              <p className="text-xs text-[#7A7167] font-light max-w-xl">
+                {isNl
+                  ? 'Evalueer kledingstukken via visuele lichaamsarchitectuur, ontdek de 12 stemmingsformules en verfijn je stijlcollectie.'
+                  : 'Evaluate garments against your visual proportions, explore the 12 emotional moods, and curate your wardrobe.'}
+              </p>
+            </div>
+            <div className="flex items-center gap-2 text-xs font-medium text-[#2C2825] shrink-0">
+              <span className="hidden sm:inline">{isNl ? 'Open Styling Studio' : 'Open Styling Studio'}</span>
+              <ArrowRight className="w-4 h-4 text-[#8C7654]" />
+            </div>
+          </div>
+
           {/* Two Columns: Personal Tasks & Upcoming Calendar */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {/* Personal Tasks */}
@@ -498,142 +540,32 @@ export const PriveDomainView: React.FC<PriveDomainViewProps> = ({
       )}
 
       {/* ============================================================ */}
-      {/* 4. MAALTIJDEN & VOEDING                                       */}
+      {/* 4. MAALTIJDEN & MENUPLANNING                                  */}
       {/* ============================================================ */}
       {activeSubTab === 'nutrition' && (
-        <div className="space-y-6">
-          <div className="rounded-2xl border border-[#E3D9C9] bg-[#FAF8F3] p-5 space-y-4">
-            <div>
-              <h2 className="font-serif text-xl font-normal text-[#2C2825]">
-                {isNl ? 'Voeding & Maaltijdritme' : 'Nutrition & Dining Rhythm'}
-              </h2>
-              <p className="text-xs text-[#7A7167] mt-1 font-light">
-                {isNl
-                  ? 'Stem maaltijdplanning af op je energieniveau en kooktijd zonder restrictief gedrag.'
-                  : 'Harmonize meals with available energy and cooking capacity.'}
-              </p>
-            </div>
-
-            <div className="space-y-3">
-              <div>
-                <label className="text-xs font-medium text-[#2C2825] block mb-1">
-                  {isNl ? 'Dieet- en voedingsnotities' : 'Dietary notes & preferences'}
-                </label>
-                <textarea
-                  rows={3}
-                  value={nutrition.dietaryNotes}
-                  onChange={(e) => onUpdateNutrition({ ...nutrition, dietaryNotes: e.target.value })}
-                  placeholder={
-                    isNl
-                      ? 'bijv. Mediterraan, focus op onbewerkte voeding, voldoende eiwitten...'
-                      : 'e.g. Mediterranean, whole foods focus, balanced protein...'
-                  }
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#FFFFFF] border border-[#DDD4C5] text-xs text-[#2C2825] focus:outline-none focus:border-[#8C7654]"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-xs font-medium text-[#2C2825] block mb-1">
-                    {isNl ? 'Beschikbare kooktijd op doordeweekse dagen' : 'Cooking time on weekdays'}
-                  </label>
-                  <select
-                    value={nutrition.cookingTimeAvailableWeekdays}
-                    onChange={(e) =>
-                      onUpdateNutrition({
-                        ...nutrition,
-                        cookingTimeAvailableWeekdays: Number(e.target.value),
-                      })
-                    }
-                    className="w-full px-3 py-2 rounded-xl bg-[#FFFFFF] border border-[#DDD4C5] text-xs text-[#2C2825]"
-                  >
-                    <option value={15}>15 {isNl ? 'minuten (snel & simpel)' : 'minutes (quick & simple)'}</option>
-                    <option value={30}>30 {isNl ? 'minuten (evenwichtig)' : 'minutes (balanced)'}</option>
-                    <option value={45}>45 {isNl ? 'minuten (uitgebreider)' : 'minutes (elaborate)'}</option>
-                    <option value={60}>60+ {isNl ? 'minuten (ontspannen koken)' : 'minutes (relaxed cooking)'}</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="text-xs font-medium text-[#2C2825] block mb-1">
-                    {isNl ? 'Gezamenlijke diners met partner' : 'Shared partner dinners'}
-                  </label>
-                  <input
-                    type="text"
-                    value={nutrition.partnerSharedDinners.join(', ')}
-                    onChange={(e) =>
-                      onUpdateNutrition({
-                        ...nutrition,
-                        partnerSharedDinners: e.target.value
-                          .split(',')
-                          .map((s) => s.trim())
-                          .filter(Boolean),
-                      })
-                    }
-                    placeholder={isNl ? 'bijv. Vrijdag, Zaterdag, Zondag' : 'e.g. Friday, Saturday'}
-                    className="w-full px-3 py-2 rounded-xl bg-[#FFFFFF] border border-[#DDD4C5] text-xs text-[#2C2825]"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <MealsAndMenuPlanningView
+          nutrition={nutrition}
+          onUpdateNutrition={onUpdateNutrition}
+          foodProfile={foodProfile}
+          calendarEvents={calendarEvents}
+          onOpenAssistantWithPrompt={onOpenAssistantWithPrompt}
+          lang={lang}
+        />
       )}
 
       {/* ============================================================ */}
-      {/* 5. PERSONAL STYLING                                           */}
+      {/* 5. PERSONAL STYLING 2.0                                       */}
       {/* ============================================================ */}
       {activeSubTab === 'style' && (
-        <div className="space-y-6">
-          <div className="rounded-2xl border border-[#E3D9C9] bg-[#FAF8F3] p-5 space-y-4">
-            <div>
-              <h2 className="font-serif text-xl font-normal text-[#2C2825]">
-                {isNl ? 'Personal Styling & Silhouetten' : 'Personal Styling & Silhouettes'}
-              </h2>
-              <p className="text-xs text-[#7A7167] mt-1 font-light">
-                {isNl
-                  ? 'Je esthetische kompas, kleurenharmonie en behaaglijke silhouetten.'
-                  : 'Your personal wardrobe palette, silhouettes, and occasions.'}
-              </p>
-            </div>
-
-            <div className="space-y-3">
-              <div>
-                <label className="text-xs font-medium text-[#2C2825] block mb-1">
-                  {isNl ? 'Favoriete silhouetten & kledingstijl' : 'Preferred silhouettes & style'}
-                </label>
-                <input
-                  type="text"
-                  value={personalStyle.preferredSilhouettes.join(', ')}
-                  onChange={(e) =>
-                    onUpdateStyle({
-                      ...personalStyle,
-                      preferredSilhouettes: e.target.value
-                        .split(',')
-                        .map((s) => s.trim())
-                        .filter(Boolean),
-                    })
-                  }
-                  placeholder={isNl ? 'bijv. Relaxed tailoring, linnen, natuurlijke stoffen, monochrome lagen' : 'e.g. Relaxed tailoring, linen, monochrome layers'}
-                  className="w-full px-3 py-2 rounded-xl bg-[#FFFFFF] border border-[#DDD4C5] text-xs text-[#2C2825]"
-                />
-              </div>
-
-              <div>
-                <label className="text-xs font-medium text-[#2C2825] block mb-1">
-                  {isNl ? 'Maten & Notities' : 'Measurements & Fit notes'}
-                </label>
-                <textarea
-                  rows={3}
-                  value={personalStyle.measurementsNotes}
-                  onChange={(e) => onUpdateStyle({ ...personalStyle, measurementsNotes: e.target.value })}
-                  placeholder={isNl ? 'Persoonlijke voorkeuren over pasvorm, lengte en stoffen...' : 'Personal fit, length, and fabric preferences...'}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#FFFFFF] border border-[#DDD4C5] text-xs text-[#2C2825]"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
+        <PersonalStylingView
+          personalStyle={personalStyle}
+          onUpdateStyle={onUpdateStyle}
+          foundationStyling={foundationStyling}
+          onUpdateFoundationStyling={onUpdateFoundationStyling}
+          wellbeing={wellbeing}
+          onUpdateWellbeing={onUpdateWellbeing}
+          lang={lang}
+        />
       )}
 
       {/* ============================================================ */}

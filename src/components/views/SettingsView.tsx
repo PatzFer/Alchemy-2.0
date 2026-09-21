@@ -20,18 +20,30 @@ import {
   Activity,
   Lock,
   Layers,
+  Link2,
 } from 'lucide-react';
-import { MemoryItem, Realm, NotificationSettings, CycleProfile, FoundationData } from '../../types';
+import {
+  MemoryItem,
+  Realm,
+  NotificationSettings,
+  CycleProfile,
+  FoundationData,
+  WellbeingState,
+  IntegrationsState,
+} from '../../types';
 import { AppState } from '../../lib/storage';
 import { requestPushPermission, sendBrowserNotification } from '../../lib/notificationEngine';
 import { SecurityPrivacyCenter } from './SecurityPrivacyCenter';
 import { FoundationSettingsView } from './FoundationSettingsView';
+import { IntegrationsView } from './IntegrationsView';
+import { MemoryManagerView } from '../brain/MemoryManagerView';
 import { DEFAULT_FOUNDATION_DATA } from '../../lib/foundationDefaults';
 
 interface SettingsViewProps {
   memories: MemoryItem[];
   onAddMemory: (memory: Partial<MemoryItem>) => void;
   onDeleteMemory: (id: string) => void;
+  onUpdateMemories?: (updater: (prev: MemoryItem[]) => MemoryItem[]) => void;
   isSampleData: boolean;
   onToggleSampleData: () => void;
   onExportData: () => void;
@@ -40,15 +52,19 @@ interface SettingsViewProps {
   notificationSettings?: NotificationSettings;
   onUpdateNotificationSettings?: (settings: NotificationSettings) => void;
   cycleProfile?: CycleProfile;
-  initialTab?: 'foundation' | 'memory' | 'notifications' | 'security' | 'data';
+  initialTab?: 'foundation' | 'memory' | 'notifications' | 'integrations' | 'security' | 'data';
   foundation?: FoundationData;
   onUpdateFoundation?: (data: FoundationData) => void;
+  wellbeingState?: WellbeingState;
+  integrations?: IntegrationsState;
+  onUpdateIntegrations?: (updater: (prev: IntegrationsState) => IntegrationsState) => void;
 }
 
 export const SettingsView: React.FC<SettingsViewProps> = ({
   memories,
   onAddMemory,
   onDeleteMemory,
+  onUpdateMemories,
   isSampleData,
   onToggleSampleData,
   onExportData,
@@ -60,8 +76,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   initialTab = 'foundation',
   foundation = DEFAULT_FOUNDATION_DATA,
   onUpdateFoundation,
+  wellbeingState,
+  integrations,
+  onUpdateIntegrations,
 }) => {
-  const [activeTab, setActiveTab] = useState<'foundation' | 'memory' | 'notifications' | 'security' | 'data'>(initialTab);
+  const [activeTab, setActiveTab] = useState<'foundation' | 'memory' | 'notifications' | 'integrations' | 'security' | 'data'>(initialTab);
   const [newMemoryContent, setNewMemoryContent] = useState('');
   const [newMemoryCategory, setNewMemoryCategory] = useState('Lifestyle & Energy');
   const [newMemoryRealm, setNewMemoryRealm] = useState<Realm>('personal');
@@ -160,6 +179,18 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             <span>{isNl ? 'Meldingen & Stille Uren' : 'Smart Notifications & Quiet Hours'}</span>
           </button>
           <button
+            onClick={() => setActiveTab('integrations')}
+            id="settings-tab-integrations"
+            className={`px-3.5 py-1.5 rounded-full transition cursor-pointer flex items-center gap-1.5 ${
+              activeTab === 'integrations'
+                ? 'bg-[#2C2825] text-[#F9F7F2] font-medium shadow-xs'
+                : 'bg-[#FFFFFF] border border-[#E3DCD1] text-[#695F54] hover:bg-[#F2ECE1]'
+            }`}
+          >
+            <Link2 className="w-3.5 h-3.5" />
+            <span>{isNl ? 'Integraties (5)' : 'Integrations (5)'}</span>
+          </button>
+          <button
             onClick={() => setActiveTab('security')}
             className={`px-3.5 py-1.5 rounded-full transition cursor-pointer ${
               activeTab === 'security'
@@ -187,106 +218,19 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         <FoundationSettingsView
           foundation={foundation}
           onUpdateFoundation={onUpdateFoundation}
+          wellbeingState={wellbeingState}
         />
       )}
 
-      {/* Tab 1: Transparent Memory */}
+      {/* Tab 1: Transparent Memory Engine */}
       {activeTab === 'memory' && (
-        <div className="space-y-6">
-          {/* Add Memory Form */}
-          <div className="rounded-2xl border border-[#E8E1D4] bg-[#FFFFFF] p-5 shadow-xs">
-            <h3 className="font-serif text-base font-medium text-[#2C2825] mb-2">
-              Teach Assistant a Permanent Fact or Preference
-            </h3>
-            <p className="text-xs text-[#7A7167] mb-4">
-              Add a principle, routine boundary, brand rule, or personal preference that JARVIS must always remember.
-            </p>
-
-            <form onSubmit={handleCreateMemory} className="space-y-3">
-              <textarea
-                rows={2}
-                required
-                value={newMemoryContent}
-                onChange={(e) => setNewMemoryContent(e.target.value)}
-                placeholder="e.g. In Mariluna, we never discount flagship courses; in personal life, prefer walking meetings on Wednesdays..."
-                className="w-full bg-[#FAF8F4] border border-[#D5CCBE] rounded-xl p-3 text-xs text-[#2C2825] placeholder-[#9E958B] focus:outline-hidden focus:border-[#8C7654]"
-              />
-
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
-                <div className="flex items-center gap-2">
-                  <select
-                    value={newMemoryRealm}
-                    onChange={(e) => setNewMemoryRealm(e.target.value as Realm)}
-                    className="bg-[#FAF8F4] border border-[#D5CCBE] rounded-xl px-3 py-1.5 text-xs text-[#2C2825]"
-                  >
-                    <option value="personal">Personal Life</option>
-                    <option value="mariluna">Mariluna Business</option>
-                  </select>
-
-                  <input
-                    type="text"
-                    value={newMemoryCategory}
-                    onChange={(e) => setNewMemoryCategory(e.target.value)}
-                    placeholder="Category"
-                    className="bg-[#FAF8F4] border border-[#D5CCBE] rounded-xl px-3 py-1.5 text-xs text-[#2C2825]"
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  className="px-4 py-2 rounded-xl bg-[#2C2825] text-[#F9F7F2] text-xs font-medium hover:bg-[#453E38] transition cursor-pointer w-fit"
-                >
-                  Save Fact to Memory
-                </button>
-              </div>
-            </form>
-          </div>
-
-          {/* Stored Memories List */}
-          <div className="space-y-3">
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-[#8A8175]">
-              Active Memory Registry
-            </h3>
-
-            {memories.map((m) => (
-              <div
-                key={m.id}
-                className="p-4 rounded-xl bg-[#FFFFFF] border border-[#E8E1D4] flex items-start justify-between gap-4 shadow-xs"
-              >
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <span
-                      className={`text-[9px] uppercase font-semibold px-2 py-0.5 rounded-full ${
-                        m.realm === 'mariluna'
-                          ? 'bg-[#2C2825] text-[#F9F7F2]'
-                          : 'bg-[#EAE4D7] text-[#554C42]'
-                      }`}
-                    >
-                      {m.realm}
-                    </span>
-                    <span className="text-[11px] font-semibold text-[#8C7654]">
-                      {m.category}
-                    </span>
-                    <span className="text-[10px] text-[#9E958B]">
-                      • Added {m.dateAdded} ({m.source === 'user_stated' ? 'Explicit' : 'Learned'})
-                    </span>
-                  </div>
-                  <p className="text-xs text-[#3E3832] font-light leading-relaxed">
-                    {m.content}
-                  </p>
-                </div>
-
-                <button
-                  onClick={() => onDeleteMemory(m.id)}
-                  title="Forget this memory"
-                  className="text-[#9E958B] hover:text-[#733] p-1.5 rounded-lg hover:bg-[#F4EFE6] transition"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
+        <MemoryManagerView
+          memories={memories}
+          onAddMemory={onAddMemory}
+          onDeleteMemory={onDeleteMemory}
+          onUpdateMemories={onUpdateMemories}
+          isNl={isNl}
+        />
       )}
 
       {/* Tab 2: Smart Notifications & Quiet Hours */}
@@ -486,19 +430,60 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
             {/* Notification Topics */}
             <div className="space-y-3 pt-2">
-              <span className="text-xs font-semibold uppercase tracking-wider text-[#8A8175] block">
-                Allowed Notification Categories
-              </span>
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold uppercase tracking-wider text-[#8A8175] block">
+                  {isNl ? 'Toegestane Notificatie Categorieën' : 'Allowed Notification Categories'}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    sendBrowserNotification(
+                      'P & M Alchemy Sovereign OS',
+                      isNl
+                        ? 'Testmelding: Je notificaties zijn discreet en doelgericht ingesteld.'
+                        : 'Test alert: Your notifications are calibrated with discretion and purpose.'
+                    );
+                  }}
+                  className="text-xs text-[#7E694E] hover:underline font-medium cursor-pointer"
+                >
+                  {isNl ? 'Test Notificatie Verzenden' : 'Send Test Notification'}
+                </button>
+              </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                 {[
-                  { key: 'upcomingTaskReminders', label: 'Upcoming scheduled tasks' },
-                  { key: 'marilunaFollowUps', label: 'Mariluna studio & business follow-ups' },
-                  { key: 'forgottenIdeas', label: 'Forgotten ideas review prompts' },
-                  { key: 'goalCheckIns', label: 'Strategic goal milestones' },
-                  { key: 'cycleInsights', label: 'Weekly cycle planning insights (Private)' },
-                  { key: 'weeklyPlanning', label: 'Sunday / Monday weekly alignment' },
-                  { key: 'rescheduleSuggestions', label: 'Gentle overdue task rescheduling' },
+                  {
+                    key: 'reminderNotifications',
+                    label: isNl ? 'Herinneringsnotificaties (bv. zondagse lichaamsmetingen)' : 'Reminder notifications (e.g. Sunday measurement)',
+                  },
+                  {
+                    key: 'calendarNotifications',
+                    label: isNl ? 'Agenda-afspraken & tijdslots (Patricia\'s agenda)' : 'Calendar notifications (Patricia\'s schedule)',
+                  },
+                  {
+                    key: 'mealPlanningNotifications',
+                    label: isNl ? 'Maaltijdplanning herinneringen (donderdag 18:00)' : 'Meal planning alerts (Thursday 18:00 prompt)',
+                  },
+                  {
+                    key: 'healthMovementReminders',
+                    label: isNl ? 'Gezondheid & zachte bewegingsreminders (stappen)' : 'Health & movement reminders (steps/walks)',
+                  },
+                  {
+                    key: 'marilunaNotifications',
+                    label: isNl ? 'Mariluna zakelijke alerts (cliëntberichten & follow-ups)' : 'Mariluna business alerts (client inquiries)',
+                  },
+                  {
+                    key: 'importantAiSuggestions',
+                    label: isNl ? 'Belangrijke AI-suggesties (capaciteit & herplanning)' : 'Important AI suggestions (capacity & rescheduling)',
+                  },
+                  {
+                    key: 'cycleInsights',
+                    label: isNl ? 'Cyclus-inzichten & energievensters (Strikt privé)' : 'Cycle phase insights (Strictly private)',
+                  },
+                  {
+                    key: 'forgottenIdeas',
+                    label: isNl ? 'Herontdekken vergeten ideeën' : 'Rediscovering dormant ideas',
+                  },
                 ].map((item) => {
                   const isChecked = Boolean(notificationSettings[item.key as keyof NotificationSettings]);
                   return (
@@ -506,7 +491,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                       key={item.key}
                       className="flex items-center justify-between p-3 rounded-xl bg-[#FAF8F4] border border-[#E7DEC8] cursor-pointer hover:bg-[#F5EFE3] transition"
                     >
-                      <span className="text-xs text-[#3E372E]">{item.label}</span>
+                      <span className="text-xs text-[#3E372E] pr-2">{item.label}</span>
                       <input
                         type="checkbox"
                         checked={isChecked}
@@ -516,7 +501,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                             [item.key]: e.target.checked,
                           })
                         }
-                        className="accent-[#7E694E] w-4 h-4 ml-2"
+                        className="accent-[#7E694E] w-4 h-4 shrink-0"
                       />
                     </label>
                   );
@@ -525,6 +510,16 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             </div>
           </div>
         </div>
+      )}
+
+      {/* Tab: Integrations */}
+      {activeTab === 'integrations' && integrations && onUpdateIntegrations && (
+        <IntegrationsView
+          integrations={integrations}
+          onUpdateIntegrations={onUpdateIntegrations}
+          lang={isNl ? 'nl' : 'en'}
+          onNavigateToNotifications={() => setActiveTab('notifications')}
+        />
       )}
 
       {/* Tab 3: Security & Privacy Center */}

@@ -16,6 +16,8 @@ import {
   AlertCircle,
   X,
   Check,
+  Footprints,
+  Activity,
 } from 'lucide-react';
 import {
   Task,
@@ -33,11 +35,19 @@ import {
   FoundationData,
   Language,
   WeatherInfo,
+  IntegrationsState,
+  DailyAlchemyBrief,
+  BrainSuggestion,
+  NutritionState,
+  MemoryItem,
 } from '../../types';
 import { calculateDayCapacity } from '../../lib/planningEngine';
 import { calculateCycleStatus } from '../../lib/cycleUtils';
 import { fetchLiveWeather } from '../../lib/weatherService';
 import { getRelevantCelestialNote, CelestialEvent } from '../../lib/celestialUtils';
+import { AlchemyBriefCard } from '../brain/AlchemyBriefCard';
+import { TaskSplitModal } from '../brain/TaskSplitModal';
+import { generateDeterministicBrief, getOrRefreshAlchemyBrief } from '../../lib/brain/briefService';
 
 interface TodayViewProps {
   tasks: Task[];
@@ -66,6 +76,9 @@ interface TodayViewProps {
   onUpdateFoundation?: (foundation: FoundationData) => void;
   lang?: Language;
   onOpenSetup?: () => void;
+  integrations?: IntegrationsState;
+  nutrition?: NutritionState;
+  onAddMemory?: (memory: Partial<MemoryItem>) => void;
 }
 
 export const TodayView: React.FC<TodayViewProps> = ({
@@ -92,6 +105,10 @@ export const TodayView: React.FC<TodayViewProps> = ({
   onUpdateFoundation,
   lang = 'nl',
   onOpenSetup,
+  integrations,
+  nutrition,
+  onAddMemory,
+  wellbeing,
 }) => {
   const safeLang: Language = lang === 'en' ? 'en' : 'nl';
   const isNl = safeLang === 'nl';
@@ -138,6 +155,98 @@ export const TodayView: React.FC<TodayViewProps> = ({
       });
     }
     setIsLocationModalOpen(false);
+  };
+
+  // 2.5 ALCHEMY BRIEF 1.0 STATE & ENGINE
+  const [brief, setBrief] = useState<DailyAlchemyBrief>(() =>
+    generateDeterministicBrief({
+      foundation,
+      calendarEvents,
+      tasks,
+      dailyCheckIns,
+      projects,
+      integrations,
+      nutrition,
+      wellbeing,
+    } as any, todayStr)
+  );
+
+  const [splitModalTask, setSplitModalTask] = useState<{ id: string; title: string } | null>(null);
+
+  useEffect(() => {
+    getOrRefreshAlchemyBrief({
+      foundation,
+      calendarEvents,
+      tasks,
+      dailyCheckIns,
+      projects,
+      integrations,
+      nutrition,
+      wellbeing,
+    } as any, todayStr).then(setBrief);
+  }, [
+    todayStr,
+    calendarEvents.length,
+    tasks.length,
+    dailyCheckIns?.length,
+    integrations?.healthConnect?.todaySteps,
+    nutrition?.activeWeeklyPlan?.days?.length,
+  ]);
+
+  const handleConfirmTaskSplit = (taskId: string, subtasks: { title: string; durationMinutes: number }[]) => {
+    const targetTask = tasks.find((t) => t.id === taskId);
+    if (!targetTask) return;
+    const newSubtasks = subtasks.map((st, idx) => ({
+      id: `st-${Date.now()}-${idx}`,
+      title: st.title,
+      completed: false,
+      durationMinutes: st.durationMinutes,
+    }));
+    onSaveTask({
+      ...targetTask,
+      subtasks: [...(targetTask.subtasks || []), ...newSubtasks],
+    });
+  };
+
+  const handleDismissBriefSuggestion = (sugId: string) => {
+    setBrief((prev) => ({
+      ...prev,
+      suggestions: prev.suggestions.filter((s) => s.id !== sugId),
+    }));
+    if (onDismissSuggestion) {
+      onDismissSuggestion(sugId);
+    }
+  };
+
+  const handleSaveEveningReflection = (feeling: 'good' | 'okay' | 'heavy' | 'productive' | 'chaotic' | 'calm', note?: string) => {
+    if (onSaveDailyCheckIn) {
+      const feelingMap: Record<string, CheckInFeeling> = {
+        good: 'good',
+        okay: 'good',
+        heavy: 'mentally_heavy',
+        productive: 'good',
+        chaotic: 'lower',
+        calm: 'good',
+      };
+      onSaveDailyCheckIn({
+        id: todayCheckIn?.id || `dci-${todayStr}`,
+        date: todayStr,
+        feeling: feelingMap[feeling] || 'good',
+        timestamp: new Date().toISOString(),
+        journalEntry: note,
+      });
+    }
+
+    if (note && note.trim() && onAddMemory) {
+      onAddMemory({
+        content: `Reflectie / Context van ${todayStr}: ${note.trim()}`,
+        category: 'Dagritme & Reflectie',
+        realm: 'personal',
+        dateAdded: todayStr,
+        source: 'user_stated',
+        type: 'temporary',
+      });
+    }
   };
 
   // 3. DAILY CHECK-IN STATE
@@ -496,6 +605,19 @@ export const TodayView: React.FC<TodayViewProps> = ({
         </div>
       </header>
 
+      {/* Health Connect Daily Movement Context (Purely neutral context, non-judgmental) */}
+      {integrations?.healthConnect?.status === 'connected' && (integrations.healthConnect.todaySteps || 0) > 0 && (
+        <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#FAF6EE] border border-[#E5DFD3] text-xs text-[#5C5449] w-fit shadow-2xs">
+          <Footprints className="w-3.5 h-3.5 text-[#8C7654]" />
+          <span>
+            {isNl
+              ? `${integrations.healthConnect.todaySteps.toLocaleString('nl-NL')} stappen vandaag`
+              : `${integrations.healthConnect.todaySteps.toLocaleString('en-US')} steps today`}
+          </span>
+          <span className="text-[10px] text-[#A69C8E]">• Health Connect</span>
+        </div>
+      )}
+
       {/* Location Setup Modal */}
       {isLocationModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs">
@@ -572,6 +694,23 @@ export const TodayView: React.FC<TodayViewProps> = ({
       )}
 
       {/* ============================================================ */}
+      {/* 1.5 ALCHEMY BRIEF 1.0 (Central Intelligence, Context & Plan)  */}
+      {/* ============================================================ */}
+      <AlchemyBriefCard
+        brief={brief}
+        onAcceptSuggestionAction={(suggestion, actionId) => {
+          handleDismissBriefSuggestion(suggestion.id);
+        }}
+        onDismissSuggestion={handleDismissBriefSuggestion}
+        onSaveEveningReflection={handleSaveEveningReflection}
+        onOpenTaskSplitter={(taskId, taskTitle) => setSplitModalTask({ id: taskId, title: taskTitle })}
+        onOpenPlanner={() => onSelectTab && onSelectTab('tasks')}
+        onOpenMeals={() => onSelectTab && onSelectTab('meals')}
+        onOpenProjects={() => onSelectTab && onSelectTab('projects')}
+        isNl={isNl}
+      />
+
+      {/* ============================================================ */}
       {/* 2. TODAY'S CALENDAR (Comes FIRST before tasks!)              */}
       {/* ============================================================ */}
       <section className="space-y-2.5">
@@ -583,6 +722,12 @@ export const TodayView: React.FC<TodayViewProps> = ({
             <span className="text-[11px] text-[#8C8377] font-sans">
               ({capacity.formattedFreeTime} {isNl ? 'vrije tijd' : 'free capacity'})
             </span>
+            {integrations?.calendar?.status === 'connected' && (
+              <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-[#E8EFE9] text-[#2D5A3C] border border-[#D0E2D4]">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#2D5A3C] animate-pulse" />
+                <span>Google Agenda</span>
+              </span>
+            )}
           </div>
           <div className="flex items-center gap-2 text-xs">
             <button
@@ -1295,6 +1440,17 @@ export const TodayView: React.FC<TodayViewProps> = ({
             </p>
           )}
         </section>
+      )}
+
+      {splitModalTask && (
+        <TaskSplitModal
+          isOpen={!!splitModalTask}
+          taskId={splitModalTask.id}
+          taskTitle={splitModalTask.title}
+          onClose={() => setSplitModalTask(null)}
+          onConfirmSplit={handleConfirmTaskSplit}
+          isNl={isNl}
+        />
       )}
     </div>
   );
