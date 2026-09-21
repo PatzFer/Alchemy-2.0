@@ -47,23 +47,23 @@ router.get('/status', (req: Request, res: Response) => {
     currentSecurityLevel = 2;
   }
 
-  // SECURITY NOTE: Perimeter lock is temporarily dormant until final security phase
+  const isSensitiveUnlocked = session.sensitiveUnlockedUntil > now;
+
   res.json({
-    authenticated: true,
-    isAppAuthenticated: true,
-    isPreviewMode: true,
-    isDevelopmentEnvironment: true,
-    authenticatedWith: session.authenticatedWith || 'preview_test_mode',
+    authenticated: session.isAppAuthenticated,
+    isAppAuthenticated: session.isAppAuthenticated,
+    isPreviewMode: session.isPreviewMode || false,
+    authenticatedWith: session.authenticatedWith || 'unauthenticated',
     inactivityTimeoutMinutes: session.inactivityTimeoutMinutes || 15,
     inactivityRemainingSeconds: remainingInactivity,
     sessionId: session.id,
     deviceId: session.deviceId,
     deviceName: session.deviceName,
-    currentSecurityLevel: 2,
-    isStepUpActive: true,
-    stepUpRemainingSeconds: 3600,
-    isSensitiveUnlocked: true, // Internal modules fully unlocked
-    sensitiveRemainingSeconds: 3600,
+    currentSecurityLevel,
+    isStepUpActive,
+    stepUpRemainingSeconds: isStepUpActive ? Math.max(0, Math.ceil((session.stepUpExpiresAt - now) / 1000)) : 0,
+    isSensitiveUnlocked,
+    sensitiveRemainingSeconds: isSensitiveUnlocked ? Math.max(0, Math.ceil((session.sensitiveUnlockedUntil - now) / 1000)) : 0,
     hasPasskeys: passkeys.length > 0,
     passkeyCount: passkeys.length,
     totpEnabled,

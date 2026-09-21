@@ -168,11 +168,17 @@ export const SecurityPrivacyCenter: React.FC<SecurityPrivacyCenterProps> = ({
     return () => clearInterval(interval);
   }, []);
 
-  // Helper for step-up gated actions (Temporarily bypassed during development phase)
-  const requireStepUp = (action: () => void, _title: string, _desc: string, _level: 2 | 3 = 3) => {
-    // SECURITY ARCHITECTURE: Step-up authentication is temporarily disabled.
-    // Actions execute directly so all features can be tested.
-    action();
+  // Helper for step-up gated actions (Gated for sensitive operations)
+  const requireStepUp = (action: () => void, title: string, desc: string, level: 2 | 3 = 3) => {
+    if (status?.isStepUpActive || status?.isSensitiveUnlocked) {
+      action();
+      return;
+    }
+    setStepUpTitle(title);
+    setStepUpDesc(desc);
+    setStepUpLevel(level);
+    setPendingAction(() => action);
+    setIsStepUpOpen(true);
   };
 
   const handleStepUpSuccess = () => {
@@ -183,12 +189,20 @@ export const SecurityPrivacyCenter: React.FC<SecurityPrivacyCenterProps> = ({
     }
   };
 
-  // Manual perimeter lock (Temporarily dormant for development)
-  const handleManualLockApp = () => {
+  // Manual perimeter lock
+  const handleManualLockApp = async () => {
+    try {
+      await fetch('/api/auth/lock-app', { method: 'POST' });
+    } catch (err) {
+      console.warn('Lock app endpoint error:', err);
+    }
     setNotificationMsg({
       type: 'info',
-      text: 'Perimeter lock is tijdelijk inactief gemaakt. Alle modules zijn direct toegankelijk.',
+      text: 'Alchemy locked at application perimeter.',
     });
+    if (onLockApp) {
+      onLockApp();
+    }
   };
 
   // Configure inactivity timeout period

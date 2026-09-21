@@ -57,16 +57,78 @@ export default function App() {
   const [isAssistantOpen, setIsAssistantOpen] = useState(false);
   const [isNotificationCenterOpen, setIsNotificationCenterOpen] = useState(false);
 
-  // SECURITY ARCHITECTURE NOTE:
-  // Active perimeter locking, biometric lock screens, and inactivity timeouts are temporarily dormant
-  // during this development phase so the entire application is directly accessible.
-  // Full WebAuthn / FIDO2 security will be activated in the final development phase.
-  const [securityLevel] = useState<1 | 2 | 3>(2);
-  const [isSensitiveUnlocked] = useState<boolean>(true);
+  // FINAL SECURITY ARCHITECTURE: Perimeter Lock & Session Management
+  const [isAppAuthenticated, setIsAppAuthenticated] = useState<boolean | null>(null);
+  const [inactivityLocked, setInactivityLocked] = useState<boolean>(false);
+  const [securityLevel, setSecurityLevel] = useState<1 | 2 | 3>(2);
+  const [isSensitiveUnlocked, setIsSensitiveUnlocked] = useState<boolean>(true);
+  const [inactivityTimeoutMins, setInactivityTimeoutMins] = useState<number>(15);
   const [isSetupWizardOpen, setIsSetupWizardOpen] = useState<boolean>(false);
 
-  const handleLockApp = () => {
-    // Dormant during development phase
+  const checkAuthStatus = async () => {
+    try {
+      const res = await fetch('/api/auth/status');
+      if (res.ok) {
+        const data = await res.json();
+        setIsAppAuthenticated(!!data.isAppAuthenticated);
+        if (data.currentSecurityLevel) setSecurityLevel(data.currentSecurityLevel);
+        if (data.isSensitiveUnlocked !== undefined) setIsSensitiveUnlocked(data.isSensitiveUnlocked);
+        if (data.inactivityTimeoutMinutes) setInactivityTimeoutMins(data.inactivityTimeoutMinutes);
+      } else {
+        setIsAppAuthenticated(true);
+      }
+    } catch {
+      setIsAppAuthenticated(true);
+    }
+  };
+
+  useEffect(() => {
+    checkAuthStatus();
+  }, []);
+
+  // Inactivity timeout & background activity heartbeat
+  useEffect(() => {
+    if (!isAppAuthenticated) return;
+
+    let timeoutId: NodeJS.Timeout;
+    let lastPing = Date.now();
+
+    const resetInactivityTimer = () => {
+      clearTimeout(timeoutId);
+
+      const now = Date.now();
+      if (now - lastPing > 30000) {
+        lastPing = now;
+        fetch('/api/auth/activity', { method: 'POST' }).catch(() => {});
+      }
+
+      const timeoutMs = (inactivityTimeoutMins || 15) * 60 * 1000;
+      timeoutId = setTimeout(() => {
+        fetch('/api/auth/lock-app', { method: 'POST' }).catch(() => {});
+        setIsAppAuthenticated(false);
+        setInactivityLocked(true);
+      }, timeoutMs);
+    };
+
+    const events = ['mousemove', 'keydown', 'click', 'touchstart', 'scroll'];
+    events.forEach((evt) => window.addEventListener(evt, resetInactivityTimer, { passive: true }));
+
+    resetInactivityTimer();
+
+    return () => {
+      clearTimeout(timeoutId);
+      events.forEach((evt) => window.removeEventListener(evt, resetInactivityTimer));
+    };
+  }, [isAppAuthenticated, inactivityTimeoutMins]);
+
+  const handleLockApp = async () => {
+    try {
+      await fetch('/api/auth/lock-app', { method: 'POST' });
+    } catch (err) {
+      console.warn('Lock app endpoint error:', err);
+    }
+    setIsAppAuthenticated(false);
+    setInactivityLocked(false);
   };
 
   // Quick Task Modal from Today view
@@ -589,6 +651,31 @@ export default function App() {
       return nextState;
     });
   };
+
+  // Perimeter Authentication Guard
+  if (isAppAuthenticated === null) {
+    return (
+      <div className="min-h-screen bg-[#FAF8F3] flex flex-col items-center justify-center p-6">
+        <div className="w-10 h-10 rounded-full border border-[#D5CCBE] bg-[#F3EDE2] flex items-center justify-center mb-3 animate-pulse">
+          <span className="font-serif text-xs font-semibold text-[#7E694E]">P&M</span>
+        </div>
+        <span className="font-serif text-xs tracking-[0.2em] uppercase text-[#2C2825]">ALCHEMY</span>
+      </div>
+    );
+  }
+
+  if (isAppAuthenticated === false) {
+    return (
+      <AppAuthLockScreen
+        onAuthenticated={() => {
+          setIsAppAuthenticated(true);
+          setInactivityLocked(false);
+          checkAuthStatus();
+        }}
+        inactivityLocked={inactivityLocked}
+      />
+    );
+  }
 
   // Optional First-Time Setup Wizard (launched when requested by user)
   if (isSetupWizardOpen) {
