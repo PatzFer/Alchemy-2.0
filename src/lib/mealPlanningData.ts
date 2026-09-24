@@ -9,6 +9,7 @@ import {
   MealFeedbackEntry,
   CalendarEvent,
   CuisineType,
+  FoundationFoodProfile,
 } from '../types';
 
 // ============================================================
@@ -495,34 +496,314 @@ export const CURATED_RECIPES: Recipe[] = [
     mealPrepNotes: 'Geschikt voor de slowcooker (4 uur op LOW).',
   },
   {
-    id: 'it-wraps-rundvlees',
-    name: 'Zachte Volkoren Wraps met Gekruid Rundvlees en Paprikasaus',
+    id: 'pt-carne-alentejana',
+    name: 'Carne de Porco à Alentejana com Batatas e Molho de Alho',
+    cuisine: 'portuguese',
+    shortDescription:
+      'Mals zacht gemarineerd varkensvlees met goudgele aardappelblokjes, knoflook, massa de pimentão en witte wijn.',
+    prepMinutes: 15,
+    cookMinutes: 25,
+    totalMinutes: 40,
+    isSlowcooker: false,
+    proteinGramsPerPerson: 38,
+    ingredients: [
+      { id: 'i-48', name: 'Mager varkensvlees (in blokjes)', amountPerPerson: 190, unit: 'g', category: 'meat_fish' },
+      { id: 'i-49', name: 'Aardappelen (in dobbelsteentjes gegaard)', amountPerPerson: 180, unit: 'g', category: 'vegetables', isCookedOrPureed: true },
+      { id: 'i-50a', name: 'Massa de pimentão (zoete paprikapasta)', amountPerPerson: 1, unit: 'el', category: 'spices_other' },
+      { id: 'i-51a', name: 'Knoflook', amountPerPerson: 2, unit: 'tenen', category: 'vegetables' },
+      { id: 'i-52a', name: 'Witte wijn', amountPerPerson: 50, unit: 'ml', category: 'pantry' },
+      { id: 'i-53a', name: 'Olijfolie extra vierge', amountPerPerson: 1, unit: 'el', category: 'pantry' },
+    ],
+    steps: [
+      'Marineer het varkensvlees kort in knoflook, paprikapasta, laurier en witte wijn.',
+      'Bak de aardappelblokjes goudgeel in de oven of pan.',
+      'Schroei het vlees krachtig aan in olijfolie met de marinade tot de saus indikt.',
+      'Meng de aardappelen kort door het vlees en de rijke saus en serveer direct warm.',
+    ],
+    substitutions: ['Kipfiletblokjes werken eveneens fantastisch.'],
+    storageNotes: 'Blijft 2 dagen uitstekend in de koelkast.',
+    mealPrepNotes: 'De marinade kan een dag op voorhand gemaakt worden.',
+  },
+
+  // ------------------------------------------------------------
+  // 🇪🇸 SPANISH (MILD & AROMATIC MEDITERRANEAN CLASSICS)
+  // ------------------------------------------------------------
+  {
+    id: 'es-pollo-ajillo',
+    name: 'Pollo al Ajillo con Arroz y Verduras Asadas',
+    cuisine: 'spanish',
+    shortDescription:
+      'Spaanse goudbruin gebraden kipdijen in een geurige saus van knoflook, pimentón en droge witte wijn, met witte rijst en zachte courgette.',
+    prepMinutes: 10,
+    cookMinutes: 25,
+    totalMinutes: 35,
+    isSlowcooker: false,
+    proteinGramsPerPerson: 38,
+    ingredients: [
+      { id: 'i-es-1', name: 'Kippendijen (zonder vel)', amountPerPerson: 200, unit: 'g', category: 'meat_fish' },
+      { id: 'i-es-2', name: 'Witte basmati rijst', amountPerPerson: 75, unit: 'g', category: 'pantry' },
+      { id: 'i-es-3', name: 'Courgette (zacht gestoofd in schijfjes)', amountPerPerson: 120, unit: 'g', category: 'vegetables', isCookedOrPureed: true },
+      { id: 'i-es-4', name: 'Verse knoflook (in dunne plakjes)', amountPerPerson: 3, unit: 'tenen', category: 'vegetables' },
+      { id: 'i-es-5', name: 'Witte wijn & pimentón dulce', amountPerPerson: 50, unit: 'ml', category: 'pantry' },
+      { id: 'i-es-6', name: 'Olijfolie extra vierge', amountPerPerson: 1, unit: 'el', category: 'pantry' },
+    ],
+    steps: [
+      'Kruid de kipdijen met zeezout, zwarte peper en milde zoete paprikapoeder (pimentón dulce).',
+      'Fruit de knoflookplakjes zachtjes goudgeel in ruime olijfolie en haal ze er even uit.',
+      'Bak de kip in dezelfde geurige olie goudbruin aan beiden kanten.',
+      'Blus af met de witte wijn, voeg de knoflook weer toe en laat 15 minuten zachtjes stoven.',
+      'Kook de witte rijst en stoof de courgetteschijfjes zacht. Serveer de kip met de knoflookjus over de rijst.',
+    ],
+    substitutions: ['Mager varkenshaasje in plaats van kip.'],
+    storageNotes: '1-2 dagen houdbaar in de koelkast; de smaak verdiept zich.',
+    mealPrepNotes: 'Perfecte snel voor te bereiden maaltijd op werkdagen.',
+  },
+  {
+    id: 'es-albondigas-salsa',
+    name: 'Albóndigas en Salsa de Tomate y Pimientos',
+    cuisine: 'spanish',
+    shortDescription:
+      'Malse Spaanse rundergehaktballetjes in een rijke, zoete tomaten-paprikasaus met goudgele gekookte aardappelen.',
+    prepMinutes: 15,
+    cookMinutes: 25,
+    totalMinutes: 40,
+    isSlowcooker: false,
+    proteinGramsPerPerson: 36,
+    ingredients: [
+      { id: 'i-es-10', name: 'Mager rundergehakt', amountPerPerson: 180, unit: 'g', category: 'meat_fish' },
+      { id: 'i-es-11', name: 'Aardappelen (in blokjes gegaard)', amountPerPerson: 200, unit: 'g', category: 'vegetables', isCookedOrPureed: true },
+      { id: 'i-es-12', name: 'Passata di pomodoro', amountPerPerson: 150, unit: 'ml', category: 'pantry' },
+      { id: 'i-es-13', name: 'Zoete rode paprika (gepureerd in de saus)', amountPerPerson: 100, unit: 'g', category: 'vegetables', isCookedOrPureed: true },
+      { id: 'i-es-14', name: 'Ui & knoflook', amountPerPerson: 1, unit: 'stuk', category: 'vegetables' },
+      { id: 'i-es-15', name: 'Olijfolie & oregano', amountPerPerson: 1, unit: 'el', category: 'pantry' },
+    ],
+    steps: [
+      'Draai malse balletjes van het rundergehakt met knoflook, peper en zout.',
+      'Schroei de gehaktballetjes in olijfolie rondom aan tot ze goudbruin zijn.',
+      'Voeg de passata en fijngemalen paprika toe en laat de balletjes 18 minuten zacht stoven in de saus.',
+      'Kook de aardappelen gaar en serveer samen met de gehaktballetjes en royale saus.',
+    ],
+    substitutions: ['Kalkoengehakt voor een extra magere variant.'],
+    storageNotes: 'Vriezer-vriendelijk.',
+    mealPrepNotes: 'Maak een grotere portie voor een snelle opwarmmaaltijd.',
+  },
+  {
+    id: 'es-estofado-rioja',
+    name: 'Slowcooker Estofado de Ternera a la Riojana',
+    cuisine: 'spanish',
+    shortDescription:
+      'Malse Spaanse runderstoofschotel langzaam gegaard met goudgele aardappelblokjes, zacht gekookte wortelen, knoflook en milde zoete pimentón.',
+    prepMinutes: 15,
+    cookMinutes: 240,
+    totalMinutes: 255,
+    isSlowcooker: true,
+    proteinGramsPerPerson: 42,
+    ingredients: [
+      { id: 'i-es-20', name: 'Mager runderstoofvlees', amountPerPerson: 210, unit: 'g', category: 'meat_fish' },
+      { id: 'i-es-21', name: 'Vastkokende aardappelen (in blokjes)', amountPerPerson: 180, unit: 'g', category: 'vegetables', isCookedOrPureed: true },
+      { id: 'i-es-22', name: 'Wortelen (in schijfjes)', amountPerPerson: 120, unit: 'g', category: 'vegetables', isCookedOrPureed: true },
+      { id: 'i-es-23', name: 'Tomatenpassata & runderbouillon', amountPerPerson: 150, unit: 'ml', category: 'pantry' },
+      { id: 'i-es-24', name: 'Pimentón dulce & laurier', amountPerPerson: 1, unit: 'tl', category: 'spices_other' },
+    ],
+    steps: [
+      'Schroei het rundvlees kort aan in een hete pan met olijfolie.',
+      'Doe het vlees samen met de aardappelen, wortelen, passata, bouillon, pimentón en laurier in de slowcooker.',
+      'Laat 6 tot 7 uur stoven op LOW tot het vlees smelt op de tong.',
+      'Serveer warm in diepe kommen.',
+    ],
+    substitutions: ['Kan ook in een gietijzeren pan op zacht vuur gemaakt worden.'],
+    storageNotes: 'Smaakt de volgende dag nog rijker.',
+    mealPrepNotes: 'Ideale voorbereiding voor een drukker begin van de week.',
+  },
+
+  // ------------------------------------------------------------
+  // 🇬🇷 GREEK (HERBY & SUN-DRENCHED SOUTHERN EUROPEAN)
+  // ------------------------------------------------------------
+  {
+    id: 'gr-souvlaki-kotopoulo',
+    name: 'Kotopoulo Souvlaki met Citroenaardappels en Gestoofde Groenten',
+    cuisine: 'greek',
+    shortDescription:
+      'Mals gemarineerde Griekse kipfiletspiesjes met Griekse oregano, knoflook en citroen, met zacht gegaarde goudgele aardappelen uit de oven en gestoofde courgette.',
+    prepMinutes: 15,
+    cookMinutes: 25,
+    totalMinutes: 40,
+    isSlowcooker: false,
+    proteinGramsPerPerson: 39,
+    ingredients: [
+      { id: 'i-gr-1', name: 'Kipfilet (in malse blokjes)', amountPerPerson: 200, unit: 'g', category: 'meat_fish' },
+      { id: 'i-gr-2', name: 'Aardappelen (in party-partjes)', amountPerPerson: 200, unit: 'g', category: 'vegetables', isCookedOrPureed: true },
+      { id: 'i-gr-3', name: 'Courgette (in blokjes, zacht gegaard)', amountPerPerson: 100, unit: 'g', category: 'vegetables', isCookedOrPureed: true },
+      { id: 'i-gr-4', name: 'Griekse oregano & knoflook', amountPerPerson: 1, unit: 'el', category: 'spices_other' },
+      { id: 'i-gr-5', name: 'Vers citroensap', amountPerPerson: 2, unit: 'el', category: 'pantry' },
+      { id: 'i-gr-6', name: 'Olijfolie extra vierge', amountPerPerson: 1, unit: 'el', category: 'pantry' },
+    ],
+    steps: [
+      'Marineer de kipblokjes met knoflook, oregano, citroensap en olijfolie.',
+      'Schep de aardappelpartjes in een ovenschaal met citroensap, olijfolie, oregano en water en bak 30 minuten zacht en goudgeel.',
+      'Grill of bak de kipspiesjes in 8-10 minuten sappig en gaar.',
+      'Stoof de courgetteschijfjes zacht in olijfolie en dien op met de malse kip en geurige citroenaardappels.',
+    ],
+    substitutions: ['Mager varkenshaasje of kalkoen.'],
+    storageNotes: 'Blijft 2 dagen prima in de koelkast.',
+    mealPrepNotes: 'Het marineren kan de ochtend van tevoren worden gedaan.',
+  },
+  {
+    id: 'gr-giouvetsi-rund',
+    name: 'Giouvetsi van Mals Rundvlees met Kritharaki in Milde Tomatensaus',
+    cuisine: 'greek',
+    shortDescription:
+      'Tragisch malse Griekse runderstoofschotel met kritharaki (orzo-pasta) gegaard in een aromatische saus van tomaat, kaneelnoot en oregano.',
+    prepMinutes: 15,
+    cookMinutes: 45,
+    totalMinutes: 60,
+    isSlowcooker: false,
+    proteinGramsPerPerson: 38,
+    ingredients: [
+      { id: 'i-gr-10', name: 'Mager runderstoofvlees (in kleine blokjes)', amountPerPerson: 190, unit: 'g', category: 'meat_fish' },
+      { id: 'i-gr-11', name: 'Kritharaki / Orzo-pasta', amountPerPerson: 75, unit: 'g', category: 'pantry' },
+      { id: 'i-gr-12', name: 'Passata di pomodoro', amountPerPerson: 160, unit: 'ml', category: 'pantry' },
+      { id: 'i-gr-13', name: 'Ui & knoflook (fijngesnipperd)', amountPerPerson: 1, unit: 'stuk', category: 'vegetables' },
+      { id: 'i-gr-14', name: 'Kaneelstokje & oregano', amountPerPerson: 1, unit: 'stuk', category: 'spices_other' },
+      { id: 'i-gr-15', name: 'Runderbouillon', amountPerPerson: 250, unit: 'ml', category: 'pantry' },
+    ],
+    steps: [
+      'Schroei de runderblokjes aan in olijfolie met ui en knoflook.',
+      'Voeg passata, runderbouillon, oregano en het kaneelstokje toe en laat op laag vuur 35 minuten zacht stoven.',
+      'Voeg de kritharaki pasta toe aan de pan/ovenschaal met extra bouillon en laat 12 minuten zacht meekoken tot de pasta romig en gaar is.',
+      'Verwijder het kaneelstokje en dien warm op.',
+    ],
+    substitutions: ['Kan ook met kipfiletdijen bereid worden.'],
+    storageNotes: 'De pasta neemt de saus op; bij het opwarmen een scheutje heet water of bouillon toevoegen.',
+    mealPrepNotes: 'Het stoofvlees kan vooraf bereid worden.',
+  },
+
+  // ------------------------------------------------------------
+  // 🇫🇷 SOUTHERN FRENCH (COMFORTING & REFINED PROVENÇAL)
+  // ------------------------------------------------------------
+  {
+    id: 'fr-poulet-provencal',
+    name: 'Poulet Provençal met Tomaat, Knoflook en Zachte Courgette',
+    cuisine: 'french',
+    shortDescription:
+      'Malse kipdijen langzaam gestoofd in een geurige saus van rijpe tomaten, knoflook, Provençaalse kruiden en zacht gegaarde courgette met tagliatelle.',
+    prepMinutes: 15,
+    cookMinutes: 30,
+    totalMinutes: 45,
+    isSlowcooker: false,
+    proteinGramsPerPerson: 37,
+    ingredients: [
+      { id: 'i-fr-1', name: 'Kippendijen (zonder bot)', amountPerPerson: 200, unit: 'g', category: 'meat_fish' },
+      { id: 'i-fr-2', name: 'Tagliatelle of penne', amountPerPerson: 75, unit: 'g', category: 'pantry' },
+      { id: 'i-fr-3', name: 'Courgette (in blokjes zacht gegaard)', amountPerPerson: 120, unit: 'g', category: 'vegetables', isCookedOrPureed: true },
+      { id: 'i-fr-4', name: 'Passata van zongerijpte tomaten', amountPerPerson: 150, unit: 'ml', category: 'pantry' },
+      { id: 'i-fr-5', name: 'Kruiden van de Provence & knoflook', amountPerPerson: 1, unit: 'tl', category: 'spices_other' },
+      { id: 'i-fr-6', name: 'Olijfolie extra vierge', amountPerPerson: 1, unit: 'el', category: 'pantry' },
+    ],
+    steps: [
+      'Bak de gepeperde en gezouten kipdijen aan in olijfolie tot ze mooi goudgeel kleuren.',
+      'Voeg knoflook en de courgetteblokjes toe en stoof 5 minuten zacht mee.',
+      'Giet de passata en Provençaalse kruiden erbij, zet het deksel schuin en laat 20 minuten rustig pruttelen.',
+      'Kook de tagliatelle al dente en schep door de warme Provençaalse saus.',
+    ],
+    substitutions: ['Runderreepjes of magere varkensoester.'],
+    storageNotes: 'Tot 3 dagen houdbaar in de koelkast.',
+    mealPrepNotes: 'Uitstekende opwarmmaaltijd.',
+  },
+  {
+    id: 'fr-daube-provenchale',
+    name: 'Slowcooker Daube de Bœuf Provençale',
+    cuisine: 'french',
+    shortDescription:
+      'Zuid-Franse runderstoofschotel langzaam gegaard met tijm, laurier, wortelen en een subtiel accent van sinaasappelschil, geserveerd met aardappelpuree.',
+    prepMinutes: 20,
+    cookMinutes: 300,
+    totalMinutes: 320,
+    isSlowcooker: true,
+    proteinGramsPerPerson: 42,
+    ingredients: [
+      { id: 'i-fr-10', name: 'Mager runderstoofvlees', amountPerPerson: 210, unit: 'g', category: 'meat_fish' },
+      { id: 'i-fr-11', name: 'Aardappelen (voor fluweelzachte puree)', amountPerPerson: 200, unit: 'g', category: 'vegetables', isCookedOrPureed: true },
+      { id: 'i-fr-12', name: 'Wortelen (in schijven gegaard)', amountPerPerson: 120, unit: 'g', category: 'vegetables', isCookedOrPureed: true },
+      { id: 'i-fr-13', name: 'Runderbouillon & passata', amountPerPerson: 150, unit: 'ml', category: 'pantry' },
+      { id: 'i-fr-14', name: 'Tijm, laurier & strip sinaasappelschil', amountPerPerson: 1, unit: 'stuk', category: 'spices_other' },
+    ],
+    steps: [
+      'Schroei de runderblokjes goudbruin in olijfolie.',
+      'Leg de wortelen en ui in de slowcooker, leg het vlees erop en giet de bouillon en passata erover.',
+      'Voeg tijm, laurier en de verse sinaasappelschil toe.',
+      'Laat 6 tot 8 uur stoven op LOW. Maak ondertussen fluweelzachte puree.',
+      'Verwijder de sinaasappelschil en laurier en serveer over de puree.',
+    ],
+    substitutions: ['Runderwang of magere runderlappen.'],
+    storageNotes: 'Smaakt heerlijk na een dag rusten in de koelkast.',
+    mealPrepNotes: 'Maak een grote schaal voor 2 dagen kookgemak.',
+  },
+
+  // ------------------------------------------------------------
+  // 🇧🇪 BELGIAN / FLEMISH (ADDITIONAL CLASSIC)
+  // ------------------------------------------------------------
+  {
+    id: 'be-kip-pruimen',
+    name: 'Zachte Kip op Grootmoeders Wijze met Stoofuitjes en Aardappelpuree',
+    cuisine: 'belgian',
+    shortDescription:
+      'Klassieke malse kipdijen zachtjes gestoofd met zoete sjallotjes, laurier, tijm en een vleugje appelstroop, geserveerd met romige aardappelpuree.',
+    prepMinutes: 15,
+    cookMinutes: 30,
+    totalMinutes: 45,
+    isSlowcooker: false,
+    proteinGramsPerPerson: 38,
+    ingredients: [
+      { id: 'i-be-20', name: 'Malse kippendijen (zonder vel)', amountPerPerson: 200, unit: 'g', category: 'meat_fish' },
+      { id: 'i-be-21', name: 'Aardappelen (voor romige puree)', amountPerPerson: 200, unit: 'g', category: 'vegetables', isCookedOrPureed: true },
+      { id: 'i-be-22', name: 'Sjalotten (zacht gestoofd)', amountPerPerson: 3, unit: 'stuks', category: 'vegetables' },
+      { id: 'i-be-23', name: 'Kippenbouillon', amountPerPerson: 150, unit: 'ml', category: 'pantry' },
+      { id: 'i-be-24', name: 'Echte Luikse stroop / appelstroop', amountPerPerson: 1, unit: 'el', category: 'pantry' },
+      { id: 'i-be-25', name: 'Boter & tijm', amountPerPerson: 1, unit: 'el', category: 'dairy_chilled' },
+    ],
+    steps: [
+      'Bak de gepeperde en gezouten kipdijen bruin in boter.',
+      'Haal de kip eruit en fruit de hele sjalotjes langzaam goudgeel in het braadvet.',
+      'Voeg de kip weer toe, giet de kippenbouillon erbij en roer de lepel Luikse stroop erdoor.',
+      'Laat 25 minuten zachtjes stoven met de deksel op de pan.',
+      'Kook en stamp de aardappelen tot een smeuïge puree en serveer met de kip en het zachte stoofvocht.',
+    ],
+    substitutions: ['Mager varkenshaasje of varkenslapje.'],
+    storageNotes: '1-2 dagen houdbaar in de koelkast.',
+    mealPrepNotes: 'Typische Vlaamse zondagse comfort food.',
+  },
+
+  // ------------------------------------------------------------
+  // 🇮🇹 ITALIAN (ADDITIONAL MILD CLASSIC)
+  // ------------------------------------------------------------
+  {
+    id: 'it-scaloppine-limone',
+    name: 'Scaloppine al Limone con Arroz e Zucchine Gegaarde',
     cuisine: 'italian',
     shortDescription:
-      'Warme zachte wraps gevuld met mals gekruide biefstukreepjes, gestoofde zoete paprikareepjes en een milde warme knoflook-tomatensaus.',
+      'Malse dunne kalfs- of kipfilets in een lichte, frisse citroen-botersaus met gestoomde witte rijst en zacht gegaarde courgette.',
     prepMinutes: 10,
     cookMinutes: 15,
     totalMinutes: 25,
     isSlowcooker: false,
-    proteinGramsPerPerson: 35,
+    proteinGramsPerPerson: 37,
     ingredients: [
-      { id: 'i-140', name: 'Malse biefstuk- of runderreepjes', amountPerPerson: 180, unit: 'g', category: 'meat_fish' },
-      { id: 'i-141', name: 'Volkoren of maïswraps', amountPerPerson: 2, unit: 'stuks', category: 'pantry' },
-      { id: 'i-142', name: 'Rode & gele paprika (zacht gestoofd)', amountPerPerson: 120, unit: 'g', category: 'vegetables', isCookedOrPureed: true },
-      { id: 'i-143', name: 'Passata di pomodoro met knoflook', amountPerPerson: 60, unit: 'ml', category: 'pantry' },
-      { id: 'i-144', name: 'Geraspte milde kaas (bv. mozzarella of emmentaler)', amountPerPerson: 30, unit: 'g', category: 'dairy_chilled' },
-      { id: 'i-145', name: 'Olijfolie & oregano', amountPerPerson: 1, unit: 'el', category: 'pantry' },
+      { id: 'i-it-20', name: 'Kipfilet of kalfslapje (zeer dun gesneden)', amountPerPerson: 180, unit: 'g', category: 'meat_fish' },
+      { id: 'i-it-21', name: 'Witte basmati rijst', amountPerPerson: 75, unit: 'g', category: 'pantry' },
+      { id: 'i-it-22', name: 'Courgette (in schijfjes, gegaard)', amountPerPerson: 120, unit: 'g', category: 'vegetables', isCookedOrPureed: true },
+      { id: 'i-it-23', name: 'Vers citroensap & rasp', amountPerPerson: 2, unit: 'el', category: 'pantry' },
+      { id: 'i-it-24', name: 'Roomboter & scheutje witte wijn', amountPerPerson: 15, unit: 'g', category: 'dairy_chilled' },
     ],
     steps: [
-      'Snijd de paprika in fijne reepjes en stoof zachtjes in een scheutje olijfolie met oregano tot ze boterzacht zijn.',
-      'Bak de gekruide runderreepjes op hoog vuur in 3-4 minuten kort en krachtig aan zodat ze vanbinnen sappig blijven.',
-      'Voeg een lepel passata toe aan de pan voor een smeuïge saus rondom het vlees.',
-      'Verwarm de wraps 20 seconden in een droge pan.',
-      'Beleg de warme wraps met de gestoofde paprika, het malse rundvlees en een beetje geraspte kaas, en rol ze lekker strak op.',
+      'Wentel de dunne kalfslapjes/kipfilets licht door een snufje bloem.',
+      'Bak op hoog vuur 2 minuten per kant goudbruin in een klontje boter en olijfolie.',
+      'Blus af met witte wijn en vers citroensap, roer een extra klontje koude boter erdoor voor een zijdezachte saus.',
+      'Kook de rijst en stoof de courgette zacht. Serveer het malse vlees direct over de rijst met de citroensaus.',
     ],
-    substitutions: ['Kipfiletreepjes zijn eveneens heerlijk in deze wrap.'],
-    storageNotes: 'Het vlees en de groenten kunnen afzonderlijk 2 dagen bewaard worden.',
-    mealPrepNotes: 'De snelste doordeweekse maaltijd: binnen 20 minuten klaar op een drukke avond.',
+    substitutions: ['Kalkoenoester.'],
+    storageNotes: 'Direct vers eten is het lekkerst.',
+    mealPrepNotes: 'Razendsnel klaar in 20 minuten.',
   },
 ];
 
@@ -622,12 +903,13 @@ export function isThursdayPlanningTime(now: Date = new Date()): boolean {
 
 /**
  * Generates an intelligent, authentic weekly menu plan for 7 days:
- * 1. Prioritizes 🇵🇹 Portuguese (Primary core identity), 🇧🇪 Belgian (second), 🇮🇹 Italian (third)
- * 2. Takes 1 vs 2 portion choices into account
- * 3. Matches estimated cooking time
- * 4. Incorporates available inventory items
- * 5. Uses learned feedback to avoid disliked meals and favor loved ones
- * 6. Strictly enforces NO couscous, NO quinoa, NO raw veg, NO smoothies, NO fruit
+ * 1. Creates a natural mix of Southern European / European cuisines (Portuguese, Italian, Spanish, Greek, French, Belgian/Flemish)
+ * 2. Portuguese cuisine is regularly represented (core identity) but does NOT dominate every day
+ * 3. Enforces cuisine rotation so consecutive days avoid repeating the same cuisine
+ * 4. Enforces protein rotation across days (chicken, beef, pork, seafood)
+ * 5. Matches estimated cooking time and workday vs weekend context
+ * 6. Incorporates available inventory items
+ * 7. Uses learned feedback and user food profile to strictly avoid disliked foods (e.g., couscous, quinoa, raw veg, cod)
  */
 export function generateWeeklyPlan(
   weekStartDate: string,
@@ -639,43 +921,26 @@ export function generateWeeklyPlan(
   calendarEvents: CalendarEvent[] = [],
   inventory: KitchenInventoryItem[] = [],
   feedbackHistory: MealFeedbackEntry[] = [],
-  customRecipes: Recipe[] = []
+  customRecipes: Recipe[] = [],
+  foodProfile?: FoundationFoodProfile
 ): WeeklyMenuPlan {
   const allRecipes = [...CURATED_RECIPES, ...customRecipes];
 
-  // Score recipes based on feedback and culinary hierarchy
-  const scoredRecipes = allRecipes.map((recipe) => {
-    let score = 10;
-    // Hierarchy weight
-    if (recipe.cuisine === 'portuguese') score += 15; // Core identity
-    else if (recipe.cuisine === 'belgian') score += 8;
-    else if (recipe.cuisine === 'italian') score += 5;
-
-    // Feedback learning
-    const pastFeedback = feedbackHistory.filter((f) => f.recipeId === recipe.id);
-    for (const fb of pastFeedback) {
-      if (fb.feedback === 'love') score += 20;
-      else if (fb.feedback === 'like') score += 8;
-      else if (fb.feedback === 'neutral') score += 0;
-      else if (fb.feedback === 'dislike') score -= 50; // Heavy demotion of disliked items
-    }
-
-    // Inventory match boost
-    const matchedIngredients = recipe.ingredients.filter((ing) =>
-      inventory.some(
-        (inv) => !inv.isUsed && inv.name.toLowerCase().includes(ing.name.toLowerCase().split(' ')[0])
-      )
-    );
-    score += matchedIngredients.length * 4;
-
-    return { recipe, score };
-  });
-
-  // Filter out any strictly disliked meals with strongly negative score
-  const availablePool = scoredRecipes.filter((s) => s.score > -20);
   const usedRecipeIds = new Set<string>();
+  const cuisineCountInWeek: Record<string, number> = {};
+  let lastCuisine: string | null = null;
+  let lastProteinType: string | null = null;
 
-  const plannedDays: PlannedMealDay[] = daySelections.map((sel) => {
+  const getProteinType = (recipe: Recipe): string => {
+    const ingNames = recipe.ingredients.map((i) => i.name.toLowerCase()).join(' ');
+    if (ingNames.includes('kip') || ingNames.includes('frango') || ingNames.includes('pollo') || ingNames.includes('poulet') || ingNames.includes('hoevekip')) return 'chicken';
+    if (ingNames.includes('rund') || ingNames.includes('biefstuk') || ingNames.includes('ternera') || ingNames.includes('bœuf') || ingNames.includes('carne') || ingNames.includes('gehakt')) return 'beef';
+    if (ingNames.includes('varkens') || ingNames.includes('bifana') || ingNames.includes('porco') || ingNames.includes('ham') || ingNames.includes('chouriço') || ingNames.includes('cerdo')) return 'pork';
+    if (ingNames.includes('gamba') || ingNames.includes('garnalen') || ingNames.includes('vis') || ingNames.includes('marisco')) return 'seafood';
+    return 'other';
+  };
+
+  const plannedDays: PlannedMealDay[] = daySelections.map((sel, dayIndex) => {
     if (sel.diningChoice === 'none') {
       return {
         date: sel.date,
@@ -688,22 +953,83 @@ export function generateWeeklyPlan(
 
     const cookingEstimate = estimateCookingTimeForDay(sel.dayOfWeek, calendarEvents, sel.date);
 
-    // Filter recipes matching the time constraint
-    let candidates = availablePool.filter((c) => !usedRecipeIds.has(c.recipe.id));
-    if (candidates.length === 0) candidates = availablePool; // reset pool if exhausted
-
-    if (cookingEstimate.recommendation === 'quick') {
-      const quickCandidates = candidates.filter((c) => c.recipe.totalMinutes <= 35 || c.recipe.isSlowcooker);
-      if (quickCandidates.length > 0) candidates = quickCandidates;
-    } else if (cookingEstimate.recommendation === 'slowcooker') {
-      const slowCandidates = candidates.filter((c) => c.recipe.isSlowcooker);
-      if (slowCandidates.length > 0) candidates = slowCandidates;
+    let availableCandidates = allRecipes.filter((r) => !usedRecipeIds.has(r.id));
+    if (availableCandidates.length === 0) {
+      availableCandidates = [...allRecipes];
     }
 
-    // Sort by score descending
-    candidates.sort((a, b) => b.score - a.score);
-    const chosen = candidates[0]?.recipe || allRecipes[0];
+    if (cookingEstimate.recommendation === 'quick') {
+      const quicks = availableCandidates.filter((r) => r.totalMinutes <= 40 || r.isSlowcooker);
+      if (quicks.length > 0) availableCandidates = quicks;
+    } else if (cookingEstimate.recommendation === 'slowcooker') {
+      const slows = availableCandidates.filter((r) => r.isSlowcooker);
+      if (slows.length > 0) availableCandidates = slows;
+    }
+
+    const scoredCandidates = availableCandidates.map((recipe) => {
+      let score = 50;
+
+      // Feedback learning
+      const pastFeedback = feedbackHistory.filter((f) => f.recipeId === recipe.id);
+      for (const fb of pastFeedback) {
+        if (fb.feedback === 'love') score += 25;
+        else if (fb.feedback === 'like') score += 10;
+        else if (fb.feedback === 'neutral') score += 0;
+        else if (fb.feedback === 'dislike') score -= 100;
+      }
+
+      // Profile dislikes
+      if (foodProfile?.dislikes && foodProfile.dislikes.length > 0) {
+        const lowerIngs = recipe.ingredients.map((i) => i.name.toLowerCase()).join(' ');
+        if (lowerIngs.includes('kabeljauw') || lowerIngs.includes('couscous') || lowerIngs.includes('quinoa')) {
+          score -= 200;
+        }
+      }
+
+      // Inventory match
+      const matchedIngredients = recipe.ingredients.filter((ing) =>
+        inventory.some(
+          (inv) => !inv.isUsed && inv.name.toLowerCase().includes(ing.name.toLowerCase().split(' ')[0])
+        )
+      );
+      score += matchedIngredients.length * 3;
+
+      // Consecutive same cuisine penalty (no same cuisine two days in a row)
+      if (lastCuisine && recipe.cuisine === lastCuisine) {
+        score -= 35;
+      }
+
+      // Cuisine frequency penalty
+      const count = cuisineCountInWeek[recipe.cuisine] || 0;
+      if (recipe.cuisine === 'portuguese') {
+        // Portuguese is core identity: fine up to 2-3 times per week, but penalized if >2
+        if (count >= 2) score -= 30 * count;
+      } else {
+        // Other cuisines cap at 2 max per week
+        if (count >= 2) score -= 25 * count;
+      }
+
+      // Protein rotation penalty
+      const pType = getProteinType(recipe);
+      if (lastProteinType && pType === lastProteinType) {
+        score -= 15;
+      }
+
+      // Small variation seed based on week start date + day index for variety on regeneration
+      const dateSeed = weekStartDate.split('-').reduce((acc, part) => acc + parseInt(part, 10), 0);
+      const varFactor = Math.sin(dateSeed * 7 + dayIndex * 13 + recipe.id.length * 3);
+      score += varFactor * 4;
+
+      return { recipe, score };
+    });
+
+    scoredCandidates.sort((a, b) => b.score - a.score);
+    const chosen = scoredCandidates[0]?.recipe || allRecipes[0];
+
     usedRecipeIds.add(chosen.id);
+    cuisineCountInWeek[chosen.cuisine] = (cuisineCountInWeek[chosen.cuisine] || 0) + 1;
+    lastCuisine = chosen.cuisine;
+    lastProteinType = getProteinType(chosen);
 
     return {
       date: sel.date,
@@ -722,6 +1048,42 @@ export function generateWeeklyPlan(
     plannedAt: new Date().toISOString(),
     days: plannedDays,
   };
+}
+
+/**
+ * Returns a smart replacement recipe for a single meal day that introduces
+ * genuine variety (preferably a different cuisine and main protein).
+ */
+export function getSmartReplacementRecipe(
+  currentRecipeId: string,
+  availableRecipes: Recipe[] = CURATED_RECIPES,
+  feedbackHistory: MealFeedbackEntry[] = [],
+  usedRecipeIdsInPlan: string[] = []
+): Recipe {
+  const current = getRecipeById(currentRecipeId);
+  const currentCuisine = current?.cuisine;
+
+  const candidates = availableRecipes.filter(
+    (r) => r.id !== currentRecipeId && !usedRecipeIdsInPlan.includes(r.id)
+  );
+
+  const pool = candidates.length > 0 ? candidates : availableRecipes.filter((r) => r.id !== currentRecipeId);
+
+  const scored = pool.map((recipe) => {
+    let score = 50;
+    if (currentCuisine && recipe.cuisine !== currentCuisine) {
+      score += 20; // Bonus for introducing a different cuisine
+    }
+    const pastFeedback = feedbackHistory.find((f) => f.recipeId === recipe.id);
+    if (pastFeedback?.feedback === 'love') score += 20;
+    else if (pastFeedback?.feedback === 'like') score += 10;
+    else if (pastFeedback?.feedback === 'dislike') score -= 100;
+
+    return { recipe, score };
+  });
+
+  scored.sort((a, b) => b.score - a.score);
+  return scored[0]?.recipe || availableRecipes[0];
 }
 
 /**

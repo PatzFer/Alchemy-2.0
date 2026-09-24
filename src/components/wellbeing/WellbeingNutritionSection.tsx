@@ -19,14 +19,22 @@ import {
   WeeklyMenuPlan,
   DailyMealPlan,
   MealItem,
+  NutritionState,
+  FoundationFoodProfile,
+  CalendarEvent,
 } from '../../types';
 import { generateShoppingListFromMenu } from '../../lib/wellbeingData';
+import { MealsAndMenuPlanningView } from '../meals/MealsAndMenuPlanningView';
 
 interface WellbeingNutritionSectionProps {
   wellbeing: WellbeingState;
   onUpdateWellbeing: (updater: (prev: WellbeingState) => WellbeingState) => void;
   onNavigateToShopping: () => void;
   onOpenAssistantWithPrompt: (prompt: string) => void;
+  nutrition?: NutritionState;
+  onUpdateNutrition?: (nutrition: NutritionState) => void;
+  foodProfile?: FoundationFoodProfile;
+  calendarEvents?: CalendarEvent[];
 }
 
 export const WellbeingNutritionSection: React.FC<WellbeingNutritionSectionProps> = ({
@@ -34,11 +42,47 @@ export const WellbeingNutritionSection: React.FC<WellbeingNutritionSectionProps>
   onUpdateWellbeing,
   onNavigateToShopping,
   onOpenAssistantWithPrompt,
+  nutrition,
+  onUpdateNutrition,
+  foodProfile,
+  calendarEvents = [],
 }) => {
+  // If shared nutrition state is available, render unified MealsAndMenuPlanningView
+  if (nutrition && onUpdateNutrition) {
+    return (
+      <MealsAndMenuPlanningView
+        nutrition={nutrition}
+        onUpdateNutrition={onUpdateNutrition}
+        foodProfile={foodProfile}
+        calendarEvents={calendarEvents}
+        onOpenAssistantWithPrompt={onOpenAssistantWithPrompt}
+      />
+    );
+  }
+
   const [selectedDayIndex, setSelectedDayIndex] = useState(0);
   const [editingMeal, setEditingMeal] = useState<{ dayIndex: number; category: 'breakfast' | 'lunch' | 'dinner' | 'snack'; meal: MealItem } | null>(null);
 
-  const activeDay = wellbeing.weeklyMenu.days[selectedDayIndex] || wellbeing.weeklyMenu.days[0];
+  const daysList = wellbeing?.weeklyMenu?.days || [];
+  const activeDay = daysList[selectedDayIndex] || daysList[0];
+
+  if (!activeDay) {
+    return (
+      <div className="rounded-3xl border border-dashed border-[#DCD3C4] bg-[#FAF8F4] p-10 text-center space-y-4">
+        <div className="w-12 h-12 rounded-full bg-[#F0EAE0] text-[#8C7654] flex items-center justify-center mx-auto">
+          <Utensils className="w-6 h-6" />
+        </div>
+        <div className="max-w-md mx-auto space-y-1.5">
+          <h3 className="font-serif text-xl font-normal text-[#2C2825]">
+            Nog geen voedingsplanning
+          </h3>
+          <p className="text-xs text-[#7A7167] font-light leading-relaxed">
+            Geen fictieve maaltijden ingeladen. Start de weekplanning om jouw maaltijden in te delen.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   const handleSyncToShopping = () => {
     const updatedList = generateShoppingListFromMenu(wellbeing.weeklyMenu, wellbeing.shoppingList);

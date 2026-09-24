@@ -48,6 +48,7 @@ import { getRelevantCelestialNote, CelestialEvent } from '../../lib/celestialUti
 import { AlchemyBriefCard } from '../brain/AlchemyBriefCard';
 import { TaskSplitModal } from '../brain/TaskSplitModal';
 import { generateDeterministicBrief, getOrRefreshAlchemyBrief } from '../../lib/brain/briefService';
+import { snoozeSuggestion, isSuggestionSnoozed } from '../../lib/snoozeStore';
 
 interface TodayViewProps {
   tasks: Task[];
@@ -112,8 +113,8 @@ export const TodayView: React.FC<TodayViewProps> = ({
 }) => {
   const safeLang: Language = lang === 'en' ? 'en' : 'nl';
   const isNl = safeLang === 'nl';
-  const todayStr = new Date().toISOString().split('T')[0];
   const dateObj = new Date();
+  const todayStr = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}-${String(dateObj.getDate()).padStart(2, '0')}`;
 
   // 1. DATE FORMATTING
   const dayName = dateObj.toLocaleDateString(isNl ? 'nl-NL' : 'en-US', { weekday: 'long' });
@@ -158,8 +159,8 @@ export const TodayView: React.FC<TodayViewProps> = ({
   };
 
   // 2.5 ALCHEMY BRIEF 1.0 STATE & ENGINE
-  const [brief, setBrief] = useState<DailyAlchemyBrief>(() =>
-    generateDeterministicBrief({
+  const [brief, setBrief] = useState<DailyAlchemyBrief>(() => {
+    const rawBrief = generateDeterministicBrief({
       foundation,
       calendarEvents,
       tasks,
@@ -168,8 +169,12 @@ export const TodayView: React.FC<TodayViewProps> = ({
       integrations,
       nutrition,
       wellbeing,
-    } as any, todayStr)
-  );
+    } as any, todayStr);
+    return {
+      ...rawBrief,
+      suggestions: (rawBrief.suggestions || []).filter((s) => !isSuggestionSnoozed(s.id)),
+    };
+  });
 
   const [splitModalTask, setSplitModalTask] = useState<{ id: string; title: string } | null>(null);
 
@@ -183,7 +188,12 @@ export const TodayView: React.FC<TodayViewProps> = ({
       integrations,
       nutrition,
       wellbeing,
-    } as any, todayStr).then(setBrief);
+    } as any, todayStr).then((res) => {
+      setBrief({
+        ...res,
+        suggestions: (res.suggestions || []).filter((s) => !isSuggestionSnoozed(s.id)),
+      });
+    });
   }, [
     todayStr,
     calendarEvents.length,
@@ -209,6 +219,8 @@ export const TodayView: React.FC<TodayViewProps> = ({
   };
 
   const handleDismissBriefSuggestion = (sugId: string) => {
+    // Persist snooze state so it survives navigation & re-render
+    snoozeSuggestion(sugId, 4);
     setBrief((prev) => ({
       ...prev,
       suggestions: prev.suggestions.filter((s) => s.id !== sugId),
@@ -314,10 +326,23 @@ export const TodayView: React.FC<TodayViewProps> = ({
 
   // 5. CALENDAR EVENTS FOR TODAY
   const todayEvents = useMemo(() => {
-    return calendarEvents
-      .filter((e) => e.date === todayStr)
-      .sort((a, b) => a.startTime.localeCompare(b.startTime));
-  }, [calendarEvents, todayStr]);
+    let rawEvents = calendarEvents.filter((e) => e.date === todayStr);
+    if (activeWorld !== 'all') {
+      rawEvents = rawEvents.filter((e) => e.realm === activeWorld);
+    }
+    const seen = new Set<string>();
+    const deduplicated: CalendarEvent[] = [];
+
+    for (const evt of rawEvents) {
+      const key = evt.googleEventId || `${evt.date}-${evt.title.trim().toLowerCase()}-${evt.startTime}`;
+      if (!seen.has(key)) {
+        seen.add(key);
+        deduplicated.push(evt);
+      }
+    }
+
+    return deduplicated.sort((a, b) => a.startTime.localeCompare(b.startTime));
+  }, [calendarEvents, todayStr, activeWorld]);
 
   // Quick Calendar Event entry
   const [isAddEventOpen, setIsAddEventOpen] = useState(false);
@@ -606,16 +631,22 @@ export const TodayView: React.FC<TodayViewProps> = ({
       </header>
 
       {/* Health Connect Daily Movement Context (Purely neutral context, non-judgmental) */}
-      {integrations?.healthConnect?.status === 'connected' && (integrations.healthConnect.todaySteps || 0) > 0 && (
-        <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#FAF6EE] border border-[#E5DFD3] text-xs text-[#5C5449] w-fit shadow-2xs">
-          <Footprints className="w-3.5 h-3.5 text-[#8C7654]" />
-          <span>
-            {isNl
-              ? `${integrations.healthConnect.todaySteps.toLocaleString('nl-NL')} stappen vandaag`
-              : `${integrations.healthConnect.todaySteps.toLocaleString('en-US')} steps today`}
-          </span>
-          <span className="text-[10px] text-[#A69C8E]">• Health Connect</span>
-        </div>
+      {integrations?.healthConnect?.status === 'connected' && (
+        (() => {
+          const stepCount = integrations.healthConnect.todaySteps ?? integrations.healthConnect.stepsToday ?? 0;
+          if (stepCount <= 0) return null;
+          return (
+            <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#FAF6EE] border border-[#E5DFD3] text-xs text-[#5C5449] w-fit shadow-2xs select-none">
+              <Footprints className="w-3.5 h-3.5 text-[#8C7654]" />
+              <span>
+                {isNl
+                  ? `${stepCount.toLocaleString('nl-NL')} stappen vandaag`
+                  : `${stepCount.toLocaleString('en-US')} steps today`}
+              </span>
+              <span className="text-[10px] text-[#A69C8E]">• Health Connect</span>
+            </div>
+          );
+        })()
       )}
 
       {/* Location Setup Modal */}
@@ -719,6 +750,9 @@ export const TodayView: React.FC<TodayViewProps> = ({
             <h2 className="font-serif text-lg font-medium text-[#2C2825]">
               {isNl ? 'Agenda van vandaag' : "Today's Calendar"}
             </h2>
+            <span className="text-xs px-2 py-0.5 rounded-full bg-[#EADFCF] text-[#554C42] font-medium font-sans">
+              {todayEvents.length} {isNl ? (todayEvents.length === 1 ? 'afspraak' : 'afspraken') : (todayEvents.length === 1 ? 'event' : 'events')}
+            </span>
             <span className="text-[11px] text-[#8C8377] font-sans">
               ({capacity.formattedFreeTime} {isNl ? 'vrije tijd' : 'free capacity'})
             </span>
@@ -1402,12 +1436,20 @@ export const TodayView: React.FC<TodayViewProps> = ({
               type="button"
               onClick={() => {
                 if (onOpenAssistantWithPrompt) {
-                  onOpenAssistantWithPrompt(smallInsight.actionPrompt);
+                  onOpenAssistantWithPrompt(
+                    smallInsight.actionPrompt,
+                    {
+                      type: 'alchemy_insight',
+                      title: smallInsight.title,
+                      body: smallInsight.body,
+                      actionPrompt: smallInsight.actionPrompt,
+                    }
+                  );
                 } else {
                   onOpenAssistant();
                 }
               }}
-              className="inline-flex items-center gap-1.5 text-xs font-medium text-[#7E694E] hover:text-[#2C2825] transition cursor-pointer"
+              className="inline-flex items-center gap-1.5 text-xs font-medium text-[#7E694E] hover:text-[#2C2825] transition cursor-pointer select-none"
             >
               <span>{isNl ? 'Bespreek met Alchemy' : 'Discuss with Alchemy'}</span>
               <ArrowRight className="w-3.5 h-3.5" />

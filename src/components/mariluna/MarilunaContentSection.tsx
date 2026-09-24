@@ -29,6 +29,7 @@ import {
   ContentStatus,
   Project,
   Idea,
+  MarilunaOffering,
 } from '../../types';
 import {
   normalizePillars,
@@ -45,6 +46,7 @@ interface MarilunaContentSectionProps {
   onAddContentPost: (post: Partial<ContentPost>) => void;
   projects: Project[];
   ideas: Idea[];
+  offerings?: MarilunaOffering[];
   onOpenSparring?: (idea: Idea) => void;
   isNl?: boolean;
 }
@@ -57,6 +59,7 @@ export const MarilunaContentSection: React.FC<MarilunaContentSectionProps> = ({
   onAddContentPost,
   projects,
   ideas,
+  offerings = [],
   onOpenSparring,
   isNl = true,
 }) => {
@@ -85,6 +88,7 @@ export const MarilunaContentSection: React.FC<MarilunaContentSectionProps> = ({
   const [formPriority, setFormPriority] = useState<'high' | 'normal' | 'low'>('normal');
   const [formProjectId, setFormProjectId] = useState('');
   const [formIdeaId, setFormIdeaId] = useState('');
+  const [formOfferingId, setFormOfferingId] = useState('');
   const [formNotes, setFormNotes] = useState('');
 
   // Pillar Management Modal
@@ -211,6 +215,7 @@ export const MarilunaContentSection: React.FC<MarilunaContentSectionProps> = ({
     setFormPriority('normal');
     setFormProjectId('');
     setFormIdeaId('');
+    setFormOfferingId('');
     setFormNotes('');
     setIsPostModalOpen(true);
   };
@@ -228,6 +233,7 @@ export const MarilunaContentSection: React.FC<MarilunaContentSectionProps> = ({
     setFormPriority(post.priority || 'normal');
     setFormProjectId(post.relatedProjectId || '');
     setFormIdeaId(post.relatedIdeaId || '');
+    setFormOfferingId(post.relatedOfferingId || '');
     setFormNotes(post.notes || '');
     setIsPostModalOpen(true);
   };
@@ -249,6 +255,7 @@ export const MarilunaContentSection: React.FC<MarilunaContentSectionProps> = ({
       priority: formPriority,
       relatedProjectId: formProjectId || undefined,
       relatedIdeaId: formIdeaId || undefined,
+      relatedOfferingId: formOfferingId || undefined,
       notes: formNotes.trim() || undefined,
       createdAt: editingPost?.createdAt || new Date().toISOString().split('T')[0],
       updatedAt: new Date().toISOString().split('T')[0],
@@ -973,8 +980,8 @@ export const MarilunaContentSection: React.FC<MarilunaContentSectionProps> = ({
                 </div>
               </div>
 
-              {/* Related Project & Idea */}
-              <div className="grid grid-cols-2 gap-3">
+              {/* Related Project, Idea & Offering */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
                   <label className="text-[10px] uppercase font-semibold text-[#7A6E60] block mb-1">
                     {isNl ? 'Gekoppeld Project' : 'Related Project'}
@@ -1012,6 +1019,24 @@ export const MarilunaContentSection: React.FC<MarilunaContentSectionProps> = ({
                           {i.title}
                         </option>
                       ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="text-[10px] uppercase font-semibold text-[#7A6E60] block mb-1">
+                    {isNl ? 'Gekoppeld Aanbod' : 'Related Offering'}
+                  </label>
+                  <select
+                    value={formOfferingId}
+                    onChange={(e) => setFormOfferingId(e.target.value)}
+                    className="w-full px-3 py-1.5 rounded-xl bg-[#FFFFFF] border border-[#DDD4C5] text-xs text-[#2C2825]"
+                  >
+                    <option value="">{isNl ? 'Geen aanbod' : 'None'}</option>
+                    {offerings.map((off) => (
+                      <option key={off.id} value={off.id}>
+                        {off.title} {off.price !== undefined && off.price !== null ? `(€${off.price})` : ''}
+                      </option>
+                    ))}
                   </select>
                 </div>
               </div>

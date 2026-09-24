@@ -124,13 +124,16 @@ router.post("/connect/:service", (req: Request, res: Response) => {
   switch (service) {
     case "calendar":
     case "google_calendar": {
-      const email = req.body.accountEmail || "patricia@gmail.com";
+      const email = req.body.accountEmail;
+      if (!email && !req.body.verified) {
+        return res.status(400).json({ error: "Geen geverifieerd account of e-mailadres opgegeven." });
+      }
       serverState.calendar = {
         status: "connected",
         accountEmail: email,
         lastSync: now,
         readOnly: true,
-        syncedEventsCount: 5,
+        syncedEventsCount: req.body.syncedEventsCount || 0,
         isPatriciaOnlySchedule: true,
       };
       return res.json({ success: true, service: "google_calendar", data: serverState.calendar });
@@ -138,37 +141,19 @@ router.post("/connect/:service", (req: Request, res: Response) => {
 
     case "gmail":
     case "mariluna_gmail": {
-      const email = req.body.accountEmail || "contact@mariluna.be";
+      const email = req.body.accountEmail;
+      const messages = req.body.messages || [];
+      if (!email && !req.body.verified) {
+        return res.status(400).json({ error: "Geen geverifieerd account of e-mailadres opgegeven." });
+      }
       serverState.gmail = {
         status: "connected",
         accountEmail: email,
         lastSync: now,
         readOnly: true,
         businessOnly: true,
-        syncedThreadsCount: 3,
-        messages: [
-          {
-            id: "msg-g1",
-            threadId: "th-1",
-            sender: "Sophie Vandamme",
-            senderEmail: "sophie.vandamme@gent.be",
-            subject: "Aanvraag traject Styling & Branding voorjaar",
-            date: now.split("T")[0],
-            snippet: "Beste Patricia, ik zou graag meer informatie ontvangen over je 1-op-1 traject...",
-            unread: true,
-            needsReview: true,
-          },
-          {
-            id: "msg-g2",
-            threadId: "th-2",
-            sender: "Atelier Noémie",
-            senderEmail: "noemie@ateliernoemie.com",
-            subject: "Bevestiging levering stalen & lookbook",
-            date: now.split("T")[0],
-            snippet: "De stalen zijn gisteren verzonden en komen normaal vrijdag aan in het atelier.",
-            unread: false,
-          },
-        ],
+        syncedThreadsCount: messages.length,
+        messages: messages,
       };
       return res.json({ success: true, service: "mariluna_gmail", data: serverState.gmail });
     }
@@ -178,8 +163,8 @@ router.post("/connect/:service", (req: Request, res: Response) => {
         status: "connected",
         platform: req.body.platform === "android" ? "android" : "web",
         lastSync: now,
-        stepsToday: req.body.stepsToday || 6840,
-        activeMinutes: 35,
+        stepsToday: typeof req.body.stepsToday === "number" ? req.body.stepsToday : 0,
+        activeMinutes: req.body.activeMinutes ?? 0,
         isStepsOnly: true,
         isPrivateOnly: true,
       };

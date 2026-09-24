@@ -25,7 +25,17 @@ export function generateDeterministicBrief(
   if (currentHour >= 18) greeting = `Goedenavond ${callingName}`;
 
   // 1. Working hours / Calendar Commitments bullet
-  const todayEvents = (state.calendarEvents || []).filter((e) => e.date === targetDate);
+  const rawEvents = (state.calendarEvents || []).filter((e) => e.date === targetDate);
+  const seenEvents = new Set<string>();
+  const todayEvents: typeof rawEvents = [];
+  for (const evt of rawEvents) {
+    const key = evt.googleEventId || `${evt.date}-${evt.title.trim().toLowerCase()}-${evt.startTime}`;
+    if (!seenEvents.has(key)) {
+      seenEvents.add(key);
+      todayEvents.push(evt);
+    }
+  }
+
   const workEvent = todayEvents.find((e) => e.title.toLowerCase().includes('werk') || e.type === 'work');
   
   let calendarBullet = 'Geen vaste werkuren gepland; volledige dagruimte';
@@ -46,7 +56,10 @@ export function generateDeterministicBrief(
   }
 
   // 3. Dinner status bullet
-  const plannedDay = state.nutrition?.activeWeeklyPlan?.days?.find((d) => d.date === targetDate);
+  const targetDayOfWeek = new Date(targetDate).toLocaleDateString('nl-NL', { weekday: 'long' }).toLowerCase();
+  const plannedDay = state.nutrition?.activeWeeklyPlan?.days?.find(
+    (d) => d.date === targetDate || (d.dayOfWeek && d.dayOfWeek.toLowerCase() === targetDayOfWeek)
+  );
   let dinnerBullet = 'Vanavond nog geen maaltijd gepland';
   if (plannedDay?.recipeId) {
     dinnerBullet = `Vanavond: ${plannedDay.customMealName || 'Gepland gerecht'}`;

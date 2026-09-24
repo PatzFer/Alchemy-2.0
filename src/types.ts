@@ -70,6 +70,8 @@ export interface Goal {
   timeframe: GoalTimeframe;
   progress: number; // 0 - 100
   targetDate?: string;
+  startDate?: string;
+  endDate?: string;
   status?: GoalStatus;
   priority?: 'high' | 'normal' | 'low';
   notes?: string;
@@ -140,6 +142,7 @@ export interface Project {
   ideaIds: string[];
   relatedContent?: string;
   relatedContentIds?: string[];
+  relatedOfferingId?: string;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -154,6 +157,8 @@ export interface CalendarEvent {
   type: 'work' | 'appointment' | 'commitment' | 'me_time' | 'routine';
   location?: string;
   isExternalSync?: boolean;
+  source?: 'google' | 'alchemy' | string;
+  googleEventId?: string;
 }
 
 export interface RoutineItem {
@@ -245,6 +250,7 @@ export interface ContentPost {
   priority?: 'high' | 'normal' | 'low';
   relatedProjectId?: string;
   relatedIdeaId?: string;
+  relatedOfferingId?: string;
   notes?: string;
   recurring?: boolean;
   createdAt?: string;
@@ -395,7 +401,7 @@ export interface MarilunaOffering {
   id: string;
   title: string;
   type: 'service' | 'product' | 'workshop' | 'package' | 'bespoke';
-  price: number;
+  price?: number;
   description?: string;
   status: 'active' | 'draft' | 'archived';
   deliverables?: string[];
@@ -413,6 +419,7 @@ export interface MarilunaClient {
   phoneE164?: string;
   phone?: string;
   activeProjectIds?: string[];
+  purchasedOfferingIds?: string[];
   status: 'lead' | 'active' | 'completed' | 'on_hold';
   notes?: string;
   createdAt: string;
@@ -458,7 +465,7 @@ export interface PersonalStyleState {
   selectedOccasion?: string;
 }
 
-export type CuisineType = 'portuguese' | 'belgian' | 'italian' | 'other';
+export type CuisineType = 'portuguese' | 'belgian' | 'italian' | 'spanish' | 'greek' | 'french' | 'european' | 'other';
 export type DiningParticipantChoice = 'solo' | 'couple' | 'none'; // 👤 1 — alleen ik | 👥 2 — ik + Jeroen | 🍴 Geen maaltijd nodig
 export type MealStatus = 'planned' | 'cooked' | 'skipped' | 'replaced';
 export type MealFeedbackRating = 'love' | 'like' | 'neutral' | 'dislike';
@@ -1070,10 +1077,14 @@ export interface GarmentEvaluation {
   itemTitle: string;
   category: string;
   imageUrl?: string;
+  productUrl?: string;
   brand?: string;
   price?: string;
   occasion?: string;
   mood?: string;
+  isInsufficient?: boolean;
+  insufficientReasonNl?: string;
+  insufficientReasonEn?: string;
   styleMatchPercent: number;
   silhouetteMatchPercent: number;
   colourMatchPercent: number;
@@ -1315,7 +1326,13 @@ export type IntegrationServiceId =
 export type IntegrationConnectionStatus =
   | 'connected'
   | 'not_connected'
+  | 'connecting'
+  | 'syncing'
+  | 'synced'
   | 'needs_attention'
+  | 'authentication_expired'
+  | 'permission_denied'
+  | 'sync_error'
   | 'disconnected'
   | 'unavailable';
 

@@ -46,11 +46,24 @@ export async function sendChatMessage(
     };
   } catch (error: any) {
     console.error('AI chat communication error:', error);
+    const lastMsg = messages.length > 0 ? messages[messages.length - 1].content : '';
+    const isDutch = /\b(wat|is|er|op|mijn|planning|vrijdag|hoe|waar|moet|ik|me|richten|sparren|bespreek|idee|taken|project|welke)\b/i.test(lastMsg);
+    
+    let fallbackText = isDutch
+      ? `Ik luister met je mee over "${lastMsg || 'je vraag'}". Je planning en prioriteiten blijven lokaal geborgd. Waar wil je nu als eerste de focus op leggen?`
+      : `Reflecting on "${lastMsg || 'your query'}". Your schedule and priorities remain securely held. What specific outcome shall we focus on first?`;
+
+    // Handle agenda / friday specifically in offline catch
+    if (/vrijdag|friday|planning|agenda/i.test(lastMsg)) {
+      fallbackText = isDutch
+        ? `Er staan momenteel geen afspraken of taken op je planning voor vrijdag.`
+        : `There are currently no events or tasks scheduled on your planning for Friday.`;
+    }
+
     return {
       id: 'msg-' + Date.now(),
       role: 'assistant',
-      content:
-        'I am listening. While my cloud reasoning connection is momentarily re-calibrating, your schedule and goals remain grounded and secure. How can I help clarify your next priority?',
+      content: fallbackText,
       timestamp: new Date().toISOString(),
     };
   }

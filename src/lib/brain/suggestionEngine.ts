@@ -1,6 +1,7 @@
 import { AppState } from '../storage';
 import { BrainSuggestion } from './types';
 import { assessCapacity } from './capacityEngine';
+import { isSuggestionSnoozed } from '../snoozeStore';
 
 /**
  * SUGGESTION ENGINE
@@ -26,7 +27,10 @@ export function generateActiveSuggestions(
   // TRIGGER 1: Evening meal check
   // If no dinner is planned tonight and calendar has significant commitments
   // -------------------------------------------------------------
-  const plannedDay = state.nutrition?.activeWeeklyPlan?.days?.find((d) => d.date === targetDate);
+  const targetDayOfWeek = new Date(targetDate).toLocaleDateString('nl-NL', { weekday: 'long' }).toLowerCase();
+  const plannedDay = state.nutrition?.activeWeeklyPlan?.days?.find(
+    (d) => d.date === targetDate || (d.dayOfWeek && d.dayOfWeek.toLowerCase() === targetDayOfWeek)
+  );
   const dinnerPlanned = !!plannedDay?.recipeId;
 
   if (!dinnerPlanned) {
@@ -175,14 +179,19 @@ export function generateActiveSuggestions(
     });
   }
 
-  // Filter out any dismissed fingerprints stored in brainState
+  // Filter out any dismissed fingerprints stored in brainState or snoozed in snoozeStore
   const dismissedFingerprints = new Set(
     (state.brain?.activeSuggestions || [])
       .filter((s) => s.status === 'dismissed')
       .map((s) => s.fingerprint)
   );
 
-  const activeFiltered = suggestions.filter((s) => !dismissedFingerprints.has(s.fingerprint));
+  const activeFiltered = suggestions.filter((s) => {
+    if (dismissedFingerprints.has(s.fingerprint)) return false;
+    if (isSuggestionSnoozed(s.id)) return false;
+    if (s.fingerprint && isSuggestionSnoozed(s.fingerprint)) return false;
+    return true;
+  });
 
   // Cap at max 2–3 calm suggestions
   return activeFiltered.slice(0, 2);

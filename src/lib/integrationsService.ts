@@ -34,13 +34,60 @@ export class IntegrationsService {
       return false;
     }
 
+    const isAndroid = typeof navigator !== 'undefined' && /Android/i.test(navigator.userAgent);
+
     try {
-      new Notification(title, {
-        icon: '/favicon.ico',
-        badge: '/favicon.ico',
-        ...options,
-      });
-      return true;
+      // Android Mobile / Chrome / PWA strictly requires ServiceWorkerRegistration.showNotification
+      if ('serviceWorker' in navigator) {
+        try {
+          let reg: ServiceWorkerRegistration | undefined;
+
+          // 1. Try active controller registration
+          if (navigator.serviceWorker.controller) {
+            reg = await navigator.serviceWorker.getRegistration();
+          }
+
+          // 2. Race with 2.0s timeout on ready
+          if (!reg) {
+            const regPromise = navigator.serviceWorker.ready;
+            const timeoutPromise = new Promise<undefined>((resolve) =>
+              setTimeout(() => resolve(undefined), 2000)
+            );
+            reg = await Promise.race([regPromise, timeoutPromise]);
+          }
+
+          // 3. Fallback: get all registrations
+          if (!reg) {
+            const regs = await navigator.serviceWorker.getRegistrations();
+            if (regs.length > 0) reg = regs[0];
+          }
+
+          if (reg && reg.showNotification) {
+            await reg.showNotification(title, {
+              icon: '/icon.svg',
+              badge: '/icon.svg',
+              vibrate: [100, 50, 100],
+              data: { url: window.location.origin },
+              ...options,
+            } as NotificationOptions);
+            return true;
+          }
+        } catch (swErr) {
+          console.warn('[Integrations] ServiceWorker notification error:', swErr);
+        }
+      }
+
+      // Desktop browser fallback ONLY (Android Chrome throws Illegal constructor error on `new Notification(...)`)
+      if (!isAndroid) {
+        new Notification(title, {
+          icon: '/icon.svg',
+          badge: '/icon.svg',
+          ...options,
+        });
+        return true;
+      }
+
+      return false;
     } catch (err) {
       console.warn('Browser push notification could not be shown:', err);
       return false;
@@ -136,8 +183,8 @@ export class IntegrationsService {
     } catch {
       // ignore
     }
-    return this.sendBrowserPush('Alchemy Sovereign OS', {
-      body: 'Testmelding geslaagd: notificaties zijn rustig en doelgericht geconfigureerd.',
+    return this.sendBrowserPush('Alchemy test', {
+      body: 'Alchemy test — notificaties werken.',
     });
   }
 

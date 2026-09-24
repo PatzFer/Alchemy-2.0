@@ -289,10 +289,49 @@ export interface GarmentEvaluationInput {
   occasion?: string;
   mood?: string;
   imageUrl?: string;
+  productUrl?: string;
   fabricDescription?: string;
   hasSizeChartOrMeasurements?: boolean;
   hasStretch?: 'none' | 'slight' | 'high';
   userNotes?: string;
+}
+
+export function checkGarmentInputSufficiency(input: GarmentEvaluationInput): {
+  isSufficient: boolean;
+  reasonNl: string;
+  reasonEn: string;
+} {
+  const hasImage = Boolean(input.imageUrl && input.imageUrl.trim().length > 5);
+  const rawUrl = (input.productUrl || '').trim();
+  const titleAsUrl = (input.itemTitle || '').trim().startsWith('http://') || (input.itemTitle || '').trim().startsWith('https://');
+  const hasUrl = Boolean(rawUrl.length > 5 || titleAsUrl);
+
+  const title = (input.itemTitle || '').trim();
+  const fabric = (input.fabricDescription || '').trim();
+  const brand = (input.brand || '').trim();
+  const notes = (input.userNotes || '').trim();
+
+  // Common placeholder or single generic test strings
+  const lowerTitle = title.toLowerCase();
+  const placeholderPatterns = ['test', 'demo', 'sample', 'item', 'kleding', 'kledingstuk', '123', 'abc', 'shirt', 'broek', 'jurk', 'rok', 'top', 'schoenen'];
+  const isPlaceholderOnly = placeholderPatterns.includes(lowerTitle) || title.length < 3;
+
+  const hasSubstantialTitle = !isPlaceholderOnly && title.length >= 4;
+  const hasExtraAttributes = fabric.length > 2 || brand.length > 2 || notes.length > 2 || Boolean(input.hasSizeChartOrMeasurements);
+
+  if (hasImage || hasUrl || (hasSubstantialTitle && (hasExtraAttributes || title.split(/\s+/).length >= 2))) {
+    return {
+      isSufficient: true,
+      reasonNl: '',
+      reasonEn: '',
+    };
+  }
+
+  return {
+    isSufficient: false,
+    reasonNl: 'Onvoldoende informatie om dit kledingstuk betrouwbaar te beoordelen. Voeg een foto, productlink of meer details (zoals stof of merk) toe.',
+    reasonEn: 'Insufficient information to evaluate this garment reliably. Please add a photo, product link, or more details (such as fabric or brand).',
+  };
 }
 
 export function evaluateGarment(
@@ -301,6 +340,39 @@ export function evaluateGarment(
   latestMeasurement?: BodyMeasurementEntry,
   learnedFeedback: StyleLearnedFeedback[] = []
 ): GarmentEvaluation {
+  const sufficiency = checkGarmentInputSufficiency(input);
+
+  if (!sufficiency.isSufficient) {
+    return {
+      id: `eval-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      date: new Date().toISOString().split('T')[0],
+      itemTitle: input.itemTitle.trim() || 'Onbekend Kledingstuk',
+      category: input.category || 'Algemeen',
+      brand: input.brand?.trim() || undefined,
+      price: input.price?.trim() || undefined,
+      imageUrl: input.imageUrl?.trim() || undefined,
+      productUrl: input.productUrl?.trim() || undefined,
+      occasion: input.occasion || 'general',
+      mood: input.mood || 'soft',
+      isInsufficient: true,
+      insufficientReasonNl: sufficiency.reasonNl,
+      insufficientReasonEn: sufficiency.reasonEn,
+      styleMatchPercent: 0,
+      silhouetteMatchPercent: 0,
+      colourMatchPercent: 0,
+      overallMatchPercent: 0,
+      fitConfidencePercent: 0,
+      fitConfidenceReason: sufficiency.reasonNl,
+      verdictNl: sufficiency.reasonNl,
+      keyObservations: [sufficiency.reasonNl],
+      pros: [],
+      considerations: ['Voeg een foto, productlink of extra details toe om een betrouwbare Stijl DNA analyse te genereren.'],
+      enhancements: [],
+      conclusion: '',
+      alternatives: [],
+    };
+  }
+
   const textCorpus = `${input.itemTitle} ${input.category} ${input.fabricDescription || ''} ${input.userNotes || ''}`.toLowerCase();
   
   // 1. STYLE DNA MATCH
@@ -510,13 +582,14 @@ export function evaluateGarment(
   return {
     id: `eval-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
     date: new Date().toISOString().split('T')[0],
-    itemTitle: input.itemTitle,
+    itemTitle: input.itemTitle.trim(),
     category: input.category,
-    brand: input.brand,
-    price: input.price,
+    brand: input.brand?.trim() || undefined,
+    price: input.price?.trim() || undefined,
+    productUrl: input.productUrl?.trim() || undefined,
     occasion: input.occasion || 'general',
     mood: input.mood || 'soft',
-    imageUrl: input.imageUrl,
+    imageUrl: input.imageUrl?.trim() || undefined,
     styleMatchPercent: styleScore,
     silhouetteMatchPercent: silhouetteScore,
     colourMatchPercent: colourScore,

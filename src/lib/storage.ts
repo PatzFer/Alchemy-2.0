@@ -784,9 +784,51 @@ export function loadState(): AppState {
       parsed.setupStatus ||
       (foundation.isCompleted ? 'completed' : foundation.isSkipped ? 'skipped' : 'not_started');
 
+    const rawIdeas = parsed.ideas || INITIAL_STATE.ideas || [];
+    const ideasMap = new Map<string, Idea>();
+    for (const item of rawIdeas) {
+      if (!item || !item.id) continue;
+      if (!ideasMap.has(item.id)) {
+        ideasMap.set(item.id, item);
+      } else {
+        const existing = ideasMap.get(item.id)!;
+        ideasMap.set(item.id, { ...existing, ...item });
+      }
+    }
+    const deduplicatedIdeas = Array.from(ideasMap.values());
+
+    const rawOfferings: MarilunaOffering[] = parsed.marilunaOfferings || [];
+    const offeringsMap = new Map<string, MarilunaOffering>();
+    for (const item of rawOfferings) {
+      if (!item || !item.id) continue;
+      if (!offeringsMap.has(item.id)) {
+        offeringsMap.set(item.id, item);
+      } else {
+        const existing = offeringsMap.get(item.id)!;
+        offeringsMap.set(item.id, { ...existing, ...item });
+      }
+    }
+    const deduplicatedOfferings = Array.from(offeringsMap.values());
+
+    const rawDailyCheckIns: DailyCheckIn[] = parsed.dailyCheckIns || [];
+    const checkInsMap = new Map<string, DailyCheckIn>();
+    for (const item of rawDailyCheckIns) {
+      if (!item) continue;
+      const key = item.id || item.date;
+      if (!key) continue;
+      if (!checkInsMap.has(key)) {
+        checkInsMap.set(key, item);
+      } else {
+        const existing = checkInsMap.get(key)!;
+        checkInsMap.set(key, { ...existing, ...item });
+      }
+    }
+    const deduplicatedCheckIns = Array.from(checkInsMap.values());
+
     return {
       ...INITIAL_STATE,
       ...parsed,
+      ideas: deduplicatedIdeas,
       foundation,
       setupStatus,
       wellbeing: {
@@ -825,7 +867,7 @@ export function loadState(): AppState {
           ...(parsed.notificationSettings?.categories || {}),
         },
       },
-      dailyCheckIns: parsed.dailyCheckIns || [],
+      dailyCheckIns: deduplicatedCheckIns,
       notifications: parsed.notifications || [],
       proactiveSuggestions: parsed.proactiveSuggestions || [],
       integrations: {
@@ -861,7 +903,7 @@ export function loadState(): AppState {
         metrics: parsed.marilunaMetrics?.metrics || [],
         records: parsed.marilunaMetrics?.records || [],
       },
-      marilunaOfferings: parsed.marilunaOfferings || [],
+      marilunaOfferings: deduplicatedOfferings,
       brain: parsed.brain ? { ...DEFAULT_BRAIN_STATE, ...parsed.brain } : DEFAULT_BRAIN_STATE,
     };
   } catch (err) {

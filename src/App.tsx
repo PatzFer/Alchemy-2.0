@@ -28,6 +28,7 @@ import {
   INITIAL_STATE,
   DEFAULT_INTEGRATIONS_STATE,
 } from './lib/storage';
+import { IntegrationsService } from './lib/integrationsService';
 import {
   ActiveWorldFilter,
   Task,
@@ -161,6 +162,16 @@ export default function App() {
         const existingIds = new Set((prev.notifications || []).map((n) => n.id));
         const newOnes = generated.filter((n) => !existingIds.has(n.id));
         if (newOnes.length === 0) return prev;
+
+        // Trigger native system push notification if allowed & enabled
+        if (prev.integrations?.pushNotifications?.enabled) {
+          for (const item of newOnes) {
+            IntegrationsService.sendBrowserPush(item.title, {
+              body: item.body,
+            });
+          }
+        }
+
         return {
           ...prev,
           notifications: [...newOnes, ...(prev.notifications || [])].slice(0, 30),
@@ -278,6 +289,8 @@ export default function App() {
         priority: goalPayload.priority || 'normal',
         progress: goalPayload.progress || 0,
         targetDate: goalPayload.targetDate,
+        startDate: goalPayload.startDate,
+        endDate: goalPayload.endDate,
         notes: goalPayload.notes,
         connectedProjectIds: goalPayload.connectedProjectIds || [],
         connectedTaskIds: goalPayload.connectedTaskIds || [],
@@ -321,10 +334,40 @@ export default function App() {
 
   // Ideas handlers
   const handleSaveIdea = (ideaPayload: Partial<Idea>) => {
-    setState((prev) => ({
-      ...prev,
-      ideas: [ideaPayload as Idea, ...prev.ideas],
-    }));
+    setState((prev) => {
+      const targetId = ideaPayload.id;
+      if (targetId && prev.ideas.some((i) => i.id === targetId)) {
+        return {
+          ...prev,
+          ideas: prev.ideas.map((i) =>
+            i.id === targetId
+              ? {
+                  ...i,
+                  ...ideaPayload,
+                  lastRevisitedAt: ideaPayload.lastRevisitedAt || new Date().toISOString().split('T')[0],
+                }
+              : i
+          ),
+        };
+      }
+
+      const newIdea: Idea = {
+        id: targetId || 'i-' + Date.now() + '-' + Math.random().toString(36).substring(2, 7),
+        title: ideaPayload.title || 'Untitled Idea',
+        content: ideaPayload.content || '',
+        realm: ideaPayload.realm || 'mariluna',
+        category: ideaPayload.category,
+        status: ideaPayload.status || 'raw',
+        createdAt: ideaPayload.createdAt || new Date().toISOString().split('T')[0],
+        lastRevisitedAt: ideaPayload.lastRevisitedAt || new Date().toISOString().split('T')[0],
+        ...ideaPayload,
+      };
+
+      return {
+        ...prev,
+        ideas: [newIdea, ...prev.ideas],
+      };
+    });
   };
 
   const handleConvertToProject = (ideaId: string) => {
@@ -437,7 +480,7 @@ export default function App() {
 
   const handleSaveDailyCheckIn = (checkIn: DailyCheckIn) => {
     setState((prev) => {
-      const existingIndex = prev.dailyCheckIns.findIndex((c) => c.date === checkIn.date);
+      const existingIndex = prev.dailyCheckIns.findIndex((c) => c.id === checkIn.id || c.date === checkIn.date);
       let updated: DailyCheckIn[];
       if (existingIndex >= 0) {
         updated = [...prev.dailyCheckIns];
@@ -593,7 +636,10 @@ export default function App() {
     }
   };
 
-  const openAssistantWithPrompt = (prompt: string) => {
+  const [activeContextItem, setActiveContextItem] = useState<any>(null);
+
+  const openAssistantWithPrompt = (prompt: string, contextItem?: any) => {
+    setActiveContextItem(contextItem || null);
     setIsAssistantOpen(true);
     // Send directly
     const userMsg: AssistantMessage = {
@@ -835,8 +881,6 @@ export default function App() {
             onSaveGoal={handleSaveGoal}
             onDeleteGoal={handleDeleteGoal}
             onToggleMilestone={handleToggleMilestone}
-            adminState={state.marilunaAdmin}
-            onUpdateAdminState={(admin) => setState((prev) => ({ ...prev, marilunaAdmin: admin }))}
             metricsState={state.marilunaMetrics}
             onUpdateMetricsState={(metrics) => setState((prev) => ({ ...prev, marilunaMetrics: metrics }))}
             offerings={state.marilunaOfferings}
@@ -849,9 +893,9 @@ export default function App() {
           />
         )}
 
-        {(currentTab === 'prive' || currentTab === 'mylife') && (
+        {(currentTab === 'prive' || currentTab === 'mylife' || currentTab === 'meals' || currentTab === 'nutrition') && (
           <PriveDomainView
-            initialSubTab="overview"
+            initialSubTab={currentTab === 'meals' || currentTab === 'nutrition' ? 'nutrition' : 'overview'}
             lifeProfile={state.lifeProfile}
             onUpdateProfile={handleUpdateProfile}
             personalStyle={state.personalStyle}
@@ -972,7 +1016,7 @@ export default function App() {
           />
         )}
 
-        {currentTab === 'settings' && (
+        {(currentTab === 'settings' || currentTab === 'integrations') && (
           <SettingsView
             memories={state.memories}
             onAddMemory={handleAddMemory}
@@ -1046,17 +1090,26 @@ export default function App() {
       {/* Central Strategic Partner AI Drawer */}
       <AIAssistantDrawer
         isOpen={isAssistantOpen}
-        onClose={() => setIsAssistantOpen(false)}
+        onClose={() => {
+          setIsAssistantOpen(false);
+          setActiveContextItem(null);
+        }}
         messages={state.chatHistory}
         onAddMessage={handleAddAssistantMessage}
         tasks={state.tasks}
         goals={state.goals}
         ideas={state.ideas}
+        projects={state.projects}
+        calendarEvents={state.calendarEvents}
+        contentPlan={state.contentPlan}
+        offerings={state.marilunaOfferings}
         lifeProfile={state.lifeProfile}
         memories={state.memories}
         activeWorld={activeWorld}
         onExecuteAction={handleExecuteAssistantAction}
         wellbeing={state.wellbeing}
+        dailyCheckIns={state.dailyCheckIns}
+        activeContextItem={activeContextItem}
       />
 
       {/* Quick Add Task Modal */}

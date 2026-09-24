@@ -3,32 +3,45 @@ import {
   Calendar,
   Clock,
   CheckCircle2,
-  Bell,
   Heart,
-  Settings,
   Plus,
   Moon,
+  Sun,
+  Zap,
+  Smile,
+  Activity,
+  AlertCircle,
+  Trash2,
+  Edit2,
   Sparkles,
-  Shield,
-  Coffee,
+  TrendingUp,
 } from 'lucide-react';
-import { WellbeingState, CheckInConfig } from '../../types';
+import { WellbeingState, CheckInConfig, DailyCheckIn } from '../../types';
+import { DailyCheckInModal } from '../DailyCheckInModal';
 
 interface WellbeingCheckInsSectionProps {
   wellbeing: WellbeingState;
   onUpdateWellbeing: (updater: (prev: WellbeingState) => WellbeingState) => void;
+  dailyCheckIns?: DailyCheckIn[];
+  onSaveDailyCheckIn?: (checkIn: DailyCheckIn) => void;
   onNavigateToProgress: () => void;
 }
 
 export const WellbeingCheckInsSection: React.FC<WellbeingCheckInsSectionProps> = ({
   wellbeing,
   onUpdateWellbeing,
+  dailyCheckIns = [],
+  onSaveDailyCheckIn,
   onNavigateToProgress,
 }) => {
   const [isConfiguring, setIsConfiguring] = useState(false);
   const [activeCheckInModal, setActiveCheckInModal] = useState<CheckInConfig | null>(null);
 
-  // Form for completing check-in
+  // Daily Check-In Modal State
+  const [isDailyModalOpen, setIsDailyModalOpen] = useState(false);
+  const [editingDailyCheckIn, setEditingDailyCheckIn] = useState<DailyCheckIn | undefined>(undefined);
+
+  // Form for completing cadence check-in
   const [checkInWeight, setCheckInWeight] = useState('');
   const [checkInWaist, setCheckInWaist] = useState('');
   const [checkInReflection, setCheckInReflection] = useState('');
@@ -45,6 +58,14 @@ export const WellbeingCheckInsSection: React.FC<WellbeingCheckInsSectionProps> =
   const [incReflection, setIncReflection] = useState(true);
   const [newPrompt, setNewPrompt] = useState('How did you care for your energy this week?');
 
+  const todayStr = new Date().toISOString().split('T')[0];
+  const todayCheckIn = dailyCheckIns.find((c) => c.date === todayStr);
+
+  // Sorted check-ins newest first
+  const sortedCheckIns = [...dailyCheckIns].sort(
+    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+  );
+
   const toggleConfigActive = (id: string) => {
     onUpdateWellbeing((prev) => ({
       ...prev,
@@ -58,7 +79,6 @@ export const WellbeingCheckInsSection: React.FC<WellbeingCheckInsSectionProps> =
     e.preventDefault();
     if (!newTitle.trim()) return;
 
-    // Calculate sample next due date (e.g., in 7 days)
     const d = new Date();
     d.setDate(d.getDate() + 7);
     const nextDue = d.toISOString().split('T')[0];
@@ -91,11 +111,9 @@ export const WellbeingCheckInsSection: React.FC<WellbeingCheckInsSectionProps> =
     e.preventDefault();
     if (!activeCheckInModal) return;
 
-    const todayStr = new Date().toISOString().split('T')[0];
     const w = parseFloat(checkInWeight);
     const waist = parseFloat(checkInWaist);
 
-    // If user provided weight or waist, add to progress logs
     if (!isNaN(w) || !isNaN(waist) || checkInReflection.trim()) {
       onUpdateWellbeing((prev) => ({
         ...prev,
@@ -133,6 +151,52 @@ export const WellbeingCheckInsSection: React.FC<WellbeingCheckInsSectionProps> =
     }, 1200);
   };
 
+  const openNewDailyCheckIn = () => {
+    setEditingDailyCheckIn(todayCheckIn);
+    setIsDailyModalOpen(true);
+  };
+
+  const openEditDailyCheckIn = (checkIn: DailyCheckIn) => {
+    setEditingDailyCheckIn(checkIn);
+    setIsDailyModalOpen(true);
+  };
+
+  const formatEnergy = (energy: string) => {
+    switch (energy) {
+      case 'very_low':
+        return 'Zeer laag';
+      case 'low':
+        return 'Laag';
+      case 'normal':
+        return 'Normaal';
+      case 'good':
+        return 'Goed';
+      case 'high':
+        return 'Hoog / Energiek';
+      default:
+        return energy;
+    }
+  };
+
+  const formatMood = (mood?: string) => {
+    switch (mood) {
+      case 'calm':
+        return 'Rustig & gegrond';
+      case 'focused':
+        return 'Gefocust';
+      case 'reflective':
+        return 'Reflectief';
+      case 'sensitive':
+        return 'Gevoelig / Zacht';
+      case 'expansive':
+        return 'Expansief';
+      case 'overstimulated':
+        return 'Overprikkeld';
+      default:
+        return mood || 'Niet gespecificeerd';
+    }
+  };
+
   return (
     <div className="space-y-8">
       {/* Header */}
@@ -142,42 +206,231 @@ export const WellbeingCheckInsSection: React.FC<WellbeingCheckInsSectionProps> =
             Gentle Somatic Cadence
           </span>
           <h2 className="text-2xl font-serif text-[#2C2825] mt-1">
-            Recurring Reflection & Check-Ins
+            Daily Wellbeing Check-Ins & Trends
           </h2>
           <p className="text-xs text-[#7A7167] mt-1 max-w-2xl font-light leading-relaxed">
-            Configure intentional moments of reflection. No guilt, no streak counters, no pressure. Your body rhythm is respected without urgency.
+            Record your daily physical and mental state. All check-in data remains strictly private within your Personal domain.
           </p>
         </div>
 
         <button
-          onClick={() => setIsConfiguring(true)}
-          className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#FAF8F3] border border-[#DED6C7] text-[#2C2825] text-xs font-medium hover:bg-[#F2ECE1] transition cursor-pointer shadow-xs"
+          onClick={openNewDailyCheckIn}
+          className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#2C2825] text-[#FAF8F3] text-xs font-medium hover:bg-[#1A1816] transition cursor-pointer shadow-xs"
         >
-          <Plus className="w-3.5 h-3.5" />
-          <span>New Check-In Cadence</span>
+          <Plus className="w-3.5 h-3.5 text-[#C5A880]" />
+          <span>{todayCheckIn ? 'Edit Today\'s Check-In' : 'Complete Today\'s Check-In'}</span>
         </button>
       </div>
 
-      {/* Gentle Philosophy Banner */}
-      <div className="bg-[#FAF8F3] border border-[#E8E2D6] rounded-2xl p-5 flex items-start gap-4 shadow-xs">
-        <div className="w-9 h-9 rounded-xl bg-[#EFE9DD] flex items-center justify-center text-[#7E694E] shrink-0 mt-0.5">
-          <Heart className="w-4 h-4" />
+      {/* Today's Check-in Status Banner */}
+      <div className="bg-[#FAF8F3] border border-[#E8E2D6] rounded-2xl p-6 shadow-xs space-y-4">
+        <div className="flex items-center justify-between border-b border-[#E8E2D6] pb-3">
+          <div className="flex items-center gap-2">
+            <Clock className="w-4 h-4 text-[#7E694E]" />
+            <h3 className="font-serif text-base text-[#2C2825] font-semibold">
+              Today's Check-In ({todayStr})
+            </h3>
+          </div>
+          {todayCheckIn ? (
+            <span className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full bg-[#EBF3E6] text-[#2D5A27]">
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              Completed
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full bg-[#FDF3E7] text-[#92400E]">
+              <AlertCircle className="w-3.5 h-3.5" />
+              Pending
+            </span>
+          )}
         </div>
-        <div className="space-y-1 text-xs">
-          <h4 className="font-serif text-[#2C2825] font-semibold text-sm">
-            The Philosophy of Unhurried Check-Ins
-          </h4>
-          <p className="text-[#6A6054] font-light leading-relaxed">
-            Traditional health apps rely on punitive streaks, red alert notifications, and urgency that spikes cortisol. In Alchemy, check-ins are peaceful invitations. If a week is crowded or you need complete quiet, simply pause or step back. Your baseline remains intact.
-          </p>
-        </div>
+
+        {todayCheckIn ? (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs">
+            <div className="p-3 bg-white rounded-xl border border-[#E8E2D6]">
+              <span className="text-[10px] uppercase font-semibold text-[#8C8377] block mb-1">
+                Energie
+              </span>
+              <span className="font-serif text-sm font-medium text-[#2C2825]">
+                {formatEnergy(todayCheckIn.energy)}
+              </span>
+            </div>
+
+            <div className="p-3 bg-white rounded-xl border border-[#E8E2D6]">
+              <span className="text-[10px] uppercase font-semibold text-[#8C8377] block mb-1">
+                Gemoedstoestand
+              </span>
+              <span className="font-serif text-sm font-medium text-[#2C2825]">
+                {formatMood(todayCheckIn.mood)}
+              </span>
+            </div>
+
+            <div className="p-3 bg-white rounded-xl border border-[#E8E2D6]">
+              <span className="text-[10px] uppercase font-semibold text-[#8C8377] block mb-1">
+                Slaap & Waak
+              </span>
+              <span className="font-mono text-xs text-[#2C2825]">
+                {todayCheckIn.sleepTime || '--:--'} → {todayCheckIn.wakeTime || '--:--'}
+              </span>
+            </div>
+
+            <div className="p-3 bg-white rounded-xl border border-[#E8E2D6]">
+              <span className="text-[10px] uppercase font-semibold text-[#8C8377] block mb-1">
+                Notitie
+              </span>
+              <span className="text-xs text-[#5C5245] italic line-clamp-2">
+                {todayCheckIn.notes || 'Geen notitie toegevoegd'}
+              </span>
+            </div>
+          </div>
+        ) : (
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-2">
+            <p className="text-xs text-[#6A6054]">
+              Take 30 seconds to log how your physical and mental body feels today.
+            </p>
+            <button
+              onClick={openNewDailyCheckIn}
+              className="px-4 py-2 rounded-xl bg-[#2C2825] text-[#FAF8F3] text-xs font-medium hover:bg-[#1A1816] transition cursor-pointer self-start sm:self-auto shrink-0"
+            >
+              Start Today's Check-In
+            </button>
+          </div>
+        )}
       </div>
 
-      {/* Active Cadences List */}
+      {/* Wellbeing Trends / Insights */}
+      <div className="bg-[#FFFFFF] border border-[#E8E2D6] rounded-2xl p-6 shadow-xs space-y-4">
+        <div className="flex items-center gap-2 border-b border-[#F2ECE1] pb-3">
+          <TrendingUp className="w-4 h-4 text-[#7E694E]" />
+          <h3 className="font-serif text-base text-[#2C2825]">Longitudinal Wellbeing Trends</h3>
+        </div>
+
+        {dailyCheckIns.length >= 3 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+            <div className="p-4 bg-[#FAF8F3] rounded-xl border border-[#E8E2D6] space-y-1">
+              <span className="text-[10px] uppercase font-semibold text-[#8C8377]">
+                Totaal vastgelegde check-ins
+              </span>
+              <p className="font-serif text-xl font-semibold text-[#2C2825]">
+                {dailyCheckIns.length} dagen
+              </p>
+              <p className="text-[11px] text-[#7A7167]">Continu overzicht opgebouwd</p>
+            </div>
+
+            <div className="p-4 bg-[#FAF8F3] rounded-xl border border-[#E8E2D6] space-y-1">
+              <span className="text-[10px] uppercase font-semibold text-[#8C8377]">
+                Meest recente energie
+              </span>
+              <p className="font-serif text-xl font-semibold text-[#2C2825]">
+                {formatEnergy(sortedCheckIns[0]?.energy || 'normal')}
+              </p>
+              <p className="text-[11px] text-[#7A7167]">
+                Laatst bijgewerkt op {sortedCheckIns[0]?.date}
+              </p>
+            </div>
+
+            <div className="p-4 bg-[#FAF8F3] rounded-xl border border-[#E8E2D6] space-y-1">
+              <span className="text-[10px] uppercase font-semibold text-[#8C8377]">
+                Gemoedsritme
+              </span>
+              <p className="font-serif text-xl font-semibold text-[#2C2825]">
+                {formatMood(sortedCheckIns[0]?.mood)}
+              </p>
+              <p className="text-[11px] text-[#7A7167]">Gebaseerd op je laatste inzendingen</p>
+            </div>
+          </div>
+        ) : (
+          <div className="p-4 rounded-xl bg-[#FAF8F3] border border-[#E8E2D6] text-xs text-[#7A7167] leading-relaxed">
+            <p className="font-medium text-[#5C5245] mb-1">
+              Onvoldoende historische gegevens voor trendanalyse
+            </p>
+            <p className="font-light">
+              Vul gedurende minimaal 3 dagen check-ins in om je energie- en rustpatronen inzichtelijk te maken. Alchemy genereert geen fictieve trends als er geen echte data is.
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* Historical Daily Check-Ins List */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-medium text-[#2C2825]">Configured Check-In Rhythms</h3>
-          <span className="text-xs text-[#8C8377]">{wellbeing.checkInConfigs.length} cadences active</span>
+          <h3 className="text-sm font-medium text-[#2C2825]">Historische Check-Ins</h3>
+          <span className="text-xs text-[#8C8377]">{dailyCheckIns.length} check-ins opgeslagen</span>
+        </div>
+
+        {dailyCheckIns.length === 0 ? (
+          <div className="bg-[#FFFFFF] border border-[#E8E2D6] rounded-2xl p-8 text-center space-y-3">
+            <Clock className="w-8 h-8 text-[#8C8377] mx-auto opacity-60" />
+            <h4 className="font-serif text-base text-[#2C2825]">Nog geen dagelijkse check-ins</h4>
+            <p className="text-xs text-[#7A7167] max-w-md mx-auto font-light">
+              Je hebt nog geen dagelijkse check-ins opgeslagen. Begin vandaag om een waardevolle, besloten historiek op te bouwen.
+            </p>
+            <button
+              onClick={openNewDailyCheckIn}
+              className="px-4 py-2 rounded-xl bg-[#2C2825] text-[#FAF8F3] text-xs font-medium hover:bg-[#1A1816] transition cursor-pointer"
+            >
+              Eerste Check-In Invullen
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {sortedCheckIns.map((item) => (
+              <div
+                key={item.id || item.date}
+                className="bg-[#FFFFFF] border border-[#E8E2D6] rounded-2xl p-4 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+              >
+                <div className="space-y-1 text-xs">
+                  <div className="flex items-center gap-2">
+                    <span className="font-serif text-sm font-semibold text-[#2C2825]">
+                      {item.date}
+                    </span>
+                    <span className="px-2 py-0.5 rounded-md bg-[#FAF8F4] border border-[#E8E2D6] font-medium text-[#6A6054]">
+                      Energie: {formatEnergy(item.energy)}
+                    </span>
+                    {item.mood && (
+                      <span className="px-2 py-0.5 rounded-md bg-[#FAF8F4] border border-[#E8E2D6] text-[#6A6054]">
+                        {formatMood(item.mood)}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-4 text-[#7A7167]">
+                    {(item.sleepTime || item.wakeTime) && (
+                      <span>
+                        Slaapvenster: {item.sleepTime || '--:--'} - {item.wakeTime || '--:--'}
+                      </span>
+                    )}
+                    {item.notes && <span className="italic text-[#5C5245]">"{item.notes}"</span>}
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
+                  <button
+                    onClick={() => openEditDailyCheckIn(item)}
+                    className="flex items-center gap-1 px-3 py-1.5 rounded-xl border border-[#DED6C7] text-xs text-[#2C2825] hover:bg-[#F2ECE1] transition cursor-pointer"
+                  >
+                    <Edit2 className="w-3.5 h-3.5" />
+                    <span>Bewerken</span>
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Configured Recurring Cadences (Optional body measurements) */}
+      <div className="pt-6 border-t border-[#E8E2D6] space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-sm font-medium text-[#2C2825]">Configured Recurring Cadences</h3>
+            <p className="text-xs text-[#7A7167]">Optional recurring prompts for body measurements and reflections.</p>
+          </div>
+          <button
+            onClick={() => setIsConfiguring(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#FAF8F3] border border-[#DED6C7] text-[#2C2825] text-xs font-medium hover:bg-[#F2ECE1] transition cursor-pointer"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>New Cadence</span>
+          </button>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -209,29 +462,6 @@ export const WellbeingCheckInsSection: React.FC<WellbeingCheckInsSectionProps> =
                     "{config.reflectionPrompt}"
                   </p>
                 )}
-
-                <div className="flex flex-wrap gap-2 mt-4 text-[11px] text-[#6A6054]">
-                  {config.includeWeight && (
-                    <span className="px-2 py-0.5 rounded-md bg-[#FAF8F4] border border-[#E8E2D6]">
-                      Weight
-                    </span>
-                  )}
-                  {config.includeMeasurements && (
-                    <span className="px-2 py-0.5 rounded-md bg-[#FAF8F4] border border-[#E8E2D6]">
-                      Measurements
-                    </span>
-                  )}
-                  {config.includeComposition && (
-                    <span className="px-2 py-0.5 rounded-md bg-[#FAF8F4] border border-[#E8E2D6]">
-                      Composition
-                    </span>
-                  )}
-                  {config.includeReflection && (
-                    <span className="px-2 py-0.5 rounded-md bg-[#FAF8F4] border border-[#E8E2D6]">
-                      Reflection
-                    </span>
-                  )}
-                </div>
               </div>
 
               <div className="pt-4 border-t border-[#F2ECE1] flex items-center justify-between">
@@ -246,7 +476,7 @@ export const WellbeingCheckInsSection: React.FC<WellbeingCheckInsSectionProps> =
                   onClick={() => setActiveCheckInModal(config)}
                   className="px-3 py-1.5 rounded-xl bg-[#2C2825] text-[#FAF8F3] text-xs font-medium hover:bg-[#1A1816] transition cursor-pointer"
                 >
-                  Open Check-In
+                  Open Cadence
                 </button>
               </div>
             </div>
@@ -254,13 +484,27 @@ export const WellbeingCheckInsSection: React.FC<WellbeingCheckInsSectionProps> =
         </div>
       </div>
 
-      {/* Interactive Check-In Modal */}
+      {/* Daily Check-In Modal */}
+      {isDailyModalOpen && (
+        <DailyCheckInModal
+          isOpen={isDailyModalOpen}
+          onClose={() => setIsDailyModalOpen(false)}
+          existingCheckIn={editingDailyCheckIn}
+          onSaveCheckIn={(checkIn) => {
+            onSaveDailyCheckIn?.(checkIn);
+            setIsDailyModalOpen(false);
+          }}
+          lang="nl"
+        />
+      )}
+
+      {/* Cadence Check-In Modal */}
       {activeCheckInModal && (
         <div className="fixed inset-0 z-50 bg-[#1A1816]/40 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-[#FAF8F3] border border-[#DED6C7] rounded-2xl max-w-md w-full p-6 shadow-xl space-y-4 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-[#E8E2D6] pb-3">
               <div>
-                <span className="text-[10px] uppercase tracking-wider text-[#8C8377]">Gentle Check-In</span>
+                <span className="text-[10px] uppercase tracking-wider text-[#8C8377]">Cadence Check-In</span>
                 <h3 className="text-base font-serif text-[#2C2825]">{activeCheckInModal.title}</h3>
               </div>
               <button
@@ -352,7 +596,7 @@ export const WellbeingCheckInsSection: React.FC<WellbeingCheckInsSectionProps> =
         <div className="fixed inset-0 z-50 bg-[#1A1816]/40 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-[#FAF8F3] border border-[#DED6C7] rounded-2xl max-w-md w-full p-6 shadow-xl space-y-4">
             <div className="flex items-center justify-between border-b border-[#E8E2D6] pb-3">
-              <h3 className="text-base font-serif text-[#2C2825]">Configure New Check-In</h3>
+              <h3 className="text-base font-serif text-[#2C2825]">Configure New Cadence</h3>
               <button
                 onClick={() => setIsConfiguring(false)}
                 className="text-xs text-[#8C8377] hover:text-[#2C2825]"
@@ -401,59 +645,6 @@ export const WellbeingCheckInsSection: React.FC<WellbeingCheckInsSectionProps> =
                     <option value="saturday">Saturday</option>
                   </select>
                 </div>
-              </div>
-
-              <div>
-                <label className="block text-[#6A6054] font-medium mb-2">Metrics to Include</label>
-                <div className="grid grid-cols-2 gap-2 text-xs text-[#4A433A]">
-                  <label className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      checked={incWeight}
-                      onChange={(e) => setIncWeight(e.target.checked)}
-                      className="rounded text-[#7E694E]"
-                    />
-                    <span>Weight</span>
-                  </label>
-                  <label className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      checked={incMeasurements}
-                      onChange={(e) => setIncMeasurements(e.target.checked)}
-                      className="rounded text-[#7E694E]"
-                    />
-                    <span>Measurements</span>
-                  </label>
-                  <label className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      checked={incComposition}
-                      onChange={(e) => setIncComposition(e.target.checked)}
-                      className="rounded text-[#7E694E]"
-                    />
-                    <span>Composition</span>
-                  </label>
-                  <label className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      checked={incReflection}
-                      onChange={(e) => setIncReflection(e.target.checked)}
-                      className="rounded text-[#7E694E]"
-                    />
-                    <span>Reflection</span>
-                  </label>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-[#6A6054] font-medium mb-1">Custom Reflection Prompt</label>
-                <input
-                  type="text"
-                  value={newPrompt}
-                  onChange={(e) => setNewPrompt(e.target.value)}
-                  placeholder="e.g. How rested is your nervous system?"
-                  className="w-full px-3 py-2 rounded-xl bg-[#FFFFFF] border border-[#DED6C7] text-[#2C2825]"
-                />
               </div>
 
               <div className="pt-2 flex justify-end gap-2">

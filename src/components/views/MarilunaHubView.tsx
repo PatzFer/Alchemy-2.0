@@ -17,11 +17,12 @@ import {
   ArrowRight,
   Clock,
   Tag,
-  Receipt,
   Building,
   AlertCircle,
   Edit2,
   Trash2,
+  Search,
+  X,
   Layers,
   ChevronRight,
   Mail,
@@ -39,9 +40,6 @@ import {
   MarilunaOffering,
   MarilunaClient,
   Language,
-  MarilunaExpense,
-  MarilunaInvoice,
-  MarilunaTaxDeadline,
   MarilunaMetric,
   IntegrationsState,
 } from '../../types';
@@ -50,7 +48,6 @@ import { MarilunaIdeaSanctuary } from '../mariluna/MarilunaIdeaSanctuary';
 import { MarilunaIdeaSparringModal } from '../mariluna/MarilunaIdeaSparringModal';
 import { MarilunaProjectsSection } from '../mariluna/MarilunaProjectsSection';
 import { MarilunaStrategySection } from '../mariluna/MarilunaStrategySection';
-import { MarilunaAdminSection } from '../mariluna/MarilunaAdminSection';
 import { MarilunaMetricsSection } from '../mariluna/MarilunaMetricsSection';
 import {
   ConvertToContentModal,
@@ -63,7 +60,6 @@ export type MarilunaSubTab =
   | 'overview'
   | 'content'
   | 'projects'
-  | 'admin'
   | 'metrics'
   | 'brainstorm'
   | 'strategy'
@@ -119,8 +115,6 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
   onSaveGoal,
   onDeleteGoal,
   onToggleMilestone,
-  adminState = { items: [], expenses: [], invoices: [], deadlines: [] } as MarilunaAdminState,
-  onUpdateAdminState,
   metricsState = { metrics: [], records: [] } as MarilunaMetricsState,
   onUpdateMetricsState,
   offerings = [],
@@ -143,34 +137,6 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
   const marilunaIdeas = ideas.filter((i) => i.realm === 'mariluna' && i.status !== 'archived');
   const marilunaGoals = goals.filter((g) => g.realm === 'mariluna');
 
-  // Mariluna 3.0: Strategic Horizon Items (Only actual data, strictly no fictional items)
-  const upcomingAdminDates = [
-    ...(adminState.deadlines || [])
-      .filter((d) => !d.completed && d.dueDate)
-      .map((d) => ({
-        id: 'dl-' + d.id,
-        title: d.title,
-        dueDate: d.dueDate,
-        type: 'deadline' as const,
-      })),
-    ...(adminState.items || [])
-      .filter((i) => i.status !== 'completed' && i.dueDate)
-      .map((i) => ({
-        id: 'item-' + i.id,
-        title: i.title,
-        dueDate: i.dueDate!,
-        type: 'admin_item' as const,
-      })),
-  ].sort((a, b) => a.dueDate.localeCompare(b.dueDate));
-
-  const earliestAdminDeadline = upcomingAdminDates[0] || null;
-
-  const unpaidInvoices = (adminState.invoices || []).filter(
-    (i) => i.status === 'sent' || i.status === 'overdue'
-  );
-  const earliestUnpaidInvoice =
-    [...unpaidInvoices].sort((a, b) => a.dueDate.localeCompare(b.dueDate))[0] || null;
-
   const recentMetric =
     metricsState.records && metricsState.records.length > 0
       ? metricsState.records[0]
@@ -187,8 +153,6 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
     ) || null;
 
   const hasAnyStrategicAttention =
-    !!earliestAdminDeadline ||
-    !!earliestUnpaidInvoice ||
     !!recentMetric ||
     !!activeProject ||
     !!currentStrategicGoal ||
@@ -199,7 +163,6 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
     { id: 'overview', label: isNl ? 'Overzicht' : 'Overview', icon: LayoutDashboard },
     { id: 'content', label: isNl ? 'Content' : 'Content', icon: FileText },
     { id: 'projects', label: isNl ? 'Projecten' : 'Projects', icon: Briefcase },
-    { id: 'admin', label: isNl ? 'Admin & Boekhouding' : 'Admin & Bookkeeping', icon: Receipt },
     { id: 'metrics', label: isNl ? 'Cijfers' : 'Metrics', icon: TrendingUp },
     { id: 'brainstorm', label: isNl ? 'Brainstorm & Sparring' : 'Brainstorm & Sparring', icon: Lightbulb },
     { id: 'strategy', label: isNl ? 'Doelen & Strategie' : 'Goals & Strategy', icon: Target },
@@ -229,19 +192,6 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
   const [newProjectDeadline, setNewProjectDeadline] = useState('');
   const [newProjectPriority, setNewProjectPriority] = useState<'high' | 'normal' | 'low'>('normal');
 
-  // Admin Modals state
-  const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
-  const [adminType, setAdminType] = useState<'expense' | 'invoice' | 'deadline'>('invoice');
-  const [invoiceClient, setInvoiceClient] = useState('');
-  const [invoiceAmount, setInvoiceAmount] = useState<number | ''>('');
-  const [invoiceNumber, setInvoiceNumber] = useState('');
-  const [invoiceDueDate, setInvoiceDueDate] = useState('');
-  const [expenseDesc, setExpenseDesc] = useState('');
-  const [expenseAmount, setExpenseAmount] = useState<number | ''>('');
-  const [expenseCategory, setExpenseCategory] = useState<MarilunaExpense['category']>('software');
-  const [deadlineTitle, setDeadlineTitle] = useState('');
-  const [deadlineDate, setDeadlineDate] = useState('');
-
   // Metrics Modal state
   const [isMetricModalOpen, setIsMetricModalOpen] = useState(false);
   const [metricName, setMetricName] = useState('');
@@ -249,12 +199,33 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
   const [metricUnit, setMetricUnit] = useState('€');
   const [metricPeriod, setMetricPeriod] = useState(new Date().getFullYear().toString());
 
-  // Offering Modal state
+  // Offering Modal & Search state
   const [isOfferingModalOpen, setIsOfferingModalOpen] = useState(false);
+  const [editingOfferingId, setEditingOfferingId] = useState<string | null>(null);
+  const [offeringSearchQuery, setOfferingSearchQuery] = useState('');
+  const [offeringTypeFilter, setOfferingTypeFilter] = useState<string>('all');
   const [offeringTitle, setOfferingTitle] = useState('');
   const [offeringType, setOfferingType] = useState<MarilunaOffering['type']>('service');
   const [offeringPrice, setOfferingPrice] = useState<number | ''>('');
   const [offeringDesc, setOfferingDesc] = useState('');
+
+  const handleOpenNewOffering = () => {
+    setEditingOfferingId(null);
+    setOfferingTitle('');
+    setOfferingType('service');
+    setOfferingPrice('');
+    setOfferingDesc('');
+    setIsOfferingModalOpen(true);
+  };
+
+  const handleOpenEditOffering = (off: MarilunaOffering) => {
+    setEditingOfferingId(off.id);
+    setOfferingTitle(off.title);
+    setOfferingType(off.type);
+    setOfferingPrice(off.price !== undefined && off.price !== null ? off.price : '');
+    setOfferingDesc(off.description || '');
+    setIsOfferingModalOpen(true);
+  };
 
   // Sparring & Idea Conversion state
   const [sparringIdea, setSparringIdea] = useState<Idea | null>(null);
@@ -423,62 +394,6 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
     setIsProjectModalOpen(false);
   };
 
-  const handleSaveAdminEntry = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!onUpdateAdminState) return;
-
-    if (adminType === 'invoice' && invoiceClient.trim() && invoiceAmount !== '') {
-      const newInv: MarilunaInvoice = {
-        id: 'inv-' + Date.now(),
-        invoiceNumber: invoiceNumber.trim() || `ML-${Date.now().toString().slice(-4)}`,
-        clientName: invoiceClient.trim(),
-        amount: Number(invoiceAmount),
-        date: todayStr,
-        dueDate: invoiceDueDate || todayStr,
-        status: 'sent',
-      };
-      onUpdateAdminState({
-        ...adminState,
-        invoices: [...adminState.invoices, newInv],
-      });
-    } else if (adminType === 'expense' && expenseDesc.trim() && expenseAmount !== '') {
-      const newExp: MarilunaExpense = {
-        id: 'exp-' + Date.now(),
-        description: expenseDesc.trim(),
-        amount: Number(expenseAmount),
-        date: todayStr,
-        category: expenseCategory,
-        paid: true,
-      };
-      onUpdateAdminState({
-        ...adminState,
-        expenses: [...adminState.expenses, newExp],
-      });
-    } else if (adminType === 'deadline' && deadlineTitle.trim() && deadlineDate) {
-      const newDead: MarilunaTaxDeadline = {
-        id: 'dead-' + Date.now(),
-        title: deadlineTitle.trim(),
-        dueDate: deadlineDate,
-        type: 'vat_btw',
-        completed: false,
-      };
-      onUpdateAdminState({
-        ...adminState,
-        deadlines: [...adminState.deadlines, newDead],
-      });
-    }
-
-    // Reset
-    setInvoiceClient('');
-    setInvoiceAmount('');
-    setInvoiceNumber('');
-    setExpenseDesc('');
-    setExpenseAmount('');
-    setDeadlineTitle('');
-    setDeadlineDate('');
-    setIsAdminModalOpen(false);
-  };
-
   const handleSaveMetric = (e: React.FormEvent) => {
     e.preventDefault();
     if (!metricName.trim() || metricValue === '' || !onUpdateMetricsState) return;
@@ -500,20 +415,56 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
 
   const handleSaveOffering = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!offeringTitle.trim() || offeringPrice === '' || !onUpdateOfferings) return;
-    const newOff: MarilunaOffering = {
-      id: 'off-' + Date.now(),
-      title: offeringTitle.trim(),
-      type: offeringType,
-      price: Number(offeringPrice),
-      description: offeringDesc.trim(),
-      status: 'active',
-    };
-    onUpdateOfferings([...offerings, newOff]);
+    if (!offeringTitle.trim() || !onUpdateOfferings) return;
+
+    const parsedPrice =
+      offeringPrice === '' || offeringPrice === undefined || offeringPrice === null
+        ? undefined
+        : Number(offeringPrice);
+
+    if (editingOfferingId) {
+      const updated = offerings.map((o) =>
+        o.id === editingOfferingId
+          ? {
+              ...o,
+              title: offeringTitle.trim(),
+              type: offeringType,
+              price: parsedPrice,
+              description: offeringDesc.trim(),
+            }
+          : o
+      );
+      onUpdateOfferings(updated);
+    } else {
+      const newOff: MarilunaOffering = {
+        id: 'off-' + Date.now(),
+        title: offeringTitle.trim(),
+        type: offeringType,
+        price: parsedPrice,
+        description: offeringDesc.trim(),
+        status: 'active',
+      };
+      onUpdateOfferings([...offerings, newOff]);
+    }
+
+    setEditingOfferingId(null);
     setOfferingTitle('');
     setOfferingPrice('');
     setOfferingDesc('');
     setIsOfferingModalOpen(false);
+  };
+
+  const handleDeleteOffering = (offeringId: string) => {
+    if (!onUpdateOfferings) return;
+    if (
+      window.confirm(
+        isNl
+          ? 'Weet je zeker dat je dit product of deze dienst wilt verwijderen?'
+          : 'Are you sure you want to delete this offering?'
+      )
+    ) {
+      onUpdateOfferings(offerings.filter((o) => o.id !== offeringId));
+    }
   };
 
   return (
@@ -590,7 +541,7 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
       {activeSubTab === 'overview' && (
         <div className="space-y-6">
           {/* Top Business Pulse Bar */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div
               onClick={() => setActiveSubTab('projects')}
               className="p-3.5 rounded-2xl border border-[#E3D9C9] bg-[#FAF8F3] hover:border-[#8C7654] transition cursor-pointer space-y-1 shadow-xs"
@@ -622,22 +573,6 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
               </div>
               <p className="text-[10px] text-[#7A7167]">
                 {contentPlan.posts.filter((p) => p.status === 'ready').length} {isNl ? 'klaar voor publicatie' : 'ready to publish'}
-              </p>
-            </div>
-
-            <div
-              onClick={() => setActiveSubTab('admin')}
-              className="p-3.5 rounded-2xl border border-[#E3D9C9] bg-[#FAF8F3] hover:border-[#8C7654] transition cursor-pointer space-y-1 shadow-xs"
-            >
-              <div className="flex items-center justify-between text-[10px] text-[#8C7654] font-medium uppercase tracking-wider">
-                <span>{isNl ? 'Admin & Facturen' : 'Admin & Invoices'}</span>
-                <Receipt className="w-3.5 h-3.5" />
-              </div>
-              <div className="font-serif text-lg text-[#2C2825]">
-                {unpaidInvoices.length} {isNl ? 'open facturen' : 'open invoices'}
-              </div>
-              <p className="text-[10px] text-[#7A7167]">
-                {upcomingAdminDates.length} {isNl ? 'komende deadlines' : 'upcoming deadlines'}
               </p>
             </div>
 
@@ -680,45 +615,7 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                {/* 1. Upcoming Admin Deadline */}
-                {earliestAdminDeadline && (
-                  <div
-                    onClick={() => setActiveSubTab('admin')}
-                    className="p-3 rounded-xl bg-[#FFFFFF] border border-[#E8E1D3] hover:border-[#8C7654] transition cursor-pointer space-y-1"
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="text-[9px] uppercase font-semibold tracking-wider text-[#8C7654]">
-                        {isNl ? 'Fiscale / Admin Deadline' : 'Admin Deadline'}
-                      </span>
-                      <span className="text-[10px] font-mono text-[#7A7167]">{earliestAdminDeadline.dueDate}</span>
-                    </div>
-                    <div className="text-xs font-medium text-[#2C2825] truncate">
-                      {earliestAdminDeadline.title}
-                    </div>
-                  </div>
-                )}
-
-                {/* 2. Unpaid / Overdue Invoice */}
-                {earliestUnpaidInvoice && (
-                  <div
-                    onClick={() => setActiveSubTab('admin')}
-                    className="p-3 rounded-xl bg-[#FFFFFF] border border-[#E8E1D3] hover:border-[#8C7654] transition cursor-pointer space-y-1"
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="text-[9px] uppercase font-semibold tracking-wider text-[#A64A38]">
-                        {isNl ? 'Openstaande Factuur' : 'Unpaid Invoice'}
-                      </span>
-                      <span className="text-xs font-mono font-medium text-[#2C2825]">
-                        €{earliestUnpaidInvoice.amount.toLocaleString('nl-NL')}
-                      </span>
-                    </div>
-                    <div className="text-xs font-medium text-[#2C2825] truncate">
-                      {earliestUnpaidInvoice.clientName} ({earliestUnpaidInvoice.invoiceNumber})
-                    </div>
-                  </div>
-                )}
-
-                {/* 3. Recent Business Figure */}
+                {/* 1. Recent Business Figure */}
                 {recentMetric && (
                   <div
                     onClick={() => setActiveSubTab('metrics')}
@@ -739,7 +636,7 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
                   </div>
                 )}
 
-                {/* 4. Active Project */}
+                {/* 2. Active Project */}
                 {activeProject && (
                   <div
                     onClick={() => setActiveSubTab('projects')}
@@ -759,7 +656,7 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
                   </div>
                 )}
 
-                {/* 5. Current Strategic Goal */}
+                {/* 3. Current Strategic Goal */}
                 {currentStrategicGoal && (
                   <div
                     onClick={() => setActiveSubTab('strategy')}
@@ -777,7 +674,7 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
                   </div>
                 )}
 
-                {/* 6. Content Needing Attention */}
+                {/* 4. Content Needing Attention */}
                 {attentionContent && (
                   <div
                     onClick={() => setActiveSubTab('content')}
@@ -852,28 +749,17 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
                 <div className="flex items-center gap-2">
                   <Clock className="w-4 h-4 text-[#8C7654]" />
                   <h3 className="font-serif text-base text-[#2C2825] font-medium">
-                    {isNl ? 'Aankomende Deadlines' : 'Upcoming Deadlines'}
+                    {isNl ? 'Aankomende Projectdeadlines' : 'Upcoming Project Deadlines'}
                   </h3>
                 </div>
               </div>
 
-              {adminState.deadlines.length === 0 && marilunaProjects.filter((p) => p.deadline).length === 0 ? (
+              {marilunaProjects.filter((p) => p.deadline).length === 0 ? (
                 <div className="py-8 text-center text-xs text-[#8C8377] italic">
-                  {isNl ? 'Geen aankomende zakelijke deadlines.' : 'No upcoming deadlines.'}
+                  {isNl ? 'Geen aankomende zakelijke projectdeadlines.' : 'No upcoming project deadlines.'}
                 </div>
               ) : (
                 <div className="space-y-2">
-                  {adminState.deadlines.map((d) => (
-                    <div
-                      key={d.id}
-                      className="p-2.5 rounded-xl bg-[#FFFFFF] border border-[#E8E1D3] flex items-center justify-between text-xs"
-                    >
-                      <span className="font-medium text-[#2C2825]">{d.title}</span>
-                      <span className="text-[10px] font-mono text-[#7A7167] bg-[#F4EFE6] px-2 py-0.5 rounded-md">
-                        {d.dueDate}
-                      </span>
-                    </div>
-                  ))}
                   {marilunaProjects
                     .filter((p) => p.deadline)
                     .map((p) => (
@@ -971,6 +857,7 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
           onAddContentPost={onAddContentPost}
           projects={projects}
           ideas={ideas}
+          offerings={offerings}
           onOpenSparring={handleSparringOpen}
           isNl={isNl}
         />
@@ -991,22 +878,6 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
           onSaveTask={onSaveTask || (() => {})}
           onToggleTask={onToggleTask || (() => {})}
           onAddContentPost={onAddContentPost}
-          onOpenAssistantWithPrompt={onOpenAssistantWithPrompt}
-          isNl={isNl}
-        />
-      )}
-
-      {/* ============================================================ */}
-      {/* 4. ADMIN & BOEKHOUDING (Mariluna 3.0 Operating Layer)        */}
-      {/* ============================================================ */}
-      {activeSubTab === 'admin' && (
-        <MarilunaAdminSection
-          adminState={adminState}
-          onUpdateAdminState={onUpdateAdminState}
-          projects={marilunaProjects}
-          goals={marilunaGoals}
-          tasks={marilunaTasks}
-          onSaveTask={onSaveTask}
           onOpenAssistantWithPrompt={onOpenAssistantWithPrompt}
           isNl={isNl}
         />
@@ -1072,7 +943,7 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
       {/* ============================================================ */}
       {activeSubTab === 'offerings' && (
         <div className="space-y-5">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <h2 className="font-serif text-xl font-normal text-[#2C2825]">
                 {isNl ? 'Producten & Diensten' : 'Offerings & Atelier Services'}
@@ -1083,13 +954,55 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
             </div>
             <button
               type="button"
-              onClick={() => setIsOfferingModalOpen(true)}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#2C2825] text-[#FAF8F3] text-xs font-medium hover:bg-[#433D37] transition shadow-xs cursor-pointer"
+              onClick={handleOpenNewOffering}
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#2C2825] text-[#FAF8F3] text-xs font-medium hover:bg-[#433D37] transition shadow-xs cursor-pointer self-start sm:self-auto"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>{isNl ? 'Aanbod Toevoegen' : 'Add Offering'}</span>
             </button>
           </div>
+
+          {/* Search & Filter Bar */}
+          {offerings.length > 0 && (
+            <div className="flex flex-col sm:flex-row gap-2.5 items-stretch sm:items-center justify-between bg-[#FAF8F3] p-2.5 rounded-2xl border border-[#E3D9C9]">
+              <div className="relative flex-1">
+                <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[#9E9589]" />
+                <input
+                  type="text"
+                  placeholder={isNl ? 'Zoek op titel of beschrijving...' : 'Search by title or description...'}
+                  value={offeringSearchQuery}
+                  onChange={(e) => setOfferingSearchQuery(e.target.value)}
+                  className="w-full pl-8 pr-3 py-1.5 rounded-xl bg-white border border-[#DDD4C5] text-xs text-[#2C2825] focus:outline-none focus:border-[#C5A880]"
+                />
+              </div>
+              <div className="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0">
+                {['all', 'service', 'package', 'bespoke', 'product', 'workshop'].map((t) => (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => setOfferingTypeFilter(t)}
+                    className={`px-2.5 py-1 rounded-lg text-[11px] font-medium transition cursor-pointer capitalize whitespace-nowrap ${
+                      offeringTypeFilter === t
+                        ? 'bg-[#2C2825] text-[#FAF8F3]'
+                        : 'bg-[#EAE2D3]/60 text-[#554C42] hover:bg-[#EAE2D3]'
+                    }`}
+                  >
+                    {t === 'all'
+                      ? isNl ? 'Alles' : 'All'
+                      : t === 'service'
+                      ? isNl ? 'Dienst' : 'Service'
+                      : t === 'package'
+                      ? isNl ? 'Pakket' : 'Package'
+                      : t === 'bespoke'
+                      ? isNl ? 'Maatwerk' : 'Bespoke'
+                      : t === 'product'
+                      ? isNl ? 'Product' : 'Product'
+                      : isNl ? 'Workshop' : 'Workshop'}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           {offerings.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-[#DCD3C4] p-10 text-center space-y-2">
@@ -1098,92 +1011,176 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
               </p>
               <button
                 type="button"
-                onClick={() => setIsOfferingModalOpen(true)}
+                onClick={handleOpenNewOffering}
                 className="text-xs text-[#8C7654] font-medium hover:underline cursor-pointer"
               >
                 {isNl ? '+ Voeg je eerste dienst of product toe' : '+ Add your first service or product'}
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-              {offerings.map((off) => (
-                <div
-                  key={off.id}
-                  className="rounded-2xl border border-[#E3D9C9] bg-[#FAF8F3] p-4 space-y-2 shadow-xs"
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <h4 className="font-serif text-base font-medium text-[#2C2825]">{off.title}</h4>
-                    <span className="text-[10px] uppercase font-semibold px-2 py-0.5 rounded-md bg-[#EAE2D3] text-[#554C42]">
-                      {off.type}
-                    </span>
+            (() => {
+              const filteredOfferings = offerings.filter((off) => {
+                const matchesSearch =
+                  !offeringSearchQuery.trim() ||
+                  off.title.toLowerCase().includes(offeringSearchQuery.toLowerCase()) ||
+                  (off.description && off.description.toLowerCase().includes(offeringSearchQuery.toLowerCase()));
+                const matchesType = offeringTypeFilter === 'all' || off.type === offeringTypeFilter;
+                return matchesSearch && matchesType;
+              });
+
+              if (filteredOfferings.length === 0) {
+                return (
+                  <div className="rounded-2xl border border-[#E3D9C9] bg-[#FAF8F3] p-8 text-center text-xs text-[#7A7167]">
+                    {isNl ? 'Geen producten of diensten gevonden voor deze filter.' : 'No offerings found for this filter.'}
                   </div>
-                  {off.description && (
-                    <p className="text-xs text-[#7A7167] leading-relaxed">{off.description}</p>
-                  )}
-                  <div className="font-mono text-sm font-semibold text-[#2C2825] pt-1">
-                    €{off.price}
-                  </div>
+                );
+              }
+
+              return (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                  {filteredOfferings.map((off) => (
+                    <div
+                      key={off.id}
+                      className="group relative rounded-2xl border border-[#E3D9C9] bg-[#FAF8F3] p-4 space-y-2 shadow-xs flex flex-col justify-between hover:border-[#C5A880] transition"
+                    >
+                      <div className="space-y-2">
+                        <div className="flex items-start justify-between gap-2">
+                          <h4 className="font-serif text-base font-medium text-[#2C2825] line-clamp-1">{off.title}</h4>
+                          <span className="text-[10px] uppercase font-semibold px-2 py-0.5 rounded-md bg-[#EAE2D3] text-[#554C42] shrink-0">
+                            {off.type}
+                          </span>
+                        </div>
+                        {off.description && (
+                          <p className="text-xs text-[#7A7167] leading-relaxed line-clamp-3">{off.description}</p>
+                        )}
+                      </div>
+
+                      <div className="pt-2 border-t border-[#EAE2D3]/60 flex items-center justify-between">
+                        <div className="font-mono text-sm font-semibold text-[#2C2825]">
+                          {off.price !== undefined && off.price !== null && !isNaN(off.price) ? (
+                            `€${off.price}`
+                          ) : (
+                            <span className="text-xs font-sans font-normal text-[#9E9589] italic">
+                              {isNl ? 'Geen prijs' : 'No price'}
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-1 opacity-90 sm:opacity-0 group-hover:opacity-100 transition">
+                          <button
+                            type="button"
+                            onClick={() => handleOpenEditOffering(off)}
+                            className="p-1.5 rounded-lg text-[#7A7167] hover:text-[#2C2825] hover:bg-[#EAE2D3] transition cursor-pointer"
+                            title={isNl ? 'Bewerken' : 'Edit'}
+                          >
+                            <Edit2 className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteOffering(off.id)}
+                            className="p-1.5 rounded-lg text-[#A05252] hover:bg-[#FBE8E8] transition cursor-pointer"
+                            title={isNl ? 'Verwijderen' : 'Delete'}
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
+              );
+            })()
           )}
 
           {/* Offering Modal */}
           {isOfferingModalOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs">
               <div className="bg-[#FAF8F3] border border-[#DDD4C5] rounded-3xl max-w-sm w-full p-6 space-y-4 shadow-xl text-[#2C2825]">
-                <h3 className="font-serif text-lg text-[#2C2825]">
-                  {isNl ? 'Dienst of Product Toevoegen' : 'Add Offering'}
-                </h3>
+                <div className="flex items-center justify-between">
+                  <h3 className="font-serif text-lg text-[#2C2825]">
+                    {editingOfferingId
+                      ? isNl ? 'Dienst of Product Bewerken' : 'Edit Offering'
+                      : isNl ? 'Dienst of Product Toevoegen' : 'Add Offering'}
+                  </h3>
+                  <button
+                    type="button"
+                    onClick={() => setIsOfferingModalOpen(false)}
+                    className="p-1 rounded-full text-[#7A7167] hover:bg-[#EAE2D3] cursor-pointer"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
                 <form onSubmit={handleSaveOffering} className="space-y-3">
-                  <input
-                    type="text"
-                    placeholder={isNl ? 'Titel dienst / product' : 'Offering title'}
-                    value={offeringTitle}
-                    onChange={(e) => setOfferingTitle(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl bg-[#FFFFFF] border border-[#DDD4C5] text-xs text-[#2C2825]"
-                    autoFocus
-                  />
-                  <div className="grid grid-cols-2 gap-2">
-                    <select
-                      value={offeringType}
-                      onChange={(e) => setOfferingType(e.target.value as any)}
-                      className="w-full px-2 py-2 rounded-xl bg-[#FFFFFF] border border-[#DDD4C5] text-xs text-[#2C2825]"
-                    >
-                      <option value="service">{isNl ? 'Dienst' : 'Service'}</option>
-                      <option value="package">{isNl ? 'Pakket' : 'Package'}</option>
-                      <option value="bespoke">{isNl ? 'Maatwerk' : 'Bespoke'}</option>
-                      <option value="product">{isNl ? 'Product' : 'Product'}</option>
-                    </select>
+                  <div>
+                    <label className="block text-[11px] font-medium text-[#7A7167] mb-1">
+                      {isNl ? 'Naam product / dienst *' : 'Name of offering *'}
+                    </label>
                     <input
-                      type="number"
-                      placeholder={isNl ? 'Prijs in €' : 'Price in €'}
-                      value={offeringPrice}
-                      onChange={(e) => setOfferingPrice(e.target.value === '' ? '' : Number(e.target.value))}
-                      className="w-full px-3 py-2 rounded-xl bg-[#FFFFFF] border border-[#DDD4C5] text-xs text-[#2C2825]"
+                      type="text"
+                      placeholder={isNl ? 'bijv. Lenormand Reading' : 'e.g. Lenormand Reading'}
+                      value={offeringTitle}
+                      onChange={(e) => setOfferingTitle(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl bg-[#FFFFFF] border border-[#DDD4C5] text-xs text-[#2C2825] focus:outline-none focus:border-[#C5A880]"
+                      autoFocus
                     />
                   </div>
-                  <textarea
-                    rows={2}
-                    placeholder={isNl ? 'Beschrijving of deliverables...' : 'Description...'}
-                    value={offeringDesc}
-                    onChange={(e) => setOfferingDesc(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl bg-[#FFFFFF] border border-[#DDD4C5] text-xs text-[#2C2825]"
-                  />
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-[11px] font-medium text-[#7A7167] mb-1">
+                        {isNl ? 'Type' : 'Type'}
+                      </label>
+                      <select
+                        value={offeringType}
+                        onChange={(e) => setOfferingType(e.target.value as any)}
+                        className="w-full px-2 py-2 rounded-xl bg-[#FFFFFF] border border-[#DDD4C5] text-xs text-[#2C2825] focus:outline-none focus:border-[#C5A880]"
+                      >
+                        <option value="service">{isNl ? 'Dienst' : 'Service'}</option>
+                        <option value="package">{isNl ? 'Pakket' : 'Package'}</option>
+                        <option value="bespoke">{isNl ? 'Maatwerk' : 'Bespoke'}</option>
+                        <option value="product">{isNl ? 'Product' : 'Product'}</option>
+                        <option value="workshop">{isNl ? 'Workshop' : 'Workshop'}</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-medium text-[#7A7167] mb-1">
+                        {isNl ? 'Prijs in € (optioneel)' : 'Price in € (optional)'}
+                      </label>
+                      <input
+                        type="number"
+                        placeholder={isNl ? 'bijv. 50' : 'e.g. 50'}
+                        value={offeringPrice}
+                        onChange={(e) => setOfferingPrice(e.target.value === '' ? '' : Number(e.target.value))}
+                        className="w-full px-3 py-2 rounded-xl bg-[#FFFFFF] border border-[#DDD4C5] text-xs text-[#2C2825] focus:outline-none focus:border-[#C5A880]"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-medium text-[#7A7167] mb-1">
+                      {isNl ? 'Beschrijving' : 'Description'}
+                    </label>
+                    <textarea
+                      rows={3}
+                      placeholder={isNl ? 'Beschrijving of deliverables...' : 'Description...'}
+                      value={offeringDesc}
+                      onChange={(e) => setOfferingDesc(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl bg-[#FFFFFF] border border-[#DDD4C5] text-xs text-[#2C2825] focus:outline-none focus:border-[#C5A880]"
+                    />
+                  </div>
                   <div className="flex justify-end gap-2 pt-2">
                     <button
                       type="button"
                       onClick={() => setIsOfferingModalOpen(false)}
-                      className="px-3 py-1.5 rounded-xl text-xs text-[#7A7167]"
+                      className="px-3 py-1.5 rounded-xl text-xs text-[#7A7167] hover:bg-[#EAE2D3]/60 cursor-pointer"
                     >
                       {isNl ? 'Annuleren' : 'Cancel'}
                     </button>
                     <button
                       type="submit"
-                      disabled={!offeringTitle.trim() || offeringPrice === ''}
-                      className="px-4 py-1.5 rounded-xl bg-[#2C2825] text-[#FAF8F3] text-xs font-medium disabled:opacity-40"
+                      disabled={!offeringTitle.trim()}
+                      className="px-4 py-1.5 rounded-xl bg-[#2C2825] text-[#FAF8F3] text-xs font-medium disabled:opacity-40 cursor-pointer"
                     >
-                      {isNl ? 'Opslaan' : 'Save'}
+                      {editingOfferingId
+                        ? isNl ? 'Wijzigingen opslaan' : 'Save changes'
+                        : isNl ? 'Opslaan' : 'Save'}
                     </button>
                   </div>
                 </form>
@@ -1200,6 +1197,7 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
         <MarilunaClientsManager
           clients={clients}
           onUpdateClients={onUpdateClients || (() => {})}
+          offerings={offerings}
           integrations={integrations}
           isNl={isNl}
         />

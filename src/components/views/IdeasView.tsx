@@ -277,7 +277,8 @@ export const IdeasView: React.FC<IdeasViewProps> = ({
                     type="button"
                     onClick={() =>
                       onOpenAssistantWithPrompt(
-                        `Wil je dit idee verder uitwerken, er content van maken, er een project van maken of het voorlopig bewaren? Idee: "${idea.title}" - ${idea.content}`
+                        `Wil je dit idee verder uitwerken, er content van maken, er een project van maken of het voorlopig bewaren? Idee: "${idea.title}" - ${idea.content}`,
+                        { type: 'idea', id: idea.id, title: idea.title, details: idea }
                       )
                     }
                     className="inline-flex items-center gap-1.5 text-xs text-[#8C7654] hover:text-[#2C2825] font-medium transition cursor-pointer"

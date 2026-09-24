@@ -16,7 +16,7 @@ import {
   Calendar,
   ChevronRight,
 } from 'lucide-react';
-import { MarilunaClient, IntegrationsState } from '../../types';
+import { MarilunaClient, IntegrationsState, MarilunaOffering } from '../../types';
 import { PhoneInputField } from './PhoneInputField';
 import {
   normalizePhoneNumber,
@@ -28,6 +28,7 @@ import {
 interface MarilunaClientsManagerProps {
   clients: MarilunaClient[];
   onUpdateClients: (clients: MarilunaClient[]) => void;
+  offerings?: MarilunaOffering[];
   integrations?: IntegrationsState;
   isNl?: boolean;
 }
@@ -37,6 +38,7 @@ type ClientFilter = 'all' | 'has_email' | 'has_phone';
 export const MarilunaClientsManager: React.FC<MarilunaClientsManagerProps> = ({
   clients = [],
   onUpdateClients,
+  offerings = [],
   integrations,
   isNl = true,
 }) => {

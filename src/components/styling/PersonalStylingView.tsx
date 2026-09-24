@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import {
   Sparkles,
   Shirt,
@@ -6,6 +6,7 @@ import {
   HelpCircle,
   Check,
   AlertCircle,
+  AlertTriangle,
   RefreshCw,
   Tag,
   Palette,
@@ -40,6 +41,7 @@ import {
   STYLING_OCCASIONS,
   PRESET_GARMENTS,
   evaluateGarment,
+  checkGarmentInputSufficiency,
   GarmentEvaluationInput,
   EmotionalMoodConfig,
 } from '../../lib/personalStylingLogic';
@@ -100,12 +102,15 @@ export const PersonalStylingView: React.FC<PersonalStylingViewProps> = ({
     return false;
   }, [latestMeasurement, calculatedShape, personalStyle.bodyShape, divergenceDismissed, recalculatedNotice]);
 
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   // Evaluator State
   const [evalInput, setEvalInput] = useState<GarmentEvaluationInput>({
     itemTitle: '',
     category: 'Jurken',
     brand: '',
     price: '',
+    productUrl: '',
     occasion: 'general',
     mood: personalStyle.activeMood || 'romantic',
     imageUrl: '',
@@ -115,13 +120,51 @@ export const PersonalStylingView: React.FC<PersonalStylingViewProps> = ({
     userNotes: '',
   });
 
-  const [currentEvaluation, setCurrentEvaluation] = useState<GarmentEvaluation | null>(
-    personalStyle.evaluations && personalStyle.evaluations.length > 0
-      ? personalStyle.evaluations[0]
-      : null
-  );
+  const [currentEvaluation, setCurrentEvaluation] = useState<GarmentEvaluation | null>(null);
 
   const [isEvaluating, setIsEvaluating] = useState(false);
+
+  // Helper for updating input and clearing current evaluation when item details change
+  const handleEvalInputChange = (fields: Partial<GarmentEvaluationInput>) => {
+    setEvalInput((prev) => ({ ...prev, ...fields }));
+    if (fields.itemTitle !== undefined || fields.imageUrl !== undefined || fields.productUrl !== undefined) {
+      setCurrentEvaluation(null);
+    }
+  };
+
+  // Check input sufficiency in real-time
+  const inputCheck = useMemo(() => {
+    return checkGarmentInputSufficiency(evalInput);
+  }, [evalInput]);
+
+  // Photo / Image File Select Handler
+  const handleImageFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (evt) => {
+        if (evt.target?.result) {
+          handleEvalInputChange({ imageUrl: evt.target.result as string });
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Drag & Drop File Handler
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    const file = e.dataTransfer.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (evt) => {
+        if (evt.target?.result) {
+          handleEvalInputChange({ imageUrl: evt.target.result as string });
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   // Evaluated items & learned feedback
   const evaluationsList: GarmentEvaluation[] = useMemo(() => {
@@ -145,7 +188,7 @@ export const PersonalStylingView: React.FC<PersonalStylingViewProps> = ({
 
   // Handle Preset Garment Test
   const handleSelectPreset = (preset: typeof PRESET_GARMENTS[0]) => {
-    setEvalInput({
+    const presetInput: GarmentEvaluationInput = {
       itemTitle: preset.title,
       category: preset.category,
       brand: preset.brand,
@@ -157,12 +200,22 @@ export const PersonalStylingView: React.FC<PersonalStylingViewProps> = ({
       hasSizeChartOrMeasurements: preset.hasSizeChart,
       hasStretch: preset.hasStretch,
       userNotes: preset.shortNoteNl,
-    });
+    };
+    setEvalInput(presetInput);
+
+    // Evaluate preset item
+    const evaluation = evaluateGarment(
+      presetInput,
+      foundationStyling,
+      latestMeasurement,
+      learnedFeedbackList
+    );
+    setCurrentEvaluation(evaluation);
   };
 
   // Run Evaluation
   const handleRunEvaluation = () => {
-    if (!evalInput.itemTitle.trim()) return;
+    if (!evalInput.itemTitle.trim() && !evalInput.imageUrl && !evalInput.productUrl) return;
     setIsEvaluating(true);
 
     setTimeout(() => {
@@ -176,18 +229,20 @@ export const PersonalStylingView: React.FC<PersonalStylingViewProps> = ({
       setCurrentEvaluation(evaluation);
       setIsEvaluating(false);
 
-      // Save to evaluations list
-      const updatedList = [evaluation, ...evaluationsList.filter((e) => e.id !== evaluation.id)];
-      onUpdateStyle({
-        ...personalStyle,
-        evaluations: updatedList,
-      });
-
-      if (onUpdateFoundationStyling) {
-        onUpdateFoundationStyling({
-          ...foundationStyling,
-          recentEvaluations: updatedList.slice(0, 15),
+      // Only save to history if input was sufficient for real analysis
+      if (!evaluation.isInsufficient) {
+        const updatedList = [evaluation, ...evaluationsList.filter((e) => e.id !== evaluation.id)];
+        onUpdateStyle({
+          ...personalStyle,
+          evaluations: updatedList,
         });
+
+        if (onUpdateFoundationStyling) {
+          onUpdateFoundationStyling({
+            ...foundationStyling,
+            recentEvaluations: updatedList.slice(0, 15),
+          });
+        }
       }
     }, 350);
   };
@@ -449,6 +504,28 @@ export const PersonalStylingView: React.FC<PersonalStylingViewProps> = ({
       {/* ============================================================ */}
       {activeSection === 'evaluator' && (
         <div className="space-y-8">
+          {/* Section Purpose Banner */}
+          <div className="rounded-2xl border border-[#E0D7C9] bg-[#FAF6EE] p-4 sm:p-5 text-xs text-[#5C5449] space-y-1.5 shadow-2xs">
+            <div className="flex items-center gap-2 text-[#8C7654] font-medium uppercase tracking-wider text-[10px]">
+              <Info className="w-3.5 h-3.5" />
+              <span>{isNl ? 'Sectie-uitleg & Werking' : 'Section Purpose'}</span>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-1">
+              <div>
+                <span className="font-semibold text-[#2C2825] block">{isNl ? '• Wat dit bevat:' : '• What it contains:'}</span>
+                <span className="text-[#7A7167]">Evaluatiestudio voor foto’s, screenshots, productlinks of kledingdetails.</span>
+              </div>
+              <div>
+                <span className="font-semibold text-[#2C2825] block">{isNl ? '• Hoe Alchemy dit gebruikt:' : '• How Alchemy uses it:'}</span>
+                <span className="text-[#7A7167]">Berekent een stijlmatch en pasvormzekerheid op basis van jouw 1.57m proporties en Stijl-DNA.</span>
+              </div>
+              <div>
+                <span className="font-semibold text-[#2C2825] block">{isNl ? '• Wat je hier kunt doen:' : '• What you can do:'}</span>
+                <span className="text-[#7A7167]">Test een kledingstuk vóór aanschaf en bewaar het in je persoonlijke kledingkast.</span>
+              </div>
+            </div>
+          </div>
+
           {/* Quick Preset Selector */}
           <div className="rounded-3xl border border-[#E3D9C9] bg-[#FAF8F3] p-6 space-y-4">
             <div className="flex items-center justify-between">
@@ -511,19 +588,31 @@ export const PersonalStylingView: React.FC<PersonalStylingViewProps> = ({
                 </h2>
                 <p className="text-xs sm:text-sm text-[#7A7167] mt-1 font-light">
                   {isNl
-                    ? 'Upload een screenshot, productfoto of kledingstuk en laat Alchemy analyseren of het past bij jouw Proporties, Stijl-DNA en gewenste uitstraling.'
-                    : 'Upload a product screenshot or garment photo to analyze fit, Style DNA, and presence.'}
+                    ? 'Upload een screenshot, productfoto, productlink of voer kledingdetails in om te analyseren of het past bij jouw Proporties, Stijl-DNA en gewenste uitstraling.'
+                    : 'Upload a product screenshot, photo, product link, or details to analyze fit, Style DNA, and presence.'}
                 </p>
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-              {/* Image Input / Preview */}
+              {/* Image Input / Preview with Mobile Photo Picker */}
               <div className="md:col-span-4 space-y-3">
                 <label className="text-xs font-medium text-[#2C2825] block">
                   {isNl ? 'Kledingfoto of screenshot' : 'Garment Photo / Screenshot'}
                 </label>
-                <div className="aspect-3/4 rounded-2xl border-2 border-dashed border-[#DCD3C4] bg-[#FFFFFF] flex flex-col items-center justify-center p-4 text-center relative overflow-hidden group">
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  accept="image/*"
+                  onChange={handleImageFileSelect}
+                  className="hidden"
+                />
+                <div
+                  onClick={() => fileInputRef.current?.click()}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={handleDrop}
+                  className="aspect-3/4 rounded-2xl border-2 border-dashed border-[#DCD3C4] bg-[#FFFFFF] flex flex-col items-center justify-center p-4 text-center relative overflow-hidden group cursor-pointer hover:border-[#8C7654] transition-all"
+                >
                   {evalInput.imageUrl ? (
                     <div className="w-full h-full relative">
                       <img
@@ -534,22 +623,41 @@ export const PersonalStylingView: React.FC<PersonalStylingViewProps> = ({
                       />
                       <button
                         type="button"
-                        onClick={() => setEvalInput({ ...evalInput, imageUrl: '' })}
-                        className="absolute top-2 right-2 p-1.5 rounded-full bg-black/60 text-white text-xs hover:bg-black/80 transition-all"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEvalInputChange({ imageUrl: '' });
+                        }}
+                        className="absolute top-2 right-2 p-1.5 rounded-full bg-black/60 text-white text-xs hover:bg-black/80 transition-all cursor-pointer"
                       >
                         ✕
                       </button>
                     </div>
                   ) : (
-                    <div className="space-y-2 p-2">
-                      <div className="w-10 h-10 rounded-full bg-[#F4EFE6] mx-auto flex items-center justify-center text-[#8C7654]">
-                        <ImageIcon className="w-5 h-5" />
+                    <div className="space-y-3 p-2 w-full">
+                      <div className="w-12 h-12 rounded-full bg-[#F4EFE6] mx-auto flex items-center justify-center text-[#8C7654]">
+                        <ImageIcon className="w-6 h-6" />
                       </div>
-                      <p className="text-xs text-[#5C5449] font-medium">
-                        {isNl ? 'Sleep een screenshot hierheen' : 'Drop an image or screenshot'}
-                      </p>
+                      <div className="space-y-1">
+                        <p className="text-xs text-[#2C2825] font-medium">
+                          {isNl ? 'Kies een foto uit je galerij' : 'Choose photo from gallery'}
+                        </p>
+                        <p className="text-[10px] text-[#7A7167]">
+                          {isNl ? 'Of sleep een afbeelding naar deze zone' : 'Or drag and drop an image'}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          fileInputRef.current?.click();
+                        }}
+                        className="w-full min-h-[44px] px-4 py-2.5 rounded-xl bg-[#2C2825] hover:bg-[#433D38] text-[#FAF8F3] font-medium text-xs flex items-center justify-center gap-2 transition-all mx-auto shadow-xs cursor-pointer"
+                      >
+                        <Upload className="w-4 h-4 text-[#C5A880]" />
+                        <span>{isNl ? 'Foto kiezen' : 'Choose Photo'}</span>
+                      </button>
                       <p className="text-[10px] text-[#8C8377]">
-                        {isNl ? 'of plak hieronder een afbeeldingslink' : 'or enter image URL below'}
+                        {isNl ? 'Direct te openen op smartphone (camera / fotobibliotheek)' : 'Opens photo picker on iOS & Android'}
                       </p>
                     </div>
                   )}
@@ -560,7 +668,7 @@ export const PersonalStylingView: React.FC<PersonalStylingViewProps> = ({
                     type="url"
                     placeholder={isNl ? 'Afbeeldingslink (URL)...' : 'Paste image URL...'}
                     value={evalInput.imageUrl || ''}
-                    onChange={(e) => setEvalInput({ ...evalInput, imageUrl: e.target.value })}
+                    onChange={(e) => handleEvalInputChange({ imageUrl: e.target.value })}
                     className="w-full px-3 py-2 rounded-xl bg-[#FFFFFF] border border-[#DDD4C5] text-xs text-[#2C2825] placeholder-[#A0988B]"
                   />
                 </div>
@@ -577,19 +685,34 @@ export const PersonalStylingView: React.FC<PersonalStylingViewProps> = ({
                       type="text"
                       placeholder={isNl ? 'bijv. Bohemian Maxi Wikkeljurk' : 'e.g. Bohemian Maxi Wrap Dress'}
                       value={evalInput.itemTitle}
-                      onChange={(e) => setEvalInput({ ...evalInput, itemTitle: e.target.value })}
+                      onChange={(e) => handleEvalInputChange({ itemTitle: e.target.value })}
                       className="w-full px-3.5 py-2.5 rounded-xl bg-[#FFFFFF] border border-[#DDD4C5] text-xs text-[#2C2825]"
                     />
                   </div>
 
                   <div>
                     <label className="text-xs font-medium text-[#2C2825] block mb-1">
+                      {isNl ? 'Productlink / Webshop URL (Optioneel)' : 'Product URL (Optional)'}
+                    </label>
+                    <input
+                      type="url"
+                      placeholder="https://..."
+                      value={evalInput.productUrl || ''}
+                      onChange={(e) => handleEvalInputChange({ productUrl: e.target.value })}
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-[#FFFFFF] border border-[#DDD4C5] text-xs text-[#2C2825]"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                  <div>
+                    <label className="text-xs font-medium text-[#2C2825] block mb-1">
                       {isNl ? 'Categorie' : 'Category'}
                     </label>
                     <select
                       value={evalInput.category}
-                      onChange={(e) => setEvalInput({ ...evalInput, category: e.target.value })}
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-[#FFFFFF] border border-[#DDD4C5] text-xs text-[#2C2825]"
+                      onChange={(e) => handleEvalInputChange({ category: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl bg-[#FFFFFF] border border-[#DDD4C5] text-xs text-[#2C2825]"
                     >
                       <option value="Jurken">Jurken (Maxi, Midi, Wikkel)</option>
                       <option value="Tops & Blouses">Tops & Blouses (Kant, Open hals, Linnen)</option>
@@ -597,32 +720,43 @@ export const PersonalStylingView: React.FC<PersonalStylingViewProps> = ({
                       <option value="Rokken">Rokken (Midi, Satijn, Wikkel)</option>
                       <option value="Jasjes & Blazers">Jasjes & Blazers (Getailleerd, Leer, Suède)</option>
                       <option value="Schoenen & Laarzen">Schoenen & Laarzen (Western boots, Loafers)</option>
-                      <option value="Accessoires & Sieraden">Accessoires (Tailleriemen, Hoeden, Gouden colliers)</option>
+                      <option value="Accessoires & Sieraden">Accessoires (Tailleriemen, Hoeden)</option>
                     </select>
                   </div>
-                </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div>
                     <label className="text-xs font-medium text-[#2C2825] block mb-1">
                       {isNl ? 'Merk / Winkel' : 'Brand'}
                     </label>
                     <input
                       type="text"
-                      placeholder="bijv. Sézane, Massimo Dutti"
+                      placeholder="bijv. Sézane"
                       value={evalInput.brand || ''}
-                      onChange={(e) => setEvalInput({ ...evalInput, brand: e.target.value })}
+                      onChange={(e) => handleEvalInputChange({ brand: e.target.value })}
                       className="w-full px-3 py-2 rounded-xl bg-[#FFFFFF] border border-[#DDD4C5] text-xs text-[#2C2825]"
                     />
                   </div>
 
                   <div>
                     <label className="text-xs font-medium text-[#2C2825] block mb-1">
-                      {isNl ? 'Gelegenheid (Optioneel)' : 'Occasion'}
+                      {isNl ? 'Prijs (Optioneel)' : 'Price (Optional)'}
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="bijv. €129"
+                      value={evalInput.price || ''}
+                      onChange={(e) => handleEvalInputChange({ price: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl bg-[#FFFFFF] border border-[#DDD4C5] text-xs text-[#2C2825]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-medium text-[#2C2825] block mb-1">
+                      {isNl ? 'Gelegenheid' : 'Occasion'}
                     </label>
                     <select
                       value={evalInput.occasion || 'general'}
-                      onChange={(e) => setEvalInput({ ...evalInput, occasion: e.target.value })}
+                      onChange={(e) => handleEvalInputChange({ occasion: e.target.value })}
                       className="w-full px-3 py-2 rounded-xl bg-[#FFFFFF] border border-[#DDD4C5] text-xs text-[#2C2825]"
                     >
                       {STYLING_OCCASIONS.map((occ) => (
@@ -632,26 +766,9 @@ export const PersonalStylingView: React.FC<PersonalStylingViewProps> = ({
                       ))}
                     </select>
                   </div>
-
-                  <div>
-                    <label className="text-xs font-medium text-[#2C2825] block mb-1">
-                      {isNl ? 'Gewenste Stemming' : 'Desired Mood'}
-                    </label>
-                    <select
-                      value={evalInput.mood || 'romantic'}
-                      onChange={(e) => setEvalInput({ ...evalInput, mood: e.target.value })}
-                      className="w-full px-3 py-2 rounded-xl bg-[#FFFFFF] border border-[#DDD4C5] text-xs text-[#2C2825]"
-                    >
-                      {EMOTIONAL_MOODS.map((m) => (
-                        <option key={m.id} value={m.id}>
-                          {m.nameNl}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
                 </div>
 
-                {/* Stof, Rekbaarheid & Maattabel (Crucial for Fit Confidence distinction) */}
+                {/* Stof, Rekbaarheid & Maattabel */}
                 <div className="rounded-2xl border border-[#EBE3D5] bg-[#F7F4EC] p-4 space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-medium text-[#2C2825] flex items-center gap-1.5">
@@ -669,7 +786,7 @@ export const PersonalStylingView: React.FC<PersonalStylingViewProps> = ({
                         type="text"
                         placeholder={isNl ? 'Stof (bijv. 100% linnen, viscose blend, zijde)' : 'Fabric (e.g. linen, silk)'}
                         value={evalInput.fabricDescription || ''}
-                        onChange={(e) => setEvalInput({ ...evalInput, fabricDescription: e.target.value })}
+                        onChange={(e) => handleEvalInputChange({ fabricDescription: e.target.value })}
                         className="w-full px-3 py-2 rounded-xl bg-[#FFFFFF] border border-[#DDD4C5] text-xs text-[#2C2825]"
                       />
                     </div>
@@ -680,7 +797,7 @@ export const PersonalStylingView: React.FC<PersonalStylingViewProps> = ({
                           type="checkbox"
                           checked={evalInput.hasSizeChartOrMeasurements || false}
                           onChange={(e) =>
-                            setEvalInput({ ...evalInput, hasSizeChartOrMeasurements: e.target.checked })
+                            handleEvalInputChange({ hasSizeChartOrMeasurements: e.target.checked })
                           }
                           className="rounded border-[#C5A880] text-[#2C2825] focus:ring-[#C5A880]"
                         />
@@ -690,12 +807,23 @@ export const PersonalStylingView: React.FC<PersonalStylingViewProps> = ({
                   </div>
                 </div>
 
+                {!inputCheck.isSufficient && evalInput.itemTitle.trim().length > 0 && (
+                  <div className="p-3 rounded-xl bg-[#FFF8EE] border border-[#E8D9C5] text-xs text-[#8C6D43] flex items-start gap-2">
+                    <AlertTriangle className="w-4 h-4 shrink-0 text-[#A85A3C] mt-0.5" />
+                    <span>
+                      {isNl
+                        ? 'Onvoldoende informatie om dit kledingstuk betrouwbaar te beoordelen. Voeg een foto, productlink of meer details (zoals stof of merk) toe.'
+                        : 'Insufficient information to evaluate this garment reliably. Please add a photo, product link, or more details (such as fabric or brand).'}
+                    </span>
+                  </div>
+                )}
+
                 <div className="pt-2 flex justify-end">
                   <button
                     type="button"
                     onClick={handleRunEvaluation}
-                    disabled={!evalInput.itemTitle.trim() || isEvaluating}
-                    className="px-6 py-3 rounded-2xl bg-[#2C2825] text-[#FAF8F3] text-xs font-medium hover:bg-[#433D38] transition-all disabled:opacity-50 shadow-sm flex items-center gap-2"
+                    disabled={(!evalInput.itemTitle.trim() && !evalInput.imageUrl && !evalInput.productUrl) || isEvaluating}
+                    className="px-6 py-3 rounded-2xl bg-[#2C2825] text-[#FAF8F3] text-xs font-medium hover:bg-[#433D38] transition-all disabled:opacity-50 shadow-sm flex items-center gap-2 cursor-pointer"
                   >
                     {isEvaluating ? (
                       <>
@@ -716,6 +844,25 @@ export const PersonalStylingView: React.FC<PersonalStylingViewProps> = ({
 
           {/* Evaluation Result Card */}
           {currentEvaluation && (
+            currentEvaluation.isInsufficient ? (
+              <div className="rounded-3xl border border-[#E5C39E] bg-[#FFFBF5] p-6 sm:p-8 space-y-4 shadow-sm">
+                <div className="flex items-center gap-3 text-[#A85A3C]">
+                  <AlertTriangle className="w-5 h-5 shrink-0" />
+                  <h3 className="font-serif text-lg text-[#2C2825]">
+                    {isNl ? 'Onvoldoende informatie voor betrouwbare analyse' : 'Insufficient Information for Analysis'}
+                  </h3>
+                </div>
+                <p className="text-xs sm:text-sm text-[#5C5449] leading-relaxed">
+                  {currentEvaluation.verdictNl ||
+                    (isNl
+                      ? 'Onvoldoende informatie om dit kledingstuk betrouwbaar te beoordelen. Voeg een foto, productlink of meer details (zoals stof of merk) toe.'
+                      : 'Insufficient information to evaluate this garment reliably. Please add a photo, product link, or more details (such as fabric or brand).')}
+                </p>
+                <div className="pt-2 flex items-center gap-2 text-xs text-[#8C7654]">
+                  <span>💡 {isNl ? 'Tip: Upload een foto, voeg een merk/stofbeschrijving toe of kies een voorbeeldkledingstuk hierboven.' : 'Tip: Upload a photo, add brand/fabric details, or select a preset above.'}</span>
+                </div>
+              </div>
+            ) : (
             <div className="rounded-3xl border border-[#D5C7B3] bg-[#FFFFFF] p-6 sm:p-8 space-y-6 shadow-sm">
               <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 pb-5 border-b border-[#F0E9DF]">
                 <div>
@@ -733,9 +880,9 @@ export const PersonalStylingView: React.FC<PersonalStylingViewProps> = ({
                   <h3 className="font-serif text-2xl text-[#2C2825]">
                     {currentEvaluation.itemTitle}
                   </h3>
-                  {currentEvaluation.brand && (
+                  {(currentEvaluation.brand || currentEvaluation.price) && (
                     <p className="text-xs text-[#7A7167] font-light mt-0.5">
-                      {currentEvaluation.brand} {currentEvaluation.price && `— ${currentEvaluation.price}`}
+                      {[currentEvaluation.brand, currentEvaluation.price].filter(Boolean).join(' — ')}
                     </p>
                   )}
                 </div>
@@ -1063,6 +1210,7 @@ export const PersonalStylingView: React.FC<PersonalStylingViewProps> = ({
                 </div>
               </div>
             </div>
+            )
           )}
         </div>
       )}
@@ -1072,6 +1220,28 @@ export const PersonalStylingView: React.FC<PersonalStylingViewProps> = ({
       {/* ============================================================ */}
       {activeSection === 'mood' && (
         <div className="space-y-6">
+          {/* Section Purpose Banner */}
+          <div className="rounded-2xl border border-[#E0D7C9] bg-[#FAF6EE] p-4 sm:p-5 text-xs text-[#5C5449] space-y-1.5 shadow-2xs">
+            <div className="flex items-center gap-2 text-[#8C7654] font-medium uppercase tracking-wider text-[10px]">
+              <Info className="w-3.5 h-3.5" />
+              <span>{isNl ? 'Sectie-uitleg & Werking' : 'Section Purpose'}</span>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-1">
+              <div>
+                <span className="font-semibold text-[#2C2825] block">{isNl ? '• Wat dit bevat:' : '• What it contains:'}</span>
+                <span className="text-[#7A7167]">12 gevoelsstemmingen en bijbehorende aanwezigheidsstijlen.</span>
+              </div>
+              <div>
+                <span className="font-semibold text-[#2C2825] block">{isNl ? '• Hoe Alchemy dit gebruikt:' : '• How Alchemy uses it:'}</span>
+                <span className="text-[#7A7167]">Past aanbevolen silhouetformules, stoftexturen en kleurenpaletten aan op je stemming.</span>
+              </div>
+              <div>
+                <span className="font-semibold text-[#2C2825] block">{isNl ? '• Wat je hier kunt doen:' : '• What you can do:'}</span>
+                <span className="text-[#7A7167]">Kies je actieve dagstemming om je kledingkeuzes af te stemmen op je gevoel.</span>
+              </div>
+            </div>
+          </div>
+
           <div className="rounded-3xl border border-[#E3D9C9] bg-[#FAF8F3] p-6 sm:p-8 space-y-4">
             <div className="space-y-1">
               <span className="text-[10px] uppercase tracking-widest text-[#8C7654] font-medium">
@@ -1188,11 +1358,38 @@ export const PersonalStylingView: React.FC<PersonalStylingViewProps> = ({
       {/* ============================================================ */}
       {activeSection === 'architecture' && (
         <div className="space-y-6">
+          {/* Section Purpose Banner */}
+          <div className="rounded-2xl border border-[#E0D7C9] bg-[#FAF6EE] p-4 sm:p-5 text-xs text-[#5C5449] space-y-1.5 shadow-2xs">
+            <div className="flex items-center gap-2 text-[#8C7654] font-medium uppercase tracking-wider text-[10px]">
+              <Info className="w-3.5 h-3.5" />
+              <span>{isNl ? 'Sectie-uitleg & Werking' : 'Section Purpose'}</span>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-1">
+              <div>
+                <span className="font-semibold text-[#2C2825] block">{isNl ? '• Wat dit bevat:' : '• What it contains:'}</span>
+                <span className="text-[#7A7167]">Jouw lichaamsmetingen (uit Gezondheid) en berekende figuursilhouet.</span>
+              </div>
+              <div>
+                <span className="font-semibold text-[#2C2825] block">{isNl ? '• Hoe Alchemy dit gebruikt:' : '• How Alchemy uses it:'}</span>
+                <span className="text-[#7A7167]">Stylingcontext voor taillepositionering en beenverlengende proporties (geen medisch oordeel).</span>
+              </div>
+              <div>
+                <span className="font-semibold text-[#2C2825] block">{isNl ? '• Wat je hier kunt doen:' : '• What you can do:'}</span>
+                <span className="text-[#7A7167]">Bekijk metingen, herbereken figuurvorm bij nieuwe maten en lees proportieregels.</span>
+              </div>
+            </div>
+          </div>
+
           <div className="rounded-3xl border border-[#E3D9C9] bg-[#FAF8F3] p-6 sm:p-8 space-y-5">
             <div className="space-y-1">
-              <span className="text-[10px] uppercase tracking-widest text-[#8C7654] font-medium">
-                Visuele Lichaamsarchitectuur
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] uppercase tracking-widest text-[#8C7654] font-medium">
+                  Visuele Lichaamsarchitectuur
+                </span>
+                <span className="px-2 py-0.5 rounded-full text-[9px] bg-[#E5DAC8] text-[#4A4237]">
+                  {isNl ? 'Berekend advieskader' : 'Calculated styling context'}
+                </span>
+              </div>
               <h2 className="font-serif text-2xl text-[#2C2825]">
                 {foundationStyling.silhouetteLabel}
               </h2>
@@ -1204,9 +1401,14 @@ export const PersonalStylingView: React.FC<PersonalStylingViewProps> = ({
             {/* Current Measurements vs Stable Style DNA comparison */}
             <div className="rounded-2xl border border-[#E5DAC8] bg-[#FFFFFF] p-5 space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#F2ECE0] pb-3">
-                <span className="text-xs font-serif font-medium text-[#2C2825]">
-                  {isNl ? 'Actuele Lichaamsgegevens uit Gezondheid & Voortgang' : 'Current Health Measurements'}
-                </span>
+                <div>
+                  <span className="text-xs font-serif font-medium text-[#2C2825] block">
+                    {isNl ? 'Actuele Lichaamsgegevens uit Gezondheid & Voortgang' : 'Current Health Measurements'}
+                  </span>
+                  <span className="text-[10px] text-[#8C7654]">
+                    {isNl ? '✓ Door gebruiker ingevoerde metingen' : '✓ User-logged measurements'}
+                  </span>
+                </div>
                 <span className="text-[11px] text-[#8C8377]">
                   {latestMeasurement?.date ? `Laatste meting: ${latestMeasurement.date}` : 'Nog geen meting vastgelegd'}
                 </span>
@@ -1250,11 +1452,14 @@ export const PersonalStylingView: React.FC<PersonalStylingViewProps> = ({
                   </div>
                 </div>
               ) : (
-                <p className="text-xs text-[#8C8377] italic">
-                  {isNl
-                    ? 'Nog geen metingen ingevoerd in Gezondheid. Het stylingprofiel hanteert Patricia’s opgeslagen proporties uit Foundation.'
-                    : 'No measurements entered in Health yet.'}
-                </p>
+                <div className="rounded-xl bg-[#FAF8F4] border border-dashed border-[#DCD3C4] p-5 text-center space-y-1">
+                  <h4 className="text-xs font-serif font-medium text-[#2C2825]">Nog geen gegevens opgeslagen.</h4>
+                  <p className="text-xs text-[#8C8377]">
+                    {isNl
+                      ? 'Nog geen metingen ingevoerd in Gezondheid & Voortgang. Voer daar je maten in om een actuele figuurberekening te tonen.'
+                      : 'No health measurements logged yet.'}
+                  </p>
+                </div>
               )}
             </div>
 
@@ -1309,6 +1514,28 @@ export const PersonalStylingView: React.FC<PersonalStylingViewProps> = ({
       {/* ============================================================ */}
       {activeSection === 'dna' && (
         <div className="space-y-6">
+          {/* Section Purpose Banner */}
+          <div className="rounded-2xl border border-[#E0D7C9] bg-[#FAF6EE] p-4 sm:p-5 text-xs text-[#5C5449] space-y-1.5 shadow-2xs">
+            <div className="flex items-center gap-2 text-[#8C7654] font-medium uppercase tracking-wider text-[10px]">
+              <Info className="w-3.5 h-3.5" />
+              <span>{isNl ? 'Sectie-uitleg & Werking' : 'Section Purpose'}</span>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-1">
+              <div>
+                <span className="font-semibold text-[#2C2825] block">{isNl ? '• Wat dit bevat:' : '• What it contains:'}</span>
+                <span className="text-[#7A7167]">Jouw esthetische kern (Feminine, Romantic, Bohemian), stijlen en kleurenpalet.</span>
+              </div>
+              <div>
+                <span className="font-semibold text-[#2C2825] block">{isNl ? '• Hoe Alchemy dit gebruikt:' : '• How Alchemy uses it:'}</span>
+                <span className="text-[#7A7167]">Ijkstandaard voor stijlmatch-percentages en kleurenharmonie bij elke beoordeling.</span>
+              </div>
+              <div>
+                <span className="font-semibold text-[#2C2825] block">{isNl ? '• Wat je hier kunt doen:' : '• What you can do:'}</span>
+                <span className="text-[#7A7167]">Bekijk je vaste esthetisch paspoort, kleurenpalet en accessoire-stijl.</span>
+              </div>
+            </div>
+          </div>
+
           {/* Core DNA and Style Tensions */}
           <div className="rounded-3xl border border-[#E3D9C9] bg-[#FAF8F3] p-6 sm:p-8 space-y-6">
             <div className="space-y-1">
@@ -1460,6 +1687,28 @@ export const PersonalStylingView: React.FC<PersonalStylingViewProps> = ({
       {/* ============================================================ */}
       {activeSection === 'wardrobe' && (
         <div className="space-y-6">
+          {/* Section Purpose Banner */}
+          <div className="rounded-2xl border border-[#E0D7C9] bg-[#FAF6EE] p-4 sm:p-5 text-xs text-[#5C5449] space-y-1.5 shadow-2xs">
+            <div className="flex items-center gap-2 text-[#8C7654] font-medium uppercase tracking-wider text-[10px]">
+              <Info className="w-3.5 h-3.5" />
+              <span>{isNl ? 'Sectie-uitleg & Werking' : 'Section Purpose'}</span>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-1">
+              <div>
+                <span className="font-semibold text-[#2C2825] block">{isNl ? '• Wat dit bevat:' : '• What it contains:'}</span>
+                <span className="text-[#7A7167]">Jouw opgeslagen kledingcollectie en historisch gegeven reacties.</span>
+              </div>
+              <div>
+                <span className="font-semibold text-[#2C2825] block">{isNl ? '• Hoe Alchemy dit gebruikt:' : '• How Alchemy uses it:'}</span>
+                <span className="text-[#7A7167]">Herkent patronen uit je eerdere beoordelingen om adviezen af te stemmen zonder Stijl-DNA te overschrijven.</span>
+              </div>
+              <div>
+                <span className="font-semibold text-[#2C2825] block">{isNl ? '• Wat je hier kunt doen:' : '• What you can do:'}</span>
+                <span className="text-[#7A7167]">Filter je kledingkast, raadpleeg aangeleerde voorkeuren en beheer je favorieten.</span>
+              </div>
+            </div>
+          </div>
+
           <div className="rounded-3xl border border-[#E3D9C9] bg-[#FAF8F3] p-6 sm:p-8 space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
@@ -1506,33 +1755,54 @@ export const PersonalStylingView: React.FC<PersonalStylingViewProps> = ({
             {/* Learned Insights Summary */}
             {learnedFeedbackList.length > 0 ? (
               <div className="rounded-2xl border border-[#EDE5D8] bg-[#FAF8F4] p-5 space-y-3">
-                <span className="text-xs font-semibold text-[#2C2825] uppercase tracking-wider">
-                  {isNl ? 'Geleerde Patronen uit je Reacties:' : 'Learned Patterns:'}
-                </span>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-[#2C2825] uppercase tracking-wider">
+                    {isNl ? 'Aangeleerde Patronen uit je Reacties' : 'Learned Patterns from Reactions'}
+                  </span>
+                  <span className="text-[10px] text-[#8C7654] font-medium">
+                    [Aangeleerd uit {learnedFeedbackList.length} beoordeling(en)]
+                  </span>
+                </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-[#5C5449]">
                   <div className="p-3 bg-white rounded-xl border border-[#EAE2D5] space-y-1">
                     <span className="font-medium text-[#2C2825] flex items-center gap-1.5">
-                      ❤️ {isNl ? 'Favoriete Elementen' : 'Top Elements'}
+                      ❤️ {isNl ? 'Positief beoordeelde items & elementen' : 'Liked items & elements'}
                     </span>
                     <p className="text-[11px] text-[#7A7167]">
-                      Herhaaldelijk hoge waardering voor lange zwierige maxi- en midijurken, wikkelvormen en suède western boots.
+                      {learnedFeedbackList.filter((f) => f.reaction === 'love' || f.reaction === 'loveee' || f.reaction === 'like' || f.rating === 'love' || f.rating === 'like').length > 0
+                        ? learnedFeedbackList
+                            .filter((f) => f.reaction === 'love' || f.reaction === 'loveee' || f.reaction === 'like' || f.rating === 'love' || f.rating === 'like')
+                            .map((f) => f.itemTitle || f.category)
+                            .slice(0, 5)
+                            .join(', ')
+                        : (isNl ? 'Nog geen positieve reacties vastgelegd.' : 'No positive reactions logged yet.')}
                     </p>
                   </div>
                   <div className="p-3 bg-white rounded-xl border border-[#EAE2D5] space-y-1">
                     <span className="font-medium text-[#2C2825] flex items-center gap-1.5">
-                      ❌ {isNl ? 'Vermeden Elementen' : 'Avoided Elements'}
+                      ❌ {isNl ? 'Afgewezen items & elementen' : 'Avoided items & elements'}
                     </span>
                     <p className="text-[11px] text-[#7A7167]">
-                      Vormeloze boxy snitten, hard optisch tl-wit en stugge synthetische stoffen worden consequent afgewezen.
+                      {learnedFeedbackList.filter((f) => f.reaction === 'dislike' || f.reaction === 'nah' || f.rating === 'dislike').length > 0
+                        ? learnedFeedbackList
+                            .filter((f) => f.reaction === 'dislike' || f.reaction === 'nah' || f.rating === 'dislike')
+                            .map((f) => f.itemTitle || f.category)
+                            .slice(0, 5)
+                            .join(', ')
+                        : (isNl ? 'Nog geen afgewezen items vastgelegd.' : 'No disliked items logged yet.')}
                     </p>
                   </div>
                 </div>
               </div>
             ) : (
-              <div className="rounded-2xl border border-[#EDE5D8] bg-[#FAF8F4] p-5 text-center text-xs text-[#8C8377] italic">
-                {isNl
-                  ? 'Nog geen reacties vastgelegd. Beoordeel items in “Past dit bij mij?” om geleerde voorkeuren op te bouwen.'
-                  : 'No reactions logged yet.'}
+              <div className="rounded-2xl border border-dashed border-[#DCD3C4] bg-[#FFFFFF] p-6 text-center space-y-1 text-xs">
+                <span className="text-[10px] uppercase font-bold text-[#8C7654] block">Aangeleerde Voorkeuren</span>
+                <h4 className="font-serif text-sm text-[#2C2825]">Nog geen gegevens opgeslagen.</h4>
+                <p className="text-[#8C8377] max-w-md mx-auto">
+                  {isNl
+                    ? 'Evalueer kledingstukken in “Past dit bij mij?” en geef een reactie (❤️, 👍, ❌) om geleerde voorkeuren op te bouwen.'
+                    : 'Log reactions on garments in “Does this fit me?” to build learned preferences.'}
+                </p>
               </div>
             )}
 
@@ -1612,7 +1882,7 @@ export const PersonalStylingView: React.FC<PersonalStylingViewProps> = ({
                   <Shirt className="w-6 h-6" />
                 </div>
                 <h3 className="font-serif text-base text-[#2C2825]">
-                  {isNl ? 'Nog geen voorkeur opgeslagen.' : 'No items saved yet.'}
+                  {isNl ? 'Nog geen gegevens opgeslagen.' : 'No items saved yet.'}
                 </h3>
                 <p className="text-xs text-[#7A7167] max-w-sm mx-auto">
                   {isNl

@@ -86,6 +86,10 @@ export const MarilunaStrategySection: React.FC<MarilunaStrategySectionProps> = (
     contentPlan?.quarterTheme || ''
   );
 
+  React.useEffect(() => {
+    setStrategicFocusText(contentPlan?.quarterTheme || '');
+  }, [contentPlan?.quarterTheme]);
+
   // Link project modal for a goal
   const [isLinkProjectOpen, setIsLinkProjectOpen] = useState(false);
 
@@ -275,8 +279,23 @@ export const MarilunaStrategySection: React.FC<MarilunaStrategySectionProps> = (
       };
     }
 
+    let finalStart = editingGoal.startDate;
+    let finalEnd = editingGoal.endDate || editingGoal.targetDate;
+
+    if (editingGoal.timeframe === 'custom') {
+      const today = new Date().toISOString().split('T')[0];
+      if (!finalStart) finalStart = today;
+      if (!finalEnd) finalEnd = finalStart;
+      if (finalStart > finalEnd) {
+        finalEnd = finalStart;
+      }
+    }
+
     onSaveGoal({
       ...editingGoal,
+      startDate: finalStart,
+      endDate: finalEnd,
+      targetDate: finalEnd,
       measurableTarget: targetData,
     });
 
@@ -328,8 +347,9 @@ export const MarilunaStrategySection: React.FC<MarilunaStrategySectionProps> = (
     setIsEditingFocus(false);
   };
 
-  const getTimeframeBadge = (timeframe: GoalTimeframe) => {
-    const normalized = timeframe.toLowerCase();
+  const getTimeframeBadge = (goalOrTimeframe: Goal | GoalTimeframe) => {
+    const tf = typeof goalOrTimeframe === 'string' ? goalOrTimeframe : goalOrTimeframe.timeframe;
+    const normalized = (tf || '').toLowerCase();
     if (normalized.includes('year')) {
       return (
         <span className="text-[10px] uppercase font-semibold px-2 py-0.5 rounded-md bg-[#EAE2D3] text-[#554C42]">
@@ -351,9 +371,15 @@ export const MarilunaStrategySection: React.FC<MarilunaStrategySectionProps> = (
         </span>
       );
     }
+
+    const customGoal = typeof goalOrTimeframe !== 'string' ? goalOrTimeframe : null;
+    const datesText = customGoal?.startDate || customGoal?.endDate || customGoal?.targetDate
+      ? ` (${customGoal.startDate ? `${customGoal.startDate} t/m ` : ''}${customGoal.endDate || customGoal.targetDate || ''})`
+      : '';
+
     return (
       <span className="text-[10px] uppercase font-semibold px-2 py-0.5 rounded-md bg-[#F2ECE1] text-[#7A7167]">
-        {isNl ? 'Aangepast' : 'Custom'}
+        {isNl ? `Aangepast${datesText}` : `Custom${datesText}`}
       </span>
     );
   };
@@ -577,6 +603,7 @@ export const MarilunaStrategySection: React.FC<MarilunaStrategySectionProps> = (
               { id: 'year', label: isNl ? 'Jaar' : 'Year' },
               { id: 'quarter', label: isNl ? 'Kwartaal' : 'Quarter' },
               { id: 'month', label: isNl ? 'Maand' : 'Month' },
+              { id: 'custom', label: isNl ? 'Aangepast' : 'Custom' },
             ].map((tf) => (
               <button
                 key={tf.id}
@@ -635,7 +662,7 @@ export const MarilunaStrategySection: React.FC<MarilunaStrategySectionProps> = (
                   <div className="flex items-start justify-between gap-3">
                     <div className="space-y-1">
                       <div className="flex items-center gap-2 flex-wrap">
-                        {getTimeframeBadge(goal.timeframe)}
+                        {getTimeframeBadge(goal)}
                         {goal.status === 'achieved' || goal.status === 'completed' ? (
                           <span className="text-[10px] uppercase font-semibold px-2 py-0.5 rounded-md bg-[#E8E1D5] text-[#2C2825]">
                             {isNl ? 'Behaald' : 'Achieved'}
@@ -895,7 +922,16 @@ export const MarilunaStrategySection: React.FC<MarilunaStrategySectionProps> = (
                   </label>
                   <select
                     value={editingGoal.timeframe || 'quarter'}
-                    onChange={(e) => setEditingGoal({ ...editingGoal, timeframe: e.target.value as any })}
+                    onChange={(e) => {
+                      const tf = e.target.value as any;
+                      const today = new Date().toISOString().split('T')[0];
+                      setEditingGoal({
+                        ...editingGoal,
+                        timeframe: tf,
+                        startDate: tf === 'custom' ? (editingGoal.startDate || today) : editingGoal.startDate,
+                        endDate: tf === 'custom' ? (editingGoal.endDate || editingGoal.targetDate || today) : editingGoal.endDate,
+                      });
+                    }}
                     className="w-full px-2.5 py-2 rounded-xl bg-[#FFFFFF] border border-[#DDD4C5] text-xs text-[#2C2825]"
                   >
                     <option value="quarter">{isNl ? 'Kwartaal' : 'Quarter'}</option>
@@ -921,6 +957,55 @@ export const MarilunaStrategySection: React.FC<MarilunaStrategySectionProps> = (
                   </select>
                 </div>
               </div>
+
+              {editingGoal.timeframe === 'custom' && (
+                <div className="grid grid-cols-2 gap-3 p-3 rounded-xl border border-[#E3D9C9] bg-[#FFFFFF]">
+                  <div>
+                    <label className="block text-[11px] font-semibold text-[#7A7167] uppercase tracking-wider mb-1">
+                      {isNl ? 'Startdatum' : 'Start Date'}
+                    </label>
+                    <input
+                      type="date"
+                      required
+                      value={editingGoal.startDate || ''}
+                      onChange={(e) => {
+                        const newStart = e.target.value;
+                        let newEnd = editingGoal.endDate || editingGoal.targetDate || '';
+                        if (newEnd && newStart > newEnd) {
+                          newEnd = newStart;
+                        }
+                        setEditingGoal({
+                          ...editingGoal,
+                          startDate: newStart,
+                          endDate: newEnd,
+                          targetDate: newEnd,
+                        });
+                      }}
+                      className="w-full px-2.5 py-1.5 rounded-lg border border-[#DDD4C5] text-xs text-[#2C2825]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-semibold text-[#7A7167] uppercase tracking-wider mb-1">
+                      {isNl ? 'Einddatum' : 'End Date'}
+                    </label>
+                    <input
+                      type="date"
+                      required
+                      min={editingGoal.startDate || undefined}
+                      value={editingGoal.endDate || editingGoal.targetDate || ''}
+                      onChange={(e) => {
+                        const newEnd = e.target.value;
+                        setEditingGoal({
+                          ...editingGoal,
+                          endDate: newEnd,
+                          targetDate: newEnd,
+                        });
+                      }}
+                      className="w-full px-2.5 py-1.5 rounded-lg border border-[#DDD4C5] text-xs text-[#2C2825]"
+                    />
+                  </div>
+                </div>
+              )}
 
               {/* Optional Measurable Target section */}
               <div className="p-3 rounded-xl border border-[#E3D9C9] bg-[#FFFFFF] space-y-2.5">

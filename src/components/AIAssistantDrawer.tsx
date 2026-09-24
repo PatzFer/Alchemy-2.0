@@ -12,7 +12,7 @@ import {
   MessageSquare,
   ShieldCheck,
 } from 'lucide-react';
-import { AssistantMessage, Task, Goal, Idea, LifeProfile, MemoryItem, Realm, WellbeingState } from '../types';
+import { AssistantMessage, Task, Goal, Idea, LifeProfile, MemoryItem, Realm, WellbeingState, Project, CalendarEvent, ContentPlan, MarilunaOffering, DailyCheckIn } from '../types';
 import { sendChatMessage } from '../lib/aiService';
 
 interface AIAssistantDrawerProps {
@@ -23,11 +23,17 @@ interface AIAssistantDrawerProps {
   tasks: Task[];
   goals: Goal[];
   ideas: Idea[];
+  projects?: Project[];
+  calendarEvents?: CalendarEvent[];
+  contentPlan?: ContentPlan;
+  offerings?: MarilunaOffering[];
   lifeProfile: LifeProfile;
   memories: MemoryItem[];
   activeWorld: 'all' | 'personal' | 'mariluna';
   onExecuteAction: (action: any) => void;
   wellbeing?: WellbeingState;
+  dailyCheckIns?: DailyCheckIn[];
+  activeContextItem?: any;
 }
 
 export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
@@ -38,38 +44,137 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
   tasks,
   goals,
   ideas,
+  projects = [],
+  calendarEvents = [],
+  contentPlan,
+  offerings = [],
   lifeProfile,
   memories,
   activeWorld,
   onExecuteAction,
   wellbeing,
+  dailyCheckIns = [],
+  activeContextItem,
 }) => {
   const [inputText, setInputText] = useState('');
   const [isThinking, setIsThinking] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const lastProcessedMsgIdRef = useRef<string | null>(null);
 
   const quickPrompts = [
     {
       label: 'Evaluate realistic day capacity',
-      prompt: 'Review my day schedule and tasks. Tell me if I am at risk of overcrowding and how to protect my evening breathing room.',
+      prompt: 'Evaluate realistic day capacity.',
       icon: Calendar,
     },
     {
       label: 'Brainstorm next theme angles',
-      prompt: 'Let us brainstorm 3 fresh strategic content angles for Mariluna around our Q4 Sovereignty theme.',
+      prompt: 'Brainstorm 3 fresh strategic content angles for Mariluna around our Q4 Sovereignty theme.',
       icon: Compass,
     },
     {
-      label: 'Constructively challenge my priorities',
+      label: 'Constructively challenge priorities',
       prompt: 'Look at my current tasks. Challenge me honestly: are any of these low-leverage distractions disguised as productivity?',
       icon: ShieldCheck,
     },
     {
       label: 'Help me break down a goal',
-      prompt: 'Help me break down my primary quarterly goal into three calm, non-punitive execution micro-tasks.',
+      prompt: 'Help me break down my primary goal into three calm, non-punitive execution micro-tasks.',
       icon: Layers,
     },
   ];
+
+  const buildContextPayload = (customContextItem?: any) => {
+    return {
+      currentDate: new Date().toISOString().split('T')[0],
+      currentDayOfWeek: new Date().toLocaleDateString('nl-NL', { weekday: 'long' }),
+      activeWorld,
+      activeContextItem: customContextItem || activeContextItem,
+      calendarEvents: (calendarEvents || []).map((e) => ({
+        id: e.id,
+        title: e.title,
+        date: e.date,
+        startTime: e.startTime,
+        endTime: e.endTime,
+        category: e.category,
+        realm: e.realm,
+      })),
+      tasks: (tasks || []).map((t) => ({
+        id: t.id,
+        title: t.title,
+        dueDate: t.dueDate,
+        status: t.status,
+        priority: t.priority,
+        realm: t.realm,
+        estimatedDuration: t.estimatedDuration,
+      })),
+      projects: (projects || []).map((p) => ({
+        id: p.id,
+        title: p.title,
+        status: p.status,
+        realm: p.realm,
+        targetDate: p.targetDate,
+        description: p.description,
+      })),
+      ideas: (ideas || []).map((i) => ({
+        id: i.id,
+        title: i.title,
+        content: i.content,
+        pillar: i.contentPillar,
+        status: i.status,
+        realm: i.realm,
+      })),
+      goals: (goals || []).map((g) => ({
+        id: g.id,
+        title: g.title,
+        description: g.description,
+        progress: g.progress,
+        timeframe: g.timeframe,
+        startDate: g.startDate,
+        endDate: g.endDate,
+        targetDate: g.targetDate,
+        realm: g.realm,
+        status: g.status,
+      })),
+      contentPlan: contentPlan ? {
+        quarterTheme: contentPlan.quarterTheme,
+        monthlyTheme: contentPlan.monthlyTheme,
+        pillars: contentPlan.pillars,
+        recentPosts: contentPlan.posts?.slice(-5).map((p) => ({ title: p.title, status: p.status, pillar: p.pillar })),
+      } : undefined,
+      offerings: (offerings || []).map((o) => ({
+        id: o.id,
+        title: o.title,
+        type: o.type,
+        price: o.price,
+        description: o.description,
+        status: o.status,
+      })),
+      workingHours: `${lifeProfile.workingHoursStart} - ${lifeProfile.workingHoursEnd}`,
+      preferences: lifeProfile.preferences,
+      memoriesSample: (memories || []).map((m) => m.content),
+      wellbeing:
+        wellbeing && wellbeing.preferences?.allowWellbeingDataToAI
+          ? {
+              focusTheme: wellbeing.currentWeeklyMovement?.focusTheme,
+              todaySession: wellbeing.currentWeeklyMovement?.sessions?.[0]?.title,
+              dietaryStyle: wellbeing.preferences?.foodPreferences?.dietaryStyle,
+              allowedToAI: true,
+            }
+          : undefined,
+      dailyCheckIns:
+        activeWorld !== 'mariluna' && (wellbeing?.preferences?.allowWellbeingDataToAI || lifeProfile?.preferences?.allowPersonalDataToAI)
+          ? (dailyCheckIns || []).slice(0, 10).map((c) => ({
+              date: c.date,
+              energy: c.energy,
+              mood: c.mood,
+              wakeTime: c.wakeTime,
+              sleepTime: c.sleepTime,
+              notes: c.notes,
+            }))
+          : undefined,
+    };
+  };
 
   useEffect(() => {
     if (isOpen) {
@@ -77,7 +182,34 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
     }
   }, [messages, isOpen, isThinking]);
 
-  const handleSend = async (customPrompt?: string) => {
+  // Auto-trigger response when opened with a user message that has no assistant reply yet
+  useEffect(() => {
+    if (!isOpen || isThinking || messages.length === 0) return;
+
+    const lastMsg = messages[messages.length - 1];
+    if (lastMsg.role === 'user' && lastMsg.id !== lastProcessedMsgIdRef.current) {
+      lastProcessedMsgIdRef.current = lastMsg.id;
+      setIsThinking(true);
+
+      const context = buildContextPayload();
+      const historyPayload = messages.map((m) => ({
+        role: m.role,
+        content: m.content,
+      }));
+
+      sendChatMessage(historyPayload, context, activeWorld)
+        .then((response) => {
+          setIsThinking(false);
+          onAddMessage(response);
+        })
+        .catch((err) => {
+          console.error('Error in assistant auto-response:', err);
+          setIsThinking(false);
+        });
+    }
+  }, [isOpen, messages, isThinking, activeWorld]);
+
+  const handleSend = async (customPrompt?: string, customContextItem?: any) => {
     const textToSend = customPrompt || inputText.trim();
     if (!textToSend || isThinking) return;
 
@@ -91,39 +223,22 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
     onAddMessage(userMessage);
     if (!customPrompt) setInputText('');
     setIsThinking(true);
+    lastProcessedMsgIdRef.current = userMessage.id;
 
-    // Build system context
-    const context = {
-      activeTasksCount: tasks.filter((t) => t.status !== 'completed').length,
-      topTasks: tasks.filter((t) => t.status !== 'completed').slice(0, 5).map((t) => ({
-        title: t.title,
-        realm: t.realm,
-        duration: t.estimatedDuration,
-        priority: t.priority,
-      })),
-      goals: goals.map((g) => ({ title: g.title, progress: g.progress, realm: g.realm })),
-      workingHours: `${lifeProfile.workingHoursStart} - ${lifeProfile.workingHoursEnd}`,
-      preferences: lifeProfile.preferences,
-      memoriesSample: memories.map((m) => m.content),
-      wellbeing:
-        wellbeing && wellbeing.preferences.allowWellbeingDataToAI
-          ? {
-              focusTheme: wellbeing.currentWeeklyMovement.focusTheme,
-              todaySession: wellbeing.currentWeeklyMovement.sessions[0]?.title,
-              dietaryStyle: wellbeing.preferences.foodPreferences.dietaryStyle,
-              allowedToAI: true,
-            }
-          : undefined,
-    };
-
+    const context = buildContextPayload(customContextItem);
     const historyPayload = [...messages, userMessage].map((m) => ({
       role: m.role,
       content: m.content,
     }));
 
-    const response = await sendChatMessage(historyPayload, context, activeWorld);
-    setIsThinking(false);
-    onAddMessage(response);
+    try {
+      const response = await sendChatMessage(historyPayload, context, activeWorld);
+      setIsThinking(false);
+      onAddMessage(response);
+    } catch (err) {
+      console.error('Error sending message:', err);
+      setIsThinking(false);
+    }
   };
 
   if (!isOpen) return null;

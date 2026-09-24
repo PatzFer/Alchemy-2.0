@@ -48,6 +48,7 @@ import {
   generateWeeklyPlan,
   generateShoppingListFromPlan,
   isThursdayPlanningTime,
+  getSmartReplacementRecipe,
 } from '../../lib/mealPlanningData';
 import { RecipeDetailModal } from './RecipeDetailModal';
 import { ThursdayPlanningModal } from './ThursdayPlanningModal';
@@ -710,7 +711,7 @@ export const MealsAndMenuPlanningView: React.FC<MealsAndMenuPlanningViewProps> =
                 Curated Receptenboek
               </h3>
               <p className="text-xs text-[#7A7167] font-light">
-                Gefilterd op Patricia’s culinaire identiteit (Portugees, Belgisch, Italiaans) en gegarandeerd vrij van couscous en quinoa.
+                Gefilterd op Patricia’s brede Zuid-Europese & Europese profiel (Portugees, Italiaans, Spaans, Grieks, Frans, Belgisch) en gegarandeerd vrij van couscous en quinoa.
               </p>
             </div>
 
@@ -732,9 +733,12 @@ export const MealsAndMenuPlanningView: React.FC<MealsAndMenuPlanningViewProps> =
           <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none text-xs">
             {[
               { id: 'all', label: 'Alle Recepten' },
-              { id: 'portuguese', label: '🇵🇹 Portugees (Kernidentiteit)' },
-              { id: 'belgian', label: '🇧🇪 Belgisch' },
+              { id: 'portuguese', label: '🇵🇹 Portugees' },
               { id: 'italian', label: '🇮🇹 Italiaans' },
+              { id: 'spanish', label: '🇪🇸 Spaans' },
+              { id: 'greek', label: '🇬🇷 Grieks' },
+              { id: 'french', label: '🇫🇷 Frans' },
+              { id: 'belgian', label: '🇧🇪 Belgisch' },
               { id: 'slowcooker', label: '🍲 Slowcooker' },
             ].map((f) => (
               <button
@@ -769,6 +773,10 @@ export const MealsAndMenuPlanningView: React.FC<MealsAndMenuPlanningViewProps> =
                       {recipe.cuisine === 'portuguese' && '🇵🇹 Portugees'}
                       {recipe.cuisine === 'belgian' && '🇧🇪 Belgisch'}
                       {recipe.cuisine === 'italian' && '🇮🇹 Italiaans'}
+                      {recipe.cuisine === 'spanish' && '🇪🇸 Spaans'}
+                      {recipe.cuisine === 'greek' && '🇬🇷 Grieks'}
+                      {recipe.cuisine === 'french' && '🇫🇷 Frans'}
+                      {recipe.cuisine === 'european' && '🇪🇺 Europees'}
                     </span>
                     {recipe.isSlowcooker && (
                       <span className="text-[10px] text-[#386584] bg-[#F0F5F8] px-2 py-0.5 rounded-full flex items-center gap-1 font-medium">
@@ -1254,72 +1262,115 @@ export const MealsAndMenuPlanningView: React.FC<MealsAndMenuPlanningViewProps> =
       />
 
       {/* Single Meal Replacement Selector Modal */}
-      {replacementDayIndex !== null && activePlan && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/40 backdrop-blur-xs overflow-y-auto"
-          onClick={() => setReplacementDayIndex(null)}
-        >
-          <div
-            className="relative w-full max-w-xl bg-[#FCFAF6] rounded-3xl border border-[#DCD3C4] shadow-2xl p-5 sm:p-6 space-y-4 max-h-[85vh] overflow-y-auto"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between border-b border-[#EAE3D5] pb-3">
-              <div>
-                <h3 className="font-serif text-lg font-normal text-[#2C2825]">
-                  Vervang Maaltijd voor {activePlan.days[replacementDayIndex]?.dayOfWeek}
-                </h3>
-                <p className="text-xs text-[#7A7167] font-light">
-                  Kies een ander favoriet recept. De rest van je weekmenu blijft ongewijzigd.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setReplacementDayIndex(null)}
-                className="p-1 text-[#7A7167] hover:text-[#2C2825]"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
+      {replacementDayIndex !== null && activePlan && (() => {
+        const currentRecipeId = activePlan.days[replacementDayIndex]?.recipeId || '';
+        const usedRecipeIdsInPlan = activePlan.days.map((d) => d.recipeId).filter(Boolean) as string[];
+        const smartSuggestion = getSmartReplacementRecipe(
+          currentRecipeId,
+          CURATED_RECIPES,
+          nutrition.feedbackHistory || [],
+          usedRecipeIdsInPlan
+        );
 
-            <div className="space-y-2.5">
-              {CURATED_RECIPES.map((r) => (
-                <div
-                  key={r.id}
-                  onClick={() => handleReplaceMeal(r.id)}
-                  className="p-3.5 rounded-2xl bg-[#FFFFFF] border border-[#E8E2D5] hover:border-[#8C7654] transition cursor-pointer flex items-center justify-between shadow-2xs group"
+        return (
+          <div
+            role="dialog"
+            aria-modal="true"
+            className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/40 backdrop-blur-xs overflow-y-auto"
+            onClick={() => setReplacementDayIndex(null)}
+          >
+            <div
+              className="relative w-full max-w-xl bg-[#FCFAF6] rounded-3xl border border-[#DCD3C4] shadow-2xl p-5 sm:p-6 space-y-4 max-h-[85vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between border-b border-[#EAE3D5] pb-3">
+                <div>
+                  <h3 className="font-serif text-lg font-normal text-[#2C2825]">
+                    Vervang Maaltijd voor {activePlan.days[replacementDayIndex]?.dayOfWeek}
+                  </h3>
+                  <p className="text-xs text-[#7A7167] font-light">
+                    Kies een ander maaltijdrecept met gepaste variatie. De rest van je weekmenu blijft ongewijzigd.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setReplacementDayIndex(null)}
+                  className="p-1 text-[#7A7167] hover:text-[#2C2825]"
                 >
-                  <div className="space-y-0.5 pr-3">
-                    <div className="flex items-center gap-2">
-                      <span className="font-serif font-medium text-xs text-[#2C2825] group-hover:text-[#8C7654] transition">
-                        {r.name}
-                      </span>
-                      <span className="text-[10px] text-[#8C7654]">
-                        {r.cuisine === 'portuguese' && '🇵🇹'}
-                        {r.cuisine === 'belgian' && '🇧🇪'}
-                        {r.cuisine === 'italian' && '🇮🇹'}
-                      </span>
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Quick Auto-Suggestion Banner */}
+              {smartSuggestion && (
+                <div
+                  onClick={() => handleReplaceMeal(smartSuggestion.id)}
+                  className="p-3.5 rounded-2xl bg-[#F5F0E6] border border-[#8C7654]/40 hover:border-[#8C7654] transition cursor-pointer flex items-center justify-between shadow-2xs group"
+                >
+                  <div className="space-y-0.5 pr-2">
+                    <div className="text-[10px] uppercase font-bold text-[#8C7654] flex items-center gap-1">
+                      <Sparkles className="w-3 h-3 text-[#8C7654]" />
+                      <span>Aanbevolen Slimme Variatie</span>
                     </div>
-                    <div className="text-[11px] text-[#7A7167] flex items-center gap-2">
-                      <span>⏱ {r.totalMinutes} min</span>
-                      <span>•</span>
-                      <span>~{r.proteinGramsPerPerson}g eiwit</span>
+                    <div className="font-serif text-xs font-semibold text-[#2C2825] group-hover:text-[#8C7654] transition">
+                      {smartSuggestion.name}
+                    </div>
+                    <div className="text-[11px] text-[#7A7167]">
+                      ⏱ {smartSuggestion.totalMinutes} min • ~{smartSuggestion.proteinGramsPerPerson}g eiwit
                     </div>
                   </div>
 
                   <button
                     type="button"
-                    className="px-3 py-1 rounded-full bg-[#2C2825] text-[#FAF8F5] text-[11px] font-medium shrink-0 group-hover:bg-[#8C7654] transition"
+                    className="px-3.5 py-1.5 rounded-full bg-[#8C7654] text-[#FAF8F5] text-xs font-medium shrink-0 group-hover:bg-[#2C2825] transition"
                   >
-                    Kies Dit
+                    Kies Suggestie
                   </button>
                 </div>
-              ))}
+              )}
+
+              <div className="space-y-2.5">
+                {CURATED_RECIPES.filter((r) => r.id !== currentRecipeId).map((r) => (
+                  <div
+                    key={r.id}
+                    onClick={() => handleReplaceMeal(r.id)}
+                    className="p-3.5 rounded-2xl bg-[#FFFFFF] border border-[#E8E2D5] hover:border-[#8C7654] transition cursor-pointer flex items-center justify-between shadow-2xs group"
+                  >
+                    <div className="space-y-0.5 pr-3">
+                      <div className="flex items-center gap-2">
+                        <span className="font-serif font-medium text-xs text-[#2C2825] group-hover:text-[#8C7654] transition">
+                          {r.name}
+                        </span>
+                        <span className="text-[10px] text-[#8C7654]">
+                          {r.cuisine === 'portuguese' && '🇵🇹'}
+                          {r.cuisine === 'belgian' && '🇧🇪'}
+                          {r.cuisine === 'italian' && '🇮🇹'}
+                          {r.cuisine === 'spanish' && '🇪🇸'}
+                          {r.cuisine === 'greek' && '🇬🇷'}
+                          {r.cuisine === 'french' && '🇫🇷'}
+                          {r.cuisine === 'european' && '🇪🇺'}
+                        </span>
+                      </div>
+                      <div className="text-[11px] text-[#7A7167] flex items-center gap-2">
+                        <span>⏱ {r.totalMinutes} min</span>
+                        <span>•</span>
+                        <span>~{r.proteinGramsPerPerson}g eiwit</span>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      className="px-3 py-1 rounded-full bg-[#2C2825] text-[#FAF8F5] text-[11px] font-medium shrink-0 group-hover:bg-[#8C7654] transition"
+                    >
+                      Kies Dit
+                    </button>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
     </div>
   );
 };

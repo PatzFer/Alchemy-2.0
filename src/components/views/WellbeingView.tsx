@@ -18,6 +18,10 @@ import {
   DailyCheckIn,
   CycleProfile,
   WaterTrackerState,
+  NutritionState,
+  FoundationFoodProfile,
+  CalendarEvent,
+  IntegrationsState,
 } from '../../types';
 import { WellbeingProgressSection } from '../wellbeing/WellbeingProgressSection';
 import { WellbeingCheckInsSection } from '../wellbeing/WellbeingCheckInsSection';
@@ -43,7 +47,13 @@ interface WellbeingViewProps {
   personalStyle?: PersonalStyleState;
   onUpdateStyle?: (updater: (prev: PersonalStyleState) => PersonalStyleState) => void;
   dailyCheckIns?: DailyCheckIn[];
+  onSaveDailyCheckIn?: (checkIn: DailyCheckIn) => void;
   cycleProfile?: CycleProfile;
+  nutrition?: NutritionState;
+  onUpdateNutrition?: (nutrition: NutritionState) => void;
+  foodProfile?: FoundationFoodProfile;
+  calendarEvents?: CalendarEvent[];
+  integrations?: IntegrationsState;
 }
 
 export const WellbeingView: React.FC<WellbeingViewProps> = ({
@@ -53,7 +63,13 @@ export const WellbeingView: React.FC<WellbeingViewProps> = ({
   personalStyle,
   onUpdateStyle,
   dailyCheckIns,
+  onSaveDailyCheckIn,
   cycleProfile,
+  nutrition,
+  onUpdateNutrition,
+  foodProfile,
+  calendarEvents = [],
+  integrations,
 }) => {
   const [activeSubTab, setActiveSubTab] = useState<WellbeingSubTab>('progress');
 
@@ -163,6 +179,7 @@ export const WellbeingView: React.FC<WellbeingViewProps> = ({
             onOpenAssistantWithPrompt={onOpenAssistantWithPrompt}
             todayCheckIn={todayCheckIn}
             cycleProfile={cycleProfile}
+            integrations={integrations}
           />
         )}
 
@@ -183,6 +200,8 @@ export const WellbeingView: React.FC<WellbeingViewProps> = ({
           <WellbeingCheckInsSection
             wellbeing={wellbeing}
             onUpdateWellbeing={onUpdateWellbeing}
+            dailyCheckIns={dailyCheckIns}
+            onSaveDailyCheckIn={onSaveDailyCheckIn}
             onNavigateToProgress={() => setActiveSubTab('progress')}
           />
         )}
@@ -193,6 +212,10 @@ export const WellbeingView: React.FC<WellbeingViewProps> = ({
             onUpdateWellbeing={onUpdateWellbeing}
             onNavigateToShopping={() => setActiveSubTab('shopping')}
             onOpenAssistantWithPrompt={onOpenAssistantWithPrompt}
+            nutrition={nutrition}
+            onUpdateNutrition={onUpdateNutrition}
+            foodProfile={foodProfile}
+            calendarEvents={calendarEvents}
           />
         )}
 

@@ -600,9 +600,11 @@ export const MarilunaProjectsSection: React.FC<MarilunaProjectsSectionProps> = (
                 <button
                   type="button"
                   onClick={() => {
+                    const projectItem = { type: 'project', id: selectedProject.id, title: selectedProject.title, details: selectedProject };
                     setSelectedProjectId(null);
                     onOpenAssistantWithPrompt(
-                      `Laten we strategisch sparren over het Mariluna project "${selectedProject.title}". Wat zijn de belangrijkste prioriteiten, openstaande taken en logische vervolgstappen?`
+                      `Laten we strategisch sparren over het Mariluna project "${selectedProject.title}". Wat zijn de belangrijkste prioriteiten, openstaande taken en logische vervolgstappen?`,
+                      projectItem
                     );
                   }}
                   className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FAF8F3] border border-[#DDD4C5] text-xs text-[#8C7654] font-medium hover:bg-[#FFFFFF] transition cursor-pointer"

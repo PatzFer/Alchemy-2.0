@@ -20,6 +20,7 @@ import {
   KitchenInventoryItem,
   MealFeedbackEntry,
   PriveWeeklyMenuPlan as WeeklyMenuPlan,
+  FoundationFoodProfile,
 } from '../../types';
 import { generateWeeklyPlan, generateShoppingListFromPlan } from '../../lib/mealPlanningData';
 
@@ -30,6 +31,7 @@ interface ThursdayPlanningModalProps {
   calendarEvents?: CalendarEvent[];
   inventory?: KitchenInventoryItem[];
   feedbackHistory?: MealFeedbackEntry[];
+  foodProfile?: FoundationFoodProfile;
 }
 
 export const ThursdayPlanningModal: React.FC<ThursdayPlanningModalProps> = ({
@@ -39,6 +41,7 @@ export const ThursdayPlanningModal: React.FC<ThursdayPlanningModalProps> = ({
   calendarEvents = [],
   inventory = [],
   feedbackHistory = [],
+  foodProfile,
 }) => {
   if (!isOpen) return null;
 
@@ -105,7 +108,9 @@ export const ThursdayPlanningModal: React.FC<ThursdayPlanningModalProps> = ({
       })),
       calendarEvents,
       inventory,
-      feedbackHistory
+      feedbackHistory,
+      [],
+      foodProfile
     );
 
     onPlanGenerated(newPlan);

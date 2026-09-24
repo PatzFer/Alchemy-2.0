@@ -92,16 +92,17 @@ export const DEFAULT_PLANNING: FoundationPlanning = {
 
 export const DEFAULT_FOOD_PROFILE: FoundationFoodProfile = {
   cuisineHierarchy: {
-    primary: 'Portugees (wezenlijke culinaire identiteit, cultuur en geur van thuis)',
-    secondary: 'Belgisch (vertrouwde klassiekers en lokale streekproducten)',
-    tertiary: 'Italiaans (pure ingrediënten, pasta’s en trage sauzen)',
+    primary: 'Portugees (wezenlijke culinaire identiteit en vaste waarde)',
+    secondary: 'Zuid-Europees & Mediterraan (Italiaans, Spaans, Grieks, Zuid-Frans)',
+    tertiary: 'Belgisch / Vlaams & milde Europese klassiekers',
   },
   likes: [
     'Portugese keuken',
-    'Belgische gerechten',
     'Italiaanse keuken',
-    'Vlees',
-    'Vis (met uitzondering van kabeljauw)',
+    'Spaanse & Griekse gerechten',
+    'Zuid-Franse & Belgische klassiekers',
+    'Vlees & gevogelte',
+    'Vis & schaaldieren (met uitzondering van kabeljauw)',
     'Pasta',
     'Witte rijst',
     'Aardappelen',

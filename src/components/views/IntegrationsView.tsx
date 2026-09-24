@@ -18,6 +18,7 @@ import {
   Smartphone,
   Check,
   X,
+  MessageSquare,
 } from 'lucide-react';
 import {
   IntegrationsState,
@@ -25,6 +26,12 @@ import {
   IntegrationConnectionStatus,
 } from '../../types';
 import { IntegrationsService } from '../../lib/integrationsService';
+import {
+  googleSignInForService,
+  fetchRealGmailMessagesFromApi,
+  getCachedAccessToken,
+  setCachedAccessToken,
+} from '../../lib/googleAuthService';
 
 interface IntegrationsViewProps {
   integrations: IntegrationsState;
@@ -42,6 +49,7 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
   const isNl = lang === 'nl';
   const [syncingService, setSyncingService] = useState<string | null>(null);
   const [testNotificationSent, setTestNotificationSent] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
 
   // Connection modals / dialogs
   const [connectModalService, setConnectModalService] = useState<string | null>(null);
@@ -51,17 +59,38 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
   const getStatusBadge = (status: IntegrationConnectionStatus, customLabel?: string) => {
     switch (status) {
       case 'connected':
+      case 'synced':
         return (
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-[#E8EFE9] text-[#2D5A3C] border border-[#D0E2D4]">
             <span className="w-1.5 h-1.5 rounded-full bg-[#2D5A3C] animate-pulse" />
             {customLabel || (isNl ? 'Verbonden' : 'Connected')}
           </span>
         );
+      case 'connecting':
+      case 'syncing':
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-[#EBF3FA] text-[#1E5285] border border-[#D0E2F5]">
+            <RefreshCw className="w-3.5 h-3.5 text-[#1E5285] animate-spin" />
+            {status === 'connecting'
+              ? (isNl ? 'Verbinden...' : 'Connecting...')
+              : (isNl ? 'Synchroniseren...' : 'Syncing...')}
+          </span>
+        );
       case 'needs_attention':
+      case 'authentication_expired':
+      case 'sync_error':
+      case 'permission_denied':
         return (
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-[#FBF2E6] text-[#8C5D23] border border-[#F0DFCA]">
             <AlertCircle className="w-3.5 h-3.5 text-[#8C5D23]" />
-            {customLabel || (isNl ? 'Aandacht vereist' : 'Needs attention')}
+            {customLabel ||
+              (status === 'authentication_expired'
+                ? (isNl ? 'Authenticatie verlopen' : 'Auth expired')
+                : status === 'permission_denied'
+                ? (isNl ? 'Toegang geweigerd' : 'Permission denied')
+                : status === 'sync_error'
+                ? (isNl ? 'Fout bij synchroniseren' : 'Sync error')
+                : (isNl ? 'Aandacht vereist' : 'Needs attention'))}
           </span>
         );
       case 'unavailable':
@@ -84,24 +113,57 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
   };
 
   const handleConnectCalendar = async () => {
-    const email = emailInput.trim() || 'patricia@gmail.com';
+    setAuthError(null);
     setSyncingService('calendar');
-    await IntegrationsService.connectService('google_calendar', { accountEmail: email });
-    onUpdateIntegrations((prev) => ({
-      ...prev,
-      calendar: {
-        ...prev.calendar,
-        status: 'connected',
-        accountEmail: email,
-        lastSync: new Date().toISOString(),
-        readOnly: true,
-        syncedEventsCount: 6,
-        isPatriciaOnlySchedule: true,
-      },
-    }));
-    setSyncingService(null);
-    setConnectModalService(null);
-    setEmailInput('');
+    try {
+      onUpdateIntegrations((prev) => ({
+        ...prev,
+        calendar: { ...prev.calendar, status: 'connecting' },
+      }));
+
+      const authRes = await googleSignInForService([
+        'https://www.googleapis.com/auth/calendar.readonly',
+      ]);
+
+      if (!authRes || !authRes.accessToken) {
+        throw new Error('OAuth authenticatie is niet voltooid.');
+      }
+
+      const now = new Date().toISOString();
+      onUpdateIntegrations((prev) => ({
+        ...prev,
+        calendar: {
+          ...prev.calendar,
+          status: 'connected',
+          accountEmail: authRes.email,
+          lastSync: now,
+          readOnly: true,
+          syncedEventsCount: prev.calendar.syncedEventsCount || 0,
+          isPatriciaOnlySchedule: true,
+          error: undefined,
+        },
+      }));
+
+      await IntegrationsService.connectService('google_calendar', {
+        accountEmail: authRes.email,
+        verified: true,
+      });
+    } catch (err: any) {
+      console.warn('Google Calendar OAuth error:', err);
+      const isAuthErr = err?.code === 'auth/popup-closed-by-user';
+      setAuthError(isAuthErr ? 'Inlogvenster is gesloten.' : 'Authenticatie mislukt.');
+      onUpdateIntegrations((prev) => ({
+        ...prev,
+        calendar: {
+          ...prev.calendar,
+          status: isAuthErr ? 'authentication_expired' : 'not_connected',
+          error: 'Authenticatie mislukt.',
+        },
+      }));
+    } finally {
+      setSyncingService(null);
+      setConnectModalService(null);
+    }
   };
 
   const handleDisconnectCalendar = async () => {
@@ -134,82 +196,153 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
   };
 
   const handleConnectGmail = async () => {
-    const email = emailInput.trim() || 'contact@mariluna.be';
+    setAuthError(null);
     setSyncingService('gmail');
-    await IntegrationsService.connectService('mariluna_gmail', { accountEmail: email });
-    onUpdateIntegrations((prev) => ({
-      ...prev,
-      gmail: {
-        ...prev.gmail,
-        status: 'connected',
-        accountEmail: email,
-        lastSync: new Date().toISOString(),
-        readOnly: true,
-        businessOnly: true,
-        syncedThreadsCount: 4,
-        messages: [
-          {
-            id: 'msg-g1',
-            threadId: 'th-1',
-            sender: 'Sophie Vandamme',
-            senderEmail: 'sophie.vandamme@gent.be',
-            subject: 'Aanvraag traject Styling & Branding voorjaar',
-            date: new Date().toISOString().split('T')[0],
-            snippet: 'Beste Patricia, ik zou graag meer informatie ontvangen over je 1-op-1 traject voor mijn nieuwe studio...',
-            unread: true,
-            needsReview: true,
-          },
-          {
-            id: 'msg-g2',
-            threadId: 'th-2',
-            sender: 'Atelier Noémie',
-            senderEmail: 'noemie@ateliernoemie.com',
-            subject: 'Bevestiging levering stoffen & lookbook',
-            date: new Date().toISOString().split('T')[0],
-            snippet: 'De stalen zijn gisteren verzonden en komen normaal vrijdag aan.',
-            unread: false,
-          },
-        ],
-      },
-    }));
-    setSyncingService(null);
-    setConnectModalService(null);
-    setEmailInput('');
+    try {
+      onUpdateIntegrations((prev) => ({
+        ...prev,
+        gmail: { ...prev.gmail, status: 'connecting' },
+      }));
+
+      const authRes = await googleSignInForService([
+        'https://www.googleapis.com/auth/gmail.readonly',
+      ]);
+
+      if (!authRes || !authRes.accessToken) {
+        throw new Error('Geen OAuth toegang gekregen.');
+      }
+
+      onUpdateIntegrations((prev) => ({
+        ...prev,
+        gmail: { ...prev.gmail, status: 'syncing' },
+      }));
+
+      const { messages, accountEmail } = await fetchRealGmailMessagesFromApi(authRes.accessToken);
+      const now = new Date().toISOString();
+
+      onUpdateIntegrations((prev) => ({
+        ...prev,
+        gmail: {
+          ...prev.gmail,
+          status: 'connected',
+          accountEmail: accountEmail || authRes.email,
+          lastSync: now,
+          readOnly: true,
+          businessOnly: true,
+          syncedThreadsCount: messages.length,
+          messages: messages,
+          error: undefined,
+        },
+      }));
+
+      await IntegrationsService.connectService('mariluna_gmail', {
+        accountEmail: accountEmail || authRes.email,
+        messages: messages,
+        verified: true,
+      });
+    } catch (err: any) {
+      console.warn('Gmail OAuth error:', err);
+      const isAuthClosed = err?.code === 'auth/popup-closed-by-user';
+      const isAuthExpired = err?.message === 'AUTHENTICATION_EXPIRED';
+
+      const userFacingErr = isAuthClosed
+        ? 'Inlogvenster geannuleerd.'
+        : isAuthExpired
+        ? 'Authenticatie verlopen.'
+        : err?.message || 'Inloggen bij Google mislukt.';
+
+      setAuthError(userFacingErr);
+
+      onUpdateIntegrations((prev) => ({
+        ...prev,
+        gmail: {
+          ...prev.gmail,
+          status: isAuthExpired ? 'authentication_expired' : 'not_connected',
+          error: userFacingErr,
+        },
+      }));
+    } finally {
+      setSyncingService(null);
+      setConnectModalService(null);
+    }
   };
 
   const handleDisconnectGmail = async () => {
     setSyncingService('gmail');
+    setCachedAccessToken(null);
     await IntegrationsService.disconnectService('mariluna_gmail');
     onUpdateIntegrations((prev) => ({
       ...prev,
       gmail: {
-        ...prev.gmail,
         status: 'not_connected',
         accountEmail: undefined,
         lastSync: undefined,
+        readOnly: true,
+        businessOnly: true,
         syncedThreadsCount: 0,
         messages: [],
+        error: undefined,
       },
     }));
     setSyncingService(null);
   };
 
   const handleSyncGmail = async () => {
+    setAuthError(null);
     setSyncingService('gmail');
-    await IntegrationsService.syncService('mariluna_gmail');
-    onUpdateIntegrations((prev) => ({
-      ...prev,
-      gmail: {
-        ...prev.gmail,
-        lastSync: new Date().toISOString(),
-      },
-    }));
-    setSyncingService(null);
+    try {
+      onUpdateIntegrations((prev) => ({
+        ...prev,
+        gmail: { ...prev.gmail, status: 'syncing' },
+      }));
+
+      let token = getCachedAccessToken();
+      if (!token) {
+        const authRes = await googleSignInForService([
+          'https://www.googleapis.com/auth/gmail.readonly',
+        ]);
+        token = authRes.accessToken;
+      }
+
+      const { messages, accountEmail } = await fetchRealGmailMessagesFromApi(token);
+      const now = new Date().toISOString();
+
+      onUpdateIntegrations((prev) => ({
+        ...prev,
+        gmail: {
+          ...prev.gmail,
+          status: 'connected',
+          accountEmail: accountEmail || prev.gmail.accountEmail,
+          lastSync: now,
+          syncedThreadsCount: messages.length,
+          messages: messages,
+          error: undefined,
+        },
+      }));
+
+      await IntegrationsService.syncService('mariluna_gmail');
+    } catch (err: any) {
+      console.warn('Gmail sync error:', err);
+      const isAuthExpired = err?.message === 'AUTHENTICATION_EXPIRED';
+      onUpdateIntegrations((prev) => ({
+        ...prev,
+        gmail: {
+          ...prev.gmail,
+          status: isAuthExpired ? 'authentication_expired' : 'sync_error',
+          error: err?.message || 'Fout bij synchroniseren.',
+        },
+      }));
+      setAuthError('Synchronisatie mislukt. Log opnieuw in bij Google om de verbinding te herstellen.');
+    } finally {
+      setSyncingService(null);
+    }
   };
 
   const handleConnectHealthConnect = async () => {
     setSyncingService('healthConnect');
-    await IntegrationsService.connectService('health_connect', { platform: 'android', stepsToday: 6840 });
+    const existingSteps = integrations.healthConnect.stepsToday ?? integrations.healthConnect.todaySteps;
+    const res = await IntegrationsService.connectService('health_connect', { platform: 'android', stepsToday: existingSteps });
+    const syncedSteps = res?.data?.stepsToday ?? existingSteps;
     onUpdateIntegrations((prev) => ({
       ...prev,
       healthConnect: {
@@ -217,10 +350,8 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
         status: 'connected',
         platform: 'android',
         lastSync: new Date().toISOString(),
-        stepsToday: 6840,
-        activeMinutes: 35,
-        isStepsOnly: true,
-        isPrivateOnly: true,
+        stepsToday: syncedSteps,
+        todaySteps: syncedSteps,
       },
     }));
     setSyncingService(null);
@@ -236,43 +367,39 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
         status: 'not_connected',
         lastSync: undefined,
         stepsToday: undefined,
+        todaySteps: undefined,
+      },
+    }));
+    setSyncingService(null);
+  };
+
+  const handleSyncHealthConnect = async () => {
+    setSyncingService('healthConnect');
+    const res = await IntegrationsService.syncService('health_connect');
+    const syncedSteps = res?.data?.stepsToday ?? integrations.healthConnect.stepsToday ?? integrations.healthConnect.todaySteps;
+    onUpdateIntegrations((prev) => ({
+      ...prev,
+      healthConnect: {
+        ...prev.healthConnect,
+        lastSync: new Date().toISOString(),
+        stepsToday: syncedSteps,
+        todaySteps: syncedSteps,
       },
     }));
     setSyncingService(null);
   };
 
   const handleConnectInstagram = async () => {
-    const handle = usernameInput.trim() || '@mariluna.studio';
+    const username = usernameInput.trim() || '@mariluna.studio';
     setSyncingService('instagram');
-    await IntegrationsService.connectService('mariluna_instagram', { accountUsername: handle });
+    await IntegrationsService.connectService('mariluna_instagram', { accountUsername: username });
     onUpdateIntegrations((prev) => ({
       ...prev,
       instagram: {
         ...prev.instagram,
         status: 'connected',
-        accountUsername: handle,
-        accountType: 'business',
+        accountUsername: username,
         lastSync: new Date().toISOString(),
-        posts: [
-          {
-            id: 'ig-101',
-            caption: 'Het geheim van een serene esthetiek zit in de ademruimte tussen de elementen. 🌿',
-            mediaType: 'IMAGE',
-            timestamp: new Date().toISOString().split('T')[0],
-            likeCount: 142,
-            commentsCount: 18,
-            reach: 890,
-          },
-          {
-            id: 'ig-102',
-            caption: 'Atelier rituelen: natuurlijk licht, natuurlijke stoffen en doordachte proporties.',
-            mediaType: 'CAROUSEL_ALBUM',
-            timestamp: new Date(Date.now() - 2 * 86400000).toISOString().split('T')[0],
-            likeCount: 198,
-            commentsCount: 24,
-            reach: 1250,
-          },
-        ],
       },
     }));
     setSyncingService(null);
@@ -309,15 +436,15 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
     setSyncingService(null);
   };
 
-  const handleTogglePushNotifications = async () => {
-    if (!integrations.pushNotifications.enabled) {
-      const permission = await IntegrationsService.requestNotificationPermission();
+  const handleToggleNotifications = async () => {
+    const nextState = !integrations.pushNotifications.enabled;
+    if (nextState && typeof window !== 'undefined' && 'Notification' in window) {
+      const perm = await IntegrationsService.requestNotificationPermission();
       onUpdateIntegrations((prev) => ({
         ...prev,
         pushNotifications: {
-          ...prev.pushNotifications,
-          enabled: true,
-          permission,
+          enabled: perm === 'granted',
+          permission: perm,
         },
       }));
     } else {
@@ -331,34 +458,92 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
     }
   };
 
-  const handleTestPush = async () => {
-    setTestNotificationSent(true);
-    await IntegrationsService.testPush();
-    setTimeout(() => setTestNotificationSent(false), 3500);
+  const handleTestNotification = async () => {
+    const success = await IntegrationsService.testPush();
+    if (success) {
+      setTestNotificationSent(true);
+      setTimeout(() => setTestNotificationSent(false), 4000);
+    }
   };
 
+  const getNotificationStatusDetails = () => {
+    if (typeof window === 'undefined' || !('Notification' in window)) {
+      return {
+        badgeStatus: 'not_connected' as const,
+        label: isNl ? 'Niet ondersteund in deze omgeving' : 'Not supported in this environment',
+        subtext: isNl
+          ? 'De Notification API is niet beschikbaar in deze browser of omgeving.'
+          : 'Notification API is not available in this context.',
+      };
+    }
+    const perm = Notification.permission;
+    if (perm === 'denied') {
+      return {
+        badgeStatus: 'needs_attention' as const,
+        label: isNl ? 'Toestemming geweigerd in Android/Browser' : 'Permission denied in browser',
+        subtext: isNl
+          ? 'Geef notificatietoestemming in de site-instellingen van Android of je browser.'
+          : 'Grant notification permission in your Android site settings.',
+      };
+    }
+    if (perm === 'default') {
+      return {
+        badgeStatus: 'not_connected' as const,
+        label: isNl ? 'Toestemming vereist' : 'Permission required',
+        subtext: isNl
+          ? 'Klik op "Inschakelen" om notificatietoestemming aan te vragen.'
+          : 'Click "Enable" to request notification permission.',
+      };
+    }
+    if (!integrations.pushNotifications.enabled) {
+      return {
+        badgeStatus: 'not_connected' as const,
+        label: isNl ? 'Gepauzeerd in Alchemy' : 'Paused in Alchemy',
+        subtext: isNl
+          ? 'Toestemming verleend op toestel, maar notificaties gepauzeerd in Alchemy OS.'
+          : 'Permission granted, but notifications paused in Alchemy OS.',
+      };
+    }
+
+    const isAndroid = typeof navigator !== 'undefined' && /Android/i.test(navigator.userAgent);
+
+    return {
+      badgeStatus: 'connected' as const,
+      label: isAndroid
+        ? isNl ? 'Notificaties actief (Android ServiceWorker gereed)' : 'Notifications active (Android SW ready)'
+        : isNl ? 'Notificaties actief' : 'Notifications active',
+      subtext: isNl
+        ? 'Echte lokale meldingen en geplande herinneringen actief met respect voor stille uren (21:00 – 08:30).'
+        : 'Realtime local pings and scheduled reminders active respecting quiet hours.',
+    };
+  };
+
+  const notificationStatusDetails = getNotificationStatusDetails();
+
   return (
-    <div className="space-y-8 animate-fade-in text-[#2C2825]">
-      {/* Editorial Header */}
-      <div className="border-b border-[#E8E2D6] pb-6 space-y-2">
-        <div className="flex items-center gap-2">
-          <span className="text-[11px] uppercase tracking-[0.25em] text-[#8C8377] font-serif">
-            {isNl ? 'Externe Koppelingen' : 'External Connections'}
-          </span>
-          <span className="w-1 h-1 rounded-full bg-[#C5A880]" />
-          <span className="text-[11px] text-[#7A7167] font-light">
-            {isNl ? 'Veilig & Rustig' : 'Safe & Quiet'}
-          </span>
-        </div>
-        <h2 className="text-2xl sm:text-3xl font-serif text-[#2C2825] tracking-tight">
-          {isNl ? 'INTEGRATIES' : 'INTEGRATIONS'}
-        </h2>
-        <p className="text-sm text-[#7A7167] font-light max-w-2xl leading-relaxed">
-          {isNl
-            ? 'Verbind Alchemy met je externe omgeving voor realistische planningscontext, beweging en atelierinzichten. Zonder dataconflicten, zonder automatische acties en met strikte scheiding tussen Privé en Mariluna.'
-            : 'Connect Alchemy to your external environment for realistic planning context, movement, and studio insights. Without data conflicts, without automated actions, and with strict separation between Private and Mariluna.'}
+    <div className="space-y-6 pb-16">
+      {/* Header */}
+      <div className="border-b border-[#E8E2D5] pb-5">
+        <h1 className="font-serif text-3xl font-normal text-[#2C2825]">
+          Integraties & Koppelingen
+        </h1>
+        <p className="text-xs text-[#7A7167] mt-1 font-light max-w-2xl leading-relaxed">
+          Beheer verbindingen met externe diensten. Transparante, eerlijke status met strikte scheiding tussen de Mariluna zakelijke wereld en je privéleven.
         </p>
       </div>
+
+      {authError && (
+        <div className="p-3.5 rounded-2xl bg-[#FDF2F0] border border-[#F0C9C2] text-xs text-[#A63B2B] flex items-center justify-between">
+          <span>{authError}</span>
+          <button
+            type="button"
+            onClick={() => setAuthError(null)}
+            className="p-1 text-[#A63B2B] hover:opacity-80"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
 
       {/* Integration Cards List */}
       <div className="space-y-5">
@@ -374,7 +559,7 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
               <div>
                 <div className="flex items-center gap-3">
                   <h3 className="font-serif text-lg font-medium text-[#2C2825]">
-                    Google Calendar
+                    Google Agenda
                   </h3>
                   {getStatusBadge(
                     integrations.calendar.status,
@@ -385,8 +570,8 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
                 </div>
                 <p className="text-xs text-[#7A7167] mt-0.5">
                   {isNl
-                    ? 'Leesbare agenda-afspraken voor dagelijkse capaciteit, maaltijdplanning en rustmomenten.'
-                    : 'Read-only calendar schedule for daily capacity, meal planning, and rest boundaries.'}
+                    ? "Inzage in Patricia's persoonlijke afspraken om overboeking te voorkomen."
+                    : "Read access to Patricia's personal events to prevent schedule congestion."}
                 </p>
               </div>
             </div>
@@ -414,41 +599,22 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
               ) : (
                 <button
                   type="button"
-                  onClick={() => {
-                    setEmailInput('patricia@gmail.com');
-                    setConnectModalService('calendar');
-                  }}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#2C2825] text-[#FAF8F3] text-xs font-medium hover:bg-[#433D37] transition cursor-pointer shadow-xs"
+                  onClick={handleConnectCalendar}
+                  disabled={syncingService === 'calendar'}
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#2C2825] text-[#FAF8F3] text-xs font-medium hover:bg-[#433D37] transition cursor-pointer shadow-xs disabled:opacity-50"
                 >
                   <ExternalLink className="w-3.5 h-3.5" />
-                  <span>{isNl ? 'Verbinden met Google Agenda' : 'Connect Google Calendar'}</span>
+                  <span>{isNl ? 'Verbinden via Google OAuth' : 'Connect via Google OAuth'}</span>
                 </button>
               )}
             </div>
           </div>
 
-          {/* Sovereign Boundary Note */}
-          <div className="rounded-xl bg-[#FFFFFF] border border-[#EDE7DC] p-3.5 flex items-start gap-2.5 text-xs text-[#6A6155] leading-relaxed">
-            <Shield className="w-4 h-4 text-[#8C7654] shrink-0 mt-0.5" />
-            <div>
-              <span className="font-medium text-[#2C2825]">
-                {isNl ? 'Patricia\'s Soevereine Agenda:' : 'Patricia\'s Sovereign Schedule:'}{' '}
-              </span>
-              {isNl
-                ? 'Deze integratie synchroniseert uitsluitend Patricia\'s persoonlijke agenda. Jeroen\'s agenda wordt NOOIT ingezien, opgehaald of afgeleid. Alchemy wijzigt of verwijdert nooit afspraken in Google Calendar.'
-                : 'This integration exclusively syncs Patricia\'s personal calendar. Jeroen\'s schedule is NEVER inspected or inferred. Alchemy never creates, edits, or deletes events in Google Calendar.'}
-            </div>
-          </div>
-
           {integrations.calendar.status === 'connected' && (
-            <div className="flex flex-wrap items-center gap-4 text-xs text-[#7A7167] pt-1 border-t border-[#EAE3D5]">
+            <div className="flex flex-wrap items-center gap-4 text-xs text-[#7A7167] pt-2 border-t border-[#EAE3D5]">
               <div>
                 <span className="text-[#8C8377]">{isNl ? 'Account:' : 'Account:'} </span>
                 <span className="font-mono text-[#2C2825]">{integrations.calendar.accountEmail || 'patricia@gmail.com'}</span>
-              </div>
-              <div>
-                <span className="text-[#8C8377]">{isNl ? 'Actieve afspraken:' : 'Active events:'} </span>
-                <span className="font-medium text-[#2C2825]">{integrations.calendar.syncedEventsCount || 0}</span>
               </div>
               {integrations.calendar.lastSync && (
                 <div>
@@ -461,7 +627,7 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
         </div>
 
         {/* ============================================================ */}
-        {/* 2. MARILUNA GMAIL                                           */}
+        {/* 2. MARILUNA GMAIL                                            */}
         {/* ============================================================ */}
         <div className="rounded-2xl border border-[#E8E2D6] bg-[#FAF8F3] p-5 sm:p-6 space-y-4 shadow-xs">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -483,14 +649,14 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
                 </div>
                 <p className="text-xs text-[#7A7167] mt-0.5">
                   {isNl
-                    ? 'Zakelijke communicatie voor cliëntcontext en studio-aanvragen.'
-                    : 'Business communication for client context and studio inquiries.'}
+                    ? 'Zakelijke e-mail communicatie voor Mariluna cliëntcontext en studio-aanvragen.'
+                    : 'Business email communication for Mariluna client context and studio requests.'}
                 </p>
               </div>
             </div>
 
             <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
-              {integrations.gmail.status === 'connected' ? (
+              {integrations.gmail.status === 'connected' || integrations.gmail.status === 'synced' ? (
                 <>
                   <button
                     type="button"
@@ -512,14 +678,12 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
               ) : (
                 <button
                   type="button"
-                  onClick={() => {
-                    setEmailInput('contact@mariluna.be');
-                    setConnectModalService('gmail');
-                  }}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#2C2825] text-[#FAF8F3] text-xs font-medium hover:bg-[#433D37] transition cursor-pointer shadow-xs"
+                  onClick={handleConnectGmail}
+                  disabled={syncingService === 'gmail'}
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#2C2825] text-[#FAF8F3] text-xs font-medium hover:bg-[#433D37] transition cursor-pointer shadow-xs disabled:opacity-50"
                 >
                   <ExternalLink className="w-3.5 h-3.5" />
-                  <span>{isNl ? 'Verbinden met Mariluna Gmail' : 'Connect Mariluna Gmail'}</span>
+                  <span>{isNl ? 'Inloggen met Mariluna Gmail' : 'Connect Mariluna Gmail'}</span>
                 </button>
               )}
             </div>
@@ -533,27 +697,72 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
                 {isNl ? 'Strikte Zakelijke Scheiding:' : 'Strict Business Realm Isolation:'}{' '}
               </span>
               {isNl
-                ? 'Uitsluitend Patricia\'s Mariluna zakelijke e-mail. Patricia\'s persoonlijke e-mail wordt NOOIT gekoppeld. Gmail-context blijft strikt binnen het Mariluna-domein en raakt nooit persoonlijke gezondheid, cyclus of styling.'
-                : 'Exclusively Patricia\'s Mariluna business email. Personal email is NEVER connected. Gmail context remains strictly inside Mariluna and never touches personal health, cycle, or styling.'}
+                ? 'Uitsluitend Patricia\'s Mariluna zakelijke e-mail. Patricia\'s persoonlijke e-mail wordt NOOIT gekoppeld. Gmail-context blijft strikt binnen het Mariluna-domein.'
+                : 'Exclusively Patricia\'s Mariluna business email. Personal email is NEVER connected. Gmail context remains strictly inside Mariluna.'}
             </div>
           </div>
 
-          {integrations.gmail.status === 'connected' && (
-            <div className="flex flex-wrap items-center gap-4 text-xs text-[#7A7167] pt-1 border-t border-[#EAE3D5]">
-              <div>
-                <span className="text-[#8C8377]">{isNl ? 'Zakelijk adres:' : 'Business email:'} </span>
-                <span className="font-mono text-[#2C2825]">{integrations.gmail.accountEmail || 'contact@mariluna.be'}</span>
-              </div>
-              <div>
-                <span className="text-[#8C8377]">{isNl ? 'Gesynchroniseerde threads:' : 'Synced threads:'} </span>
-                <span className="font-medium text-[#2C2825]">{integrations.gmail.messages.length}</span>
-              </div>
-              {integrations.gmail.lastSync && (
+          {(integrations.gmail.status === 'connected' || integrations.gmail.status === 'synced') && (
+            <div className="space-y-3 pt-3 border-t border-[#EAE3D5]">
+              <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-[#7A7167]">
                 <div>
-                  <span className="text-[#8C8377]">{isNl ? 'Laatst gesynchroniseerd:' : 'Last sync:'} </span>
-                  <span>{new Date(integrations.gmail.lastSync).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                  <span className="text-[#8C8377]">{isNl ? 'Zakelijk adres:' : 'Business email:'} </span>
+                  <span className="font-mono text-[#2C2825] font-medium">{integrations.gmail.accountEmail}</span>
                 </div>
-              )}
+                <div>
+                  <span className="text-[#8C8377]">{isNl ? 'Gesynchroniseerde e-mails:' : 'Synced emails:'} </span>
+                  <span className="font-medium text-[#2C2825]">{integrations.gmail.messages.length}</span>
+                </div>
+                {integrations.gmail.lastSync && (
+                  <div>
+                    <span className="text-[#8C8377]">{isNl ? 'Laatst bijgewerkt:' : 'Last sync:'} </span>
+                    <span>{new Date(integrations.gmail.lastSync).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Real Email Display List */}
+              <div className="space-y-2 pt-2">
+                <h4 className="text-xs font-serif font-medium text-[#2C2825] flex items-center gap-1.5">
+                  <MessageSquare className="w-3.5 h-3.5 text-[#8C7654]" />
+                  <span>{isNl ? 'Gesynchroniseerde Berichten' : 'Synced Messages'}</span>
+                </h4>
+
+                {integrations.gmail.messages.length === 0 ? (
+                  <div className="p-4 rounded-xl border border-dashed border-[#DDD4C5] bg-[#FFFFFF] text-xs text-[#7A7167] text-center space-y-1">
+                    <p className="font-medium text-[#2C2825]">
+                      {isNl ? 'Geen e-mails gevonden in Mariluna Gmail' : 'No messages found in Mariluna Gmail'}
+                    </p>
+                    <p className="text-[11px] text-[#8C8377]">
+                      {isNl
+                        ? 'Geen recente berichten aangetroffen. Klik op "Synchroniseren" om opnieuw te controleren.'
+                        : 'No recent messages retrieved. Click "Sync" to check again.'}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+                    {integrations.gmail.messages.map((msg) => (
+                      <div
+                        key={msg.id}
+                        className="p-3.5 rounded-xl bg-[#FFFFFF] border border-[#E8E2D6] shadow-2xs space-y-1 text-xs"
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="font-semibold text-[#2C2825] truncate">
+                            {msg.sender} <span className="text-[#8C8377] font-normal">({msg.senderEmail})</span>
+                          </span>
+                          <span className="text-[10px] text-[#8C8377] shrink-0 font-mono">{msg.date}</span>
+                        </div>
+                        <div className="font-medium text-[#7E694E] text-xs truncate">
+                          {msg.subject}
+                        </div>
+                        <p className="text-[11px] text-[#6C6358] line-clamp-2 leading-relaxed">
+                          {msg.snippet}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>
@@ -570,71 +779,64 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
               <div>
                 <div className="flex items-center gap-3">
                   <h3 className="font-serif text-lg font-medium text-[#2C2825]">
-                    Google Health Connect
+                    Health Connect
                   </h3>
                   {getStatusBadge(integrations.healthConnect.status)}
                 </div>
                 <p className="text-xs text-[#7A7167] mt-0.5">
                   {isNl
-                    ? 'Uitsluitend stappen en dagelijkse bewegingscontext (Android-only ondersteuning).'
-                    : 'Steps and daily movement context only (Android platform support).'}
+                    ? 'Neutrale dagelijkse bewegingscontext (alleen stappen & actieve minuten).'
+                    : 'Neutral daily movement context (steps & active minutes only).'}
                 </p>
               </div>
             </div>
 
             <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
               {integrations.healthConnect.status === 'connected' ? (
-                <button
-                  type="button"
-                  onClick={handleDisconnectHealthConnect}
-                  className="px-3 py-1.5 rounded-xl text-xs font-medium text-[#A64A38] hover:bg-[#F9ECE9] transition cursor-pointer"
-                >
-                  {isNl ? 'Verbreken' : 'Disconnect'}
-                </button>
+                <>
+                  <button
+                    type="button"
+                    onClick={handleSyncHealthConnect}
+                    disabled={syncingService === 'healthConnect'}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#FFFFFF] border border-[#DDD4C5] text-xs font-medium text-[#5A5145] hover:bg-[#F5EFE6] transition cursor-pointer"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 ${syncingService === 'healthConnect' ? 'animate-spin' : ''}`} />
+                    <span>{isNl ? 'Synchroniseren' : 'Sync'}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleDisconnectHealthConnect}
+                    className="px-3 py-1.5 rounded-xl text-xs font-medium text-[#A64A38] hover:bg-[#F9ECE9] transition cursor-pointer"
+                  >
+                    {isNl ? 'Verbreken' : 'Disconnect'}
+                  </button>
+                </>
               ) : integrations.healthConnect.status === 'unavailable' ? (
-                <button
-                  type="button"
-                  onClick={handleConnectHealthConnect}
-                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#FFFFFF] border border-[#DDD4C5] text-xs font-medium text-[#5A5145] hover:bg-[#F5EFE6] transition cursor-pointer"
-                  title={isNl ? 'Simuleer Android Health Connect koppeling' : 'Simulate Android Health Connect sync'}
-                >
-                  <Smartphone className="w-3.5 h-3.5" />
-                  <span>{isNl ? 'Koppelen (Android)' : 'Connect (Android)'}</span>
-                </button>
+                <span className="text-xs text-[#8C8377] italic">
+                  {isNl ? 'Vereist Android toestel met Health Connect app' : 'Requires Android device with Health Connect'}
+                </span>
               ) : (
                 <button
                   type="button"
                   onClick={handleConnectHealthConnect}
                   className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#2C2825] text-[#FAF8F3] text-xs font-medium hover:bg-[#433D37] transition cursor-pointer shadow-xs"
                 >
-                  <span>{isNl ? 'Verbinden met Health Connect' : 'Connect Health Connect'}</span>
+                  <Smartphone className="w-3.5 h-3.5" />
+                  <span>{isNl ? 'Health Connect Koppelen' : 'Connect Health Connect'}</span>
                 </button>
               )}
             </div>
           </div>
 
-          {/* Health Connect Boundary Note */}
-          <div className="rounded-xl bg-[#FFFFFF] border border-[#EDE7DC] p-3.5 flex items-start gap-2.5 text-xs text-[#6A6155] leading-relaxed">
-            <Shield className="w-4 h-4 text-[#8C7654] shrink-0 mt-0.5" />
-            <div>
-              <span className="font-medium text-[#2C2825]">
-                {isNl ? 'Uitsluitend Stappen & Beweging:' : 'Steps & Activity Context Only:'}{' '}
-              </span>
-              {isNl
-                ? 'Alchemy leest uitsluitend stappen en dagelijkse beweging. Nooit hartslag, bloeddruk, glucose, slaap, menstruatie of medische dossiers. Stappen worden nooit gebruikt als moreel oordeel of schuldgevoel.'
-                : 'Alchemy reads strictly steps and daily movement. Never heart rate, glucose, sleep, cycle, or medical records. Step count is never used to judge a "good" or "bad" day.'}
-            </div>
-          </div>
-
           {integrations.healthConnect.status === 'connected' && (
-            <div className="flex flex-wrap items-center gap-4 text-xs text-[#7A7167] pt-1 border-t border-[#EAE3D5]">
+            <div className="flex flex-wrap items-center gap-4 text-xs text-[#7A7167] pt-2 border-t border-[#EAE3D5]">
               <div>
                 <span className="text-[#8C8377]">{isNl ? 'Stappen vandaag:' : 'Steps today:'} </span>
-                <span className="font-mono text-[#2C2825] font-medium">{integrations.healthConnect.stepsToday || 6840}</span>
-              </div>
-              <div>
-                <span className="text-[#8C8377]">{isNl ? 'Platform:' : 'Platform:'} </span>
-                <span className="capitalize text-[#2C2825]">{integrations.healthConnect.platform}</span>
+                <span className="font-mono text-[#2C2825] font-semibold">
+                  {(integrations.healthConnect.stepsToday ?? integrations.healthConnect.todaySteps) !== undefined
+                    ? (integrations.healthConnect.stepsToday ?? integrations.healthConnect.todaySteps ?? 0).toLocaleString(isNl ? 'nl-NL' : 'en-US')
+                    : (isNl ? 'Geen stapgegevens beschikbaar' : 'No step data available')}
+                </span>
               </div>
               {integrations.healthConnect.lastSync && (
                 <div>
@@ -647,7 +849,7 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
         </div>
 
         {/* ============================================================ */}
-        {/* 4. MARILUNA INSTAGRAM                                       */}
+        {/* 4. MARILUNA INSTAGRAM                                        */}
         {/* ============================================================ */}
         <div className="rounded-2xl border border-[#E8E2D6] bg-[#FAF8F3] p-5 sm:p-6 space-y-4 shadow-xs">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -664,8 +866,8 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
                 </div>
                 <p className="text-xs text-[#7A7167] mt-0.5">
                   {isNl
-                    ? 'Inzichten en gepubliceerde content voor de Mariluna Content Planner.'
-                    : 'Insights and published content for the Mariluna Content Planner.'}
+                    ? 'Inzichten in recente atelierposts en bereik voor contentplanning.'
+                    : 'Insights into recent studio posts and reach for content planning.'}
                 </p>
               </div>
             </div>
@@ -693,54 +895,19 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
               ) : (
                 <button
                   type="button"
-                  onClick={() => {
-                    setUsernameInput('@mariluna.studio');
-                    setConnectModalService('instagram');
-                  }}
+                  onClick={() => setConnectModalService('instagram')}
                   className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#2C2825] text-[#FAF8F3] text-xs font-medium hover:bg-[#433D37] transition cursor-pointer shadow-xs"
                 >
                   <ExternalLink className="w-3.5 h-3.5" />
-                  <span>{isNl ? 'Verbinden met Instagram' : 'Connect Instagram'}</span>
+                  <span>{isNl ? 'Koppelen met Instagram' : 'Connect Instagram'}</span>
                 </button>
               )}
             </div>
           </div>
-
-          {/* Instagram Boundary Note */}
-          <div className="rounded-xl bg-[#FFFFFF] border border-[#EDE7DC] p-3.5 flex items-start gap-2.5 text-xs text-[#6A6155] leading-relaxed">
-            <Lock className="w-4 h-4 text-[#8C7654] shrink-0 mt-0.5" />
-            <div>
-              <span className="font-medium text-[#2C2825]">
-                {isNl ? 'Uitsluitend Zakelijk Content-overzicht:' : 'Strictly Business Content Overview:'}{' '}
-              </span>
-              {isNl
-                ? 'Koppeling met het professionele Mariluna account (@mariluna.studio). Alchemy plaatst NOOIT automatisch posts, verstuurt geen DM\'s en heeft geen toegang tot privégegevens.'
-                : 'Connects to the professional Mariluna account. Alchemy NEVER automatically posts, sends DMs, or accesses personal data.'}
-            </div>
-          </div>
-
-          {integrations.instagram.status === 'connected' && (
-            <div className="flex flex-wrap items-center gap-4 text-xs text-[#7A7167] pt-1 border-t border-[#EAE3D5]">
-              <div>
-                <span className="text-[#8C8377]">{isNl ? 'Account:' : 'Account:'} </span>
-                <span className="font-mono text-[#2C2825] font-medium">{integrations.instagram.accountUsername || '@mariluna.studio'}</span>
-              </div>
-              <div>
-                <span className="text-[#8C8377]">{isNl ? 'Gepubliceerde posts ingeladen:' : 'Loaded posts:'} </span>
-                <span className="font-medium text-[#2C2825]">{integrations.instagram.posts.length}</span>
-              </div>
-              {integrations.instagram.lastSync && (
-                <div>
-                  <span className="text-[#8C8377]">{isNl ? 'Laatst gesynchroniseerd:' : 'Last sync:'} </span>
-                  <span>{new Date(integrations.instagram.lastSync).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                </div>
-              )}
-            </div>
-          )}
         </div>
 
         {/* ============================================================ */}
-        {/* 5. PUSH NOTIFICATIONS                                       */}
+        {/* 5. PUSH NOTIFICATIES                                         */}
         {/* ============================================================ */}
         <div className="rounded-2xl border border-[#E8E2D6] bg-[#FAF8F3] p-5 sm:p-6 space-y-4 shadow-xs">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -751,19 +918,15 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
               <div>
                 <div className="flex items-center gap-3">
                   <h3 className="font-serif text-lg font-medium text-[#2C2825]">
-                    Push Notifications
+                    Push Notificaties
                   </h3>
                   {getStatusBadge(
-                    integrations.pushNotifications.enabled ? 'connected' : 'not_connected',
-                    integrations.pushNotifications.enabled
-                      ? (isNl ? 'Ingeschakeld' : 'Enabled')
-                      : (isNl ? 'Uitgeschakeld' : 'Disabled')
+                    notificationStatusDetails.badgeStatus,
+                    notificationStatusDetails.label
                   )}
                 </div>
                 <p className="text-xs text-[#7A7167] mt-0.5">
-                  {isNl
-                    ? 'Sober en doelgericht: herinnert aan belangrijke deadlines, donderdag menuplanning en wekelijkse metingen.'
-                    : 'Sparse and thoughtful: alerts for important deadlines, Thursday meal planning, and weekly measurements.'}
+                  {notificationStatusDetails.subtext}
                 </p>
               </div>
             </div>
@@ -771,29 +934,10 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
             <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
               <button
                 type="button"
-                onClick={handleTestPush}
-                disabled={testNotificationSent}
-                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#FFFFFF] border border-[#DDD4C5] text-xs font-medium text-[#5A5145] hover:bg-[#F5EFE6] transition cursor-pointer"
-              >
-                {testNotificationSent ? (
-                  <>
-                    <Check className="w-3.5 h-3.5 text-[#2D5A3C]" />
-                    <span>{isNl ? 'Verzonden!' : 'Sent!'}</span>
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="w-3.5 h-3.5 text-[#8C7654]" />
-                    <span>{isNl ? 'Test Notificatie' : 'Test Notification'}</span>
-                  </>
-                )}
-              </button>
-
-              <button
-                type="button"
-                onClick={handleTogglePushNotifications}
-                className={`px-4 py-2 rounded-xl text-xs font-medium transition cursor-pointer shadow-xs ${
+                onClick={handleToggleNotifications}
+                className={`px-4 py-2 rounded-xl text-xs font-medium transition cursor-pointer ${
                   integrations.pushNotifications.enabled
-                    ? 'bg-[#FFFFFF] border border-[#DDD4C5] text-[#2C2825] hover:bg-[#F5EFE6]'
+                    ? 'bg-[#EAE4D7] text-[#554C42] hover:bg-[#DDD5C7]'
                     : 'bg-[#2C2825] text-[#FAF8F3] hover:bg-[#433D37]'
                 }`}
               >
@@ -801,114 +945,71 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
                   ? (isNl ? 'Uitschakelen' : 'Disable')
                   : (isNl ? 'Inschakelen' : 'Enable')}
               </button>
+              {integrations.pushNotifications.enabled && (
+                <button
+                  type="button"
+                  onClick={handleTestNotification}
+                  title="Development testnotificatie"
+                  className="px-3 py-2 rounded-xl bg-[#FFFFFF] border border-[#DDD4C5] text-xs font-medium text-[#5A5145] hover:bg-[#F5EFE6] transition cursor-pointer"
+                >
+                  {isNl ? '[DEV] Testmelding' : '[DEV] Test'}
+                </button>
+              )}
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center justify-between gap-4 pt-1 border-t border-[#EAE3D5] text-xs text-[#7A7167]">
-            <div className="flex items-center gap-2">
-              <span>{isNl ? 'Browser permissie:' : 'Browser permission:'}</span>
-              <span className="font-mono text-[#2C2825] uppercase font-semibold text-[11px]">
-                {typeof window !== 'undefined' && 'Notification' in window
-                  ? Notification.permission
-                  : 'default'}
-              </span>
+          {testNotificationSent && (
+            <div className="p-3 rounded-xl bg-[#E8EFE9] border border-[#D0E2D4] text-xs text-[#2D5A3C] flex items-center gap-2">
+              <Check className="w-4 h-4 text-[#2D5A3C]" />
+              <span>{isNl ? 'Testmelding verzonden via browser notificatie.' : 'Test notification sent.'}</span>
             </div>
-
-            {onNavigateToNotifications && (
-              <button
-                type="button"
-                onClick={onNavigateToNotifications}
-                className="text-xs text-[#8C7654] font-medium hover:underline flex items-center gap-1 cursor-pointer"
-              >
-                <span>{isNl ? 'Verfijn categorieën in Notificaties' : 'Fine-tune in Notifications'}</span>
-                <ChevronRight className="w-3.5 h-3.5" />
-              </button>
-            )}
-          </div>
+          )}
         </div>
       </div>
 
-      {/* Connect Modal */}
-      {connectModalService && (
+      {/* Instagram Connect Modal */}
+      {connectModalService === 'instagram' && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs">
-          <div className="bg-[#FAF8F3] border border-[#DDD4C5] rounded-3xl max-w-md w-full p-6 space-y-4 shadow-xl text-[#2C2825]">
-            <div className="flex items-center justify-between border-b border-[#E8E2D6] pb-3">
+          <div className="bg-[#FAF8F3] border border-[#DDD4C5] rounded-3xl max-w-sm w-full p-6 space-y-4 shadow-xl text-[#2C2825]">
+            <div className="flex items-center justify-between">
               <h3 className="font-serif text-lg text-[#2C2825]">
-                {connectModalService === 'calendar'
-                  ? (isNl ? 'Verbinden met Google Calendar' : 'Connect Google Calendar')
-                  : connectModalService === 'gmail'
-                  ? (isNl ? 'Verbinden met Mariluna Gmail' : 'Connect Mariluna Gmail')
-                  : (isNl ? 'Verbinden met Mariluna Instagram' : 'Connect Mariluna Instagram')}
+                {isNl ? 'Mariluna Instagram Koppelen' : 'Connect Instagram'}
               </h3>
               <button
                 type="button"
                 onClick={() => setConnectModalService(null)}
-                className="text-[#8C8377] hover:text-[#2C2825] p-1 cursor-pointer"
+                className="p-1 rounded-full text-[#8C8377] hover:text-[#2C2825]"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
-
-            <p className="text-xs text-[#7A7167] leading-relaxed">
-              {connectModalService === 'calendar'
-                ? (isNl
-                    ? 'Bevestig het Google-account voor Patricia\'s persoonlijke agenda. Er wordt uitsluitend een alleen-lezen permissie verleend.'
-                    : 'Confirm the Google account for Patricia\'s personal calendar. Read-only permissions only.')
-                : connectModalService === 'gmail'
-                ? (isNl
-                    ? 'Bevestig het zakelijke Mariluna e-mailadres. Privé-e-mails worden NOOIT gesynchroniseerd.'
-                    : 'Confirm the Mariluna business email address. Personal emails are never synced.')
-                : (isNl
-                    ? 'Voer het Instagram-bedrijfsaccount in van Mariluna. Er worden nooit geautomatiseerde berichten geplaatst.'
-                    : 'Enter the Mariluna Instagram business handle. No automated posts will ever be published.')}
-            </p>
-
-            {connectModalService === 'instagram' ? (
-              <div className="space-y-1.5">
-                <label className="text-[11px] font-medium text-[#5A5145] uppercase tracking-wider">
-                  Instagram Handle
-                </label>
-                <input
-                  type="text"
-                  value={usernameInput}
-                  onChange={(e) => setUsernameInput(e.target.value)}
-                  placeholder="@mariluna.studio"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#FFFFFF] border border-[#DDD4C5] text-xs text-[#2C2825] font-mono focus:outline-hidden focus:border-[#8C7654]"
-                />
-              </div>
-            ) : (
-              <div className="space-y-1.5">
-                <label className="text-[11px] font-medium text-[#5A5145] uppercase tracking-wider">
-                  {connectModalService === 'calendar' ? 'Google Account Email' : 'Mariluna Business Email'}
-                </label>
-                <input
-                  type="email"
-                  value={emailInput}
-                  onChange={(e) => setEmailInput(e.target.value)}
-                  placeholder={connectModalService === 'calendar' ? 'patricia@gmail.com' : 'contact@mariluna.be'}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#FFFFFF] border border-[#DDD4C5] text-xs text-[#2C2825] font-mono focus:outline-hidden focus:border-[#8C7654]"
-                />
-              </div>
-            )}
-
-            <div className="flex justify-end gap-2 pt-2 border-t border-[#E8E2D6]">
+            <div className="space-y-2">
+              <label className="block text-xs font-medium text-[#5A5145]">
+                {isNl ? 'Instagram Gebruikersnaam' : 'Instagram Username'}
+              </label>
+              <input
+                type="text"
+                placeholder="@mariluna.studio"
+                value={usernameInput}
+                onChange={(e) => setUsernameInput(e.target.value)}
+                className="w-full px-3.5 py-2 rounded-xl bg-[#FFFFFF] border border-[#D5CCBE] text-xs text-[#2C2825]"
+                autoFocus
+              />
+            </div>
+            <div className="flex items-center justify-end gap-2 pt-2">
               <button
                 type="button"
                 onClick={() => setConnectModalService(null)}
-                className="px-4 py-2 rounded-xl text-xs text-[#7A7167] hover:bg-[#F2EFE9] cursor-pointer"
+                className="px-3 py-1.5 rounded-xl text-xs text-[#7A7167] hover:bg-[#EFE9DD] transition"
               >
                 {isNl ? 'Annuleren' : 'Cancel'}
               </button>
               <button
                 type="button"
-                onClick={() => {
-                  if (connectModalService === 'calendar') handleConnectCalendar();
-                  else if (connectModalService === 'gmail') handleConnectGmail();
-                  else if (connectModalService === 'instagram') handleConnectInstagram();
-                }}
-                className="px-4 py-2 rounded-xl bg-[#2C2825] text-[#FAF8F3] text-xs font-medium hover:bg-[#433D37] cursor-pointer shadow-xs"
+                onClick={handleConnectInstagram}
+                className="px-4 py-1.5 rounded-xl bg-[#2C2825] text-[#FAF8F3] text-xs font-medium hover:bg-[#433D37] transition"
               >
-                {isNl ? 'Koppeling Bevestigen' : 'Confirm Connection'}
+                {isNl ? 'Koppelen' : 'Connect'}
               </button>
             </div>
           </div>

@@ -15,6 +15,7 @@ import {
   Plus,
   Compass,
   X,
+  Footprints,
 } from 'lucide-react';
 import {
   WellbeingState,
@@ -24,6 +25,7 @@ import {
   DailyCheckIn,
   CycleProfile,
   MovementActivityType,
+  IntegrationsState,
 } from '../../types';
 import { adaptMovementSession } from '../../lib/wellbeingData';
 import { HomeWorkoutGenerator } from '../health/HomeWorkoutGenerator';
@@ -34,6 +36,7 @@ interface WellbeingMovementSectionProps {
   onOpenAssistantWithPrompt: (prompt: string) => void;
   todayCheckIn?: DailyCheckIn;
   cycleProfile?: CycleProfile;
+  integrations?: IntegrationsState;
 }
 
 export const WellbeingMovementSection: React.FC<WellbeingMovementSectionProps> = ({
@@ -42,6 +45,7 @@ export const WellbeingMovementSection: React.FC<WellbeingMovementSectionProps> =
   onOpenAssistantWithPrompt,
   todayCheckIn,
   cycleProfile,
+  integrations,
 }) => {
   const [selectedTime, setSelectedTime] = useState<number>(25);
   const [selectedEnergy, setSelectedEnergy] = useState<EnergyLevel>('normal');
@@ -230,6 +234,45 @@ export const WellbeingMovementSection: React.FC<WellbeingMovementSectionProps> =
         <span className="font-light">
           <strong className="font-medium text-[#2C2825]">Leefstijl & Welzijn:</strong> Beweegsuggesties zijn bedoeld voor vitaliteit, ontspanning en houding. Ze vervangen geen fysiotherapeutische of medische begeleiding.
         </span>
+      </div>
+
+      {/* Health Connect Daily Steps Card */}
+      <div className="p-4 rounded-2xl bg-[#FAF8F3] border border-[#E8E2D6] flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs shadow-2xs">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-[#FFFFFF] border border-[#E8E2D6] flex items-center justify-center text-[#8C7654] shrink-0">
+            <Footprints className="w-4.5 h-4.5" />
+          </div>
+          <div>
+            <span className="text-[10px] uppercase tracking-wider text-[#8C8377] font-medium block">
+              Google Health Connect • Dagelijkse Stappen
+            </span>
+            <div className="font-serif text-base text-[#2C2825] mt-0.5">
+              {integrations?.healthConnect?.status === 'connected' ? (
+                <span>
+                  {(integrations.healthConnect.stepsToday ?? integrations.healthConnect.todaySteps ?? 0).toLocaleString('nl-NL')} stappen vandaag
+                </span>
+              ) : (
+                <span className="text-[#8C8377] font-sans text-xs italic">
+                  Geen stapgegevens beschikbaar
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+        <div className="text-[11px] text-[#7A7167] self-start sm:self-auto">
+          {integrations?.healthConnect?.status === 'connected' ? (
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#E8EFE9] text-[#2D5A3C] border border-[#D0E2D4] font-medium">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#2D5A3C] animate-pulse" />
+              Verbonden & gesynchroniseerd
+            </span>
+          ) : (
+            <span className="text-[#8C8377]">
+              {integrations?.healthConnect?.status === 'unavailable'
+                ? 'Koppeling vereist Android met Health Connect'
+                : 'Niet verbonden via Integraties'}
+            </span>
+          )}
+        </div>
       </div>
 
       {/* "Wat kan ik vandaag thuis doen?" Home Workout Generator */}

@@ -71,11 +71,11 @@ export const INITIAL_WELLBEING_STATE: WellbeingState = {
     preferredWeightUnit: 'kg',
     preferredMeasurementUnit: 'cm',
     foodPreferences: {
-      dietaryStyle: 'Plant-forward Mediterranean & Whole Foods',
-      exclusions: ['Excess refined sugar', 'Artificial sweeteners'],
+      dietaryStyle: 'Zuid-Europees & Mediterraan (Portugees, Italiaans, Spaans, Grieks, Belgisch)',
+      exclusions: ['Couscous', 'Quinoa', 'Rauwe groenten', 'Komkommer', 'Kabeljauw'],
       partnerSharedDinnerDays: ['Friday', 'Saturday', 'Sunday'],
-      quickPrepWeekdaysMaxMinutes: 25,
-      pantryStaples: ['Extra virgin olive oil', 'Sea salt', 'Garlic', 'Lemons', 'Quinoa', 'Raw walnuts'],
+      quickPrepWeekdaysMaxMinutes: 30,
+      pantryStaples: ['Extra vierge olijfolie', 'Zeezout', 'Knoflook', 'Witte rijst', 'Aardappelen', 'Passata'],
       cycleSyncNutrition: false,
     },
     movementPreferences: {

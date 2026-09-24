@@ -47,6 +47,7 @@ import {
   DEFAULT_FOOD_PROFILE,
   DEFAULT_PERSONAL_STYLING,
 } from '../../lib/foundationDefaults';
+import { evaluateGarment, GarmentEvaluationInput } from '../../lib/personalStylingLogic';
 
 interface FoundationSettingsViewProps {
   foundation: FoundationData;
@@ -155,72 +156,32 @@ export const FoundationSettingsView: React.FC<FoundationSettingsViewProps> = ({
     setIsEvaluating(true);
 
     setTimeout(() => {
-      // Calculate scores based on Patricia's authoritative Stijl DNA & proportions
-      const isHighWaist = evalWaistStyle.toLowerCase().includes('hoog') || evalWaistStyle.toLowerCase().includes('high');
-      const isNaturalFabric = ['linnen', 'zijde', 'wol', 'katoen', 'viscose'].some((f) => evalFabric.toLowerCase().includes(f));
-      const isWarmTone = ['zand', 'taupe', 'espresso', 'terracotta', 'cognac', 'olijf', 'goud', 'ivoor', 'wit', 'warm'].some((c) =>
-        evalColor.toLowerCase().includes(c)
-      );
-
-      const silhouetteScore = isHighWaist ? 96 : 82;
-      const colourScore = isWarmTone ? 94 : 76;
-      const styleScore = isNaturalFabric ? 95 : 84;
-      const emotionalScore = 90;
-      const overall = Math.round((silhouetteScore * 0.35 + colourScore * 0.25 + styleScore * 0.25 + emotionalScore * 0.15));
-      const fitConfidence = isHighWaist ? 90 : 78;
-
-      let verdict = '';
-      const observations: string[] = [];
-
-      if (isHighWaist) {
-        observations.push('Hoge taille accentueert direct het smalste punt van Patricia’s silhouet.');
-      } else {
-        observations.push('Lagere taille vereist mogelijk instoppen van de top om proporties te beschermen.');
-      }
-
-      if (isWarmTone) {
-        observations.push('Kleurtoon sluit naadloos aan bij het Warm Zand, Espresso & Portugese Aarde palet.');
-      }
-
-      if (isNaturalFabric) {
-        observations.push('Natuurlijke vezelstructuur past bij de tactiele, ingetogen luxe van Stijl DNA v1.0.');
-      }
-
-      if (overall >= 90) {
-        verdict = `Uitstekende match (${overall}%). Dit item omarmt de taille-definitie en verlengt optisch de beenlijn bij 1.57 m.`;
-      } else if (overall >= 80) {
-        verdict = `Goeie match (${overall}%). Combineer bij voorkeur met een aansluitend bovenstuk of goudkleurig detail voor optimale harmonie.`;
-      } else {
-        verdict = `Aandachtspunt (${overall}%). Let op dat de zoomlijn niet horizontaal snijdt op het breedste heuppunt.`;
-      }
-
-      const evaluation: GarmentEvaluation = {
-        id: `eval-${Date.now()}`,
-        date: new Date().toISOString().split('T')[0],
+      const input: GarmentEvaluationInput = {
         itemTitle: evalTitle,
         category: evalCategory,
-        styleMatchPercent: styleScore,
-        silhouetteMatchPercent: silhouetteScore,
-        colourMatchPercent: colourScore,
-        emotionalMatchPercent: emotionalScore,
-        overallMatchPercent: overall,
-        fitConfidencePercent: fitConfidence,
-        verdictNl: verdict,
-        keyObservations: observations,
+        fabricDescription: `${evalFabric} (${evalColor}, ${evalWaistStyle})`,
+        mood: evalMood,
       };
+
+      const evaluation = evaluateGarment(
+        input,
+        data.personalStyling,
+        latestLog ? { id: 'latest', unit: 'cm', waist: latestLog.waist, hip: latestLog.hip, date: latestLog.date } : undefined
+      );
 
       setNewEvalResult(evaluation);
       setIsEvaluating(false);
 
-      // Append to data
-      setData((prev) => ({
-        ...prev,
-        personalStyling: {
-          ...prev.personalStyling,
-          recentEvaluations: [evaluation, ...(prev.personalStyling.recentEvaluations || [])].slice(0, 10),
-        },
-      }));
-    }, 450);
+      if (!evaluation.isInsufficient) {
+        setData((prev) => ({
+          ...prev,
+          personalStyling: {
+            ...prev.personalStyling,
+            recentEvaluations: [evaluation, ...(prev.personalStyling.recentEvaluations || [])].slice(0, 10),
+          },
+        }));
+      }
+    }, 350);
   };
 
   // Feedback recording (Style Learning Layer)
@@ -1388,7 +1349,18 @@ export const FoundationSettingsView: React.FC<FoundationSettingsViewProps> = ({
 
                 {/* Evaluation Result Card */}
                 {newEvalResult && (
-                  <div className="mt-4 p-4 rounded-2xl bg-[#FFFFFF] border border-[#D5CCBE] space-y-3 shadow-xs">
+                  newEvalResult.isInsufficient ? (
+                    <div className="mt-4 p-4 rounded-2xl bg-[#FFFBF5] border border-[#E5C39E] space-y-2 shadow-xs">
+                      <div className="flex items-center gap-2 text-[#A85A3C] font-medium text-xs">
+                        <AlertTriangle className="w-4 h-4 shrink-0" />
+                        <span>{isNl ? 'Onvoldoende informatie' : 'Insufficient Information'}</span>
+                      </div>
+                      <p className="text-xs text-[#5C5449] leading-relaxed">
+                        {newEvalResult.verdictNl}
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="mt-4 p-4 rounded-2xl bg-[#FFFFFF] border border-[#D5CCBE] space-y-3 shadow-xs">
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <div className="text-[10px] uppercase tracking-wider text-[#8C7654] font-medium">
@@ -1458,6 +1430,7 @@ export const FoundationSettingsView: React.FC<FoundationSettingsViewProps> = ({
                       </div>
                     </div>
                   </div>
+                  )
                 )}
               </div>
             </div>

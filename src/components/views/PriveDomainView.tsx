@@ -118,6 +118,12 @@ export const PriveDomainView: React.FC<PriveDomainViewProps> = ({
   const isNl = lang === 'nl';
   const [activeSubTab, setActiveSubTab] = useState<PriveSubTab>(initialSubTab);
 
+  React.useEffect(() => {
+    if (initialSubTab) {
+      setActiveSubTab(initialSubTab);
+    }
+  }, [initialSubTab]);
+
   const todayStr = new Date().toISOString().split('T')[0];
   const personalTasks = tasks.filter((t) => t.realm === 'personal');
   const todayPersonalTasks = personalTasks.filter((t) => !t.completed && (!t.dueDate || t.dueDate <= todayStr));
@@ -535,7 +541,13 @@ export const PriveDomainView: React.FC<PriveDomainViewProps> = ({
           personalStyle={personalStyle}
           onUpdateStyle={onUpdateStyle}
           dailyCheckIns={dailyCheckIns}
+          onSaveDailyCheckIn={onSaveDailyCheckIn}
           cycleProfile={cycleProfile}
+          nutrition={nutrition}
+          onUpdateNutrition={onUpdateNutrition}
+          foodProfile={foodProfile}
+          calendarEvents={calendarEvents}
+          integrations={integrations}
         />
       )}
 
