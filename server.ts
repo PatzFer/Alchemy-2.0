@@ -8,6 +8,7 @@ import securityRouter from "./server/securityRoutes";
 import integrationsRouter from "./server/integrationsRoutes";
 import brainRouter from "./server/brainRoutes";
 import { securityVault } from "./server/security";
+import { classifyIntent, buildIntentAwareResponse, isDutchMessage } from "./server/brainEngine";
 
 dotenv.config();
 
@@ -294,24 +295,35 @@ function generateIntentAwareJarvisFallback(userMsg: string, ctx: any, world: str
 // Central AI Chat Endpoint (Strategic partner, brain dump analysis, planning advisor)
 app.post("/api/ai/chat", async (req: Request, res: Response) => {
   try {
-    const { messages, context, world } = req.body;
+    const { messages = [], context, world } = req.body;
     const permissions = securityVault.getPermissions();
+
+    const sanitizedContext = securityVault.sanitizeContextForAi(context, world);
+    const lastUserMsg = messages.length > 0 ? messages[messages.length - 1].content : "";
+    const isDutch = isDutchMessage(lastUserMsg);
+
+    // Classify user intent
+    const intentObj = classifyIntent(lastUserMsg, messages, sanitizedContext);
 
     // Check if user has restricted to local rules only
     if (permissions.activeAiProvider === "local-rules") {
-      const lastUserMsg = messages && messages.length > 0 ? messages[messages.length - 1].content : "schedule";
+      const localResp = buildIntentAwareResponse(intentObj, lastUserMsg, sanitizedContext, world);
       return res.json({
         role: "assistant",
-        content: `[Local Privacy Mode Active] Reflecting on "${lastUserMsg}". Your schedule is held locally with zero remote transmission. Priority: keep your deep work contained to your designated hours and preserve your evening downtime.`,
+        content: `[Local Privacy Mode Active] ${localResp}`,
       });
     }
 
-    // SERVER-SIDE PRIVACY FIREWALL: Sanitize context according to strict user permissions
-    const sanitizedContext = securityVault.sanitizeContextForAi(context, world);
-    const lastUserMsg = messages && messages.length > 0 ? messages[messages.length - 1].content : "";
-    const isDutch = isDutchText(lastUserMsg);
-
     const ai = getAI();
+
+    if (!ai) {
+      // Fallback intelligent response when API key is not configured yet
+      const fallbackResponse = buildIntentAwareResponse(intentObj, lastUserMsg, sanitizedContext, world);
+      return res.json({
+        role: "assistant",
+        content: fallbackResponse,
+      });
+    }
 
     const systemPrompt = `You are "JARVIS", the personal AI operating system and strategic thinking partner in "P & M Alchemy" for Patricia ("Patz").
 
@@ -321,77 +333,36 @@ STRICT LANGUAGE MANDATE (CRITICAL):
 - IF THE USER ASKS OR WRITES IN ENGLISH: YOU MUST RESPOND ENTIRELY IN ENGLISH.
 - NEVER SWITCH LANGUAGES MID-CONVERSATION OR REPLY IN ENGLISH TO A DUTCH QUESTION.
 
+CLASSIFIED INTENT: ${intentObj.intent.toUpperCase()}
+TARGET TIMEFRAME/DAY: ${intentObj.resolvedTargetDay || "N/A"}
+
 PERSONALITY & TONE:
 - Intelligent, warm, grounded, practical, strategic, creative, calm, honest, concise.
-- Never patronizing, never excessively enthusiastic or bubbly, never generic AI clichés.
-- Quiet luxury, modern editorial sensibility: "Everything is under control, but you still have space to breathe."
-- Value balance: rest, free time, and realistic pacing are non-negotiable foundations of sustainable success.
-- Direct & factual: when asked a concrete question about schedule, calendar, tasks, or projects, answer directly with facts. Do NOT replace factual answers with unsolicited coaching.
+- Direct & factual: when asked a concrete question about schedule, calendar, tasks, goals, or prices, answer directly with facts using ONLY the provided real data. Do NOT replace factual answers with unsolicited generic coaching.
+- If the requested data (e.g. appointments for Friday) is empty in the provided context, state clearly in ${isDutch ? "Dutch" : "English"}: "${isDutch ? "Er staan momenteel geen afspraken of taken op je planning voor " + (intentObj.resolvedTargetDay || "deze dag") + "." : "There are currently no events or tasks scheduled for " + (intentObj.resolvedTargetDay || "this day") + "."}"
+- NEVER invent or fabricate appointments, tasks, goals, products, or prices.
+- If the query is a simple greeting like "Hallo", reply with a warm, natural 1-2 sentence greeting. Do NOT give a long strategic coaching speech.
 
 DOMAINS & PRIVACY BOUNDARIES:
 - BUSINESS REALM (Mariluna): Studio, strategy, content, clients, launches, revenue.
 - PERSONAL REALM: Routines, self-care, nutrition, household, personal wellbeing.
 - WELLBEING & MOVEMENT PRIVACY: ${
       permissions.allowWellbeingDataToAI
-        ? "The user has authorized AI analysis of wellbeing habits, movement, and nutrition. Identify patterns clearly distinguishing recorded facts from interpretation. Never provide medical advice, diagnosis, or calorie-counting shame."
-        : "Wellbeing, body measurements, and progress logs are strictly quarantined. Provide general, grounded movement or meal ideas only when prompted, without accessing personal body logs."
-    }
-- CYCLE INTELLIGENCE PRIVACY: ${
-      permissions.allowCycleDataToAI
-        ? "The user has authorized lifestyle pacing based on cycle rhythms. Maintain strict privacy boundaries."
-        : "Cycle data is strictly confidential and withheld from external processing. Do not reference cycle biological phases unless directly prompted by user."
+        ? "The user has authorized AI analysis of wellbeing habits, movement, and nutrition."
+        : "Wellbeing, body measurements, and progress logs are strictly quarantined. Do not reference body logs."
     }
 
-SYSTEM CONTEXT PROVIDED:
+REAL SYSTEM CONTEXT PROVIDED:
 - Active Realm: ${world || "Balanced (Personal + Mariluna)"}
 - Current Date: ${sanitizedContext?.currentDate || new Date().toISOString().split('T')[0]}
-- Active Strategic Focus / Theme: ${sanitizedContext?.contentPlan?.quarterTheme ? `"${sanitizedContext.contentPlan.quarterTheme}"` : "Geen specifieke focus ingesteld"}
 - Active Context Item: ${JSON.stringify(sanitizedContext?.activeContextItem || null)}
 - Calendar Events: ${JSON.stringify(sanitizedContext?.calendarEvents || [])}
 - Active Tasks: ${JSON.stringify(sanitizedContext?.tasks || [])}
-- Active Projects: ${JSON.stringify(sanitizedContext?.projects || [])}
-- Ideas: ${JSON.stringify(sanitizedContext?.ideas || [])}
-- Goals: ${JSON.stringify(sanitizedContext?.goals || [])}
+- Active Goals: ${JSON.stringify(sanitizedContext?.goals || [])}
 - Mariluna Products & Services (Offerings): ${JSON.stringify(sanitizedContext?.offerings || [])}
+- Strategic Focus / Theme: ${sanitizedContext?.contentPlan?.quarterTheme || "Geen specifieke focus"}
 - Working Hours: ${sanitizedContext?.workingHours || "09:00 - 17:00"}
-
-SPECIFIC INTENT HANDLING:
-1. AGENDA / CALENDAR QUESTIONS (e.g., "Wat staat er deze vrijdag op mijn planning?"):
-   - Inspect calendarEvents and tasks for the requested day/date (e.g. Friday).
-   - List the actual scheduled events (with times) and tasks.
-   - IF NO items are scheduled for that day, say clearly in ${isDutch ? "Dutch" : "English"}: "${isDutch ? "Er staan geen afspraken of taken op je planning voor [dag]." : "There are no events or tasks scheduled for [day]."}"
-   - NEVER invent or make up fake appointments.
-2. "WAAR MOET IK ME NU OP RICHTEN?" / "WHAT SHOULD I FOCUS ON TODAY?":
-   - Inspect active strategic focus ("${sanitizedContext?.contentPlan?.quarterTheme || "Geen specifieke focus ingesteld"}"), today's tasks, goals, and projects.
-   - Give 1-3 concrete priorities based on available real data.
-   - You may reference the active strategic focus if defined, but NEVER invent fake tasks, goals, or priorities.
-3. "EVALUATE REALISTIC DAY CAPACITY":
-   - Calculate total event + task duration vs working hours (${sanitizedContext?.workingHours || "09:00-17:00"}).
-   - Provide concrete capacity analysis (% capacity, event hrs, task hrs) and 1 protection recommendation.
-4. "BRAIN_STORM NEXT THEME ANGLES" / "BRAIN_STORM 3 FRESH STRATEGIC CONTENT ANGLES...":
-   - Generate EXACTLY 3 fresh, distinct, high-impact content angles for Mariluna with clear hooks and formats.
-5. "CONSTRUCTIVELY CHALLENGE MY PRIORITIES":
-   - Inspect active tasks, challenge 1-2 low-leverage items.
-6. PRODUCT / SERVICE PRICES (e.g. "Wat kost mijn Lenormand reading?" or "What is the price of X?"):
-   - Inspect stored Mariluna Products & Services (offerings).
-   - If a matching product/service exists, state its exact stored price (e.g. "Lenormand reading kost €50.").
-   - If no price is stored for that product/service OR no matching product/service exists, state clearly that no stored price is available.
-   - NEVER invent, guess, or hallucinate a price.
-7. CONTEXTUAL ITEM (Project, Idea, Task, Content, Insight):
-   - If an active context item is provided, address THAT specific item directly with actionable recommendations.
-8. AMBIGUOUS INTENTS:
-   - If intent is unclear, ask a short 1-sentence clarification question in ${isDutch ? "Dutch" : "English"}.
-
-Always provide your thoughtful conversational response in ${isDutch ? "DUTCH" : "ENGLISH"}.`;
-
-    if (!ai) {
-      // Fallback intelligent response when API key is not configured yet
-      const fallbackResponse = generateIntentAwareJarvisFallback(lastUserMsg, sanitizedContext, world);
-      return res.json({
-        role: "assistant",
-        content: fallbackResponse,
-      });
-    }
+`;
 
     // Format conversation history for Gemini 3.8 Flash
     const formattedContents = messages.map((m: { role: string; content: string }) => ({
@@ -404,22 +375,23 @@ Always provide your thoughtful conversational response in ${isDutch ? "DUTCH" : 
       contents: formattedContents,
       config: {
         systemInstruction: systemPrompt,
-        temperature: 0.5,
+        temperature: 0.3,
       },
     });
 
-    const text = response.text || generateIntentAwareJarvisFallback(lastUserMsg, sanitizedContext, world);
+    const text = response.text || buildIntentAwareResponse(intentObj, lastUserMsg, sanitizedContext, world);
     res.json({
       role: "assistant",
       content: text,
     });
   } catch (error: any) {
-    console.error("AI Chat Error (transient fallback):", error);
+    console.error("AI Chat Error:", error);
     const lastUserMsg = req.body.messages?.slice(-1)[0]?.content || "";
     const sanitizedContext = securityVault.sanitizeContextForAi(req.body.context, req.body.world);
+    const intentObj = classifyIntent(lastUserMsg, req.body.messages || [], sanitizedContext);
     res.json({
       role: "assistant",
-      content: generateIntentAwareJarvisFallback(lastUserMsg, sanitizedContext, req.body.world),
+      content: buildIntentAwareResponse(intentObj, lastUserMsg, sanitizedContext, req.body.world),
     });
   }
 });

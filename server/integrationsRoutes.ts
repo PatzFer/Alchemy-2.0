@@ -159,11 +159,14 @@ router.post("/connect/:service", (req: Request, res: Response) => {
     }
 
     case "health_connect": {
+      if (!req.body.verified) {
+        return res.status(400).json({ error: "Health Connect/Google Fit vereist geverifieerde OAuth/API data." });
+      }
       serverState.healthConnect = {
         status: "connected",
         platform: req.body.platform === "android" ? "android" : "web",
         lastSync: now,
-        stepsToday: typeof req.body.stepsToday === "number" ? req.body.stepsToday : 0,
+        stepsToday: typeof req.body.stepsToday === "number" ? req.body.stepsToday : undefined,
         activeMinutes: req.body.activeMinutes ?? 0,
         isStepsOnly: true,
         isPrivateOnly: true,
@@ -173,32 +176,17 @@ router.post("/connect/:service", (req: Request, res: Response) => {
 
     case "instagram":
     case "mariluna_instagram": {
+      if (!req.body.verified && !req.body.posts) {
+        return res.status(400).json({ error: "Instagram koppeling vereist een geverifieerd Meta Graph API Access Token." });
+      }
       const username = req.body.accountUsername || "@mariluna.studio";
+      const posts = Array.isArray(req.body.posts) ? req.body.posts : [];
       serverState.instagram = {
         status: "connected",
         accountUsername: username,
         accountType: "business",
         lastSync: now,
-        posts: [
-          {
-            id: "ig-101",
-            caption: "Het geheim van een serene esthetiek zit in de ademruimte tussen de elementen. 🌿",
-            mediaType: "IMAGE",
-            timestamp: now.split("T")[0],
-            likeCount: 142,
-            commentsCount: 18,
-            reach: 890,
-          },
-          {
-            id: "ig-102",
-            caption: "Atelier rituelen: zacht natuurlijk licht en doordachte proporties.",
-            mediaType: "CAROUSEL_ALBUM",
-            timestamp: new Date(Date.now() - 2 * 86400000).toISOString().split("T")[0],
-            likeCount: 198,
-            commentsCount: 24,
-            reach: 1250,
-          },
-        ],
+        posts: posts,
       };
       return res.json({ success: true, service: "mariluna_instagram", data: serverState.instagram });
     }

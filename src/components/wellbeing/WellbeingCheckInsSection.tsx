@@ -15,9 +15,15 @@ import {
   Edit2,
   Sparkles,
   TrendingUp,
+  Shield,
 } from 'lucide-react';
 import { WellbeingState, CheckInConfig, DailyCheckIn } from '../../types';
 import { DailyCheckInModal } from '../DailyCheckInModal';
+import {
+  calculateSleepDurationMinutes,
+  formatSleepDuration,
+  calculateCheckInTrends,
+} from '../../lib/healthUtils';
 
 interface WellbeingCheckInsSectionProps {
   wellbeing: WellbeingState;
@@ -197,6 +203,8 @@ export const WellbeingCheckInsSection: React.FC<WellbeingCheckInsSectionProps> =
     }
   };
 
+  const trendSummary = calculateCheckInTrends(dailyCheckIns);
+
   return (
     <div className="space-y-8">
       {/* Header */}
@@ -206,10 +214,10 @@ export const WellbeingCheckInsSection: React.FC<WellbeingCheckInsSectionProps> =
             Gentle Somatic Cadence
           </span>
           <h2 className="text-2xl font-serif text-[#2C2825] mt-1">
-            Daily Wellbeing Check-Ins & Trends
+            Mijn Check-Ins & Persoonlijke Trends
           </h2>
           <p className="text-xs text-[#7A7167] mt-1 max-w-2xl font-light leading-relaxed">
-            Record your daily physical and mental state. All check-in data remains strictly private within your Personal domain.
+            Houd je dagelijkse energie, nachtrust en gemoed op een zachte manier bij. Alle gegevens blijven strikt privé binnen je Persoonlijk domein.
           </p>
         </div>
 
@@ -218,7 +226,7 @@ export const WellbeingCheckInsSection: React.FC<WellbeingCheckInsSectionProps> =
           className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#2C2825] text-[#FAF8F3] text-xs font-medium hover:bg-[#1A1816] transition cursor-pointer shadow-xs"
         >
           <Plus className="w-3.5 h-3.5 text-[#C5A880]" />
-          <span>{todayCheckIn ? 'Edit Today\'s Check-In' : 'Complete Today\'s Check-In'}</span>
+          <span>{todayCheckIn ? 'Bewerk Check-in van Vandaag' : 'Vul Check-In in'}</span>
         </button>
       </div>
 
@@ -228,18 +236,18 @@ export const WellbeingCheckInsSection: React.FC<WellbeingCheckInsSectionProps> =
           <div className="flex items-center gap-2">
             <Clock className="w-4 h-4 text-[#7E694E]" />
             <h3 className="font-serif text-base text-[#2C2825] font-semibold">
-              Today's Check-In ({todayStr})
+              Check-In voor Vandaag ({todayStr})
             </h3>
           </div>
           {todayCheckIn ? (
             <span className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full bg-[#EBF3E6] text-[#2D5A27]">
               <CheckCircle2 className="w-3.5 h-3.5" />
-              Completed
+              Ingevuld
             </span>
           ) : (
             <span className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full bg-[#FDF3E7] text-[#92400E]">
               <AlertCircle className="w-3.5 h-3.5" />
-              Pending
+              Nog niet ingevuld
             </span>
           )}
         </div>
@@ -266,10 +274,15 @@ export const WellbeingCheckInsSection: React.FC<WellbeingCheckInsSectionProps> =
 
             <div className="p-3 bg-white rounded-xl border border-[#E8E2D6]">
               <span className="text-[10px] uppercase font-semibold text-[#8C8377] block mb-1">
-                Slaap & Waak
+                Slaap & Duur
               </span>
               <span className="font-mono text-xs text-[#2C2825]">
                 {todayCheckIn.sleepTime || '--:--'} → {todayCheckIn.wakeTime || '--:--'}
+                {todayCheckIn.sleepTime && todayCheckIn.wakeTime && (
+                  <span className="block text-[11px] text-[#8C7654] font-semibold mt-0.5">
+                    ⏱ {formatSleepDuration(calculateSleepDurationMinutes(todayCheckIn.sleepTime, todayCheckIn.wakeTime))}
+                  </span>
+                )}
               </span>
             </div>
 
@@ -285,13 +298,13 @@ export const WellbeingCheckInsSection: React.FC<WellbeingCheckInsSectionProps> =
         ) : (
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-2">
             <p className="text-xs text-[#6A6054]">
-              Take 30 seconds to log how your physical and mental body feels today.
+              Neem 30 seconden om je fysieke en mentale energie vanmorgen in kaart te brengen.
             </p>
             <button
               onClick={openNewDailyCheckIn}
               className="px-4 py-2 rounded-xl bg-[#2C2825] text-[#FAF8F3] text-xs font-medium hover:bg-[#1A1816] transition cursor-pointer self-start sm:self-auto shrink-0"
             >
-              Start Today's Check-In
+              Start Check-In
             </button>
           </div>
         )}
@@ -299,44 +312,61 @@ export const WellbeingCheckInsSection: React.FC<WellbeingCheckInsSectionProps> =
 
       {/* Wellbeing Trends / Insights */}
       <div className="bg-[#FFFFFF] border border-[#E8E2D6] rounded-2xl p-6 shadow-xs space-y-4">
-        <div className="flex items-center gap-2 border-b border-[#F2ECE1] pb-3">
-          <TrendingUp className="w-4 h-4 text-[#7E694E]" />
-          <h3 className="font-serif text-base text-[#2C2825]">Longitudinal Wellbeing Trends</h3>
+        <div className="flex items-center justify-between border-b border-[#F2ECE1] pb-3">
+          <div className="flex items-center gap-2">
+            <TrendingUp className="w-4 h-4 text-[#7E694E]" />
+            <h3 className="font-serif text-base text-[#2C2825]">Persoonlijke Energietrends</h3>
+          </div>
+          <div className="flex items-center gap-1.5 text-[11px] text-[#8C8377]">
+            <Shield className="w-3.5 h-3.5 text-[#8C7654]" />
+            <span>Retentiebeleid: 2 maanden bewaard</span>
+          </div>
         </div>
 
-        {dailyCheckIns.length >= 3 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
-            <div className="p-4 bg-[#FAF8F3] rounded-xl border border-[#E8E2D6] space-y-1">
-              <span className="text-[10px] uppercase font-semibold text-[#8C8377]">
-                Totaal vastgelegde check-ins
-              </span>
-              <p className="font-serif text-xl font-semibold text-[#2C2825]">
-                {dailyCheckIns.length} dagen
-              </p>
-              <p className="text-[11px] text-[#7A7167]">Continu overzicht opgebouwd</p>
+        {trendSummary.hasEnoughDataForTrends ? (
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+              <div className="p-4 bg-[#FAF8F3] rounded-xl border border-[#E8E2D6] space-y-1">
+                <span className="text-[10px] uppercase font-semibold text-[#8C8377]">
+                  Totaal vastgelegde check-ins
+                </span>
+                <p className="font-serif text-xl font-semibold text-[#2C2825]">
+                  {trendSummary.totalCheckInsCount} dagen
+                </p>
+                <p className="text-[11px] text-[#7A7167]">Continu overzicht opgebouwd</p>
+              </div>
+
+              <div className="p-4 bg-[#FAF8F3] rounded-xl border border-[#E8E2D6] space-y-1">
+                <span className="text-[10px] uppercase font-semibold text-[#8C8377]">
+                  Gemiddelde Energie
+                </span>
+                <p className="font-serif text-xl font-semibold text-[#2C2825]">
+                  {trendSummary.averageEnergyLabel || 'Normaal'}
+                </p>
+                <p className="text-[11px] text-[#7A7167]">
+                  Gemiddelde score: {trendSummary.averageEnergyValue} / 5
+                </p>
+              </div>
+
+              <div className="p-4 bg-[#FAF8F3] rounded-xl border border-[#E8E2D6] space-y-1">
+                <span className="text-[10px] uppercase font-semibold text-[#8C8377]">
+                  Gemiddelde Slaapduur
+                </span>
+                <p className="font-serif text-xl font-semibold text-[#2C2825]">
+                  {trendSummary.averageSleepFormatted || 'Onbekend'}
+                </p>
+                <p className="text-[11px] text-[#7A7167]">Berekend uit opgeslagen slaapvensters</p>
+              </div>
             </div>
 
-            <div className="p-4 bg-[#FAF8F3] rounded-xl border border-[#E8E2D6] space-y-1">
-              <span className="text-[10px] uppercase font-semibold text-[#8C8377]">
-                Meest recente energie
-              </span>
-              <p className="font-serif text-xl font-semibold text-[#2C2825]">
-                {formatEnergy(sortedCheckIns[0]?.energy || 'normal')}
-              </p>
-              <p className="text-[11px] text-[#7A7167]">
-                Laatst bijgewerkt op {sortedCheckIns[0]?.date}
-              </p>
-            </div>
-
-            <div className="p-4 bg-[#FAF8F3] rounded-xl border border-[#E8E2D6] space-y-1">
-              <span className="text-[10px] uppercase font-semibold text-[#8C8377]">
-                Gemoedsritme
-              </span>
-              <p className="font-serif text-xl font-semibold text-[#2C2825]">
-                {formatMood(sortedCheckIns[0]?.mood)}
-              </p>
-              <p className="text-[11px] text-[#7A7167]">Gebaseerd op je laatste inzendingen</p>
-            </div>
+            {trendSummary.sleepEnergyInsight && (
+              <div className="p-3.5 rounded-xl bg-[#FAF6EE] border border-[#E8D9BF] text-xs text-[#5F5547] flex items-start gap-2.5">
+                <Sparkles className="w-4 h-4 text-[#8C7654] shrink-0 mt-0.5" />
+                <p className="font-light leading-relaxed">
+                  <strong className="font-medium text-[#2C2825]">Geobserveerd patroon:</strong> {trendSummary.sleepEnergyInsight}
+                </p>
+              </div>
+            )}
           </div>
         ) : (
           <div className="p-4 rounded-xl bg-[#FAF8F3] border border-[#E8E2D6] text-xs text-[#7A7167] leading-relaxed">
@@ -350,19 +380,19 @@ export const WellbeingCheckInsSection: React.FC<WellbeingCheckInsSectionProps> =
         )}
       </div>
 
-      {/* Historical Daily Check-Ins List */}
+      {/* Historical Daily Check-Ins List ("Mijn check-ins") */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-medium text-[#2C2825]">Historische Check-Ins</h3>
+          <h3 className="text-sm font-medium text-[#2C2825]">Mijn Check-Ins</h3>
           <span className="text-xs text-[#8C8377]">{dailyCheckIns.length} check-ins opgeslagen</span>
         </div>
 
         {dailyCheckIns.length === 0 ? (
           <div className="bg-[#FFFFFF] border border-[#E8E2D6] rounded-2xl p-8 text-center space-y-3">
             <Clock className="w-8 h-8 text-[#8C8377] mx-auto opacity-60" />
-            <h4 className="font-serif text-base text-[#2C2825]">Nog geen dagelijkse check-ins</h4>
+            <h4 className="font-serif text-base text-[#2C2825]">Je hebt nog geen eerdere check-ins.</h4>
             <p className="text-xs text-[#7A7167] max-w-md mx-auto font-light">
-              Je hebt nog geen dagelijkse check-ins opgeslagen. Begin vandaag om een waardevolle, besloten historiek op te bouwen.
+              Begin vandaag om een waardevolle, besloten historiek op te bouwen.
             </p>
             <button
               onClick={openNewDailyCheckIn}
@@ -373,46 +403,53 @@ export const WellbeingCheckInsSection: React.FC<WellbeingCheckInsSectionProps> =
           </div>
         ) : (
           <div className="space-y-3">
-            {sortedCheckIns.map((item) => (
-              <div
-                key={item.id || item.date}
-                className="bg-[#FFFFFF] border border-[#E8E2D6] rounded-2xl p-4 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4"
-              >
-                <div className="space-y-1 text-xs">
-                  <div className="flex items-center gap-2">
-                    <span className="font-serif text-sm font-semibold text-[#2C2825]">
-                      {item.date}
-                    </span>
-                    <span className="px-2 py-0.5 rounded-md bg-[#FAF8F4] border border-[#E8E2D6] font-medium text-[#6A6054]">
-                      Energie: {formatEnergy(item.energy)}
-                    </span>
-                    {item.mood && (
-                      <span className="px-2 py-0.5 rounded-md bg-[#FAF8F4] border border-[#E8E2D6] text-[#6A6054]">
-                        {formatMood(item.mood)}
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-4 text-[#7A7167]">
-                    {(item.sleepTime || item.wakeTime) && (
-                      <span>
-                        Slaapvenster: {item.sleepTime || '--:--'} - {item.wakeTime || '--:--'}
-                      </span>
-                    )}
-                    {item.notes && <span className="italic text-[#5C5245]">"{item.notes}"</span>}
-                  </div>
-                </div>
+            {sortedCheckIns.map((item) => {
+              const durMins = calculateSleepDurationMinutes(item.sleepTime, item.wakeTime);
+              const durFormatted = formatSleepDuration(durMins);
 
-                <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
-                  <button
-                    onClick={() => openEditDailyCheckIn(item)}
-                    className="flex items-center gap-1 px-3 py-1.5 rounded-xl border border-[#DED6C7] text-xs text-[#2C2825] hover:bg-[#F2ECE1] transition cursor-pointer"
-                  >
-                    <Edit2 className="w-3.5 h-3.5" />
-                    <span>Bewerken</span>
-                  </button>
+              return (
+                <div
+                  key={item.id || item.date}
+                  className="bg-[#FFFFFF] border border-[#E8E2D6] rounded-2xl p-4 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                >
+                  <div className="space-y-1.5 text-xs">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="font-serif text-sm font-semibold text-[#2C2825]">
+                        {new Date(item.date).toLocaleDateString('nl-NL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+                      </span>
+                      <span className="px-2.5 py-0.5 rounded-full bg-[#FAF8F4] border border-[#E8E2D6] font-medium text-[#6A6054]">
+                        Energie: {formatEnergy(item.energy)}
+                      </span>
+                      {item.mood && (
+                        <span className="px-2.5 py-0.5 rounded-full bg-[#FAF8F4] border border-[#E8E2D6] text-[#6A6054]">
+                          {formatMood(item.mood)}
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-3 text-[#7A7167]">
+                      {(item.sleepTime || item.wakeTime) && (
+                        <span className="font-mono text-xs text-[#5C5245]">
+                          🌙 Slaap: {item.sleepTime || '--:--'} – {item.wakeTime || '--:--'}
+                          {durFormatted && <strong className="ml-1 text-[#8C7654] font-medium">• {durFormatted} slaap</strong>}
+                        </span>
+                      )}
+                      {item.notes && <span className="italic text-[#5C5245]">"{item.notes}"</span>}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
+                    <button
+                      onClick={() => openEditDailyCheckIn(item)}
+                      className="flex items-center gap-1 px-3 py-1.5 rounded-xl border border-[#DED6C7] text-xs text-[#2C2825] hover:bg-[#F2ECE1] transition cursor-pointer"
+                    >
+                      <Edit2 className="w-3.5 h-3.5" />
+                      <span>Bewerken</span>
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

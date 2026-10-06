@@ -17,7 +17,7 @@ import {
 // ============================================================
 export const DEFAULT_PANTRY_STAPLES: Omit<KitchenInventoryItem, 'id' | 'addedDate'>[] = [
   { name: 'Olijfolie extra vierge', quantity: '1 fles', location: 'pantry', category: 'pantry' },
-  { name: 'Witte basmati rijst', quantity: '1 kg', location: 'pantry', category: 'pantry' },
+  { name: 'Portugese rijst (arroz carolino)', quantity: '1 kg', location: 'pantry', category: 'pantry' },
   { name: 'Pasta (Penne / Tagliatelle)', quantity: '500 g', location: 'pantry', category: 'pantry' },
   { name: 'Passata di pomodoro (gezeefde tomaten)', quantity: '3 flesjes', location: 'pantry', category: 'pantry' },
   { name: 'Gele uien', quantity: '1 netje', location: 'pantry', category: 'vegetables' },
@@ -922,7 +922,8 @@ export function generateWeeklyPlan(
   inventory: KitchenInventoryItem[] = [],
   feedbackHistory: MealFeedbackEntry[] = [],
   customRecipes: Recipe[] = [],
-  foodProfile?: FoundationFoodProfile
+  foodProfile?: FoundationFoodProfile,
+  generationSeed: number = Date.now()
 ): WeeklyMenuPlan {
   const allRecipes = [...CURATED_RECIPES, ...customRecipes];
 
@@ -978,12 +979,10 @@ export function generateWeeklyPlan(
         else if (fb.feedback === 'dislike') score -= 100;
       }
 
-      // Profile dislikes
-      if (foodProfile?.dislikes && foodProfile.dislikes.length > 0) {
-        const lowerIngs = recipe.ingredients.map((i) => i.name.toLowerCase()).join(' ');
-        if (lowerIngs.includes('kabeljauw') || lowerIngs.includes('couscous') || lowerIngs.includes('quinoa')) {
-          score -= 200;
-        }
+      // Cod penalty
+      const lowerIngs = recipe.ingredients.map((i) => i.name.toLowerCase()).join(' ');
+      if (lowerIngs.includes('kabeljauw') || lowerIngs.includes('bacalhau')) {
+        score -= 200;
       }
 
       // Inventory match
@@ -1015,10 +1014,11 @@ export function generateWeeklyPlan(
         score -= 15;
       }
 
-      // Small variation seed based on week start date + day index for variety on regeneration
+      // Variation seed using generationSeed so each regeneration creates a genuinely different composition
       const dateSeed = weekStartDate.split('-').reduce((acc, part) => acc + parseInt(part, 10), 0);
-      const varFactor = Math.sin(dateSeed * 7 + dayIndex * 13 + recipe.id.length * 3);
-      score += varFactor * 4;
+      const seedPart = Math.floor(generationSeed % 99991);
+      const varFactor = Math.sin(seedPart * 13 + dateSeed * 7 + dayIndex * 19 + recipe.id.length * 5);
+      score += varFactor * 28; // Increased weight for varied composition on generation request
 
       return { recipe, score };
     });
@@ -1043,7 +1043,7 @@ export function generateWeeklyPlan(
   });
 
   return {
-    id: 'plan-' + Date.now(),
+    id: 'plan-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
     weekStartDate,
     plannedAt: new Date().toISOString(),
     days: plannedDays,

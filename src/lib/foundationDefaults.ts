@@ -104,9 +104,9 @@ export const DEFAULT_FOOD_PROFILE: FoundationFoodProfile = {
     'Vlees & gevogelte',
     'Vis & schaaldieren (met uitzondering van kabeljauw)',
     'Pasta',
-    'Witte rijst',
-    'Aardappelen',
+    'Portugese rijst (arroz carolino)',
     'Risotto',
+    'Aardappelen',
     'Wraps',
     'Voedzame soepen',
     'Zelfgemaakte warme sauzen',
@@ -124,16 +124,15 @@ export const DEFAULT_FOOD_PROFILE: FoundationFoodProfile = {
     'Geen havermout als voorkeursvoedsel',
     'Geen noten in bereide maaltijden',
     'Geen linzen als voorkeursvoedsel',
-    'GEEN COUSCOUS (nooit standaard suggereren of opnemen)',
-    'GEEN QUINOA (nooit standaard suggereren of opnemen)',
+    'Vermijd andere rijstsoorten (basmati/jasmijn) - uitsluitend arroz carolino of risotto',
   ],
-  noCouscousRule: true,
-  noQuinoaRule: true,
+  noCouscousRule: false,
+  noQuinoaRule: false,
   noRawVegetablesRule: true,
   allergies: [],
   intolerances: ['Kabeljauw (vermijden/niet geliefd)'],
   kitchenNotes:
-    'Doel: geleidelijk gewichtsverlies, spierbehoud, 80-100g eiwit per dag, normale smakelijke gerechten, geen crashdiëten, geen schuldgevoelens rondom eten. Couscous en quinoa strikt uitgesloten.',
+    'Doel: geleidelijk gewichtsverlies, spierbehoud, 80-100g eiwit per dag, normale smakelijke gerechten, geen crashdiëten, geen schuldgevoelens rondom eten. Rijst uitsluitend als Portugese rijst / arroz carolino of risotto.',
 };
 
 export const DEFAULT_PERSONAL_STYLING: FoundationPersonalStyling = {

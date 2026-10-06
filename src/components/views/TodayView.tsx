@@ -28,6 +28,8 @@ import {
   ActiveWorldFilter,
   CycleProfile,
   DailyCheckIn,
+  DailyIntention,
+  Realm,
   CheckInFeeling,
   CheckInDriver,
   ProactiveSuggestion,
@@ -68,6 +70,11 @@ interface TodayViewProps {
   cycleProfile?: CycleProfile;
   dailyCheckIns?: DailyCheckIn[];
   onSaveDailyCheckIn?: (checkIn: DailyCheckIn) => void;
+  intentions?: DailyIntention[];
+  onSaveIntention?: (title: string, realm?: Realm, dateStr?: string) => void;
+  onCompleteIntention?: (id: string) => void;
+  onSnoozeIntention?: (id: string) => void;
+  onDismissIntention?: (id: string) => void;
   proactiveSuggestions?: ProactiveSuggestion[];
   onDismissSuggestion?: (id: string) => void;
   onSelectTab?: (tab: any) => void;
@@ -98,6 +105,11 @@ export const TodayView: React.FC<TodayViewProps> = ({
   cycleProfile,
   dailyCheckIns = [],
   onSaveDailyCheckIn,
+  intentions = [],
+  onSaveIntention,
+  onCompleteIntention,
+  onSnoozeIntention,
+  onDismissIntention,
   proactiveSuggestions = [],
   onDismissSuggestion,
   onSelectTab,
@@ -157,6 +169,28 @@ export const TodayView: React.FC<TodayViewProps> = ({
     }
     setIsLocationModalOpen(false);
   };
+
+  // 2.5 TODAY'S INTENTION & PROACTIVE PROMPT STATE
+  const todayIntention = useMemo(() => {
+    return intentions.find(
+      (i) => i.date === todayStr && (activeWorld === 'all' || i.realm === activeWorld)
+    );
+  }, [intentions, todayStr, activeWorld]);
+
+  const [isIntentionInputOpen, setIsIntentionInputOpen] = useState(false);
+  const [intentionInputText, setIntentionInputText] = useState('');
+
+  const shouldShowProactivePrompt = useMemo(() => {
+    if (!todayIntention) return false;
+    if (todayIntention.completed || todayIntention.status === 'completed') return false;
+    if (todayIntention.status === 'dismissed') return false;
+    if (todayIntention.status === 'snoozed' && todayIntention.snoozedUntil) {
+      if (new Date(todayIntention.snoozedUntil).getTime() > Date.now()) {
+        return false;
+      }
+    }
+    return true;
+  }, [todayIntention]);
 
   // 2.5 ALCHEMY BRIEF 1.0 STATE & ENGINE
   const [brief, setBrief] = useState<DailyAlchemyBrief>(() => {
@@ -740,6 +774,163 @@ export const TodayView: React.FC<TodayViewProps> = ({
         onOpenProjects={() => onSelectTab && onSelectTab('projects')}
         isNl={isNl}
       />
+
+      {/* ============================================================ */}
+      {/* 1.6 TODAY'S INTENTION (Subtle Daily Focus Anchor)            */}
+      {/* ============================================================ */}
+      <div className="p-4 rounded-2xl bg-[#FFFFFF] border border-[#E8E2D5] shadow-xs space-y-2.5">
+        <div className="flex items-center justify-between border-b border-[#F2ECE1] pb-2 text-xs">
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-3.5 h-3.5 text-[#8C7654]" />
+            <span className="font-serif font-medium text-[#2C2825] uppercase tracking-wider text-[11px]">
+              {isNl ? 'Dagelijkse Intentie' : "Today's Intention"}
+            </span>
+          </div>
+          {todayIntention && (
+            <button
+              type="button"
+              onClick={() => {
+                setIntentionInputText(todayIntention.title);
+                setIsIntentionInputOpen(true);
+              }}
+              className="text-[11px] text-[#8C8377] hover:text-[#2C2825] transition cursor-pointer"
+            >
+              {isNl ? 'Wijzigen' : 'Edit'}
+            </button>
+          )}
+        </div>
+
+        {todayIntention ? (
+          <div className="flex items-center justify-between text-xs pt-0.5">
+            <div className="space-y-0.5">
+              <p className="font-serif text-sm text-[#2C2825] font-medium">
+                "{todayIntention.title}"
+              </p>
+              <p className="text-[11px] text-[#7A7167]">
+                {todayIntention.completed
+                  ? (isNl ? '✓ Vandaag gedaan' : '✓ Completed today')
+                  : (isNl ? '○ Nog niet gedaan' : '○ Active focus')}
+              </p>
+            </div>
+
+            {todayIntention.completed ? (
+              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-[#EBF3E6] text-[#2D5A27] text-xs font-medium border border-[#D2E4C9]">
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                <span>{isNl ? 'Vandaag gedaan' : 'Completed'}</span>
+              </span>
+            ) : (
+              <button
+                type="button"
+                onClick={() => onCompleteIntention && onCompleteIntention(todayIntention.id)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#2C2825] text-[#FAF8F5] text-xs font-medium hover:bg-[#433D38] transition cursor-pointer shadow-xs"
+              >
+                <Check className="w-3.5 h-3.5 text-[#E6D7BD]" />
+                <span>{isNl ? 'Markeer als gedaan' : 'Mark as done'}</span>
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="pt-1">
+            {isIntentionInputOpen ? (
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (!intentionInputText.trim()) return;
+                  onSaveIntention && onSaveIntention(intentionInputText, activeWorld === 'mariluna' ? 'mariluna' : 'personal');
+                  setIsIntentionInputOpen(false);
+                  setIntentionInputText('');
+                }}
+                className="flex items-center gap-2"
+              >
+                <input
+                  type="text"
+                  value={intentionInputText}
+                  onChange={(e) => setIntentionInputText(e.target.value)}
+                  placeholder={isNl ? 'bijv. Ademhaling, Rust, Vandaag niet haasten' : 'e.g. Breathing, Calm pacing, No rushing'}
+                  className="flex-1 px-3 py-1.5 rounded-xl border border-[#D5CCBE] bg-[#FAF8F4] text-xs text-[#2C2825] focus:outline-hidden focus:border-[#8C7654]"
+                  autoFocus
+                />
+                <button
+                  type="submit"
+                  className="px-3.5 py-1.5 rounded-xl bg-[#2C2825] text-[#FAF8F5] text-xs font-medium hover:bg-[#433D38] transition cursor-pointer shrink-0"
+                >
+                  {isNl ? 'Opslaan' : 'Save'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsIntentionInputOpen(false)}
+                  className="p-1.5 text-[#8C8377] hover:text-[#2C2825]"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </form>
+            ) : (
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-[#7A7167] font-light">
+                  {isNl ? 'Nog geen intentie ingesteld voor vandaag.' : 'No intention set for today yet.'}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setIsIntentionInputOpen(true)}
+                  className="inline-flex items-center gap-1 text-xs text-[#8C7654] font-medium hover:text-[#2C2825] transition cursor-pointer"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>{isNl ? 'Stel intentie in' : 'Set intention'}</span>
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* ============================================================ */}
+      {/* 1.7 PROACTIVE INTENTION PROMPT (Gentle Daily Follow-up)       */}
+      {/* ============================================================ */}
+      {shouldShowProactivePrompt && todayIntention && (
+        <div className="p-4 rounded-2xl bg-[#FAF6EE] border border-[#E6DBCE] shadow-xs space-y-3 animate-fade-in text-[#2C2825]">
+          <div className="flex items-center justify-between border-b border-[#E8DCC9] pb-2">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-[#8C7654]" />
+              <span className="font-serif font-medium text-xs text-[#8C7654] uppercase tracking-wider">
+                {isNl ? 'Proactieve Guidance' : 'Proactive Guidance'}
+              </span>
+            </div>
+          </div>
+
+          <p className="text-xs text-[#5F5547] leading-relaxed font-light">
+            Je had vandaag <strong className="font-medium text-[#2C2825]">"{todayIntention.title}"</strong> als intentie gekozen.
+            Heb je daar nu een moment voor?
+          </p>
+
+          <div className="flex flex-wrap items-center gap-2 pt-1 text-xs">
+            <button
+              type="button"
+              onClick={() => onCompleteIntention && onCompleteIntention(todayIntention.id)}
+              className="px-4 py-2 rounded-xl bg-[#2C2825] text-[#FAF8F5] font-medium hover:bg-[#433D38] transition cursor-pointer shadow-xs flex items-center gap-1.5"
+            >
+              <Check className="w-3.5 h-3.5 text-[#E6D7BD]" />
+              <span>{isNl ? 'Ja, nu doen' : 'Yes, do now'}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => onSnoozeIntention && onSnoozeIntention(todayIntention.id, 120)}
+              className="px-3.5 py-2 rounded-xl bg-[#FFFFFF] border border-[#D5CCBE] text-[#63594C] font-medium hover:bg-[#F7F2E9] transition cursor-pointer flex items-center gap-1"
+            >
+              <Clock className="w-3.5 h-3.5 text-[#8C7654]" />
+              <span>{isNl ? 'Snooze (2u)' : 'Snooze'}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => onDismissIntention && onDismissIntention(todayIntention.id)}
+              className="px-3 py-2 text-[#8C8377] hover:text-[#2C2825] transition cursor-pointer font-light"
+            >
+              {isNl ? 'Niet vandaag' : 'Not today'}
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* ============================================================ */}
       {/* 2. TODAY'S CALENDAR (Comes FIRST before tasks!)              */}

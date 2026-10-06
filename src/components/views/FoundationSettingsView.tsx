@@ -1036,21 +1036,21 @@ export const FoundationSettingsView: React.FC<FoundationSettingsViewProps> = ({
                 </h2>
                 <p className="text-xs text-[#7A7167] font-light mt-0.5">
                   {isNl
-                    ? 'Portugees (1), Belgisch (2), Italiaans (3) • 80-100g eiwit • Geen couscous & geen quinoa • Geen schuldgevoel.'
-                    : 'Portuguese, Belgian, Italian cuisines with strict no-couscous & no-quinoa policy.'}
+                    ? 'Portugees (1), Belgisch (2), Italiaans (3) • 80-100g eiwit • Rijst: Arroz Carolino & Risotto • Geen schuldgevoel.'
+                    : 'Portuguese, Belgian, Italian cuisines with Arroz Carolino & Risotto rice rules.'}
                 </p>
               </div>
 
-              {/* Strict No Couscous & No Quinoa Callout */}
-              <div className="p-4 rounded-2xl bg-[#FEF2F2] border border-[#FECACA] space-y-2">
-                <div className="flex items-center gap-2 text-xs font-serif font-medium text-[#991B1B]">
-                  <AlertTriangle className="w-4 h-4 text-[#DC2626]" />
-                  <span>{isNl ? 'Strikte Regels: GEEN COUSCOUS & GEEN QUINOA' : 'Strict Directives: NO COUSCOUS & NO QUINOA'}</span>
+              {/* Rice Preference Callout */}
+              <div className="p-4 rounded-2xl bg-[#FAF6EE] border border-[#E8D9BF] space-y-2">
+                <div className="flex items-center gap-2 text-xs font-serif font-medium text-[#8C7654]">
+                  <Utensils className="w-4 h-4 text-[#8C7654]" />
+                  <span>{isNl ? 'Rijstvoorkeur & Voedingsregels' : 'Rice Preferences & Food Directives'}</span>
                 </div>
-                <p className="text-xs text-[#7F1D1D] font-light leading-relaxed">
+                <p className="text-xs text-[#5F5547] font-light leading-relaxed">
                   {isNl
-                    ? 'Couscous en quinoa mogen NOOIT worden opgenomen als voorkeursvoedsel of standaard maaltijdsuggestie in weekmenu’s of recepten. Deze uitsluitingen zijn permanent verankerd in Patricia’s profiel.'
-                    : 'Couscous and quinoa must NEVER be included or recommended as default meals.'}
+                    ? 'Patricia eet rijst uitsluitend als: Portugese rijst / arroz carolino of risotto. Andere rijstsoorten vermijden.'
+                    : 'Patricia eats rice exclusively as Portuguese arroz carolino or risotto. Avoid other rice types.'}
                 </p>
               </div>
 
@@ -1085,8 +1085,8 @@ export const FoundationSettingsView: React.FC<FoundationSettingsViewProps> = ({
                 </label>
                 <div className="flex flex-wrap gap-1.5">
                   {[
-                    'Geen couscous (Strikt)',
-                    'Geen quinoa (Strikt)',
+                    'Rijst: Arroz carolino & Risotto',
+                    'Andere rijstsoorten vermijden',
                     'Geen fruit',
                     'Geen rauwe groenten',
                     'Groenten gegaard / gepureerd',

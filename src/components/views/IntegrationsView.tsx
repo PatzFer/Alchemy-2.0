@@ -29,6 +29,9 @@ import { IntegrationsService } from '../../lib/integrationsService';
 import {
   googleSignInForService,
   fetchRealGmailMessagesFromApi,
+  fetchRealCalendarEventsFromApi,
+  fetchRealGoogleFitStepsFromApi,
+  fetchRealInstagramPostsFromApi,
   getCachedAccessToken,
   setCachedAccessToken,
 } from '../../lib/googleAuthService';
@@ -55,6 +58,7 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
   const [connectModalService, setConnectModalService] = useState<string | null>(null);
   const [emailInput, setEmailInput] = useState('');
   const [usernameInput, setUsernameInput] = useState('');
+  const [instagramTokenInput, setInstagramTokenInput] = useState('');
 
   const getStatusBadge = (status: IntegrationConnectionStatus, customLabel?: string) => {
     switch (status) {
@@ -123,11 +127,15 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
 
       const authRes = await googleSignInForService([
         'https://www.googleapis.com/auth/calendar.readonly',
+        'https://www.googleapis.com/auth/calendar.events',
       ]);
 
       if (!authRes || !authRes.accessToken) {
         throw new Error('OAuth authenticatie is niet voltooid.');
       }
+
+      const { accountEmail, isWriteAccessGranted, totalEventsCount } =
+        await fetchRealCalendarEventsFromApi(authRes.accessToken);
 
       const now = new Date().toISOString();
       onUpdateIntegrations((prev) => ({
@@ -135,29 +143,39 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
         calendar: {
           ...prev.calendar,
           status: 'connected',
-          accountEmail: authRes.email,
+          accountEmail: accountEmail || authRes.email,
           lastSync: now,
-          readOnly: true,
-          syncedEventsCount: prev.calendar.syncedEventsCount || 0,
+          readOnly: !isWriteAccessGranted,
+          syncedEventsCount: totalEventsCount,
           isPatriciaOnlySchedule: true,
           error: undefined,
         },
       }));
 
       await IntegrationsService.connectService('google_calendar', {
-        accountEmail: authRes.email,
+        accountEmail: accountEmail || authRes.email,
+        syncedEventsCount: totalEventsCount,
+        readOnly: !isWriteAccessGranted,
         verified: true,
       });
     } catch (err: any) {
       console.warn('Google Calendar OAuth error:', err);
-      const isAuthErr = err?.code === 'auth/popup-closed-by-user';
-      setAuthError(isAuthErr ? 'Inlogvenster is gesloten.' : 'Authenticatie mislukt.');
+      const isAuthClosed = err?.message?.includes('geannuleerd') || err?.message?.includes('closed');
+      const isAuthExpired = err?.message === 'AUTHENTICATION_EXPIRED';
+
+      const userFacingErr = isAuthClosed
+        ? 'Inlogvenster geannuleerd.'
+        : isAuthExpired
+        ? 'Authenticatie verlopen.'
+        : err?.message || 'Authenticatie met Google Calendar mislukt.';
+
+      setAuthError(userFacingErr);
       onUpdateIntegrations((prev) => ({
         ...prev,
         calendar: {
           ...prev.calendar,
-          status: isAuthErr ? 'authentication_expired' : 'not_connected',
-          error: 'Authenticatie mislukt.',
+          status: isAuthExpired ? 'authentication_expired' : 'not_connected',
+          error: userFacingErr,
         },
       }));
     } finally {
@@ -177,22 +195,58 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
         accountEmail: undefined,
         lastSync: undefined,
         syncedEventsCount: 0,
+        error: undefined,
       },
     }));
     setSyncingService(null);
   };
 
   const handleSyncCalendar = async () => {
+    setAuthError(null);
     setSyncingService('calendar');
-    await IntegrationsService.syncService('google_calendar');
-    onUpdateIntegrations((prev) => ({
-      ...prev,
-      calendar: {
-        ...prev.calendar,
-        lastSync: new Date().toISOString(),
-      },
-    }));
-    setSyncingService(null);
+    try {
+      let token = getCachedAccessToken();
+      if (!token) {
+        const authRes = await googleSignInForService([
+          'https://www.googleapis.com/auth/calendar.readonly',
+          'https://www.googleapis.com/auth/calendar.events',
+        ]);
+        token = authRes.accessToken;
+      }
+
+      const { accountEmail, isWriteAccessGranted, totalEventsCount } =
+        await fetchRealCalendarEventsFromApi(token);
+
+      const now = new Date().toISOString();
+      onUpdateIntegrations((prev) => ({
+        ...prev,
+        calendar: {
+          ...prev.calendar,
+          status: 'connected',
+          accountEmail: accountEmail || prev.calendar.accountEmail,
+          lastSync: now,
+          readOnly: !isWriteAccessGranted,
+          syncedEventsCount: totalEventsCount,
+          error: undefined,
+        },
+      }));
+
+      await IntegrationsService.syncService('google_calendar');
+    } catch (err: any) {
+      console.warn('Calendar sync error:', err);
+      const isAuthExpired = err?.message === 'AUTHENTICATION_EXPIRED';
+      setAuthError('Synchronisatie mislukt. Log opnieuw in bij Google Calendar.');
+      onUpdateIntegrations((prev) => ({
+        ...prev,
+        calendar: {
+          ...prev.calendar,
+          status: isAuthExpired ? 'authentication_expired' : 'sync_error',
+          error: err?.message || 'Fout bij synchroniseren.',
+        },
+      }));
+    } finally {
+      setSyncingService(null);
+    }
   };
 
   const handleConnectGmail = async () => {
@@ -242,14 +296,14 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
       });
     } catch (err: any) {
       console.warn('Gmail OAuth error:', err);
-      const isAuthClosed = err?.code === 'auth/popup-closed-by-user';
+      const isAuthClosed = err?.message?.includes('geannuleerd') || err?.message?.includes('closed');
       const isAuthExpired = err?.message === 'AUTHENTICATION_EXPIRED';
 
       const userFacingErr = isAuthClosed
         ? 'Inlogvenster geannuleerd.'
         : isAuthExpired
         ? 'Authenticatie verlopen.'
-        : err?.message || 'Inloggen bij Google mislukt.';
+        : err?.message || 'Inloggen bij Google Gmail mislukt.';
 
       setAuthError(userFacingErr);
 
@@ -339,22 +393,69 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
   };
 
   const handleConnectHealthConnect = async () => {
+    setAuthError(null);
     setSyncingService('healthConnect');
-    const existingSteps = integrations.healthConnect.stepsToday ?? integrations.healthConnect.todaySteps;
-    const res = await IntegrationsService.connectService('health_connect', { platform: 'android', stepsToday: existingSteps });
-    const syncedSteps = res?.data?.stepsToday ?? existingSteps;
-    onUpdateIntegrations((prev) => ({
-      ...prev,
-      healthConnect: {
-        ...prev.healthConnect,
-        status: 'connected',
-        platform: 'android',
-        lastSync: new Date().toISOString(),
-        stepsToday: syncedSteps,
-        todaySteps: syncedSteps,
-      },
-    }));
-    setSyncingService(null);
+    try {
+      onUpdateIntegrations((prev) => ({
+        ...prev,
+        healthConnect: { ...prev.healthConnect, status: 'connecting' },
+      }));
+
+      const authRes = await googleSignInForService([
+        'https://www.googleapis.com/auth/fitness.activity.read',
+      ]);
+
+      if (!authRes || !authRes.accessToken) {
+        throw new Error('Geen OAuth toegang gekregen voor Google Fit.');
+      }
+
+      const { stepsToday } = await fetchRealGoogleFitStepsFromApi(authRes.accessToken);
+      const now = new Date().toISOString();
+
+      onUpdateIntegrations((prev) => ({
+        ...prev,
+        healthConnect: {
+          ...prev.healthConnect,
+          status: 'connected',
+          platform: 'web',
+          lastSync: now,
+          stepsToday: stepsToday,
+          todaySteps: stepsToday,
+          isStepsOnly: true,
+          isPrivateOnly: true,
+          error: undefined,
+        },
+      }));
+
+      await IntegrationsService.connectService('health_connect', {
+        platform: 'web',
+        stepsToday: stepsToday,
+        verified: true,
+      });
+    } catch (err: any) {
+      console.warn('Google Fit OAuth error:', err);
+      const isAuthClosed = err?.message?.includes('geannuleerd');
+      const isAuthExpired = err?.message === 'AUTHENTICATION_EXPIRED';
+
+      const userFacingErr = isAuthClosed
+        ? 'Inlogvenster geannuleerd.'
+        : isAuthExpired
+        ? 'Authenticatie verlopen.'
+        : err?.message || 'Koppelen met Google Fit mislukt.';
+
+      setAuthError(userFacingErr);
+
+      onUpdateIntegrations((prev) => ({
+        ...prev,
+        healthConnect: {
+          ...prev.healthConnect,
+          status: isAuthExpired ? 'authentication_expired' : 'not_connected',
+          error: userFacingErr,
+        },
+      }));
+    } finally {
+      setSyncingService(null);
+    }
   };
 
   const handleDisconnectHealthConnect = async () => {
@@ -368,43 +469,119 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
         lastSync: undefined,
         stepsToday: undefined,
         todaySteps: undefined,
+        error: undefined,
       },
     }));
     setSyncingService(null);
   };
 
   const handleSyncHealthConnect = async () => {
+    setAuthError(null);
     setSyncingService('healthConnect');
-    const res = await IntegrationsService.syncService('health_connect');
-    const syncedSteps = res?.data?.stepsToday ?? integrations.healthConnect.stepsToday ?? integrations.healthConnect.todaySteps;
-    onUpdateIntegrations((prev) => ({
-      ...prev,
-      healthConnect: {
-        ...prev.healthConnect,
-        lastSync: new Date().toISOString(),
-        stepsToday: syncedSteps,
-        todaySteps: syncedSteps,
-      },
-    }));
-    setSyncingService(null);
+    try {
+      let token = getCachedAccessToken();
+      if (!token) {
+        const authRes = await googleSignInForService([
+          'https://www.googleapis.com/auth/fitness.activity.read',
+        ]);
+        token = authRes.accessToken;
+      }
+
+      const { stepsToday } = await fetchRealGoogleFitStepsFromApi(token);
+      const now = new Date().toISOString();
+
+      onUpdateIntegrations((prev) => ({
+        ...prev,
+        healthConnect: {
+          ...prev.healthConnect,
+          status: 'connected',
+          lastSync: now,
+          stepsToday: stepsToday,
+          todaySteps: stepsToday,
+          error: undefined,
+        },
+      }));
+
+      await IntegrationsService.syncService('health_connect');
+    } catch (err: any) {
+      console.warn('Health sync error:', err);
+      onUpdateIntegrations((prev) => ({
+        ...prev,
+        healthConnect: {
+          ...prev.healthConnect,
+          status: 'sync_error',
+          error: err?.message || 'Fout bij synchroniseren.',
+        },
+      }));
+      setAuthError('Google Fit synchronisatie mislukt.');
+    } finally {
+      setSyncingService(null);
+    }
   };
 
   const handleConnectInstagram = async () => {
+    const token = instagramTokenInput.trim();
     const username = usernameInput.trim() || '@mariluna.studio';
+
+    if (!token) {
+      setAuthError('Een Meta / Instagram Graph Access Token is vereist om de Instagram API te verifiëren.');
+      onUpdateIntegrations((prev) => ({
+        ...prev,
+        instagram: {
+          ...prev.instagram,
+          status: 'needs_attention',
+          error: 'Meta Graph Access Token vereist.',
+          posts: [],
+        },
+      }));
+      setConnectModalService(null);
+      return;
+    }
+
+    setAuthError(null);
     setSyncingService('instagram');
-    await IntegrationsService.connectService('mariluna_instagram', { accountUsername: username });
-    onUpdateIntegrations((prev) => ({
-      ...prev,
-      instagram: {
-        ...prev.instagram,
-        status: 'connected',
-        accountUsername: username,
-        lastSync: new Date().toISOString(),
-      },
-    }));
-    setSyncingService(null);
-    setConnectModalService(null);
-    setUsernameInput('');
+
+    try {
+      const { posts, accountUsername } = await fetchRealInstagramPostsFromApi(token);
+      const now = new Date().toISOString();
+
+      onUpdateIntegrations((prev) => ({
+        ...prev,
+        instagram: {
+          ...prev.instagram,
+          status: 'connected',
+          accountUsername: accountUsername || username,
+          accountType: 'business',
+          lastSync: now,
+          posts: posts,
+          error: undefined,
+        },
+      }));
+
+      await IntegrationsService.connectService('mariluna_instagram', {
+        accountUsername: accountUsername || username,
+        posts: posts,
+        verified: true,
+      });
+    } catch (err: any) {
+      console.warn('Instagram Graph API error:', err);
+      const userFacingErr = err?.message || 'Instagram token verificatie mislukt.';
+      setAuthError(userFacingErr);
+
+      onUpdateIntegrations((prev) => ({
+        ...prev,
+        instagram: {
+          ...prev.instagram,
+          status: 'needs_attention',
+          error: userFacingErr,
+          posts: [],
+        },
+      }));
+    } finally {
+      setSyncingService(null);
+      setConnectModalService(null);
+      setInstagramTokenInput('');
+    }
   };
 
   const handleDisconnectInstagram = async () => {
@@ -418,6 +595,7 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
         accountUsername: undefined,
         lastSync: undefined,
         posts: [],
+        error: undefined,
       },
     }));
     setSyncingService(null);
@@ -564,7 +742,9 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
                   {getStatusBadge(
                     integrations.calendar.status,
                     integrations.calendar.status === 'connected'
-                      ? (isNl ? 'Verbonden (Alleen-lezen)' : 'Connected (Read-only)')
+                      ? integrations.calendar.readOnly
+                        ? (isNl ? 'Verbonden • Alleen-lezen' : 'Connected • Read-only')
+                        : (isNl ? 'Verbonden • Lezen & schrijven' : 'Connected • Read & write')
                       : undefined
                   )}
                 </div>
@@ -779,9 +959,14 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
               <div>
                 <div className="flex items-center gap-3">
                   <h3 className="font-serif text-lg font-medium text-[#2C2825]">
-                    Health Connect
+                    Health Connect / Google Fit
                   </h3>
-                  {getStatusBadge(integrations.healthConnect.status)}
+                  {getStatusBadge(
+                    integrations.healthConnect.status,
+                    integrations.healthConnect.status === 'connected'
+                      ? (isNl ? 'Verbonden • Google Fit' : 'Connected • Google Fit')
+                      : undefined
+                  )}
                 </div>
                 <p className="text-xs text-[#7A7167] mt-0.5">
                   {isNl
@@ -983,18 +1168,38 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
                 <X className="w-4 h-4" />
               </button>
             </div>
-            <div className="space-y-2">
-              <label className="block text-xs font-medium text-[#5A5145]">
-                {isNl ? 'Instagram Gebruikersnaam' : 'Instagram Username'}
-              </label>
-              <input
-                type="text"
-                placeholder="@mariluna.studio"
-                value={usernameInput}
-                onChange={(e) => setUsernameInput(e.target.value)}
-                className="w-full px-3.5 py-2 rounded-xl bg-[#FFFFFF] border border-[#D5CCBE] text-xs text-[#2C2825]"
-                autoFocus
-              />
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-medium text-[#5A5145] mb-1">
+                  {isNl ? 'Instagram Gebruikersnaam' : 'Instagram Username'}
+                </label>
+                <input
+                  type="text"
+                  placeholder="@mariluna.studio"
+                  value={usernameInput}
+                  onChange={(e) => setUsernameInput(e.target.value)}
+                  className="w-full px-3.5 py-2 rounded-xl bg-[#FFFFFF] border border-[#D5CCBE] text-xs text-[#2C2825]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-[#5A5145] mb-1">
+                  {isNl ? 'Meta Graph API Access Token' : 'Meta Graph API Access Token'}
+                </label>
+                <input
+                  type="password"
+                  placeholder="EAAG..."
+                  value={instagramTokenInput}
+                  onChange={(e) => setInstagramTokenInput(e.target.value)}
+                  className="w-full px-3.5 py-2 rounded-xl bg-[#FFFFFF] border border-[#D5CCBE] text-xs text-[#2C2825]"
+                  autoFocus
+                />
+                <p className="text-[10px] text-[#8C8377] mt-1 leading-relaxed">
+                  {isNl
+                    ? 'Vul je actieve Instagram/Meta Graph API token in om posts te synchroniseren. Geen verbinding mogelijk zonder geverifieerde token.'
+                    : 'Provide your active Meta Graph API token to sync posts.'}
+                </p>
+              </div>
             </div>
             <div className="flex items-center justify-end gap-2 pt-2">
               <button

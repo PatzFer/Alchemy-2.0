@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, Check, Sun, Moon, Zap, Smile, Heart, Clock } from 'lucide-react';
 import { DailyCheckIn, EnergyLevel, MoodState, PhysicalComfort, Language } from '../types';
+import { calculateSleepDurationMinutes, formatSleepDuration } from '../lib/healthUtils';
 
 interface DailyCheckInModalProps {
   isOpen: boolean;
@@ -33,6 +34,9 @@ export const DailyCheckInModal: React.FC<DailyCheckInModalProps> = ({
     existingCheckIn?.physicalDiscomfort || 'comfortable'
   );
   const [notes, setNotes] = useState<string>(existingCheckIn?.notes || '');
+
+  const durationMins = calculateSleepDurationMinutes(sleepTime, wakeTime);
+  const formattedDuration = formatSleepDuration(durationMins);
 
   const handleSave = () => {
     const checkIn: DailyCheckIn = {
@@ -79,30 +83,40 @@ export const DailyCheckInModal: React.FC<DailyCheckInModalProps> = ({
         </p>
 
         {/* Dynamic sleep and wake times */}
-        <div className="grid grid-cols-2 gap-3 p-3.5 rounded-2xl bg-[#FFFFFF] border border-[#E5DFD3]">
-          <div>
-            <label className="text-[10px] uppercase font-semibold text-[#8C8377] flex items-center gap-1">
-              <Moon className="w-3 h-3 text-[#7E694E]" />
-              <span>{isNl ? 'Slaaptijd gisteravond' : 'Sleep time'}</span>
-            </label>
-            <input
-              type="time"
-              value={sleepTime}
-              onChange={(e) => setSleepTime(e.target.value)}
-              className="w-full mt-1 p-1.5 rounded-lg border border-[#D5CCBE] text-xs font-mono"
-            />
+        <div className="p-3.5 rounded-2xl bg-[#FFFFFF] border border-[#E5DFD3] space-y-2">
+          <div className="flex items-center justify-between text-xs">
+            <span className="font-serif font-medium text-[#2C2825]">Nachtrust & Slaapvenster</span>
+            {formattedDuration && (
+              <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-[#FAF6EE] text-[#8C7654] border border-[#E6DBCE] font-semibold">
+                ⏱ {formattedDuration} slaap
+              </span>
+            )}
           </div>
-          <div>
-            <label className="text-[10px] uppercase font-semibold text-[#8C8377] flex items-center gap-1">
-              <Sun className="w-3 h-3 text-[#7E694E]" />
-              <span>{isNl ? 'Waaktijd vanmorgen' : 'Wake time'}</span>
-            </label>
-            <input
-              type="time"
-              value={wakeTime}
-              onChange={(e) => setWakeTime(e.target.value)}
-              className="w-full mt-1 p-1.5 rounded-lg border border-[#D5CCBE] text-xs font-mono"
-            />
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-[10px] uppercase font-semibold text-[#8C8377] flex items-center gap-1">
+                <Moon className="w-3 h-3 text-[#7E694E]" />
+                <span>{isNl ? 'Slaaptijd gisteravond' : 'Sleep time'}</span>
+              </label>
+              <input
+                type="time"
+                value={sleepTime}
+                onChange={(e) => setSleepTime(e.target.value)}
+                className="w-full mt-1 p-1.5 rounded-lg border border-[#D5CCBE] text-xs font-mono"
+              />
+            </div>
+            <div>
+              <label className="text-[10px] uppercase font-semibold text-[#8C8377] flex items-center gap-1">
+                <Sun className="w-3 h-3 text-[#7E694E]" />
+                <span>{isNl ? 'Waaktijd vanmorgen' : 'Wake time'}</span>
+              </label>
+              <input
+                type="time"
+                value={wakeTime}
+                onChange={(e) => setWakeTime(e.target.value)}
+                className="w-full mt-1 p-1.5 rounded-lg border border-[#D5CCBE] text-xs font-mono"
+              />
+            </div>
           </div>
         </div>
 

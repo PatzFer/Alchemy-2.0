@@ -1,5 +1,6 @@
 import { Router, Request, Response } from "express";
 import { GoogleGenAI } from "@google/genai";
+import { classifyIntent, buildIntentAwareResponse, isDutchMessage } from "./brainEngine";
 
 const router = Router();
 
@@ -149,16 +150,23 @@ Geef een JSON terug in dit format:
  */
 router.post("/query", async (req: Request, res: Response) => {
   try {
-    const { query, context, relevance } = req.body;
+    const { query = '', context = {}, relevance } = req.body;
     const ai = getAI();
+
+    const intentObj = classifyIntent(query, [], context);
 
     if (!ai) {
       return res.json({
-        answer: `[Alchemy Brain offline-modus] Wat betreft "${query}": houd je dagritme overzichtelijk, bewaak je ademruimte en focus vandaag op maximaal één hoofdprioriteit.`,
+        answer: buildIntentAwareResponse(intentObj, query, context, "all"),
       });
     }
 
+    const isDutch = isDutchMessage(query);
+
     const prompt = `Patricia vraagt: "${query}"
+
+GECLASSIFICEERDE INTENTIE: ${intentObj.intent.toUpperCase()}
+TARGET TIMEFRAME/DAG: ${intentObj.resolvedTargetDay || "N/A"}
 
 TOEGESTANE CONTEXT:
 ${JSON.stringify(context || {})}
@@ -166,19 +174,27 @@ ${JSON.stringify(context || {})}
 RELEVANTIE EN FILTERTOELICHTING:
 ${relevance?.privacyRationale || "Filter actief."}
 
-Geef een kort, doordacht, warm en praktisch antwoord in helder Nederlands. Gebruik maximaal 2-3 bullets indien relevant. Geen wollige uitweidingen.`;
+INTENTIE-SPECIFIEKE REGELS:
+- Indien INTENTIE = GREETING ("Hallo"): Geef een korte, warme groet van 1-2 zinnen. Geen strategische coaching speech.
+- Indien INTENTIE = CALENDAR_AGENDA ("Wat staat er op mijn planning?"): Bekijk de kalender en taken in context. Als er geen items zijn voor die dag, zeg eerlijk: "${isDutch ? "Er staan momenteel geen afspraken of taken op je planning voor " + (intentObj.resolvedTargetDay || "deze dag") + "." : "There are no events or tasks scheduled for " + (intentObj.resolvedTargetDay || "this day") + "."}".
+- Indien INTENTIE = TODAYS_PRIORITIES ("Waar moet ik me nu op richten?"): Geef 1-3 concrete prioriteiten op basis van de ECHTE agenda, taken, doelen en de dagelijkse intentie (todayIntention) in de context.
+- Vragen over Doelen ("Wat moet ik doen voor Mariluna?"): Bekijk de opgeslagen doelen (goals), gekoppelde projecten en taken in de context. Maak NOOIT automatisch taken aan zonder expliciete toestemming.
+- Indien INTENTIE = PRICING_OFFERING_QUESTION ("Wat kost X?"): Zoek in het opgeslagen Mariluna aanbod in context. Noem de exacte opgeslagen prijs. Als er geen prijs bekend is, zeg dat eerlijk. Verzin NOOIT een prijs.
+- VERZIN NOOIT fictieve afspraken, taken, doelen, intenties of prijzen.
+
+Geef een kort, doordacht, warm en praktisch antwoord in ${isDutch ? "helder Nederlands" : "het Engels"}.`;
 
     const response = await ai.models.generateContent({
       model: "gemini-3.8-flash",
       contents: prompt,
       config: {
         systemInstruction: BRAIN_SYSTEM_PROMPT,
-        temperature: 0.5,
+        temperature: 0.3,
       },
     });
 
     return res.json({
-      answer: response.text?.trim() || "Ik denk met je mee. Hoe kan ik je planning vandaag het best verlichten?",
+      answer: response.text?.trim() || buildIntentAwareResponse(intentObj, query, context, "all"),
     });
   } catch (err: any) {
     console.error("Brain query error:", err);

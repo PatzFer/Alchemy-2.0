@@ -12,6 +12,7 @@ import {
   NutritionState,
   CycleProfile,
   DailyCheckIn,
+  DailyIntention,
   NotificationSettings,
   SmartNotification,
   ProactiveSuggestion,
@@ -83,6 +84,7 @@ export interface AppState {
   nutrition: NutritionState;
   cycleProfile: CycleProfile;
   dailyCheckIns: DailyCheckIn[];
+  intentions?: DailyIntention[];
   wellbeing: WellbeingState;
   notificationSettings: NotificationSettings;
   notifications: SmartNotification[];
@@ -161,6 +163,7 @@ export const INITIAL_STATE: AppState = {
     lastUpdated: new Date().toISOString(),
   },
   dailyCheckIns: [],
+  intentions: [],
   wellbeing: EMPTY_WELLBEING_STATE,
   notificationSettings: DEFAULT_NOTIFICATION_SETTINGS,
   notifications: [],
@@ -825,6 +828,20 @@ export function loadState(): AppState {
     }
     const deduplicatedCheckIns = Array.from(checkInsMap.values());
 
+    const rawIntentions: DailyIntention[] = parsed.intentions || [];
+    const intentionsMap = new Map<string, DailyIntention>();
+    for (const item of rawIntentions) {
+      if (!item) continue;
+      const key = item.id || `${item.date}-${item.realm}`;
+      if (!intentionsMap.has(key)) {
+        intentionsMap.set(key, item);
+      } else {
+        const existing = intentionsMap.get(key)!;
+        intentionsMap.set(key, { ...existing, ...item });
+      }
+    }
+    const deduplicatedIntentions = Array.from(intentionsMap.values());
+
     return {
       ...INITIAL_STATE,
       ...parsed,
@@ -868,6 +885,7 @@ export function loadState(): AppState {
         },
       },
       dailyCheckIns: deduplicatedCheckIns,
+      intentions: deduplicatedIntentions,
       notifications: parsed.notifications || [],
       proactiveSuggestions: parsed.proactiveSuggestions || [],
       integrations: {

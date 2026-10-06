@@ -99,6 +99,7 @@ export const ThursdayPlanningModal: React.FC<ThursdayPlanningModalProps> = ({
 
   const handleGenerate = () => {
     const weekStartDate = dayConfigs[0]?.date || nextMonday.toISOString().split('T')[0];
+    const freshSeed = Date.now() + Math.floor(Math.random() * 100000);
     const newPlan = generateWeeklyPlan(
       weekStartDate,
       dayConfigs.map((c) => ({
@@ -110,7 +111,8 @@ export const ThursdayPlanningModal: React.FC<ThursdayPlanningModalProps> = ({
       inventory,
       feedbackHistory,
       [],
-      foodProfile
+      foodProfile,
+      freshSeed
     );
 
     onPlanGenerated(newPlan);
@@ -173,7 +175,7 @@ export const ThursdayPlanningModal: React.FC<ThursdayPlanningModalProps> = ({
           <div className="flex items-start gap-3 p-3.5 rounded-2xl bg-[#FAF6EE] border border-[#E9E1D2] text-xs">
             <ShieldCheck className="w-4 h-4 text-[#8C7654] shrink-0 mt-0.5" />
             <div className="space-y-0.5 text-[#5F5547] font-light leading-relaxed">
-              <strong className="font-medium text-[#2C2825]">Patz Culinaire Bron:</strong> Prioriteit voor 🇵🇹 Portugees, 🇧🇪 Belgisch en 🇮🇹 Italiaans met ~80-100g eiwit per dag. Couscous en quinoa zijn strikt uitgesloten.
+              <strong className="font-medium text-[#2C2825]">Patz Culinaire Bron:</strong> Prioriteit voor 🇵🇹 Portugees, 🇧🇪 Belgisch en 🇮🇹 Italiaans met ~80-100g eiwit per dag. Rijst uitsluitend als Portugese arroz carolino of risotto.
             </div>
           </div>
 

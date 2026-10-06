@@ -54,6 +54,19 @@ export type GoalStatus =
   | 'archived'
   | 'completed';
 
+export interface DailyIntention {
+  id: string;
+  title: string;
+  date: string; // YYYY-MM-DD
+  realm: Realm; // 'personal' | 'mariluna'
+  status: 'active' | 'completed' | 'snoozed' | 'dismissed';
+  completed: boolean;
+  completedAt?: string;
+  snoozedUntil?: string; // ISO string
+  lastPromptedDate?: string; // YYYY-MM-DD
+  createdAt: string;
+}
+
 export interface GoalMeasurableTarget {
   type: 'revenue' | 'clients' | 'bookings' | 'posts' | 'products_sold' | 'custom';
   targetValue: number;

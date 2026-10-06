@@ -822,3 +822,187 @@ export function generateHomeWorkoutSuggestion(options: {
     equipmentNeeded: Array.from(new Set(chosenExercises.map((e) => e.equipment))),
   };
 }
+
+/**
+ * Calculates sleep duration in minutes handling overnight crossings across midnight.
+ * e.g., "23:00" to "07:30" => 510 minutes (8h 30m)
+ */
+export function calculateSleepDurationMinutes(sleepTime?: string, wakeTime?: string): number | null {
+  if (!sleepTime || !wakeTime) return null;
+  const sParts = sleepTime.split(':').map(Number);
+  const wParts = wakeTime.split(':').map(Number);
+  if (sParts.length < 2 || wParts.length < 2) return null;
+  const [sH, sM] = sParts;
+  const [wH, wM] = wParts;
+  if (isNaN(sH) || isNaN(sM) || isNaN(wH) || isNaN(wM)) return null;
+
+  const startMins = sH * 60 + sM;
+  let endMins = wH * 60 + wM;
+
+  if (endMins <= startMins) {
+    endMins += 24 * 60; // crossed midnight
+  }
+
+  return endMins - startMins;
+}
+
+/**
+ * Formats sleep duration in minutes into readable Dutch string.
+ * e.g., 510 => "8u30", 480 => "8u00"
+ */
+export function formatSleepDuration(minutes: number | null): string {
+  if (minutes === null || minutes <= 0) return '';
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  if (mins === 0) return `${hours}u00`;
+  return `${hours}u${mins < 10 ? '0' : ''}${mins}`;
+}
+
+/**
+ * Maps EnergyLevel enum to a numeric value 1-5 for averaging and trend analysis.
+ */
+export function energyLevelToValue(energy?: DailyCheckIn['energy']): number {
+  switch (energy) {
+    case 'very_low': return 1;
+    case 'low': return 2;
+    case 'normal': return 3;
+    case 'good': return 4;
+    case 'high': return 5;
+    default: return 3;
+  }
+}
+
+/**
+ * Maps numeric energy average back to readable Dutch label.
+ */
+export function formatEnergyValueLabel(avg: number): string {
+  if (avg >= 4.5) return 'Hoog ⚡';
+  if (avg >= 3.5) return 'Goed ✨';
+  if (avg >= 2.5) return 'Normaal 🙂';
+  if (avg >= 1.5) return 'Laag 🌿';
+  return 'Zeer laag 😴';
+}
+
+/**
+ * Analyzes real dailyCheckIns dataset to compute factual trends without medical claims.
+ */
+export interface CheckInTrendSummary {
+  totalCheckInsCount: number;
+  averageEnergyValue?: number;
+  averageEnergyLabel?: string;
+  averageSleepMinutes?: number;
+  averageSleepFormatted?: string;
+  sleepEnergyInsight?: string;
+  moodFrequency: Record<string, number>;
+  dominantMood?: string;
+  hasEnoughDataForTrends: boolean;
+}
+
+export function calculateCheckInTrends(checkIns: DailyCheckIn[] = []): CheckInTrendSummary {
+  if (!checkIns || checkIns.length === 0) {
+    return {
+      totalCheckInsCount: 0,
+      moodFrequency: {},
+      hasEnoughDataForTrends: false,
+    };
+  }
+
+  // Deduplicate by date, keeping latest
+  const map = new Map<string, DailyCheckIn>();
+  checkIns.forEach((c) => map.set(c.date, c));
+  const uniqueList = Array.from(map.values()).sort((a, b) => b.date.localeCompare(a.date));
+
+  const total = uniqueList.length;
+  if (total < 3) {
+    return {
+      totalCheckInsCount: total,
+      moodFrequency: {},
+      hasEnoughDataForTrends: false,
+    };
+  }
+
+  let totalEnergy = 0;
+  let energyCount = 0;
+  let totalSleepMins = 0;
+  let sleepCount = 0;
+  const moodFrequency: Record<string, number> = {};
+  const sleepEnergyPairs: { sleepMins: number; energyVal: number }[] = [];
+
+  uniqueList.forEach((c) => {
+    if (c.energy) {
+      totalEnergy += energyLevelToValue(c.energy);
+      energyCount++;
+    }
+
+    const duration = calculateSleepDurationMinutes(c.sleepTime, c.wakeTime);
+    if (duration && duration > 0 && duration < 24 * 60) {
+      totalSleepMins += duration;
+      sleepCount++;
+
+      if (c.energy) {
+        sleepEnergyPairs.push({
+          sleepMins: duration,
+          energyVal: energyLevelToValue(c.energy),
+        });
+      }
+    }
+
+    if (c.mood) {
+      moodFrequency[c.mood] = (moodFrequency[c.mood] || 0) + 1;
+    }
+  });
+
+  const avgEnergyVal = energyCount > 0 ? Number((totalEnergy / energyCount).toFixed(1)) : undefined;
+  const avgSleepMins = sleepCount > 0 ? Math.round(totalSleepMins / sleepCount) : undefined;
+
+  let sleepEnergyInsight: string | undefined;
+  if (sleepEnergyPairs.length >= 3) {
+    const goodSleepDays = sleepEnergyPairs.filter((p) => p.sleepMins >= 450); // >= 7.5h
+    const lowerSleepDays = sleepEnergyPairs.filter((p) => p.sleepMins < 420); // < 7h
+
+    if (goodSleepDays.length > 0 && lowerSleepDays.length > 0) {
+      const avgEnergyGoodSleep = goodSleepDays.reduce((a, b) => a + b.energyVal, 0) / goodSleepDays.length;
+      const avgEnergyLowerSleep = lowerSleepDays.reduce((a, b) => a + b.energyVal, 0) / lowerSleepDays.length;
+
+      if (avgEnergyGoodSleep - avgEnergyLowerSleep >= 0.5) {
+        sleepEnergyInsight = `Je gerapporteerde energie was over de afgelopen periode gemiddeld hoger (${formatEnergyValueLabel(avgEnergyGoodSleep)}) op dagen met meer dan 7,5 uur slaap vergeleken met kortere nachten (${formatEnergyValueLabel(avgEnergyLowerSleep)}).`;
+      } else if (avgEnergyLowerSleep - avgEnergyGoodSleep >= 0.5) {
+        sleepEnergyInsight = `Je gerapporteerde energie bleef relatief stabiel, ongeacht kleine variaties in de opgemeten nachtrust.`;
+      }
+    }
+  }
+
+  let dominantMood: string | undefined;
+  let maxMoodCount = 0;
+  Object.entries(moodFrequency).forEach(([m, count]) => {
+    if (count > maxMoodCount) {
+      maxMoodCount = count;
+      dominantMood = m;
+    }
+  });
+
+  return {
+    totalCheckInsCount: total,
+    averageEnergyValue: avgEnergyVal,
+    averageEnergyLabel: avgEnergyVal ? formatEnergyValueLabel(avgEnergyVal) : undefined,
+    averageSleepMinutes: avgSleepMins,
+    averageSleepFormatted: avgSleepMins ? formatSleepDuration(avgSleepMins) : undefined,
+    sleepEnergyInsight,
+    moodFrequency,
+    dominantMood,
+    hasEnoughDataForTrends: true,
+  };
+}
+
+/**
+ * Purges daily check-ins older than retentionMonths (default 2 months / 60 days).
+ * Strictly affects ONLY dailyCheckIns; leaves all other Wellbeing data intact.
+ */
+export function purgeExpiredDailyCheckIns(checkIns: DailyCheckIn[] = [], retentionMonths = 2): DailyCheckIn[] {
+  if (!checkIns || checkIns.length === 0) return [];
+  const now = new Date();
+  const cutoff = new Date(now.getTime() - retentionMonths * 30 * 24 * 60 * 60 * 1000);
+  const cutoffStr = cutoff.toISOString().split('T')[0];
+
+  return checkIns.filter((c) => c.date >= cutoffStr);
+}

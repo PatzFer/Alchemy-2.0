@@ -42,6 +42,8 @@ import {
   AssistantMessage,
   CycleProfile,
   DailyCheckIn,
+  DailyIntention,
+  Realm,
   NotificationSettings,
   SmartNotification,
   ProactiveSuggestion,
@@ -50,6 +52,8 @@ import {
 import { evaluateSmartNotifications } from './lib/notificationEngine';
 import { applyFoundationToAppState } from './lib/foundationDefaults';
 import { Sparkles } from 'lucide-react';
+import { MorningCheckInModal } from './components/MorningCheckInModal';
+import { purgeExpiredDailyCheckIns } from './lib/healthUtils';
 
 export default function App() {
   const [state, setState] = useState<AppState>(() => loadState());
@@ -130,6 +134,26 @@ export default function App() {
     }
     setIsAppAuthenticated(false);
     setInactivityLocked(false);
+  };
+
+  const [isMorningModalOpen, setIsMorningModalOpen] = useState(false);
+
+  // Morning Check-in trigger once per day
+  useEffect(() => {
+    if (!isAppAuthenticated) return;
+    const todayStr = new Date().toISOString().split('T')[0];
+    const lastShown = localStorage.getItem('lastMorningCheckInShownDate');
+    const todayCheckIn = state.dailyCheckIns?.find((c) => c.date === todayStr);
+
+    if (lastShown !== todayStr && !todayCheckIn) {
+      setIsMorningModalOpen(true);
+    }
+  }, [isAppAuthenticated]);
+
+  const handleDismissMorningModal = () => {
+    const todayStr = new Date().toISOString().split('T')[0];
+    localStorage.setItem('lastMorningCheckInShownDate', todayStr);
+    setIsMorningModalOpen(false);
   };
 
   // Quick Task Modal from Today view
@@ -332,6 +356,94 @@ export default function App() {
     }));
   };
 
+  // Intentions handlers
+  const handleSaveIntention = (title: string, realm: Realm = 'personal', dateStr?: string) => {
+    const targetDate = dateStr || new Date().toISOString().split('T')[0];
+    const cleanTitle = title.trim();
+    if (!cleanTitle) return;
+
+    setState((prev) => {
+      const existingList = prev.intentions || [];
+      const existingIndex = existingList.findIndex(
+        (i) => i.date === targetDate && i.realm === realm
+      );
+
+      if (existingIndex >= 0) {
+        const updatedList = [...existingList];
+        updatedList[existingIndex] = {
+          ...updatedList[existingIndex],
+          title: cleanTitle,
+          status: 'active',
+          completed: false,
+        };
+        return { ...prev, intentions: updatedList };
+      } else {
+        const newIntention: DailyIntention = {
+          id: `int-${targetDate}-${Date.now()}`,
+          title: cleanTitle,
+          date: targetDate,
+          realm: realm,
+          status: 'active',
+          completed: false,
+          createdAt: new Date().toISOString(),
+        };
+        return { ...prev, intentions: [newIntention, ...existingList] };
+      }
+    });
+  };
+
+  const handleCompleteIntention = (intentionId: string) => {
+    const todayStr = new Date().toISOString().split('T')[0];
+    setState((prev) => ({
+      ...prev,
+      intentions: (prev.intentions || []).map((i) =>
+        i.id === intentionId
+          ? {
+              ...i,
+              completed: true,
+              status: 'completed',
+              completedAt: new Date().toISOString(),
+              lastPromptedDate: todayStr,
+            }
+          : i
+      ),
+    }));
+  };
+
+  const handleSnoozeIntention = (intentionId: string, minutes: number = 120) => {
+    const snoozedUntilTime = new Date(Date.now() + minutes * 60 * 1000).toISOString();
+    const todayStr = new Date().toISOString().split('T')[0];
+    setState((prev) => ({
+      ...prev,
+      intentions: (prev.intentions || []).map((i) =>
+        i.id === intentionId
+          ? {
+              ...i,
+              status: 'snoozed',
+              snoozedUntil: snoozedUntilTime,
+              lastPromptedDate: todayStr,
+            }
+          : i
+      ),
+    }));
+  };
+
+  const handleDismissIntentionPrompt = (intentionId: string) => {
+    const todayStr = new Date().toISOString().split('T')[0];
+    setState((prev) => ({
+      ...prev,
+      intentions: (prev.intentions || []).map((i) =>
+        i.id === intentionId
+          ? {
+              ...i,
+              status: 'dismissed',
+              lastPromptedDate: todayStr,
+            }
+          : i
+      ),
+    }));
+  };
+
   // Ideas handlers
   const handleSaveIdea = (ideaPayload: Partial<Idea>) => {
     setState((prev) => {
@@ -484,12 +596,19 @@ export default function App() {
       let updated: DailyCheckIn[];
       if (existingIndex >= 0) {
         updated = [...prev.dailyCheckIns];
-        updated[existingIndex] = checkIn;
+        updated[existingIndex] = {
+          ...updated[existingIndex],
+          ...checkIn,
+          id: updated[existingIndex].id || checkIn.id,
+        };
       } else {
         updated = [checkIn, ...prev.dailyCheckIns];
       }
-      return { ...prev, dailyCheckIns: updated };
+      // Apply 2-month retention purge
+      const purged = purgeExpiredDailyCheckIns(updated, 2);
+      return { ...prev, dailyCheckIns: purged };
     });
+    handleDismissMorningModal();
   };
 
   // Notification handlers
@@ -804,6 +923,11 @@ export default function App() {
             cycleProfile={state.cycleProfile}
             dailyCheckIns={state.dailyCheckIns}
             onSaveDailyCheckIn={handleSaveDailyCheckIn}
+            intentions={state.intentions}
+            onSaveIntention={handleSaveIntention}
+            onCompleteIntention={handleCompleteIntention}
+            onSnoozeIntention={handleSnoozeIntention}
+            onDismissIntention={handleDismissIntentionPrompt}
             proactiveSuggestions={state.proactiveSuggestions}
             onDismissSuggestion={handleDismissSuggestion}
             onSelectTab={setCurrentTab}
@@ -1109,6 +1233,7 @@ export default function App() {
         onExecuteAction={handleExecuteAssistantAction}
         wellbeing={state.wellbeing}
         dailyCheckIns={state.dailyCheckIns}
+        intentions={state.intentions}
         activeContextItem={activeContextItem}
       />
 
@@ -1195,6 +1320,17 @@ export default function App() {
             </form>
           </div>
         </div>
+      )}
+
+      {/* Morning Check-In Modal on first daily app launch */}
+      {isMorningModalOpen && (
+        <MorningCheckInModal
+          isOpen={isMorningModalOpen}
+          onClose={handleDismissMorningModal}
+          onSaveCheckIn={handleSaveDailyCheckIn}
+          existingCheckIn={state.dailyCheckIns?.find((c) => c.date === new Date().toISOString().split('T')[0])}
+          lang="nl"
+        />
       )}
     </div>
   );

@@ -12,7 +12,7 @@ import {
   MessageSquare,
   ShieldCheck,
 } from 'lucide-react';
-import { AssistantMessage, Task, Goal, Idea, LifeProfile, MemoryItem, Realm, WellbeingState, Project, CalendarEvent, ContentPlan, MarilunaOffering, DailyCheckIn } from '../types';
+import { AssistantMessage, Task, Goal, Idea, LifeProfile, MemoryItem, Realm, WellbeingState, Project, CalendarEvent, ContentPlan, MarilunaOffering, DailyCheckIn, DailyIntention } from '../types';
 import { sendChatMessage } from '../lib/aiService';
 
 interface AIAssistantDrawerProps {
@@ -33,6 +33,7 @@ interface AIAssistantDrawerProps {
   onExecuteAction: (action: any) => void;
   wellbeing?: WellbeingState;
   dailyCheckIns?: DailyCheckIn[];
+  intentions?: DailyIntention[];
   activeContextItem?: any;
 }
 
@@ -54,6 +55,7 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
   onExecuteAction,
   wellbeing,
   dailyCheckIns = [],
+  intentions = [],
   activeContextItem,
 }) => {
   const [inputText, setInputText] = useState('');
@@ -106,6 +108,8 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
         status: t.status,
         priority: t.priority,
         realm: t.realm,
+        goalId: t.goalId,
+        projectId: t.projectId,
         estimatedDuration: t.estimatedDuration,
       })),
       projects: (projects || []).map((p) => ({
@@ -113,6 +117,8 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
         title: p.title,
         status: p.status,
         realm: p.realm,
+        goalId: p.goalId,
+        taskIds: p.taskIds || [],
         targetDate: p.targetDate,
         description: p.description,
       })),
@@ -135,7 +141,26 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
         targetDate: g.targetDate,
         realm: g.realm,
         status: g.status,
+        connectedProjectIds: g.connectedProjectIds || [],
+        connectedTaskIds: g.connectedTaskIds || [],
       })),
+      intentions: (intentions || [])
+        .filter((i) => activeWorld === 'all' || i.realm === activeWorld)
+        .map((i) => ({
+          id: i.id,
+          title: i.title,
+          date: i.date,
+          realm: i.realm,
+          status: i.status,
+          completed: i.completed,
+        })),
+      todayIntention: (() => {
+        const todayStr = new Date().toISOString().split('T')[0];
+        const found = (intentions || []).find(
+          (i) => i.date === todayStr && (activeWorld === 'all' || i.realm === activeWorld)
+        );
+        return found ? { id: found.id, title: found.title, status: found.status, completed: found.completed } : undefined;
+      })(),
       contentPlan: contentPlan ? {
         quarterTheme: contentPlan.quarterTheme,
         monthlyTheme: contentPlan.monthlyTheme,

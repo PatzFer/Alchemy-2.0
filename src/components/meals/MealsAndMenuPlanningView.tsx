@@ -387,7 +387,7 @@ export const MealsAndMenuPlanningView: React.FC<MealsAndMenuPlanningViewProps> =
             <ShieldCheck className="w-4 h-4 text-[#8C7654] shrink-0" />
             <span>
               <strong>Patz Regels actief:</strong> 🇵🇹 Portugees (1), 🇧🇪 Belgisch (2), 🇮🇹 Italiaans (3) •{' '}
-              <span className="text-[#991B1B] font-medium">Geen couscous & geen quinoa</span> • Gegaarde groenten
+              <span className="text-[#8C7654] font-medium">Rijst: Arroz Carolino & Risotto</span> • Gegaarde groenten
             </span>
           </div>
           <div className="flex items-center gap-1.5 text-[11px] text-[#8C8275]">
@@ -711,7 +711,7 @@ export const MealsAndMenuPlanningView: React.FC<MealsAndMenuPlanningViewProps> =
                 Curated Receptenboek
               </h3>
               <p className="text-xs text-[#7A7167] font-light">
-                Gefilterd op Patricia’s brede Zuid-Europese & Europese profiel (Portugees, Italiaans, Spaans, Grieks, Frans, Belgisch) en gegarandeerd vrij van couscous en quinoa.
+                Gefilterd op Patricia’s brede Zuid-Europese & Europese profiel (Portugees, Italiaans, Spaans, Grieks, Frans, Belgisch) en afgestemd op jouw rijst- en eiwitvoorkeuren.
               </p>
             </div>
 
