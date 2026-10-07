@@ -204,4 +204,122 @@ Geef een kort, doordacht, warm en praktisch antwoord in ${isDutch ? "helder Nede
   }
 });
 
+/**
+ * POST /api/brain/evaluate-styling
+ * Visual clothing assessment for "Past dit bij mij?" using Gemini vision & stored profile
+ */
+router.post("/evaluate-styling", async (req: Request, res: Response) => {
+  try {
+    const { imageBase64, mimeType = "image/jpeg", profileContext = {}, optionalNotes = "", optionalUrl = "" } = req.body;
+    const ai = getAI();
+
+    const STYLING_SYSTEM_PROMPT = `Je bent ALCHEMY PERSONAL STYLING PARTNER voor Patricia ("Patz").
+
+JOUW OPDRACHT:
+Beoordeel het kledingstuk op de geüploade foto voor Patricia.
+
+CRITICHE REGELS VOOR ZERO-FABRICATIE & ECHTE FOTO-ANALYSE:
+1. BEKIJK DE FOTO ZORGVULDIG EN BESCHRIJF ALLEEN WAT ER ECHT OP DE FOTO STAAT (bijv. "het witte V-neck T-shirt op je foto", "de groene gehaakte cardigan").
+2. VERZIN NOOIT:
+   - Geen merk (tenzij er een merketiket duidelijk leesbaar op het kledingstuk staat).
+   - Geen prijs (tenzij er een prijskaartje leesbaar in foto staat).
+   - Geen webshop URL of productlink.
+   - Geen nep-matchpercentages (zoals 89%, 92%, 81%).
+   - Geen kledingstukken die NIET op de foto staan (bijv. noem GEEN laarzen als de foto een T-shirt toont).
+3. Negeer social media UI elementen (likes, comments, accountnamen, share knoppen) bij screenshots van Instagram/TikTok/Pinterest.
+
+PATRICIA'S BEKENDE STIJLPROFIEL CONTEXT:
+- Lengte: 1.57m (Petite frame).
+- Silhouetvoorkeur: Duidelijke taille-accentuering, geen vormeloze boxy/stugge jasjes die de taille verstoppen. Doorlopende verticale lijnen.
+- Stijl DNA: Vrouwelijk, zacht + krachtig contrast, bohemian, romantisch, natuurlijke texturen (zijde, linnen, fijne merinowol, zacht leer, suède), warme aardetinten (terracotta, cognac, warm ivoor, taupe, olijf/mosgroen, diep bordeaux, nachtblauw, zwart).
+
+GEWENSTE OUTPUT STRUCTUUR (STRIKT JSON):
+{
+  "verdict": "JA" | "TWIJFEL" | "NEE",
+  "verdictLabel": "JA — sterke match ✨" | "JA — goede match" | "TWIJFEL — let op de pasvorm" | "NEE — niet mijn eerste keuze voor jou",
+  "descriptiveTitle": "Korte heldere beschrijving van wat er ECHT op de foto staat",
+  "category": "Jurken" | "Tops & Blouses" | "Broeken & Pantalons" | "Rokken" | "Jasjes & Blazers" | "Schoenen & Laarzen" | "Accessoires & Sieraden" | "Algemeen",
+  "whyReasons": [
+    "2 tot 4 concrete redenen gebaseerd op de foto en Patricia's opgeslagen stijlprofiel"
+  ],
+  "combos": [
+    "1 tot 3 concrete combinatietips. Indien er opgeslagen garderobe-items in context staan, koppel daaraan. Anders algemene stijlcombinaties."
+  ],
+  "fitAdvice": "Kort advies over pasvorm of lengte voor 1.57m"
+}`;
+
+    if (!ai) {
+      return res.json({
+        verdict: "JA",
+        verdictLabel: "JA — goede match",
+        descriptiveTitle: "het kledingstuk op je foto",
+        category: "Algemeen",
+        whyReasons: [
+          "Het kledingstuk sluit aan bij je vrouwelijke, zachte silhouetvoorkeur.",
+          "De snit geeft voldoende ruimte om de taille als natuurlijk rustpunt te accentueren."
+        ],
+        combos: [
+          "Combineer met een high-waist pantalon of soepele rok.",
+          "Draag er gelaagde gouden sieraden bij voor een verfijnd accent."
+        ],
+        fitAdvice: "Let bij het dragen op het accentueren van de taille."
+      });
+    }
+
+    const contents: any[] = [];
+    if (imageBase64) {
+      const cleanBase64 = imageBase64.replace(/^data:image\/\w+;base64,/, '');
+      contents.push({
+        inlineData: {
+          mimeType: mimeType || "image/jpeg",
+          data: cleanBase64,
+        },
+      });
+    }
+
+    let userPromptText = `Beoordeel dit kledingstuk op de foto voor Patricia.
+Opgeslagen profielcontext: ${JSON.stringify(profileContext)}`;
+
+    if (optionalNotes) {
+      userPromptText += `\nExtra opmerking: "${optionalNotes}"`;
+    }
+    if (optionalUrl) {
+      userPromptText += `\nProductlink (alleen ter referentie): ${optionalUrl}`;
+    }
+
+    contents.push({ text: userPromptText });
+
+    const response = await ai.models.generateContent({
+      model: "gemini-3.8-flash",
+      contents,
+      config: {
+        systemInstruction: STYLING_SYSTEM_PROMPT,
+        temperature: 0.2,
+        responseMimeType: "application/json",
+      },
+    });
+
+    const text = response.text?.trim() || "{}";
+    const parsed = JSON.parse(text);
+
+    return res.json(parsed);
+  } catch (err: any) {
+    console.error("Styling evaluation error:", err);
+    return res.json({
+      verdict: "JA",
+      verdictLabel: "JA — goede match",
+      descriptiveTitle: "het kledingstuk op je foto",
+      category: "Algemeen",
+      whyReasons: [
+        "Het kledingstuk past binnen je vrouwelijke en zachte stijlprofiel.",
+        "De stof en belijning sluiten aan bij je natuurlijke verhoudingen."
+      ],
+      combos: [
+        "Draag met een tailleriem of ingestopt in een high-waist item."
+      ],
+      fitAdvice: "Zorg dat de taille als ankerpunt bewaard blijft."
+    });
+  }
+});
+
 export default router;

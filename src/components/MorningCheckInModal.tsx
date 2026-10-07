@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Sparkles, Moon, Sun, Clock, Check, X } from 'lucide-react';
-import { DailyCheckIn, EnergyLevel, MoodState, Language } from '../types';
+import { DailyCheckIn, EnergyLevel, MoodState, Language, DailyIntention } from '../types';
 import { calculateSleepDurationMinutes, formatSleepDuration } from '../lib/healthUtils';
 
 interface MorningCheckInModalProps {
@@ -8,6 +8,7 @@ interface MorningCheckInModalProps {
   onClose: () => void;
   onSaveCheckIn: (checkIn: DailyCheckIn) => void;
   existingCheckIn?: DailyCheckIn;
+  todayIntention?: DailyIntention;
   lang?: Language;
 }
 
@@ -16,6 +17,7 @@ export const MorningCheckInModal: React.FC<MorningCheckInModalProps> = ({
   onClose,
   onSaveCheckIn,
   existingCheckIn,
+  todayIntention,
   lang = 'nl',
 }) => {
   if (!isOpen) return null;
@@ -74,6 +76,12 @@ export const MorningCheckInModal: React.FC<MorningCheckInModalProps> = ({
             <p className="text-xs text-[#7A7167] font-light leading-relaxed">
               Hoe is je nacht geweest? Korte check-in voor je persoonlijke ritme.
             </p>
+            {todayIntention && todayIntention.title && (
+              <div className="pt-1 flex items-center gap-1.5 text-[11px] text-[#8C7654] font-medium">
+                <Sparkles className="w-3 h-3 text-[#C5A880]" />
+                <span>Je intentie vandaag: "{todayIntention.title}"</span>
+              </div>
+            )}
           </div>
           <button
             type="button"

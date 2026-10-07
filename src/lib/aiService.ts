@@ -145,3 +145,36 @@ export async function requestIdeaAnalysis(rawIdea: string, realm: string): Promi
     };
   }
 }
+
+export async function requestStylingEvaluationPhoto(
+  imageBase64: string,
+  profileContext: Record<string, any>,
+  optionalNotes?: string,
+  optionalUrl?: string
+): Promise<any> {
+  try {
+    const mimeType = imageBase64.startsWith('data:image/png')
+      ? 'image/png'
+      : imageBase64.startsWith('data:image/webp')
+      ? 'image/webp'
+      : 'image/jpeg';
+
+    const res = await fetch('/api/brain/evaluate-styling', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        imageBase64,
+        mimeType,
+        profileContext,
+        optionalNotes,
+        optionalUrl,
+      }),
+    });
+
+    if (!res.ok) throw new Error(`Styling evaluation failed: ${res.status}`);
+    return await res.json();
+  } catch (err) {
+    console.warn('Styling evaluation API fallback:', err);
+    return null;
+  }
+}

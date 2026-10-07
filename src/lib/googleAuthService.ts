@@ -31,6 +31,14 @@ export const googleSignInForService = async (
       return reject(new Error('Browser omgevingsfout.'));
     }
 
+    const fullScopes = Array.from(
+      new Set([
+        ...scopes,
+        'https://www.googleapis.com/auth/userinfo.email',
+        'https://www.googleapis.com/auth/userinfo.profile',
+      ])
+    );
+
     const triggerGIS = () => {
       if (!window.google?.accounts?.oauth2) {
         return reject(new Error('Google Identity Services SDK is niet beschikbaar.'));
@@ -39,7 +47,7 @@ export const googleSignInForService = async (
       try {
         const client = window.google.accounts.oauth2.initTokenClient({
           client_id: CLIENT_ID,
-          scope: scopes.join(' '),
+          scope: fullScopes.join(' '),
           callback: async (response: any) => {
             if (response.error) {
               if (response.error === 'access_denied') {
@@ -55,11 +63,11 @@ export const googleSignInForService = async (
             }
 
             cachedAccessToken = response.access_token;
-            const grantedScopesStr = response.scope || scopes.join(' ');
+            const grantedScopesStr = response.scope || fullScopes.join(' ');
             const grantedScopes = grantedScopesStr.split(' ');
 
             // Fetch user profile email
-            let email = 'contact@mariluna.be';
+            let email = '';
             try {
               const userRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
                 headers: { Authorization: `Bearer ${response.access_token}` },
@@ -79,7 +87,8 @@ export const googleSignInForService = async (
           },
         });
 
-        client.requestAccessToken({ prompt: 'consent' });
+        // Always force Google account chooser screen
+        client.requestAccessToken({ prompt: 'select_account' });
       } catch (err: any) {
         reject(new Error(err.message || 'Authenticatie met Google mislukt.'));
       }
@@ -134,7 +143,7 @@ export const fetchRealCalendarEventsFromApi = async (
   }
 
   const primaryData = await primaryCalRes.json();
-  const accountEmail = primaryData.id || 'patricia@mariluna.be';
+  const accountEmail = primaryData.id || '';
   const accessRole = primaryData.accessRole || 'reader';
   const isWriteAccessGranted = accessRole === 'owner' || accessRole === 'writer';
 

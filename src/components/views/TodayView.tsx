@@ -615,7 +615,7 @@ export const TodayView: React.FC<TodayViewProps> = ({
       {/* ============================================================ */}
       {/* 1. DATE + WEATHER                                            */}
       {/* ============================================================ */}
-      <header className="space-y-1 pt-1">
+      <header className="space-y-1.5 pt-1">
         <div className="flex items-start justify-between gap-3">
           <div>
             <span className="text-xs uppercase tracking-[0.2em] font-medium text-[#8C8377] font-sans block capitalize">
@@ -661,6 +661,47 @@ export const TodayView: React.FC<TodayViewProps> = ({
               </button>
             )}
           </div>
+        </div>
+
+        {/* Subtle Today Check-In Status (Prompt 13) */}
+        <div className="flex items-center gap-2 pt-0.5">
+          {todayCheckIn ? (
+            <button
+              type="button"
+              onClick={() => onSelectTab && onSelectTab('prive')}
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EBF3E6] border border-[#D2E4C9] text-[#2D5A27] text-xs font-medium hover:bg-[#E2EEE0] transition cursor-pointer"
+              title={isNl ? 'Bekijk in Privé' : 'View in Private'}
+            >
+              <CheckCircle2 className="w-3.5 h-3.5 text-[#2D5A27]" />
+              <span>
+                {isNl
+                  ? `Vandaag ingecheckt · Energie: ${
+                      todayCheckIn.energy === 'very_low'
+                        ? 'Zeer laag'
+                        : todayCheckIn.energy === 'low'
+                        ? 'Laag'
+                        : todayCheckIn.energy === 'normal'
+                        ? 'Normaal'
+                        : todayCheckIn.energy === 'good'
+                        ? 'Goed'
+                        : todayCheckIn.energy === 'high'
+                        ? 'Hoog'
+                        : 'Ingevuld'
+                    }`
+                  : `Checked in today · Energy: ${todayCheckIn.energy}`}
+              </span>
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => onSelectTab && onSelectTab('prive')}
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FAF8F3] border border-[#E8E2D6] text-[#7A7167] text-xs font-medium hover:bg-[#F2ECE1] transition cursor-pointer"
+              title={isNl ? 'Check-in invullen in Privé' : 'Complete check-in in Private'}
+            >
+              <Clock className="w-3.5 h-3.5 text-[#8C7654]" />
+              <span>{isNl ? 'Nog niet ingecheckt' : 'Not checked in yet'}</span>
+            </button>
+          )}
         </div>
       </header>
 

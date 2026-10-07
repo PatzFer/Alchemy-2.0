@@ -1095,6 +1095,11 @@ export interface GarmentEvaluation {
   price?: string;
   occasion?: string;
   mood?: string;
+  verdict?: 'JA' | 'TWIJFEL' | 'NEE';
+  verdictLabel?: string;
+  whyReasons?: string[];
+  combos?: string[];
+  fitAdvice?: string;
   isInsufficient?: boolean;
   insufficientReasonNl?: string;
   insufficientReasonEn?: string;

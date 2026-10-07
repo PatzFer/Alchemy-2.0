@@ -557,39 +557,61 @@ export function evaluateGarment(
   }
   enhancements.push('Drapeer er een zacht suède jack of kort leren jasje overheen voor het gewenste soft + strong contrast.');
 
-  // Conclusion
+  // Conclusion & Qualitative Verdicts
+  let verdict: 'JA' | 'TWIJFEL' | 'NEE' = 'JA';
+  let verdictLabel = '';
   let verdictNl = '';
   let conclusion = '';
   const alternatives: string[] = [];
 
-  if (overallScore >= 85) {
-    conclusion = `Ja — sterk Patricia. Dit stuk heeft exact de vrouwelijke poëzie, rust en tactiele aantrekkingskracht die bij jouw aanwezigheid past.`;
-    verdictNl = `Zeer sterke match (${overallScore}%). Sluit naadloos aan bij jouw stijl-DNA en benadrukt je proporties op een zachte, elegante wijze.`;
-    alternatives.push('Kies bij twijfel tussen twee maten de maat die op je taille aansluit; de rok of pantalon mag soepel vallen.');
-  } else if (overallScore >= 70) {
-    conclusion = `Goede basis, mits juist gestyled. Het kledingstuk heeft potentie, maar vraagt om een doordachte combinatie met laarzen en een taille-accent.`;
-    verdictNl = `Goede match met stylingaandacht (${overallScore}%). Heeft de juiste stijltoon, maar vereist een bewuste volumeplaatsing rond de taille.`;
-    alternatives.push('Draag dit stuk met een opgerolde mouw of ingestopt in een high-waist item.');
-    alternatives.push('Voeg een suède riem of gelaagde kettingen toe om de focus naar boven en de taille te leiden.');
+  if (overallScore >= 80) {
+    verdict = 'JA';
+    verdictLabel = 'JA — sterke match ✨';
+    conclusion = `JA — sterk Patricia. Dit kledingstuk heeft de vrouwelijke elegantie en taillebalans die bij jouw proporties past.`;
+    verdictNl = `Sterke match. Sluit goed aan bij jouw Stijl-DNA en 1.57m verhoudingen.`;
+  } else if (overallScore >= 65) {
+    verdict = 'TWIJFEL';
+    verdictLabel = 'TWIJFEL — let op de pasvorm';
+    conclusion = `TWIJFEL — heeft potentie, mits gedragen met doordachte taille-accentuering en schoenkeuze.`;
+    verdictNl = `Twijfelgeval. Vraagt om bewuste combinatie met laarzen of riem rond de taille.`;
+    alternatives.push('Draag dit item ingestopt of met een ceintuur om de taille te markeren.');
   } else {
-    conclusion = `Niet mijn eerste keuze voor jou, vooral door het gebrek aan tailledefinitie en de stugge val. De stijl zelf mag dan aantrekkelijk zijn, de architectuur werkt minder gunstig voor jouw 1.57m proporties.`;
-    verdictNl = `Lagere match (${overallScore}%). De snit creëert een te recht of massief silhouet en laat je natuurlijke taille niet tot haar recht komen.`;
-    alternatives.push('Zoek naar een variant met een overslag/wikkel-model (wrap dress/top) in plaats van deze rechte snit.');
-    alternatives.push('Kies een soepelvallende stof (zoals cupro, zijde, zachte viscose) in plaats van deze stugge textuur.');
-    alternatives.push('Indien je dit item toch wilt dragen: voeg een opvallende tailleriem toe en laat de halslijn openvallen.');
+    verdict = 'NEE';
+    verdictLabel = 'NEE — niet mijn eerste keuze voor jou';
+    conclusion = `NEE — het silhouet of de val sluit minder gunstig aan bij jouw natuurlijke proporties.`;
+    verdictNl = `Geen sterke match. De snit mist taillefocus of heeft een massieve val.`;
+    alternatives.push('Kies liever voor een variant met overslag of natuurlijke taille-insnoering.');
   }
+
+  const whyReasons = [...pros.slice(0, 3), ...considerations.slice(0, 2)];
+  if (whyReasons.length === 0) {
+    whyReasons.push('Sluit aan bij de vrouwelijke en soepele belijning van je Stijl-DNA.');
+  }
+
+  const combos = enhancements.slice(0, 3);
+  if (combos.length === 0) {
+    combos.push('Combineer met een high-waist pantalon of soepele midi-rok.');
+    combos.push('Draag met gelaagde gouden sieraden voor een warm accent.');
+  }
+
+  const cleanTitle = (input.itemTitle || '').trim() || 'het kledingstuk op je foto';
 
   return {
     id: `eval-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
     date: new Date().toISOString().split('T')[0],
-    itemTitle: input.itemTitle.trim(),
-    category: input.category,
+    itemTitle: cleanTitle,
+    category: input.category || 'Algemeen',
     brand: input.brand?.trim() || undefined,
     price: input.price?.trim() || undefined,
     productUrl: input.productUrl?.trim() || undefined,
     occasion: input.occasion || 'general',
     mood: input.mood || 'soft',
     imageUrl: input.imageUrl?.trim() || undefined,
+    verdict,
+    verdictLabel,
+    whyReasons,
+    combos,
+    fitAdvice: fitReason,
     styleMatchPercent: styleScore,
     silhouetteMatchPercent: silhouetteScore,
     colourMatchPercent: colourScore,
@@ -600,10 +622,10 @@ export function evaluateGarment(
     fitConfidencePercent: fitConfidence,
     fitConfidenceReason: fitReason,
     verdictNl,
-    keyObservations: [...pros.slice(0, 2), ...considerations.slice(0, 2)],
+    keyObservations: whyReasons,
     pros,
     considerations,
-    enhancements,
+    enhancements: combos,
     conclusion,
     alternatives,
   };

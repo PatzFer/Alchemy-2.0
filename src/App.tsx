@@ -1329,6 +1329,7 @@ export default function App() {
           onClose={handleDismissMorningModal}
           onSaveCheckIn={handleSaveDailyCheckIn}
           existingCheckIn={state.dailyCheckIns?.find((c) => c.date === new Date().toISOString().split('T')[0])}
+          todayIntention={(state.intentions || []).find((i) => i.date === new Date().toISOString().split('T')[0])}
           lang="nl"
         />
       )}

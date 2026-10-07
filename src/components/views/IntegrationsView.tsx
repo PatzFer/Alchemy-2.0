@@ -187,6 +187,7 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
   const handleDisconnectCalendar = async () => {
     setSyncingService('calendar');
     await IntegrationsService.disconnectService('google_calendar');
+    setCachedAccessToken(null);
     onUpdateIntegrations((prev) => ({
       ...prev,
       calendar: {

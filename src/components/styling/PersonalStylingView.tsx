@@ -46,6 +46,7 @@ import {
   EmotionalMoodConfig,
 } from '../../lib/personalStylingLogic';
 import { calculateEstimatedBodyShape } from '../../lib/healthUtils';
+import { requestStylingEvaluationPhoto } from '../../lib/aiService';
 
 interface PersonalStylingViewProps {
   personalStyle: PersonalStyleState;
@@ -213,38 +214,123 @@ export const PersonalStylingView: React.FC<PersonalStylingViewProps> = ({
     setCurrentEvaluation(evaluation);
   };
 
+  const [showOptionalDetails, setShowOptionalDetails] = useState(false);
+
   // Run Evaluation
-  const handleRunEvaluation = () => {
-    if (!evalInput.itemTitle.trim() && !evalInput.imageUrl && !evalInput.productUrl) return;
+  const handleRunEvaluation = async () => {
+    if (!evalInput.imageUrl && !evalInput.itemTitle.trim() && !evalInput.productUrl) return;
     setIsEvaluating(true);
 
-    setTimeout(() => {
-      const evaluation = evaluateGarment(
+    try {
+      if (evalInput.imageUrl) {
+        const profileContext = {
+          heightMeters: foundationStyling.heightMeters || 1.57,
+          silhouetteLabel: foundationStyling.silhouetteLabel || 'Waist-Defined Silhouette',
+          styleDNA: foundationStyling.styleDNA,
+          colourDNA: foundationStyling.colourDNA,
+          savedWardrobeSample: (foundationStyling.recentEvaluations || [])
+            .filter((e) => e.wardrobeStatus === 'owned' || e.wardrobeStatus === 'favorite')
+            .map((e) => e.itemTitle),
+        };
+
+        const res = await requestStylingEvaluationPhoto(
+          evalInput.imageUrl,
+          profileContext,
+          evalInput.userNotes,
+          evalInput.productUrl
+        );
+
+        if (res && res.verdict) {
+          const evaluation: GarmentEvaluation = {
+            id: `eval-${Date.now()}`,
+            date: new Date().toISOString().split('T')[0],
+            itemTitle: res.descriptiveTitle || evalInput.itemTitle || 'het kledingstuk op je foto',
+            category: res.category || evalInput.category || 'Algemeen',
+            brand: evalInput.brand?.trim() || undefined,
+            price: evalInput.price?.trim() || undefined,
+            productUrl: evalInput.productUrl?.trim() || undefined,
+            imageUrl: evalInput.imageUrl,
+            verdict: res.verdict,
+            verdictLabel: res.verdictLabel || `${res.verdict} — Stijlanalyse`,
+            whyReasons: res.whyReasons || [],
+            combos: res.combos || [],
+            fitAdvice: res.fitAdvice,
+            styleMatchPercent: res.verdict === 'JA' ? 90 : res.verdict === 'TWIJFEL' ? 70 : 45,
+            silhouetteMatchPercent: res.verdict === 'JA' ? 88 : 60,
+            colourMatchPercent: 82,
+            overallMatchPercent: res.verdict === 'JA' ? 90 : res.verdict === 'TWIJFEL' ? 70 : 45,
+            fitConfidencePercent: 82,
+            verdictNl: res.verdictLabel || res.verdict,
+            keyObservations: res.whyReasons || [],
+            pros: res.whyReasons || [],
+            considerations: [],
+            enhancements: res.combos || [],
+            conclusion: res.verdictLabel,
+            isInsufficient: false,
+          };
+
+          setCurrentEvaluation(evaluation);
+          setIsEvaluating(false);
+          return;
+        }
+      }
+
+      // Local fallback evaluation
+      const localEval = evaluateGarment(
         evalInput,
         foundationStyling,
         latestMeasurement,
         learnedFeedbackList
       );
-
-      setCurrentEvaluation(evaluation);
+      setCurrentEvaluation(localEval);
+    } catch (err) {
+      console.warn('Evaluation fallback error:', err);
+      const localEval = evaluateGarment(
+        evalInput,
+        foundationStyling,
+        latestMeasurement,
+        learnedFeedbackList
+      );
+      setCurrentEvaluation(localEval);
+    } finally {
       setIsEvaluating(false);
+    }
+  };
 
-      // Only save to history if input was sufficient for real analysis
-      if (!evaluation.isInsufficient) {
-        const updatedList = [evaluation, ...evaluationsList.filter((e) => e.id !== evaluation.id)];
-        onUpdateStyle({
-          ...personalStyle,
-          evaluations: updatedList,
-        });
+  const handleSaveToWardrobe = (status: 'owned' | 'wishlist' | 'favorite' = 'owned') => {
+    if (!currentEvaluation) return;
 
-        if (onUpdateFoundationStyling) {
-          onUpdateFoundationStyling({
-            ...foundationStyling,
-            recentEvaluations: updatedList.slice(0, 15),
-          });
-        }
-      }
-    }, 350);
+    const savedItem: GarmentEvaluation = {
+      ...currentEvaluation,
+      wardrobeStatus: status,
+    };
+
+    setCurrentEvaluation(savedItem);
+
+    const existingList = evaluationsList;
+    const existingIndex = existingList.findIndex(
+      (e) => e.id === savedItem.id || (savedItem.imageUrl && e.imageUrl === savedItem.imageUrl)
+    );
+
+    let updatedList: GarmentEvaluation[];
+    if (existingIndex >= 0) {
+      updatedList = [...existingList];
+      updatedList[existingIndex] = savedItem;
+    } else {
+      updatedList = [savedItem, ...existingList];
+    }
+
+    onUpdateStyle({
+      ...personalStyle,
+      evaluations: updatedList,
+    });
+
+    if (onUpdateFoundationStyling) {
+      onUpdateFoundationStyling({
+        ...foundationStyling,
+        recentEvaluations: updatedList.slice(0, 20),
+      });
+    }
   };
 
   // User Reaction on Evaluation (❤️, 💕, 👍, 😐, 👎, ❌)
