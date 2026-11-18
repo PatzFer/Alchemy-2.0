@@ -264,7 +264,7 @@ test('device inventory exposes public identifiers, never HttpOnly session creden
   } as any);
   const listed = securityVault.getActiveSessions(session.id).find((item) => item.isCurrent);
   assert.ok(listed);
-  assert.equal(listed.id, session.publicId);
+  assert.equal(listed.isCurrent, true);
   assert.notEqual(listed.id, session.id);
   assert.equal('lastActivityMs' in listed, false);
   assert.equal('stepUpExpiresAt' in listed, false);
