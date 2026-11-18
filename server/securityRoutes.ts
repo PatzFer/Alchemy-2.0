@@ -68,9 +68,12 @@ router.get('/status', (req: Request, res: Response) => {
     hasPasskeys: passkeys.length > 0,
     passkeyCount: passkeys.length,
     totpEnabled,
-    recoveryCodesRemaining: recoveryStatus.remaining,
-    recoveryCodesTotal: recoveryStatus.total,
-    permissions,
+    // Do not disclose private security configuration to an unauthenticated session.
+    // The lock screen only needs the available unlock methods; detailed settings and
+    // recovery inventory are returned after the app has been unlocked.
+    recoveryCodesRemaining: session.isAppAuthenticated ? recoveryStatus.remaining : undefined,
+    recoveryCodesTotal: session.isAppAuthenticated ? recoveryStatus.total : undefined,
+    permissions: session.isAppAuthenticated ? permissions : undefined,
   });
 });
 
