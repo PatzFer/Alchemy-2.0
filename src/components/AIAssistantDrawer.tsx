@@ -212,12 +212,12 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
     if (!isOpen || isThinking || messages.length === 0) return;
 
     const lastMsg = messages[messages.length - 1];
-    if (lastMsg.role === 'user' && lastMsg.id !== lastProcessedMsgIdRef.current) {
+    if (lastMsg.role === 'user' && lastMsg.world === activeWorld && lastMsg.id !== lastProcessedMsgIdRef.current) {
       lastProcessedMsgIdRef.current = lastMsg.id;
       setIsThinking(true);
 
       const context = buildContextPayload();
-      const historyPayload = messages.map((m) => ({
+      const historyPayload = messages.filter((m) => m.world === activeWorld).map((m) => ({
         role: m.role,
         content: m.content,
       }));
@@ -225,7 +225,7 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
       sendChatMessage(historyPayload, context, activeWorld)
         .then((response) => {
           setIsThinking(false);
-          onAddMessage(response);
+          onAddMessage({ ...response, world: activeWorld });
         })
         .catch((err) => {
           console.error('Error in assistant auto-response:', err);
@@ -243,6 +243,7 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
       role: 'user',
       content: textToSend,
       timestamp: new Date().toISOString(),
+      world: activeWorld,
     };
 
     onAddMessage(userMessage);
@@ -251,7 +252,7 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
     lastProcessedMsgIdRef.current = userMessage.id;
 
     const context = buildContextPayload(customContextItem);
-    const historyPayload = [...messages, userMessage].map((m) => ({
+    const historyPayload = [...messages.filter((m) => m.world === activeWorld), userMessage].map((m) => ({
       role: m.role,
       content: m.content,
     }));
@@ -259,7 +260,7 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
     try {
       const response = await sendChatMessage(historyPayload, context, activeWorld);
       setIsThinking(false);
-      onAddMessage(response);
+      onAddMessage({ ...response, world: activeWorld });
     } catch (err) {
       console.error('Error sending message:', err);
       setIsThinking(false);
