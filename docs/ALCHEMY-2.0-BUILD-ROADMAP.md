@@ -304,3 +304,9 @@ Incremental implementation commits on `design/phase-1`:
 - Added regression tests for privacy-by-default and permission allowlisting.
 - Closed a false-connection path in the integration API: client-supplied `verified` flags, email addresses or imported post/message arrays are not proof of Google or Meta authorization. Google Calendar/Gmail and Instagram now return an explicit not-implemented response instead of recording a fake connected state. Native Health Connect remains unavailable until its Android bridge exists. Browser push permission remains a local browser capability.
 - Remaining architecture blockers are unchanged: security state and integration state are in-memory, app data is plaintext in browser local storage, and OAuth token exchange/refresh/revocation is not implemented server-side. These are not production-ready conditions.
+
+### Additional release blocker found during security review
+
+- The current security vault creates recovery codes at process startup but only stores their hashes; the initial plaintext codes are not delivered through a safe first-owner setup flow.
+- Passkey/TOTP enrollment now correctly requires an authenticated session, but a fresh deployment has no persisted credential store or owner bootstrap mechanism. Since sessions and credentials are currently in-memory, a server restart can invalidate the only enrolled authentication methods.
+- Before any real deployment, implement durable identity/session/credential storage and a one-time owner bootstrap flow (or a trusted external identity provider). Do not reopen unauthenticated passkey/TOTP enrollment as a workaround.
