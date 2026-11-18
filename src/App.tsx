@@ -56,6 +56,7 @@ import { applyFoundationToAppState } from './lib/foundationDefaults';
 import { Sparkles } from 'lucide-react';
 import { MorningCheckInModal } from './components/MorningCheckInModal';
 import { purgeExpiredDailyCheckIns } from './lib/healthUtils';
+import { createAlchemyBackup, downloadAlchemyBackupFile, verifyAlchemyBackup } from './lib/backup';
 
 const getLocalDateString = (date = new Date()): string => {
   const year = date.getFullYear();
@@ -778,30 +779,62 @@ export default function App() {
     }
   };
 
-  const handleExportData = () => {
-    const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(state, null, 2));
-    const downloadAnchor = document.createElement('a');
-    downloadAnchor.setAttribute('href', dataStr);
-    downloadAnchor.setAttribute('download', `pm-alchemy-backup-${getLocalDateString()}.json`);
-    document.body.appendChild(downloadAnchor);
-    downloadAnchor.click();
-    downloadAnchor.remove();
+  const handleExportData = async () => {
+    try {
+      const backup = await createAlchemyBackup(state);
+      downloadAlchemyBackupFile(backup);
+    } catch (error) {
+      console.error('Alchemy backup export failed:', error);
+      alert('De back-up kon niet veilig worden aangemaakt. Probeer een recente browser.');
+    }
   };
 
   const handleImportData = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const fileReader = new FileReader();
-    if (e.target.files && e.target.files[0]) {
-      fileReader.readAsText(e.target.files[0], 'UTF-8');
-      fileReader.onload = (event) => {
-        try {
-          const parsed = JSON.parse(event.target?.result as string);
-          setState(parsed);
-          alert('Backup restored successfully.');
-        } catch (err) {
-          alert('Failed to parse backup JSON.');
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const input = e.target;
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      try {
+        const parsed = JSON.parse(event.target?.result as string);
+        let restored: AppState;
+        if (parsed?.format === 'p-m-alchemy-backup') {
+          const verified = await verifyAlchemyBackup(parsed);
+          restored = verified.payload;
+        } else {
+          // Backward compatibility for legacy raw-JSON exports. They have no checksum,
+          // so require explicit confirmation and basic structural validation.
+          const legacy = parsed as Partial<AppState>;
+          const requiredArrays: (keyof AppState)[] = [
+            'tasks', 'goals', 'ideas', 'projects', 'calendarEvents', 'memories',
+            'dailyCheckIns', 'notifications', 'proactiveSuggestions',
+          ];
+          const valid = !!legacy && typeof legacy === 'object' &&
+            requiredArrays.every((key) => Array.isArray(legacy[key])) &&
+            !!legacy.foundation && typeof legacy.foundation === 'object' &&
+            !!legacy.integrations && typeof legacy.integrations === 'object';
+          if (!valid) throw new Error('Ongeldig of onvolledig back-upbestand.');
+          const confirmed = window.confirm(
+            'Dit is een oudere Alchemy-back-up zonder integriteitscontrole. Herstel kan de huidige gegevens vervangen. Maak eerst een actuele back-up. Wil je doorgaan?'
+          );
+          if (!confirmed) return;
+          restored = legacy as AppState;
         }
-      };
-    }
+        if (!window.confirm('Deze actie vervangt de huidige Alchemy-gegevens door de back-up. Heb je een actuele back-up gemaakt en wil je doorgaan?')) return;
+        setState(restored);
+        alert('Alchemy-back-up gecontroleerd en hersteld.');
+      } catch (error) {
+        console.error('Alchemy backup import failed:', error);
+        alert(error instanceof Error ? error.message : 'De back-up kon niet worden gecontroleerd.');
+      } finally {
+        input.value = '';
+      }
+    };
+    reader.onerror = () => {
+      alert('Het back-upbestand kon niet worden gelezen.');
+      input.value = '';
+    };
+    reader.readAsText(file, 'UTF-8');
   };
 
   const handleResetData = () => {
