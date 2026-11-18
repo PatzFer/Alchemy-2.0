@@ -41,6 +41,13 @@ for (const table of requiredTables) {
   }
 }
 
+if (!/revoke\s+all\s+on\s+public\.app_state_snapshots\s+from\s+anon\s*,\s*authenticated/i.test(sql)) {
+  throw new Error('Snapshot table must not be directly accessible to browser roles.');
+}
+if (!/grant\s+select\s+on\s+public\.app_state_snapshots\s+to\s+service_role/i.test(sql)) {
+  throw new Error('Snapshot table must grant server-role read access.');
+}
+
 const serverOnlyTables = [
   'security_passkeys',
   'security_totp',
