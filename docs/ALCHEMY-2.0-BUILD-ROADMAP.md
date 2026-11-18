@@ -325,3 +325,11 @@ Incremental implementation commits on `design/phase-1`:
 - Wired the Settings > Data Sovereignty & Backups controls to the new export/verification flow. New exports use the checksummed envelope. Import verifies the checksum before replacing app state and requires explicit confirmation. Legacy raw JSON exports remain importable only after structural checks and two confirmation steps because they do not contain an integrity checksum.
 - Latest commit `a625ef7fcea2bd0e693caca199b4e9598274b89d` passed GitHub Actions: dependency install, TypeScript check, privacy + backup regression tests and production build.
 - Backup integrity is not encryption. Current browser storage remains plaintext and the backup JSON contains the full app state; users should keep exported files in a private location. Cloud persistence is not connected and no live migration has run.
+
+## Progress log — 18 November 2026 (backup UX accuracy and auth perimeter review)
+
+- Reviewed the server route perimeter: the Gemini chat, day-planning, goal-breakdown and idea-analysis endpoints are all mounted behind `requireAppAuth`. The integrations status endpoint is also protected. This is a source review; it does not replace live penetration testing.
+- Updated Settings copy to stop claiming browser storage is "secure". It now accurately says that app data is stored in this browser, is not encrypted yet, and cloud storage is not connected.
+- Renamed backup actions to describe their actual integrity-checking behavior ("Export verified backup" and "Verify & restore backup").
+- Latest commit `fa78d539a8ee1d8118444ae7658186a8f40d8413` passed GitHub Actions: dependency install, TypeScript check, privacy/backup regression tests and production build.
+- No live Supabase project is connected. No database migration or live browser restore test has been run. Browser localStorage remains plaintext, and SHA-256 checksums detect accidental/unauthorized file changes only when the checksum itself is not also recomputed; they are not encryption or a digital signature.
