@@ -7,6 +7,7 @@ import { createServer as createViteServer } from "vite";
 import securityRouter from "./server/securityRoutes";
 import integrationsRouter from "./server/integrationsRoutes";
 import brainRouter from "./server/brainRoutes";
+import persistenceRouter from "./server/persistenceRoutes";
 import { securityVault, requireAppAuth } from "./server/security";
 import { classifyIntent, buildIntentAwareResponse, isDutchMessage } from "./server/brainEngine";
 
@@ -32,6 +33,8 @@ app.use("/api/security", securityRouter);
 app.use("/api/integrations", integrationsRouter);
 // Mount Alchemy Brain 1.0 Endpoints
 app.use("/api/brain", brainRouter);
+// Supabase-backed owner snapshot endpoints; require a verified Supabase bearer token.
+app.use("/api/persistence", persistenceRouter);
 
 // Initialize Gemini SDK lazily / safely with User-Agent telemetry
 let aiClient: GoogleGenAI | null = null;
