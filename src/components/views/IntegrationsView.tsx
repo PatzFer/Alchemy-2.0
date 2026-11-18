@@ -972,19 +972,19 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
               <div>
                 <div className="flex items-center gap-3">
                   <h3 className="font-serif text-lg font-medium text-[var(--text-primary)]">
-                    Google Fit (legacy)
+                    Health Connect (Android)
                   </h3>
                   {getStatusBadge(
                     integrations.healthConnect.status,
                     integrations.healthConnect.status === 'connected'
-                      ? (isNl ? 'Verbonden • Google Fit legacy' : 'Connected • Google Fit legacy')
+                      ? (isNl ? 'Verbonden • Health Connect' : 'Connected • Health Connect')
                       : undefined
                   )}
                 </div>
                 <p className="text-xs text-[var(--text-secondary)] mt-0.5">
                   {isNl
-                    ? 'Tijdelijke Google Fit REST-koppeling. Dit is geen Health Connect-integratie; Google Fit API-ondersteuning eindigt eind 2026.'
-                    : 'Temporary Google Fit REST connection. This is not a Health Connect integration; Google Fit API support ends at the end of 2026.'}
+                    ? 'De native Android Health Connect-koppeling is nog in ontwikkeling. Er worden pas gegevens getoond nadat echte Android-toestemming en synchronisatie beschikbaar zijn.'
+                    : 'The native Android Health Connect connection is still in development. Data will appear only after real Android permissions and synchronization are available.'}
                 </p>
               </div>
             </div>
@@ -1011,7 +1011,7 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
                 </>
               ) : integrations.healthConnect.status === 'unavailable' ? (
                 <span className="text-xs text-[var(--text-muted)] italic">
-                  {isNl ? 'Native Android Health Connect-integratie vereist' : 'Native Android Health Connect integration required'}
+                  {isNl ? 'Native Android Health Connect-koppeling nog niet beschikbaar' : 'Native Android Health Connect connection not available yet'}
                 </span>
               ) : (
                 <button
