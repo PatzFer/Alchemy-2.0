@@ -363,7 +363,6 @@ test('financial records and prices remain quarantined without financial AI conse
   assert.equal('marilunaFinance' in result, false);
   assert.equal('revenueTargetYear' in result.marilunaMetrics, false);
   assert.deepEqual(result.marilunaMetrics.metrics, [
-    { id: 'revenue', name: 'Revenue', value: 5000, unit: '€' },
     { id: 'followers', name: 'Instagram followers', value: 800, unit: 'people' },
   ]);
   assert.deepEqual(result.tasks.map((item: any) => item.id), ['business-task']);
