@@ -52,8 +52,10 @@ All tables include immutable owner ownership, created/updated timestamps and ind
 - Snapshot writes use `public.save_app_state_snapshot`, a narrowly scoped SECURITY DEFINER RPC with an empty search path, explicit argument validation, service-role-only execution and a transaction-scoped per-owner advisory lock for revision allocation.
 - The server verifies the Supabase access token with Supabase Auth and derives the owner ID from the verified identity. It does not accept an owner ID from the browser.
 - The API verifies returned snapshot ownership, schema/revision metadata and canonical JSON SHA-256 integrity; request payloads are bounded to 1.5 MB.
+- Snapshot writes and reads also validate the required Alchemy state structure (module arrays, Foundation data and integration state) before accepting or returning a snapshot.
 - CI statically checks the migration grants and RPC hardening, and unit tests cover malformed identities, payload limits, owner mismatch, atomic RPC use and snapshot integrity.
 - These changes are committed but remain un-applied to any live Supabase database. They do not yet make the React app use Supabase; localStorage remains the current application store.
+
 ## 5. Migration strategy (non-destructive)
 
 1. Confirm Supabase project ownership, region, Auth configuration, redirect origins and secrets.
