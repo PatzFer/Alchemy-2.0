@@ -124,39 +124,16 @@ router.post("/connect/:service", requireAppAuth, (req: Request, res: Response) =
 
   switch (service) {
     case "calendar":
-    case "google_calendar": {
-      const email = req.body.accountEmail;
-      if (!email && !req.body.verified) {
-        return res.status(400).json({ error: "Geen geverifieerd account of e-mailadres opgegeven." });
-      }
-      serverState.calendar = {
-        status: "connected",
-        accountEmail: email,
-        lastSync: now,
-        readOnly: true,
-        syncedEventsCount: req.body.syncedEventsCount || 0,
-        isPatriciaOnlySchedule: true,
-      };
-      return res.json({ success: true, service: "google_calendar", data: serverState.calendar });
-    }
-
+    case "google_calendar":
     case "gmail":
     case "mariluna_gmail": {
-      const email = req.body.accountEmail;
-      const messages = req.body.messages || [];
-      if (!email && !req.body.verified) {
-        return res.status(400).json({ error: "Geen geverifieerd account of e-mailadres opgegeven." });
-      }
-      serverState.gmail = {
-        status: "connected",
-        accountEmail: email,
-        lastSync: now,
-        readOnly: true,
-        businessOnly: true,
-        syncedThreadsCount: messages.length,
-        messages: messages,
-      };
-      return res.json({ success: true, service: "mariluna_gmail", data: serverState.gmail });
+      // Client-provided email/verified flags are not proof of provider authorization.
+      // Until OAuth code exchange and token validation happen server-side, fail closed.
+      return res.status(501).json({
+        success: false,
+        service,
+        error: "Server-side Google OAuth verification and durable token storage are not implemented yet. No connection has been recorded.",
+      });
     }
 
     case "health_connect": {
@@ -171,19 +148,12 @@ router.post("/connect/:service", requireAppAuth, (req: Request, res: Response) =
 
     case "instagram":
     case "mariluna_instagram": {
-      if (!req.body.verified && !req.body.posts) {
-        return res.status(400).json({ error: "Instagram koppeling vereist een geverifieerd Meta Graph API Access Token." });
-      }
-      const username = req.body.accountUsername || "@mariluna.studio";
-      const posts = Array.isArray(req.body.posts) ? req.body.posts : [];
-      serverState.instagram = {
-        status: "connected",
-        accountUsername: username,
-        accountType: "business",
-        lastSync: now,
-        posts: posts,
-      };
-      return res.json({ success: true, service: "mariluna_instagram", data: serverState.instagram });
+      // A client-supplied verified flag or post array must never establish a trusted connection.
+      return res.status(501).json({
+        success: false,
+        service,
+        error: "Server-side Meta OAuth verification and durable token storage are not implemented yet. No connection has been recorded.",
+      });
     }
 
     case "push_notifications": {
