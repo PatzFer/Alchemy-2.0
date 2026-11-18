@@ -55,19 +55,23 @@ test('snapshot owner comes from verified Supabase identity and stored payload ha
     if (url.endsWith('/auth/v1/user')) {
       return new Response(JSON.stringify({ id: ownerId }), { status: 200 });
     }
-    if (url.includes('/rest/v1/app_state_snapshots?')) {
-      return new Response(JSON.stringify([{ revision: 4 }]), { status: 200 });
-    }
-    if (url.endsWith('/rest/v1/app_state_snapshots')) {
+    if (url.endsWith('/rest/v1/rpc/save_app_state_snapshot')) {
       const body = JSON.parse(String(init?.body));
-      assert.equal(body.owner_id, ownerId);
-      assert.equal(body.revision, 5);
-      assert.equal(body.payload_sha256, payloadHash);
+      assert.equal(body.p_owner_id, ownerId);
+      assert.equal(body.p_schema_version, 1);
+      assert.deepEqual(body.p_payload, payload);
+      assert.equal(body.p_payload_sha256, payloadHash);
+      assert.equal(body.p_source, 'autosave');
       return new Response(JSON.stringify([{
         id: 'snapshot-id',
-        ...body,
+        owner_id: body.p_owner_id,
+        schema_version: body.p_schema_version,
+        revision: 5,
+        payload: body.p_payload,
+        payload_sha256: body.p_payload_sha256,
+        source: body.p_source,
         created_at: new Date().toISOString(),
-      }]), { status: 201 });
+      }]), { status: 200 });
     }
     throw new Error(`Unexpected request: ${url}`);
   };
@@ -75,7 +79,7 @@ test('snapshot owner comes from verified Supabase identity and stored payload ha
   const saved = await store.saveSnapshot('verified-token', payload);
   assert.equal(saved.owner_id, ownerId);
   assert.equal(saved.revision, 5);
-  assert.equal(calls.length, 3);
+  assert.equal(calls.length, 2);
   assert.equal(new Headers(calls[1].init?.headers).get('Authorization'), `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`);
 });
 
