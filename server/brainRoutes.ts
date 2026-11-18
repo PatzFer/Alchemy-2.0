@@ -107,7 +107,7 @@ Geen extra tekst, alleen JSON.`;
  * POST /api/brain/split-task
  * Breaks an oversized task into 3-5 manageable micro-steps
  */
-router.post("/split-task", requireAppAuth, async (req: Request, res: Response) => {
+router.post("/split-task", requireAppAuth, requireAiRateLimit, async (req: Request, res: Response) => {
   try {
     const { taskTitle, estimatedDuration } = req.body;
     const world = req.body.world === 'mariluna' ? 'mariluna' : 'personal';
@@ -165,7 +165,7 @@ Geef een JSON terug in dit format:
  * POST /api/brain/query
  * Strategic, contextual thinking partner endpoint
  */
-router.post("/query", requireAppAuth, async (req: Request, res: Response) => {
+router.post("/query", requireAppAuth, requireAiRateLimit, async (req: Request, res: Response) => {
   try {
     const { query = '', context = {} } = req.body;
     const world = req.body.world === 'mariluna' ? 'mariluna' : 'personal';
@@ -230,7 +230,7 @@ Geef een kort, doordacht, warm en praktisch antwoord in ${isDutch ? "helder Nede
  * POST /api/brain/evaluate-styling
  * Visual clothing assessment for "Past dit bij mij?" using Gemini vision & stored profile
  */
-router.post("/evaluate-styling", requireAppAuth, async (req: Request, res: Response) => {
+router.post("/evaluate-styling", requireAppAuth, requireAiRateLimit, async (req: Request, res: Response) => {
   try {
     const { imageBase64, mimeType = "image/jpeg", profileContext = {}, optionalNotes = "", optionalUrl = "" } = req.body;
     const permissions = securityVault.getPermissions();
