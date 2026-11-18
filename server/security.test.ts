@@ -383,3 +383,17 @@ test('application sessions expire after their absolute lifetime', () => {
   assert.equal(securityVault.getSession(session.id), undefined);
   assert.equal(securityVault.getActiveSessions(session.id).some((item) => item.id === session.publicId), false);
 });
+
+
+test('authentication rate limiting locks after five failures and can be cleared', () => {
+  const key = 'alchemy-rate-limit-regression-test';
+  securityVault.clearFailedAttempts(key);
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    securityVault.recordFailedAttempt(key);
+  }
+  const blocked = securityVault.checkRateLimit(key);
+  assert.equal(blocked.allowed, false);
+  assert.ok((blocked.remainingLockoutSeconds || 0) > 0);
+  securityVault.clearFailedAttempts(key);
+  assert.equal(securityVault.checkRateLimit(key).allowed, true);
+});
