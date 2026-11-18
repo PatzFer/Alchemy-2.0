@@ -271,7 +271,7 @@ router.post('/step-up', requireAppAuth, async (req: Request, res: Response) => {
 // ----------------------------------------------------
 // 4. WebAuthn / Passkey Endpoints
 // ----------------------------------------------------
-router.post('/webauthn/register-options', requireAppAuth, async (req: Request, res: Response) => {
+router.post('/webauthn/register-options', requireAppAuth, requireStepUpAuth, async (req: Request, res: Response) => {
   try {
     const session = getOrCreateSession(req, res);
     const { rpID } = getRPInfo(req);
@@ -359,6 +359,14 @@ router.post('/webauthn/register-verify', requireAppAuth, async (req: Request, re
 router.post('/webauthn/auth-options', async (req: Request, res: Response) => {
   try {
     const session = getOrCreateSession(req, res);
+    const rateLimit = securityVault.checkRateLimit(session.ip);
+    if (!rateLimit.allowed) {
+      return res.status(429).json({
+        error: 'Too many failed authentication attempts.',
+        locked: true,
+        remainingLockoutSeconds: rateLimit.remainingLockoutSeconds,
+      });
+    }
     const { rpID } = getRPInfo(req);
     const passkeys = securityVault.getPasskeys();
 
@@ -401,8 +409,14 @@ router.post('/webauthn/auth-verify', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Authentication challenge expired or missing.' });
     }
 
+    if (!response || typeof response.id !== 'string' || response.id.length > 2048) {
+      securityVault.recordFailedAttempt(session.ip);
+      return res.status(400).json({ error: 'Invalid passkey credential response.' });
+    }
+
     const passkey = securityVault.getPasskey(response.id);
     if (!passkey) {
+      securityVault.recordFailedAttempt(session.ip);
       return res.status(400).json({ error: 'Unrecognized passkey credential.' });
     }
 
@@ -451,7 +465,7 @@ router.post('/webauthn/auth-verify', async (req: Request, res: Response) => {
 // ----------------------------------------------------
 // 5. TOTP Authenticator App Endpoints
 // ----------------------------------------------------
-router.post('/totp/setup', requireAppAuth, (req: Request, res: Response) => {
+router.post('/totp/setup', requireAppAuth, requireStepUpAuth, (req: Request, res: Response) => {
   const { secret, uri } = securityVault.generateTotpSetup();
   res.json({
     secret,
@@ -462,7 +476,7 @@ router.post('/totp/setup', requireAppAuth, (req: Request, res: Response) => {
   });
 });
 
-router.post('/totp/verify-setup', requireAppAuth, (req: Request, res: Response) => {
+router.post('/totp/verify-setup', requireAppAuth, requireStepUpAuth, (req: Request, res: Response) => {
   const { code } = req.body;
   if (!code) return res.status(400).json({ error: '6-digit code required' });
 
