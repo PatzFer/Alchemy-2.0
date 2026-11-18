@@ -29,16 +29,40 @@ const REQUIRED_STATE_ARRAYS = [
   'dailyCheckIns', 'notifications', 'proactiveSuggestions',
 ] as const;
 
+const REQUIRED_STATE_OBJECTS = [
+  'lifeProfile', 'contentPlan', 'personalStyle', 'nutrition', 'cycleProfile',
+  'wellbeing', 'notificationSettings', 'foundation', 'integrations',
+] as const;
+
 export function isValidAlchemySnapshotPayload(
   value: unknown,
 ): value is Record<string, unknown> {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
   const state = value as Record<string, unknown>;
+
   if (!REQUIRED_STATE_ARRAYS.every((key) => Array.isArray(state[key]))) return false;
-  return Boolean(
-    state.foundation && typeof state.foundation === 'object' && !Array.isArray(state.foundation) &&
-    state.integrations && typeof state.integrations === 'object' && !Array.isArray(state.integrations)
-  );
+  if (!REQUIRED_STATE_OBJECTS.every((key) =>
+    state[key] !== null && typeof state[key] === 'object' && !Array.isArray(state[key])
+  )) return false;
+
+  if (!Array.isArray(state.chatHistory)) return false;
+  if (typeof state.isSampleData !== 'boolean') return false;
+  if (!['not_started', 'in_progress', 'skipped', 'completed'].includes(String(state.setupStatus))) {
+    return false;
+  }
+
+  const foundation = state.foundation as Record<string, unknown>;
+  const integrations = state.integrations as Record<string, unknown>;
+  if (!foundation.aboutYou || typeof foundation.aboutYou !== 'object' || Array.isArray(foundation.aboutYou)) {
+    return false;
+  }
+  if (!integrations.calendar || typeof integrations.calendar !== 'object' || Array.isArray(integrations.calendar)) {
+    return false;
+  }
+  if (!integrations.gmail || typeof integrations.gmail !== 'object' || Array.isArray(integrations.gmail)) {
+    return false;
+  }
+  return true;
 }
 
 function stableJson(value: unknown): string {
