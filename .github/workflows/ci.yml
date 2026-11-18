@@ -24,13 +24,13 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
         with:
-          node-version: 22
-      - name: Install dependencies
-        run: npm install --no-audit --no-fund
+          bun-version: latest
+      - name: Install locked dependencies
+        run: bun install --frozen-lockfile
       - name: TypeScript check
-        run: npm run lint
+        run: bun run lint
       - name: Production build
-        run: npm run build
+        run: bun run build
