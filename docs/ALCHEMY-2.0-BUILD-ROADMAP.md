@@ -281,3 +281,11 @@ Incremental implementation commits on `design/phase-1`:
 - Added `docs/ALCHEMY-1.0-RELEASE-TEST-CHECKLIST.md` to distinguish checks that have actually run from those that remain outstanding.
 - This is the first confirmed green automated quality gate. It is not a browser, mobile, OAuth, authentication regression or penetration test, and it does not remove the current production blockers: plaintext browser persistence, process-memory-only security vault/sessions, incomplete provider token revocation, and unavailable native Health Connect.
 - The type model still uses only `personal` and `mariluna` realms. A Shared realm remains a cross-cutting migration and was deliberately not introduced as a superficial enum change.
+
+## Progress log — 18 November 2026 (Jarvis realm privacy firewall)
+
+- A deeper review of the legacy `/api/ai/chat` path found that its server-side sanitizer was primarily a blacklist. The client payload included mixed-realm calendar events, projects, ideas, intentions and untagged memory strings. Several of those arrays were not filtered by the older sanitizer, so relying on client-side filtering alone was insufficient.
+- Added server-side realm filtering for Mariluna and Personal chat contexts: calendar events, projects, ideas, intentions, tasks and goals are retained only when their explicit `realm` matches the active domain. Ambiguous active-context items are dropped. Untagged `memoriesSample` strings are removed because they cannot be safely assigned to a realm.
+- Removed personal work-context details and private-derived capacity/check-in signals from the Mariluna structured Brain context. Heritage and personal planning preference fields are also withheld from that business scope.
+- Added Node test-runner regression tests for both realm directions and included them in CI. The test suite, TypeScript check and production build all passed together on commit `994618c39ae7d9c2622aa7626784430aecf4773b`.
+- These tests cover the sanitizer's known payload fields. They are not a complete proof of privacy: the broader client payload schema, other AI endpoints, balanced-mode consent semantics and all future fields still require a systematic audit. Authentication persistence and encrypted at-rest storage remain unresolved production blockers.
