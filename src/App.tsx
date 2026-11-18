@@ -820,9 +820,11 @@ export default function App() {
           if (!confirmed) return;
           restored = legacy as AppState;
         }
-        if (!window.confirm('Deze actie vervangt de huidige Alchemy-gegevens door de back-up. Heb je een actuele back-up gemaakt en wil je doorgaan?')) return;
+        if (!window.confirm('Deze actie vervangt de huidige Alchemy-gegevens. Alchemy downloadt eerst automatisch een herstelkopie van je huidige gegevens. Wil je doorgaan?')) return;
+        const rollbackBackup = await createAlchemyBackup(state);
+        downloadAlchemyBackupFile(rollbackBackup);
         setState(restored);
-        alert('Alchemy-back-up gecontroleerd en hersteld.');
+        alert('Alchemy-back-up gecontroleerd en hersteld. Er is eerst een herstelkopie van de vorige gegevens gedownload.');
       } catch (error) {
         console.error('Alchemy backup import failed:', error);
         alert(error instanceof Error ? error.message : 'De back-up kon niet worden gecontroleerd.');
@@ -837,9 +839,16 @@ export default function App() {
     reader.readAsText(file, 'UTF-8');
   };
 
-  const handleResetData = () => {
-    if (window.confirm('Reset all data to default initial state?')) {
+  const handleResetData = async () => {
+    if (!window.confirm('Alle Alchemy-gegevens worden teruggezet naar de standaardinstellingen. Eerst wordt automatisch een herstelkopie gedownload. Wil je doorgaan?')) return;
+    try {
+      const rollbackBackup = await createAlchemyBackup(state);
+      downloadAlchemyBackupFile(rollbackBackup);
       setState(resetState());
+      alert('Alchemy is gereset. Je vorige gegevens zijn als herstelkopie gedownload.');
+    } catch (error) {
+      console.error('Alchemy reset backup failed:', error);
+      alert('Reset geannuleerd: er kon geen veilige herstelkopie worden gemaakt.');
     }
   };
 
