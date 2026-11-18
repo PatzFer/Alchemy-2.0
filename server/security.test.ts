@@ -254,3 +254,20 @@ test('expired WebAuthn challenges are rejected', async () => {
   await new Promise((resolve) => setTimeout(resolve, 5));
   assert.equal(securityVault.consumeChallenge('test-expired-challenge'), undefined);
 });
+
+
+test('device inventory exposes public identifiers, never HttpOnly session credentials', () => {
+  const session = securityVault.createSession({
+    ip: '127.0.0.9',
+    headers: { 'user-agent': 'Alchemy device inventory test' },
+    socket: { remoteAddress: '127.0.0.9' },
+  } as any);
+  const [listed] = securityVault.getActiveSessions(session.id);
+  assert.ok(listed);
+  assert.equal(listed.id, session.publicId);
+  assert.notEqual(listed.id, session.id);
+  assert.equal('lastActivityMs' in listed, false);
+  assert.equal('stepUpExpiresAt' in listed, false);
+  assert.equal(securityVault.revokeSession(listed.id), true);
+  assert.equal(securityVault.getSession(session.id), undefined);
+});
