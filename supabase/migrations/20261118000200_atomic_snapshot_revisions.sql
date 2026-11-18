@@ -5,6 +5,11 @@ alter table public.app_state_snapshots
   add column source text not null default 'autosave'
   check (source in ('migration', 'autosave', 'manual_backup', 'restore'));
 
+-- Snapshot access is server-mediated only. The browser never receives a service-role
+-- credential and must not bypass the authenticated API with direct PostgREST writes.
+revoke all on public.app_state_snapshots from anon, authenticated;
+grant select on public.app_state_snapshots to service_role;
+
 -- The owner ID is supplied only after the API verifies the Supabase access token.
 -- This RPC is service-role only; clients cannot choose an owner or invoke it directly.
 
