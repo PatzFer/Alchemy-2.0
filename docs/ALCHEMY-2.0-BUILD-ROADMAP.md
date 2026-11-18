@@ -420,3 +420,6 @@ Incremental implementation commits on `design/phase-1`:
 - Added tests for all four states and registered them in CI. The planner is intentionally separate from app startup and has no write capability.
 
 - Refined migration detection to ignore prefilled Foundation defaults while still detecting completed/changed identity profiles, cycle tracking, styling/nutrition records, connected integrations and nested Mariluna finance/metrics data. This avoids both false positives on a clean first start and false negatives for business-only records.
+
+- Migration data detection explicitly ignores the preconfigured Foundation template shipped with Alchemy (including its seeded profile and completed-template flag). Only fields changed from the template, actual user records, configured cycle data, or connected integrations count as local user data. This prevents a brand-new install from being misclassified as an existing local database.
+- Added regression tests for a clean seeded install, profile-only customisation and Mariluna-only finance records. The current CI run is validating these cases together with the stricter snapshot boundary.
