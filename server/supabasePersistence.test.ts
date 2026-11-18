@@ -190,6 +190,30 @@ test('snapshot writes reject a database response with altered checksum metadata'
   );
 });
 
+
+test('snapshot loading rejects structurally incomplete stored Alchemy state', async () => {
+  const fetcher: FetchLike = async (input) => {
+    if (String(input).endsWith('/auth/v1/user')) {
+      return new Response(JSON.stringify({ id: ownerId }), { status: 200 });
+    }
+    return new Response(JSON.stringify([{
+      id: 'snapshot-id',
+      owner_id: ownerId,
+      schema_version: 1,
+      revision: 1,
+      payload: { tasks: [], foundation: {}, integrations: {} },
+      payload_sha256: createHash('sha256').update('{"tasks":[],"foundation":{},"integrations":{}}').digest('hex'),
+      source: 'autosave',
+      created_at: new Date().toISOString(),
+    }]), { status: 200 });
+  };
+  const store = new SupabasePersistence(readSupabaseServerConfig(env)!, fetcher);
+  await assert.rejects(
+    () => store.loadLatestSnapshot('verified-token'),
+    /metadata is invalid/,
+  );
+});
+
 test('snapshot loading rejects a payload whose stored hash does not match', async () => {
   const fetcher: FetchLike = async (input) => {
     const url = String(input);
