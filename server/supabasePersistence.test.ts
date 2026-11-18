@@ -4,6 +4,7 @@ import { createHash } from 'node:crypto';
 import {
   readSupabaseServerConfig,
   SupabasePersistence,
+  isValidAlchemySnapshotPayload,
   type FetchLike,
 } from './supabasePersistence';
 
@@ -22,6 +23,16 @@ const env = {
   SUPABASE_ANON_KEY: 'public-anon-key',
   SUPABASE_SERVICE_ROLE_KEY: 'server-only-service-role',
 };
+
+
+test('snapshot payload validator accepts the complete app contract and rejects missing core modules', () => {
+  assert.equal(isValidAlchemySnapshotPayload(validPayload), true);
+  assert.equal(isValidAlchemySnapshotPayload({ ...validPayload, nutrition: undefined }), false);
+  assert.equal(isValidAlchemySnapshotPayload({ ...validPayload, chatHistory: undefined }), false);
+  assert.equal(isValidAlchemySnapshotPayload({ ...validPayload, setupStatus: 'unknown' }), false);
+  assert.equal(isValidAlchemySnapshotPayload({ ...validPayload, foundation: { aboutYou: [] } }), false);
+  assert.equal(isValidAlchemySnapshotPayload([]), false);
+});
 
 test('Supabase configuration requires all server credentials and HTTPS', () => {
   assert.equal(readSupabaseServerConfig({}), null);
