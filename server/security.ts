@@ -23,7 +23,8 @@ export interface PasskeyCredential {
 }
 
 export interface ActiveSession {
-  id: string;
+  id: string; // Internal HttpOnly-cookie credential; never expose in API responses.
+  publicId: string; // Non-authenticating identifier safe for device-management UI.
   deviceId: string;
   deviceName: string;
   ip: string;
@@ -155,6 +156,7 @@ class SecurityVault {
     const now = Date.now();
     const session: ActiveSession = {
       id: sessionId,
+      publicId: crypto.randomUUID(),
       deviceId: crypto.createHash('sha256').update(ip + userAgent).digest('hex').substring(0, 12),
       deviceName,
       ip,
@@ -239,15 +241,31 @@ class SecurityVault {
     }
   }
 
-  public getActiveSessions(currentSessionId: string): ActiveSession[] {
+  public getActiveSessions(currentSessionId: string): Omit<ActiveSession, 'id' | 'lastActivityMs' | 'stepUpExpiresAt' | 'sensitiveUnlockedUntil'>[] {
     return Array.from(this.sessions.values()).map((s) => ({
-      ...s,
+      publicId: s.publicId,
+      deviceId: s.deviceId,
+      deviceName: s.deviceName,
+      ip: s.ip,
+      userAgent: s.userAgent,
+      createdAt: s.createdAt,
+      lastActive: s.lastActive,
+      authenticatedWith: s.authenticatedWith,
+      isAppAuthenticated: s.isAppAuthenticated,
+      isPreviewMode: s.isPreviewMode,
+      appAuthenticatedAt: s.appAuthenticatedAt,
+      inactivityTimeoutMinutes: s.inactivityTimeoutMinutes,
       isCurrent: s.id === currentSessionId,
     }));
   }
 
-  public revokeSession(sessionId: string): boolean {
-    return this.sessions.delete(sessionId);
+  // Device-management endpoints accept only the public identifier, never the
+  // HttpOnly cookie credential used internally to authenticate API requests.
+  public revokeSession(publicId: string): boolean {
+    for ( (const [sessionId, session] of this.sessions.entries()) ) {
+      if (session.publicId === publicId) return this.sessions.delete(sessionId);
+    }
+    return false;
   }
 
   public revokeOtherSessions(currentSessionId: string): void {
