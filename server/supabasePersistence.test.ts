@@ -153,6 +153,31 @@ test('snapshot owner comes from verified Supabase identity and stored payload ha
   assert.equal(new Headers(calls[1].init?.headers).get('Authorization'), `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`);
 });
 
+
+test('snapshot writes reject a database response with altered checksum metadata', async () => {
+  const fetcher: FetchLike = async (input, init) => {
+    if (String(input).endsWith('/auth/v1/user')) {
+      return new Response(JSON.stringify({ id: ownerId }), { status: 200 });
+    }
+    const body = JSON.parse(String(init?.body));
+    return new Response(JSON.stringify([{
+      id: 'snapshot-id',
+      owner_id: ownerId,
+      schema_version: body.p_schema_version,
+      revision: 1,
+      payload: body.p_payload,
+      payload_sha256: '0'.repeat(64),
+      source: body.p_source,
+      created_at: new Date().toISOString(),
+    }]), { status: 200 });
+  };
+  const store = new SupabasePersistence(readSupabaseServerConfig(env)!, fetcher);
+  await assert.rejects(
+    () => store.saveSnapshot('verified-token', validPayload),
+    /invalid snapshot metadata or content/,
+  );
+});
+
 test('snapshot loading rejects a payload whose stored hash does not match', async () => {
   const fetcher: FetchLike = async (input) => {
     const url = String(input);
