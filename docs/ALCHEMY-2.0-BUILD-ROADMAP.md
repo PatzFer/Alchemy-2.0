@@ -353,3 +353,11 @@ Incremental implementation commits on `design/phase-1`:
 - Added `GET /api/ready` as a separate deployment-readiness endpoint. It currently returns HTTP 503 with explicit blockers instead of allowing infrastructure monitors to mistake a running Node process for a production-ready Alchemy deployment.
 - The blockers name the actual outstanding work: durable Supabase identity/session storage, durable credential and integration persistence, and encrypted app-state storage. This endpoint is intentionally not a liveness check; `/api/health` remains the process health endpoint.
 - Latest source commit: `ae27c70662c7ad5a959de73a0438d534eb241459`. CI validation has been triggered and is pending at the time of this note.
+
+## Progress log — 18 November 2026 (migration safety gate)
+
+- Consolidated the Supabase migration directory to one initial identity/persistence migration. Removed a duplicate schema migration to avoid conflicting definitions.
+- Added `scripts/check-supabase-migrations.ts` and `bun run check:supabase` to validate canonical 14-digit migration timestamps, unique migration versions, required owner/persistence/security tables, RLS on every required table, server-only privilege revocation and owner-scoped policies.
+- The first CI run correctly caught that the migration filename used a 12-digit timestamp. Renamed it to the canonical 14-digit Supabase timestamp and reran the full workflow.
+- Commit `3482929e595665f32d35129a9ef9b741900d6232` passed dependency installation, TypeScript, Supabase migration safety checks, privacy/backup tests and production build.
+- These are static migration checks only. SQL has not been applied to a live Supabase project; database behavior, RLS execution and restore drills remain unverified.
