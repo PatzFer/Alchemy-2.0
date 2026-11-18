@@ -347,3 +347,9 @@ Incremental implementation commits on `design/phase-1`:
 - Updated confirmation text to explain the automatic rollback download. This reduces reliance on the user remembering to export first.
 - GitHub Actions for commit `50cdb44f394605a684ab5b4175031ffaa09f097b` passed dependency installation, TypeScript, privacy/backup regression tests and production build.
 - Limitation: the rollback file download is initiated by the browser; this code cannot verify that the user retained the file. A later persistent server-side snapshot/restore mechanism is still required before cloud migration.
+
+## Progress log — 18 November 2026 (deployment readiness transparency)
+
+- Added `GET /api/ready` as a separate deployment-readiness endpoint. It currently returns HTTP 503 with explicit blockers instead of allowing infrastructure monitors to mistake a running Node process for a production-ready Alchemy deployment.
+- The blockers name the actual outstanding work: durable Supabase identity/session storage, durable credential and integration persistence, and encrypted app-state storage. This endpoint is intentionally not a liveness check; `/api/health` remains the process health endpoint.
+- Latest source commit: `ae27c70662c7ad5a959de73a0438d534eb241459`. CI validation has been triggered and is pending at the time of this note.
