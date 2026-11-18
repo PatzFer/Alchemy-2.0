@@ -661,7 +661,9 @@ export const securityVault = new SecurityVault();
 // Middleware Helpers
 // ----------------------------------------------------
 export function getOrCreateSession(req: Request, res: Response): ActiveSession {
-  const sessionId = req.cookies?.pm_alchemy_session || req.headers['x-session-id'] as string;
+  // The opaque session token is accepted only from the HttpOnly cookie.
+  // A caller-controlled header must never act as an alternate session credential.
+  const sessionId = req.cookies?.pm_alchemy_session;
   if (sessionId) {
     const existing = securityVault.getSession(sessionId);
     if (existing) {
