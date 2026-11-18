@@ -313,6 +313,14 @@ class SecurityVault {
     return pending.challenge;
   }
 
+  // Atomically remove a ceremony nonce before cryptographic verification so
+  // concurrent/replayed submissions cannot both consume the same challenge.
+  public consumeChallenge(key: string): string | undefined {
+    const challenge = this.getChallenge(key);
+    this.currentChallenges.delete(key);
+    return challenge;
+  }
+
   public deleteChallenge(key: string): void {
     this.currentChallenges.delete(key);
   }
