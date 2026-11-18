@@ -574,7 +574,7 @@ class SecurityVault {
           const category = String(item.category || '').toLowerCase();
           const content = String(item.content || '').toLowerCase();
           const cycleSensitive = /cycle|cyclus|menstru|luteal|follicular|ovulat/.test(category + ' ' + content);
-          const wellbeingSensitive = /health|gezondheid|symptom|medisch|medical|weight|gewicht|lichaam|measurement|meting|nutrition|voeding|diet|calorie|medication|medicatie/.test(category + ' ' + content);
+          const wellbeingSensitive = /health|gezondheid|symptom|medisch|medical|weight|gewicht|lichaam|measurement|meting|nutrition|voeding|diet|calorie|food|meal|eten|koken|body|measurements|medication|medicatie/.test(category + ' ' + content);
           const financialSensitive = /financial|finance|boekhoud|revenue|omzet|price|prijs|cost|kosten|profit|winst|invoice|factuur|expense|uitgave|tax|belasting|btw|rsz|budget/.test(category + ' ' + content);
 
           if (item.realm === 'personal') {
