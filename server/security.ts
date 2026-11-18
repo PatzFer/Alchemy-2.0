@@ -550,7 +550,7 @@ class SecurityVault {
 
     // Filter every mixed-realm collection using server-owned consent settings.
     // Missing realm metadata is ambiguous and therefore excluded from AI context.
-    const collectionKeys = ['calendarEvents', 'projects', 'ideas', 'intentions', 'tasks', 'goals'];
+    const collectionKeys = ['calendarEvents', 'projects', 'ideas', 'intentions', 'tasks', 'goals', 'memoryItems'];
     for (const key of collectionKeys) {
       if (!Array.isArray(sanitized[key])) continue;
       sanitized[key] = sanitized[key].filter((item: any) => {
@@ -563,6 +563,40 @@ class SecurityVault {
         }
         return false;
       });
+    }
+
+    if (Array.isArray(sanitized.memoryItems)) {
+      sanitized.memoryItems = sanitized.memoryItems
+        .filter((item: any) => {
+          if (!item || !['explicit', 'confirmed'].includes(item.type) || item.status !== 'active') return false;
+          if (item.expiresAt && Number.isFinite(Date.parse(item.expiresAt)) && Date.parse(item.expiresAt) <= Date.now()) return false;
+
+          const category = String(item.category || '').toLowerCase();
+          const content = String(item.content || '').toLowerCase();
+          const cycleSensitive = /cycle|cyclus|menstru|luteal|follicular|ovulat/.test(category + ' ' + content);
+          const wellbeingSensitive = /health|gezondheid|symptom|medisch|medical|weight|gewicht|lichaam|measurement|meting|nutrition|voeding|diet|calorie|medication|medicatie/.test(category + ' ' + content);
+          const financialSensitive = /financial|finance|boekhoud|revenue|omzet|price|prijs|cost|kosten|profit|winst|invoice|factuur|expense|uitgave|tax|belasting|btw|rsz|budget/.test(category + ' ' + content);
+
+          if (item.realm === 'personal') {
+            if (!this.permissions.allowPersonalDataToAI || !(world === 'personal' || world === 'all' || world === 'balanced' || !world)) return false;
+            if (cycleSensitive && !this.permissions.allowCycleDataToAI) return false;
+            if (wellbeingSensitive && !this.permissions.allowWellbeingDataToAI) return false;
+          } else if (item.realm === 'mariluna') {
+            if (!this.permissions.allowMarilunaDataToAI || !(world === 'mariluna' || world === 'all' || world === 'balanced')) return false;
+            if (financialSensitive && !this.permissions.allowFinancialDataToAI) return false;
+          } else {
+            return false;
+          }
+          return typeof item.content === 'string' && item.content.trim().length > 0;
+        })
+        .slice(0, 20)
+        .map((item: any) => ({
+          content: String(item.content).trim().slice(0, 600),
+          category: String(item.category || 'General').slice(0, 80),
+          realm: item.realm,
+          type: item.type,
+          confidence: item.confidence,
+        }));
     }
 
     const isAllowedRealmItem = (item: any): boolean => {
