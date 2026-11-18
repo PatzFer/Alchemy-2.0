@@ -229,9 +229,9 @@ export const PriveDomainView: React.FC<PriveDomainViewProps> = ({
                     : 'Help me reflect on my personal rhythm, energy, and wellbeing this week.'
                 )
               }
-              className="flex items-center gap-2 px-4 py-2 rounded-full border border-[#8A7661] bg-[#514439] text-[#F0EBDD] text-xs font-medium hover:border-[#8C7654] transition shadow-xs cursor-pointer"
+              className="flex items-center gap-2 px-4 py-2 rounded-full border border-[#8A7661] bg-[#514439] text-[#F0EBDD] text-xs font-medium hover:border-[var(--accent-secondary)] transition shadow-xs cursor-pointer"
             >
-              <Sparkles className="w-3.5 h-3.5 text-[#8C7654]" />
+              <Sparkles className="w-3.5 h-3.5 text-[var(--accent-secondary)]" />
               <span>{isNl ? 'Persoonlijke Reflectie' : 'Personal Reflection'}</span>
             </button>
           </div>
@@ -274,13 +274,13 @@ export const PriveDomainView: React.FC<PriveDomainViewProps> = ({
             {/* Cycle Snapshot */}
             <div
               onClick={() => setActiveSubTab('cycle')}
-              className="p-4 rounded-2xl border border-[#E3D9C9] bg-[#FAF8F3] hover:border-[#8C7654] transition cursor-pointer space-y-1 shadow-xs"
+              className="p-4 rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-1)] hover:border-[var(--accent-secondary)] transition cursor-pointer space-y-1 shadow-xs"
             >
-              <div className="flex items-center justify-between text-[11px] text-[#8C7654] font-medium uppercase tracking-wider">
+              <div className="flex items-center justify-between text-[11px] text-[var(--accent-secondary)] font-medium uppercase tracking-wider">
                 <span>{isNl ? 'Cyclusstatus' : 'Cycle Status'}</span>
                 <Activity className="w-3.5 h-3.5" />
               </div>
-              <div className="font-serif text-lg text-[#2C2825] capitalize">
+              <div className="font-serif text-lg text-[var(--text-primary)] capitalize">
                 {cycleProfile.trackingEnabled
                   ? cycleStatus.activePhase === 'follicular'
                     ? isNl ? 'Folliculaire Fase' : 'Follicular Phase'
@@ -291,7 +291,7 @@ export const PriveDomainView: React.FC<PriveDomainViewProps> = ({
                     : isNl ? 'Menstruele Fase' : 'Menstrual Phase'
                   : isNl ? 'Niet geactiveerd' : 'Not active'}
               </div>
-              <p className="text-[11px] text-[#7A7167]">
+              <p className="text-[11px] text-[var(--text-secondary)]">
                 {cycleProfile.trackingEnabled
                   ? `${isNl ? 'Dag' : 'Day'} ${cycleStatus.cycleDay} • ${cycleStatus.daysUntilNextPeriod} ${isNl ? 'dagen tot menstruatie' : 'days to period'}`
                   : isNl ? 'Tik om cyclus in te stellen' : 'Tap to set up cycle'}
@@ -299,12 +299,12 @@ export const PriveDomainView: React.FC<PriveDomainViewProps> = ({
             </div>
 
             {/* Daily Energy & Check-in */}
-            <div className="p-4 rounded-2xl border border-[#E3D9C9] bg-[#FAF8F3] space-y-1 shadow-xs">
-              <div className="flex items-center justify-between text-[11px] text-[#8C7654] font-medium uppercase tracking-wider">
+            <div className="p-4 rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-1)] space-y-1 shadow-xs">
+              <div className="flex items-center justify-between text-[11px] text-[var(--accent-secondary)] font-medium uppercase tracking-wider">
                 <span>{isNl ? 'Dagelijkse Energie' : 'Daily Energy'}</span>
                 <Smile className="w-3.5 h-3.5" />
               </div>
-              <div className="font-serif text-lg text-[#2C2825] capitalize">
+              <div className="font-serif text-lg text-[var(--text-primary)] capitalize">
                 {todayCheckIn?.feeling
                   ? todayCheckIn.feeling === 'good'
                     ? isNl ? 'Goed & Energiek' : 'Good & Energetic'
@@ -315,7 +315,7 @@ export const PriveDomainView: React.FC<PriveDomainViewProps> = ({
                     : isNl ? 'Mentaal zwaar' : 'Mentally heavy'
                   : isNl ? 'Nog niet ingevuld' : 'Not recorded yet'}
               </div>
-              <p className="text-[11px] text-[#7A7167]">
+              <p className="text-[11px] text-[var(--text-secondary)]">
                 {todayCheckIn?.notes || (isNl ? 'Ingevuld via de Vandaag-pagina' : 'Recorded via Today screen')}
               </p>
             </div>
@@ -323,16 +323,16 @@ export const PriveDomainView: React.FC<PriveDomainViewProps> = ({
             {/* Water Tracker Snapshot */}
             <div
               onClick={() => setActiveSubTab('wellbeing')}
-              className="p-4 rounded-2xl border border-[#E3D9C9] bg-[#FAF8F3] hover:border-[#8C7654] transition cursor-pointer space-y-1 shadow-xs"
+              className="p-4 rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-1)] hover:border-[var(--accent-secondary)] transition cursor-pointer space-y-1 shadow-xs"
             >
-              <div className="flex items-center justify-between text-[11px] text-[#8C7654] font-medium uppercase tracking-wider">
+              <div className="flex items-center justify-between text-[11px] text-[var(--accent-secondary)] font-medium uppercase tracking-wider">
                 <span>{isNl ? 'Water (750ml)' : 'Water (750ml)'}</span>
                 <Droplet className="w-3.5 h-3.5 text-[#3B82F6]" />
               </div>
-              <div className="font-serif text-lg text-[#2C2825]">
+              <div className="font-serif text-lg text-[var(--text-primary)]">
                 {waterStats.todayVolumeL} L
               </div>
-              <p className="text-[11px] text-[#7A7167]">
+              <p className="text-[11px] text-[var(--text-secondary)]">
                 {waterStats.todayBottles} / {waterStats.targetBottles} {isNl ? 'flessen' : 'bottles'} ({waterStats.percentOfTarget}%)
               </p>
             </div>
@@ -340,16 +340,16 @@ export const PriveDomainView: React.FC<PriveDomainViewProps> = ({
             {/* Routines & Evening Protection */}
             <div
               onClick={() => setActiveSubTab('routines')}
-              className="p-4 rounded-2xl border border-[#E3D9C9] bg-[#FAF8F3] hover:border-[#8C7654] transition cursor-pointer space-y-1 shadow-xs"
+              className="p-4 rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-1)] hover:border-[var(--accent-secondary)] transition cursor-pointer space-y-1 shadow-xs"
             >
-              <div className="flex items-center justify-between text-[11px] text-[#8C7654] font-medium uppercase tracking-wider">
+              <div className="flex items-center justify-between text-[11px] text-[var(--accent-secondary)] font-medium uppercase tracking-wider">
                 <span>{isNl ? 'Vaste Routines' : 'Routines'}</span>
                 <Clock className="w-3.5 h-3.5" />
               </div>
-              <div className="font-serif text-lg text-[#2C2825]">
+              <div className="font-serif text-lg text-[var(--text-primary)]">
                 {lifeProfile.routines.length} {isNl ? 'rituelen actief' : 'active rituals'}
               </div>
-              <p className="text-[11px] text-[#7A7167]">
+              <p className="text-[11px] text-[var(--text-secondary)]">
                 {lifeProfile.preferences.protectEvenings
                   ? isNl ? 'Avondrust actief beschermd' : 'Evening rest guarded'
                   : isNl ? 'Flexibel dagritme' : 'Flexible rhythm'}
@@ -360,40 +360,40 @@ export const PriveDomainView: React.FC<PriveDomainViewProps> = ({
           {/* Personal Styling 2.0 Feature Banner */}
           <div
             onClick={() => setActiveSubTab('style')}
-            className="rounded-2xl border border-[#D5C7B3] bg-gradient-to-r from-[#FAF8F3] to-[#F4EFE6] p-5 hover:border-[#8C7654] transition cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs"
+            className="rounded-2xl border border-[#D5C7B3] bg-gradient-to-r from-[var(--surface-1)] to-[#F4EFE6] p-5 hover:border-[var(--accent-secondary)] transition cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs"
           >
             <div className="space-y-1">
               <div className="flex items-center gap-2">
                 <span className="px-2.5 py-0.5 rounded-full text-[10px] uppercase tracking-widest font-medium bg-[#EFE8DC] text-[#78664D]">
                   Personal Styling 2.0
                 </span>
-                <span className="text-[11px] text-[#8C7654] font-serif italic">
+                <span className="text-[11px] text-[var(--accent-secondary)] font-serif italic">
                   {foundationStyling?.silhouetteLabel || 'Waist-Defined Silhouette'} • 1.57m
                 </span>
               </div>
-              <h3 className="font-serif text-base font-normal text-[#2C2825]">
+              <h3 className="font-serif text-base font-normal text-[var(--text-primary)]">
                 {isNl ? '“Past dit bij mij?” & Emotional Dressing Studio' : '“Does this fit me?” & Emotional Dressing'}
               </h3>
-              <p className="text-xs text-[#7A7167] font-light max-w-xl">
+              <p className="text-xs text-[var(--text-secondary)] font-light max-w-xl">
                 {isNl
                   ? 'Evalueer kledingstukken via visuele lichaamsarchitectuur, ontdek de 12 stemmingsformules en verfijn je stijlcollectie.'
                   : 'Evaluate garments against your visual proportions, explore the 12 emotional moods, and curate your wardrobe.'}
               </p>
             </div>
-            <div className="flex items-center gap-2 text-xs font-medium text-[#2C2825] shrink-0">
+            <div className="flex items-center gap-2 text-xs font-medium text-[var(--text-primary)] shrink-0">
               <span className="hidden sm:inline">{isNl ? 'Open Styling Studio' : 'Open Styling Studio'}</span>
-              <ArrowRight className="w-4 h-4 text-[#8C7654]" />
+              <ArrowRight className="w-4 h-4 text-[var(--accent-secondary)]" />
             </div>
           </div>
 
           {/* Two Columns: Personal Tasks & Upcoming Calendar */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {/* Personal Tasks */}
-            <div className="rounded-2xl border border-[#E3D9C9] bg-[#FAF8F3] p-4 sm:p-5 space-y-3">
-              <div className="flex items-center justify-between pb-2 border-b border-[#ECE3D4]">
+            <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-1)] p-4 sm:p-5 space-y-3">
+              <div className="flex items-center justify-between pb-2 border-b border-[var(--border-subtle)]">
                 <div className="flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-[#8C7654]" />
-                  <h3 className="font-serif text-base text-[#2C2825] font-medium">
+                  <CheckCircle2 className="w-4 h-4 text-[var(--accent-secondary)]" />
+                  <h3 className="font-serif text-base text-[var(--text-primary)] font-medium">
                     {isNl ? 'Persoonlijke Taken' : 'Personal Tasks'}
                   </h3>
                 </div>
@@ -403,7 +403,7 @@ export const PriveDomainView: React.FC<PriveDomainViewProps> = ({
               </div>
 
               {todayPersonalTasks.length === 0 ? (
-                <div className="py-8 text-center text-xs text-[#8C8377] italic">
+                <div className="py-8 text-center text-xs text-[var(--text-muted)] italic">
                   {isNl ? 'Geen openstaande persoonlijke taken.' : 'No open personal tasks today.'}
                 </div>
               ) : (
@@ -411,20 +411,20 @@ export const PriveDomainView: React.FC<PriveDomainViewProps> = ({
                   {todayPersonalTasks.slice(0, 5).map((task) => (
                     <div
                       key={task.id}
-                      className="p-2.5 rounded-xl bg-[#FFFFFF] border border-[#E8E1D3] flex items-center justify-between gap-3 text-xs"
+                      className="p-2.5 rounded-xl bg-[var(--surface-2)] border border-[var(--border-subtle)] flex items-center justify-between gap-3 text-xs"
                     >
                       <div className="flex items-center gap-2.5 min-w-0">
                         <button
                           type="button"
                           onClick={() => onToggleTask && onToggleTask(task.id)}
-                          className="text-[#B2A796] hover:text-[#2C2825] shrink-0"
+                          className="text-[#B2A796] hover:text-[var(--text-primary)] shrink-0"
                         >
                           <Circle className="w-4 h-4" />
                         </button>
-                        <span className="truncate text-[#2C2825]">{task.title}</span>
+                        <span className="truncate text-[var(--text-primary)]">{task.title}</span>
                       </div>
                       {task.estimatedDurationMinutes && (
-                        <span className="text-[10px] text-[#8C8377] shrink-0">
+                        <span className="text-[10px] text-[var(--text-muted)] shrink-0">
                           {task.estimatedDurationMinutes}m
                         </span>
                       )}
@@ -435,11 +435,11 @@ export const PriveDomainView: React.FC<PriveDomainViewProps> = ({
             </div>
 
             {/* Upcoming Personal Calendar Events */}
-            <div className="rounded-2xl border border-[#E3D9C9] bg-[#FAF8F3] p-4 sm:p-5 space-y-3">
-              <div className="flex items-center justify-between pb-2 border-b border-[#ECE3D4]">
+            <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-1)] p-4 sm:p-5 space-y-3">
+              <div className="flex items-center justify-between pb-2 border-b border-[var(--border-subtle)]">
                 <div className="flex items-center gap-2">
-                  <Calendar className="w-4 h-4 text-[#8C7654]" />
-                  <h3 className="font-serif text-base text-[#2C2825] font-medium">
+                  <Calendar className="w-4 h-4 text-[var(--accent-secondary)]" />
+                  <h3 className="font-serif text-base text-[var(--text-primary)] font-medium">
                     {isNl ? 'Persoonlijke Agenda' : 'Personal Calendar'}
                   </h3>
                 </div>
@@ -449,7 +449,7 @@ export const PriveDomainView: React.FC<PriveDomainViewProps> = ({
               </div>
 
               {personalEvents.length === 0 ? (
-                <div className="py-8 text-center text-xs text-[#8C8377] italic">
+                <div className="py-8 text-center text-xs text-[var(--text-muted)] italic">
                   {isNl ? 'Geen persoonlijke afspraken gepland.' : 'No personal events scheduled.'}
                 </div>
               ) : (
@@ -457,13 +457,13 @@ export const PriveDomainView: React.FC<PriveDomainViewProps> = ({
                   {personalEvents.slice(0, 5).map((event) => (
                     <div
                       key={event.id}
-                      className="p-2.5 rounded-xl bg-[#FFFFFF] border border-[#E8E1D3] flex items-center justify-between text-xs"
+                      className="p-2.5 rounded-xl bg-[var(--surface-2)] border border-[var(--border-subtle)] flex items-center justify-between text-xs"
                     >
                       <div>
-                        <div className="font-medium text-[#2C2825]">{event.title}</div>
-                        <div className="text-[10px] text-[#8C8377]">{event.date}</div>
+                        <div className="font-medium text-[var(--text-primary)]">{event.title}</div>
+                        <div className="text-[10px] text-[var(--text-muted)]">{event.date}</div>
                       </div>
-                      <span className="text-[11px] font-mono text-[#7A7167] bg-[#F5EFE4] px-2 py-0.5 rounded-md">
+                      <span className="text-[11px] font-mono text-[var(--text-secondary)] bg-[#F5EFE4] px-2 py-0.5 rounded-md">
                         {event.startTime} - {event.endTime}
                       </span>
                     </div>
@@ -477,17 +477,17 @@ export const PriveDomainView: React.FC<PriveDomainViewProps> = ({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div
               onClick={() => setActiveSubTab('nutrition')}
-              className="p-4 rounded-2xl border border-[#E3D9C9] bg-[#FFFFFF] hover:border-[#8C7654] transition cursor-pointer space-y-1 shadow-xs"
+              className="p-4 rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-2)] hover:border-[var(--accent-secondary)] transition cursor-pointer space-y-1 shadow-xs"
             >
-              <div className="flex items-center gap-2 text-xs font-medium text-[#2C2825]">
-                <Utensils className="w-4 h-4 text-[#8C7654]" />
+              <div className="flex items-center gap-2 text-xs font-medium text-[var(--text-primary)]">
+                <Utensils className="w-4 h-4 text-[var(--accent-secondary)]" />
                 <span>{isNl ? 'Voeding & Maaltijden' : 'Nutrition & Meals'}</span>
               </div>
-              <p className="text-xs text-[#7A7167]">
+              <p className="text-xs text-[var(--text-secondary)]">
                 {nutrition.dietaryNotes ||
                   (isNl ? 'Nog geen dieetvoorkeuren genoteerd.' : 'No dietary notes recorded.')}
               </p>
-              <div className="text-[11px] text-[#8C7654] pt-1 flex items-center gap-1 font-medium">
+              <div className="text-[11px] text-[var(--accent-secondary)] pt-1 flex items-center gap-1 font-medium">
                 <span>{isNl ? 'Bekijk maaltijden' : 'View nutrition'}</span>
                 <ArrowRight className="w-3 h-3" />
               </div>
@@ -495,18 +495,18 @@ export const PriveDomainView: React.FC<PriveDomainViewProps> = ({
 
             <div
               onClick={() => setActiveSubTab('style')}
-              className="p-4 rounded-2xl border border-[#E3D9C9] bg-[#FFFFFF] hover:border-[#8C7654] transition cursor-pointer space-y-1 shadow-xs"
+              className="p-4 rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-2)] hover:border-[var(--accent-secondary)] transition cursor-pointer space-y-1 shadow-xs"
             >
-              <div className="flex items-center gap-2 text-xs font-medium text-[#2C2825]">
-                <Shirt className="w-4 h-4 text-[#8C7654]" />
+              <div className="flex items-center gap-2 text-xs font-medium text-[var(--text-primary)]">
+                <Shirt className="w-4 h-4 text-[var(--accent-secondary)]" />
                 <span>{isNl ? 'Personal Styling & Garderobe' : 'Personal Styling & Wardrobe'}</span>
               </div>
-              <p className="text-xs text-[#7A7167]">
+              <p className="text-xs text-[var(--text-secondary)]">
                 {personalStyle.colorPalette.length > 0
                   ? `${personalStyle.colorPalette.length} ${isNl ? 'kleurenpaletten vastgelegd' : 'color palettes saved'}`
                   : isNl ? 'Nog geen stylingprofiel vastgelegd.' : 'No style preferences saved yet.'}
               </p>
-              <div className="text-[11px] text-[#8C7654] pt-1 flex items-center gap-1 font-medium">
+              <div className="text-[11px] text-[var(--accent-secondary)] pt-1 flex items-center gap-1 font-medium">
                 <span>{isNl ? 'Bekijk styling' : 'View styling'}</span>
                 <ArrowRight className="w-3 h-3" />
               </div>
@@ -587,17 +587,17 @@ export const PriveDomainView: React.FC<PriveDomainViewProps> = ({
         <div className="space-y-5">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="font-serif text-xl font-normal text-[#2C2825]">
+              <h2 className="font-serif text-xl font-normal text-[var(--text-primary)]">
                 {isNl ? 'Persoonlijke Doelen' : 'Personal Aspirations'}
               </h2>
-              <p className="text-xs text-[#7A7167] mt-0.5">
+              <p className="text-xs text-[var(--text-secondary)] mt-0.5">
                 {isNl ? 'Rustige, betekenisvolle intenties voor je eigen leven.' : 'Calm, intentional aspirations for your private life.'}
               </p>
             </div>
             <button
               type="button"
               onClick={() => setIsGoalModalOpen(true)}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#2C2825] text-[#FAF8F3] text-xs font-medium hover:bg-[#433D37] transition shadow-xs cursor-pointer"
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[var(--text-primary)] text-[var(--surface-1)] text-xs font-medium hover:bg-[#433D37] transition shadow-xs cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>{isNl ? 'Nieuw Doel' : 'New Goal'}</span>
@@ -606,13 +606,13 @@ export const PriveDomainView: React.FC<PriveDomainViewProps> = ({
 
           {personalGoals.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-[#DCD3C4] p-10 text-center space-y-2">
-              <p className="text-xs text-[#7A7167] italic">
+              <p className="text-xs text-[var(--text-secondary)] italic">
                 {isNl ? 'Nog geen persoonlijke doelen.' : 'No personal goals recorded yet.'}
               </p>
               <button
                 type="button"
                 onClick={() => setIsGoalModalOpen(true)}
-                className="text-xs text-[#8C7654] font-medium hover:underline cursor-pointer"
+                className="text-xs text-[var(--accent-secondary)] font-medium hover:underline cursor-pointer"
               >
                 {isNl ? '+ Voeg je eerste persoonlijke doel toe' : '+ Add your first personal goal'}
               </button>
@@ -622,27 +622,27 @@ export const PriveDomainView: React.FC<PriveDomainViewProps> = ({
               {personalGoals.map((goal) => (
                 <div
                   key={goal.id}
-                  className="rounded-2xl border border-[#E3D9C9] bg-[#FAF8F3] p-4 space-y-3 shadow-xs"
+                  className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-1)] p-4 space-y-3 shadow-xs"
                 >
                   <div className="flex items-start justify-between gap-2">
-                    <h4 className="font-serif text-base text-[#2C2825] font-medium">{goal.title}</h4>
+                    <h4 className="font-serif text-base text-[var(--text-primary)] font-medium">{goal.title}</h4>
                     {goal.targetDate && (
-                      <span className="text-[10px] text-[#8C7654] bg-[#F2ECE1] px-2 py-0.5 rounded-md shrink-0">
+                      <span className="text-[10px] text-[var(--accent-secondary)] bg-[#F2ECE1] px-2 py-0.5 rounded-md shrink-0">
                         {goal.targetDate}
                       </span>
                     )}
                   </div>
                   {goal.description && (
-                    <p className="text-xs text-[#7A7167] leading-relaxed">{goal.description}</p>
+                    <p className="text-xs text-[var(--text-secondary)] leading-relaxed">{goal.description}</p>
                   )}
                   {goal.milestones && goal.milestones.length > 0 && (
-                    <div className="space-y-1.5 pt-2 border-t border-[#ECE3D4]">
+                    <div className="space-y-1.5 pt-2 border-t border-[var(--border-subtle)]">
                       {goal.milestones.map((m) => (
                         <div key={m.id} className="flex items-center gap-2 text-xs text-[#524B43]">
                           <button
                             type="button"
                             onClick={() => onToggleMilestone && onToggleMilestone(goal.id, m.id)}
-                            className="text-[#8C7654] hover:text-[#2C2825]"
+                            className="text-[var(--accent-secondary)] hover:text-[var(--text-primary)]"
                           >
                             {m.completed ? (
                               <CheckCircle2 className="w-3.5 h-3.5 text-[#3A6B35]" />
@@ -665,8 +665,8 @@ export const PriveDomainView: React.FC<PriveDomainViewProps> = ({
           {/* Goal Modal */}
           {isGoalModalOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs">
-              <div className="bg-[#FAF8F3] border border-[#DDD4C5] rounded-3xl max-w-sm w-full p-6 space-y-4 shadow-xl text-[#2C2825]">
-                <h3 className="font-serif text-lg text-[#2C2825]">
+              <div className="bg-[var(--surface-1)] border border-[#DDD4C5] rounded-3xl max-w-sm w-full p-6 space-y-4 shadow-xl text-[var(--text-primary)]">
+                <h3 className="font-serif text-lg text-[var(--text-primary)]">
                   {isNl ? 'Nieuw Persoonlijk Doel' : 'New Personal Goal'}
                 </h3>
                 <form onSubmit={handleCreateGoal} className="space-y-3">
@@ -675,27 +675,27 @@ export const PriveDomainView: React.FC<PriveDomainViewProps> = ({
                     placeholder={isNl ? 'Titel doel (bijv. Dagelijks ochtendritueel behouden)' : 'Goal title'}
                     value={newGoalTitle}
                     onChange={(e) => setNewGoalTitle(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl bg-[#FFFFFF] border border-[#DDD4C5] text-xs text-[#2C2825]"
+                    className="w-full px-3 py-2 rounded-xl bg-[var(--surface-2)] border border-[#DDD4C5] text-xs text-[var(--text-primary)]"
                     autoFocus
                   />
                   <input
                     type="date"
                     value={newGoalTargetDate}
                     onChange={(e) => setNewGoalTargetDate(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl bg-[#FFFFFF] border border-[#DDD4C5] text-xs text-[#2C2825]"
+                    className="w-full px-3 py-2 rounded-xl bg-[var(--surface-2)] border border-[#DDD4C5] text-xs text-[var(--text-primary)]"
                   />
                   <div className="flex justify-end gap-2 pt-2">
                     <button
                       type="button"
                       onClick={() => setIsGoalModalOpen(false)}
-                      className="px-3 py-1.5 rounded-xl text-xs text-[#7A7167]"
+                      className="px-3 py-1.5 rounded-xl text-xs text-[var(--text-secondary)]"
                     >
                       {isNl ? 'Annuleren' : 'Cancel'}
                     </button>
                     <button
                       type="submit"
                       disabled={!newGoalTitle.trim()}
-                      className="px-4 py-1.5 rounded-xl bg-[#2C2825] text-[#FAF8F3] text-xs font-medium disabled:opacity-40"
+                      className="px-4 py-1.5 rounded-xl bg-[var(--text-primary)] text-[var(--surface-1)] text-xs font-medium disabled:opacity-40"
                     >
                       {isNl ? 'Opslaan' : 'Save'}
                     </button>
@@ -712,13 +712,13 @@ export const PriveDomainView: React.FC<PriveDomainViewProps> = ({
       {/* ============================================================ */}
       {activeSubTab === 'routines' && (
         <div className="space-y-6">
-          <div className="rounded-2xl border border-[#E3D9C9] bg-[#FAF8F3] p-5 space-y-4">
+          <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-1)] p-5 space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="font-serif text-xl font-normal text-[#2C2825]">
+                <h2 className="font-serif text-xl font-normal text-[var(--text-primary)]">
                   {isNl ? 'Vaste Rituelen & Levensstructuur' : 'Daily Rituals & Structure'}
                 </h2>
-                <p className="text-xs text-[#7A7167] mt-0.5">
+                <p className="text-xs text-[var(--text-secondary)] mt-0.5">
                   {isNl ? 'Routines die je dag dragen en rust inbouwen.' : 'Rituals that ground your day with spaciousness.'}
                 </p>
               </div>
@@ -729,12 +729,12 @@ export const PriveDomainView: React.FC<PriveDomainViewProps> = ({
               {lifeProfile.routines.map((routine) => (
                 <div
                   key={routine.id}
-                  className="p-3 rounded-xl bg-[#FFFFFF] border border-[#E5DDD0] flex items-center justify-between text-xs"
+                  className="p-3 rounded-xl bg-[var(--surface-2)] border border-[#E5DDD0] flex items-center justify-between text-xs"
                 >
                   <div className="flex items-center gap-2.5">
-                    <Clock className="w-3.5 h-3.5 text-[#8C7654]" />
-                    <span className="font-medium text-[#2C2825]">{routine.title}</span>
-                    <span className="text-[10px] text-[#7A7167] bg-[#F2ECE1] px-2 py-0.5 rounded-md capitalize">
+                    <Clock className="w-3.5 h-3.5 text-[var(--accent-secondary)]" />
+                    <span className="font-medium text-[var(--text-primary)]">{routine.title}</span>
+                    <span className="text-[10px] text-[var(--text-secondary)] bg-[#F2ECE1] px-2 py-0.5 rounded-md capitalize">
                       {routine.timeOfDay} • {routine.durationMinutes}m
                     </span>
                   </div>
@@ -750,18 +750,18 @@ export const PriveDomainView: React.FC<PriveDomainViewProps> = ({
             </div>
 
             {/* Add Routine Form */}
-            <form onSubmit={handleAddRoutine} className="pt-3 border-t border-[#ECE3D4] flex flex-wrap gap-2 items-center">
+            <form onSubmit={handleAddRoutine} className="pt-3 border-t border-[var(--border-subtle)] flex flex-wrap gap-2 items-center">
               <input
                 type="text"
                 placeholder={isNl ? 'Nieuwe routine (bijv. Ochtendthee & ademhaling)' : 'New ritual title'}
                 value={newRoutineTitle}
                 onChange={(e) => setNewRoutineTitle(e.target.value)}
-                className="flex-1 min-w-[200px] px-3 py-2 rounded-xl bg-[#FFFFFF] border border-[#DDD4C5] text-xs text-[#2C2825]"
+                className="flex-1 min-w-[200px] px-3 py-2 rounded-xl bg-[var(--surface-2)] border border-[#DDD4C5] text-xs text-[var(--text-primary)]"
               />
               <select
                 value={newRoutineTime}
                 onChange={(e) => setNewRoutineTime(e.target.value as any)}
-                className="px-2.5 py-2 rounded-xl bg-[#FFFFFF] border border-[#DDD4C5] text-xs text-[#2C2825]"
+                className="px-2.5 py-2 rounded-xl bg-[var(--surface-2)] border border-[#DDD4C5] text-xs text-[var(--text-primary)]"
               >
                 <option value="morning">{isNl ? 'Ochtend' : 'Morning'}</option>
                 <option value="afternoon">{isNl ? 'Middag' : 'Afternoon'}</option>
@@ -771,12 +771,12 @@ export const PriveDomainView: React.FC<PriveDomainViewProps> = ({
                 type="number"
                 value={newRoutineDuration}
                 onChange={(e) => setNewRoutineDuration(Number(e.target.value))}
-                className="w-16 px-2 py-2 rounded-xl bg-[#FFFFFF] border border-[#DDD4C5] text-xs text-[#2C2825] text-center"
+                className="w-16 px-2 py-2 rounded-xl bg-[var(--surface-2)] border border-[#DDD4C5] text-xs text-[var(--text-primary)] text-center"
               />
               <button
                 type="submit"
                 disabled={!newRoutineTitle.trim()}
-                className="px-4 py-2 rounded-xl bg-[#2C2825] text-[#FAF8F3] text-xs font-medium disabled:opacity-40"
+                className="px-4 py-2 rounded-xl bg-[var(--text-primary)] text-[var(--surface-1)] text-xs font-medium disabled:opacity-40"
               >
                 {isNl ? 'Toevoegen' : 'Add'}
               </button>
