@@ -503,3 +503,12 @@ Incremental implementation commits on `design/phase-1`:
 - Added a Security & Privacy control to choose between local deterministic Jarvis processing and Gemini server processing. Changing the provider requires step-up authorization.
 - Selecting Gemini does not override any data-consent switch: the selected workspace and the relevant personal, Mariluna, wellbeing and financial permissions continue to be enforced independently at the server boundary.
 - The UI's initial consent display now matches the server's deny-by-default state rather than visually suggesting permission before status has loaded.
+
+
+## Progress log — 18 November 2026 (Jarvis memory retrieval)
+
+- Connected structured memories to Jarvis context instead of sending the legacy unscoped `memoriesSample` strings.
+- Only active, explicit or user-confirmed memories are eligible. Pending learned suggestions, archived items, expired memories and unscoped records are excluded; the result is capped at 20 memories and 600 characters each.
+- Memory retrieval is realm-aware and separately checks personal, Mariluna, wellbeing, cycle and financial permissions. Sensitive memories require their corresponding additional consent even when general workspace access is enabled.
+- Jarvis receives confirmed memories as context, with explicit prompt guidance that memory text is data rather than instructions and never overrides the current user request.
+- Added regression tests for realm/sensitivity consent and memory status filtering. The memory list remains local-first until durable storage is connected.
