@@ -2,23 +2,200 @@
 
 @layer base {
   :root {
+    color-scheme: dark;
     --font-serif: 'Cormorant Garamond', Georgia, serif;
     --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+    --app-bg: #171916;
+    --surface-1: #20231f;
+    --surface-2: #282c27;
+    --surface-raised: #30352f;
+    --text-primary: #F0EBDD;
+    --text-secondary: #B7B7A9;
+    --text-muted: #858A7F;
+    --border-subtle: rgba(224, 220, 203, 0.13);
+    --border-strong: rgba(224, 220, 203, 0.24);
+    --focus-ring: #D6C69B;
+    --accent-primary: #A9B88A;
+    --accent-secondary: #D6C69B;
+    --status-success: #91B58D;
+    --status-warning: #D5B477;
+    --status-danger: #D58B82;
+    --status-info: #91AFC0;
+
+    --domain-mariluna: #263D35;
+    --domain-mariluna-moss: #A9B88A;
+    --domain-private: #39312B;
+    --domain-private-copper: #B49A7A;
+  }
+
+  html, body, #root {
+    min-height: 100%;
   }
 
   body {
+    margin: 0;
     font-family: var(--font-sans);
-    background-color: #F9F7F2;
-    color: #2C2825;
+    background-color: var(--app-bg);
+    color: var(--text-primary);
     -webkit-tap-highlight-color: transparent;
   }
 
   h1, h2, h3, .font-editorial {
     font-family: var(--font-serif);
   }
+
+  button, input, textarea, select {
+    font: inherit;
+  }
+
+  button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 3px;
+  }
 }
 
-/* Custom quiet luxury scrollbars */
+.alchemy-home {
+  color: var(--text-primary);
+  background:
+    radial-gradient(ellipse at 14% 8%, rgba(169, 184, 138, 0.09), transparent 36rem),
+    radial-gradient(ellipse at 90% 80%, rgba(180, 154, 122, 0.08), transparent 32rem),
+    var(--app-bg);
+}
+
+.alchemy-eyebrow {
+  color: var(--text-muted);
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.alchemy-eyebrow--light {
+  color: rgba(244, 239, 224, 0.68);
+}
+
+.alchemy-monogram {
+  display: inline-flex;
+  width: 2.1rem;
+  height: 2.1rem;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(214, 198, 155, 0.5);
+  border-radius: 999px;
+  color: #D6C69B;
+  font-family: var(--font-serif);
+  font-size: 1.1rem;
+}
+
+.alchemy-icon-button {
+  position: relative;
+  display: inline-flex;
+  width: 2.6rem;
+  height: 2.6rem;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border-subtle);
+  border-radius: 999px;
+  color: var(--text-secondary);
+  background: rgba(255,255,255,0.025);
+  transition: background 160ms ease, border-color 160ms ease, color 160ms ease;
+}
+.alchemy-icon-button:hover {
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+  background: rgba(255,255,255,0.07);
+}
+.alchemy-notification-dot {
+  position: absolute;
+  top: 0.45rem;
+  right: 0.45rem;
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 999px;
+  background: #D6C69B;
+  box-shadow: 0 0 0 2px var(--app-bg);
+}
+
+.alchemy-domain-card {
+  min-height: 19rem;
+  padding: 1.5rem;
+  border: 1px solid rgba(241, 235, 219, 0.12);
+  border-radius: 1.4rem;
+  color: #F3EEDF;
+  transition: transform 180ms ease, border-color 180ms ease, filter 180ms ease;
+}
+.alchemy-domain-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(241, 235, 219, 0.32);
+  filter: brightness(1.08);
+}
+.alchemy-domain-card:active {
+  transform: translateY(-1px);
+}
+.alchemy-domain-card--mariluna {
+  background:
+    radial-gradient(ellipse at 88% 10%, rgba(169, 184, 138, 0.2), transparent 16rem),
+    linear-gradient(145deg, #304b40, #1e3029 82%);
+}
+.alchemy-domain-card--private {
+  background:
+    radial-gradient(ellipse at 88% 10%, rgba(180, 154, 122, 0.22), transparent 16rem),
+    linear-gradient(145deg, #514439, #302923 82%);
+}
+.alchemy-domain-symbol {
+  color: #D6C69B;
+  font-size: 2rem;
+  line-height: 1;
+}
+.alchemy-enter-label {
+  display: inline-flex;
+  margin-top: 1.4rem;
+  border-bottom: 1px solid rgba(243, 238, 223, 0.45);
+  padding-bottom: 0.3rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+}
+
+.alchemy-utility-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: 999px;
+  padding: 0.65rem 0.95rem;
+  color: var(--text-secondary);
+  background: rgba(255,255,255,0.025);
+  font-size: 0.75rem;
+  transition: color 160ms ease, border-color 160ms ease, background 160ms ease;
+}
+.alchemy-utility-button:hover {
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+  background: rgba(255,255,255,0.07);
+}
+
+@media (max-width: 640px) {
+  .alchemy-domain-card {
+    min-height: 16rem;
+    padding: 1.25rem;
+  }
+  .alchemy-domain-card > div:last-child {
+    margin-top: 3.2rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+
+/* Quiet, low-contrast scrollbars */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -27,9 +204,9 @@
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #D8D2C7;
+  background: #555A50;
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #B8B0A2;
+  background: #747A6D;
 }
