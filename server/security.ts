@@ -567,8 +567,8 @@ class SecurityVault {
 
     const isAllowedRealmItem = (item: any): boolean => {
       const realm = item?.realm || item?.world;
-      if (realm === 'personal') return this.permissions.allowPersonalDataToAI && (world === 'personal' || world === 'all' || !world);
-      if (realm === 'mariluna') return this.permissions.allowMarilunaDataToAI && (world === 'mariluna' || world === 'all');
+      if (realm === 'personal') return this.permissions.allowPersonalDataToAI && (world === 'personal' || world === 'all' || world === 'balanced' || !world);
+      if (realm === 'mariluna') return this.permissions.allowMarilunaDataToAI && (world === 'mariluna' || world === 'all' || world === 'balanced');
       return false;
     };
     if (sanitized.todayIntention && !isAllowedRealmItem(sanitized.todayIntention)) delete sanitized.todayIntention;
