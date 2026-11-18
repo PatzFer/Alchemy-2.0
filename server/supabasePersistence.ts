@@ -164,11 +164,25 @@ export class SupabasePersistence {
         p_source: source,
       }),
     });
-    if (!rows[0]) throw new Error('Supabase did not return the saved snapshot.');
-    if (rows[0].owner_id !== owner.id) {
+    if (!Array.isArray(rows) || !rows[0]) {
+      throw new Error('Supabase did not return the saved snapshot.');
+    }
+    const saved = rows[0];
+    if (saved.owner_id !== owner.id) {
       throw new Error('Supabase returned a snapshot for a different owner.');
     }
-    return rows[0];
+    if (!Number.isInteger(saved.revision) || saved.revision < 1 ||
+        saved.schema_version !== schemaVersion ||
+        !isValidAlchemySnapshotPayload(saved.payload) ||
+        saved.source !== source ||
+        saved.payload_sha256 !== payloadSha256) {
+      throw new Error('Supabase returned invalid snapshot metadata or content.');
+    }
+    const returnedHash = createHash('sha256').update(stableJson(saved.payload)).digest('hex');
+    if (returnedHash !== payloadSha256) {
+      throw new Error('Supabase returned a snapshot with a failed integrity check.');
+    }
+    return saved;
   }
 
   async loadLatestSnapshot(accessToken: string): Promise<SnapshotRecord | null> {
