@@ -19,13 +19,14 @@ export interface SplitTaskResponse {
 
 export async function splitTaskWithBrain(
   taskTitle: string,
-  estimatedDuration: number = 60
+  estimatedDuration: number = 60,
+  world: 'personal' | 'mariluna' = 'personal'
 ): Promise<SplitTaskResponse> {
   try {
     const res = await fetch('/api/brain/split-task', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ taskTitle, estimatedDuration, world: 'personal' }),
+      body: JSON.stringify({ taskTitle, estimatedDuration, world }),
     });
 
     if (res.ok) {
