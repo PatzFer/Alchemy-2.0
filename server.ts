@@ -15,7 +15,14 @@ dotenv.config();
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
 
-app.use(express.json());
+app.disable("x-powered-by");
+app.use((_req: Request, res: Response, next) => {
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+  res.setHeader("X-Permitted-Cross-Domain-Policies", "none");
+  next();
+});
+app.use(express.json({ limit: "2mb" }));
 app.use(cookieParser());
 
 // Mount Security & Privacy Endpoints
