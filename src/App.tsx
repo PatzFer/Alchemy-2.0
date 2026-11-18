@@ -927,7 +927,7 @@ export default function App() {
   const userLang = state.foundation?.aboutYou?.preferredLanguage || 'nl';
 
   return (
-    <div className="min-h-screen bg-[#FAF8F4] text-[#2C2825] font-sans antialiased selection:bg-[#E2D8C7] selection:text-[#2C2825]">
+    <div className="min-h-screen bg-[var(--app-bg)] text-[var(--text-primary)] font-sans antialiased selection:bg-[#52634A] selection:text-[#F0EBDD]">
       {/* Offline Status Badge */}
       <OfflineIndicator />
 
@@ -1227,6 +1227,23 @@ export default function App() {
         onNavigateTab={(tab) => setCurrentTab(tab)}
         onOpenAssistantWithPrompt={openAssistantWithPrompt}
       />
+
+      {/* Global Quick Capture: available from every working area */}
+      {currentTab !== 'today' && (
+        <button
+          type="button"
+          onClick={() => {
+            setQuickRealm(currentTab === 'mariluna' ? 'mariluna' : currentTab === 'prive' ? 'personal' : activeWorld === 'mariluna' ? 'mariluna' : 'personal');
+            setQuickKind('task');
+            setIsQuickTaskModalOpen(true);
+          }}
+          className="fixed left-4 bottom-20 lg:bottom-6 z-30 flex items-center gap-2 rounded-full border border-[var(--border-strong)] bg-[var(--surface-raised)] px-4 py-3 text-xs font-medium text-[var(--text-primary)] shadow-xl transition hover:-translate-y-0.5 hover:border-[var(--accent-secondary)]"
+          aria-label="Quick Capture"
+        >
+          <span className="text-base leading-none">＋</span>
+          <span className="hidden sm:inline">Snel vastleggen</span>
+        </button>
+      )}
 
       {/* Floating Action Button for AI Strategic Partner on mobile */}
       <button
