@@ -347,7 +347,7 @@ export const TasksView: React.FC<TasksViewProps> = ({
                         </span>
                         <span className="flex items-center gap-1">
                           <Calendar className="w-3 h-3 text-[var(--text-muted)]" />
-                          Due: {task.dueDate}
+                          Deadline: {task.dueDate}
                         </span>
                         {task.recurring !== 'none' && (
                           <span className="flex items-center gap-1 capitalize">
@@ -364,14 +364,14 @@ export const TasksView: React.FC<TasksViewProps> = ({
                     <button
                       onClick={() => openEditModal(task)}
                       className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-2)] transition cursor-pointer"
-                      title="Edit task"
+                      title="Taak bewerken"
                     >
                       <Edit3 className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => onDeleteTask(task.id)}
-                      className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-[#733] hover:bg-[var(--surface-2)] transition cursor-pointer"
-                      title="Delete task"
+                      className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-[#E29B8D] hover:bg-[var(--surface-2)] transition cursor-pointer"
+                      title="Taak verwijderen"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -515,13 +515,13 @@ export const TasksView: React.FC<TasksViewProps> = ({
                         handleAddSubtask();
                       }
                     }}
-                    placeholder="Add step..."
+                    placeholder="Stap toevoegen..."
                     className="flex-1 bg-[var(--surface-raised)] border border-[var(--border-subtle)] rounded-lg px-3 py-1.5 text-xs text-[var(--text-primary)]"
                   />
                   <button
                     type="button"
                     onClick={handleAddSubtask}
-                    className="px-3 py-1.5 rounded-lg bg-[var(--surface-2)] text-xs font-medium text-[var(--text-primary)] hover:bg-[#E5DEC7] transition"
+                    className="px-3 py-1.5 rounded-lg bg-[var(--surface-2)] text-xs font-medium text-[var(--text-primary)] hover:bg-[var(--surface-raised)] transition"
                   >
                     Add
                   </button>
@@ -540,7 +540,7 @@ export const TasksView: React.FC<TasksViewProps> = ({
                           onClick={() =>
                             setFormSubtasks(formSubtasks.filter((_, idx) => idx !== i))
                           }
-                          className="text-[var(--text-muted)] hover:text-[#733]"
+                          className="text-[var(--text-muted)] hover:text-[#E29B8D]"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
