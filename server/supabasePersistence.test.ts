@@ -109,12 +109,12 @@ test('snapshot loading rejects a record returned for a different owner', async (
       return new Response(JSON.stringify({ id: ownerId }), { status: 200 });
     }
     return new Response(JSON.stringify([{
-      id: 'snapshot-id',
+      id: 'd4f1c1a2-1234-4a5b-9c8d-1234567890ab',
       owner_id: otherOwnerId,
       schema_version: 1,
       revision: 1,
-      payload: { tasks: [] },
-      payload_sha256: createHash('sha256').update('{"tasks":[]}').digest('hex'),
+      payload: validPayload,
+      payload_sha256: createHash('sha256').update(canonicalJson(validPayload)).digest('hex'),
       source: 'autosave',
       created_at: new Date().toISOString(),
     }]), { status: 200 });
@@ -145,7 +145,7 @@ test('snapshot owner comes from verified Supabase identity and stored payload ha
       assert.equal(body.p_payload_sha256, payloadHash);
       assert.equal(body.p_source, 'autosave');
       return new Response(JSON.stringify([{
-        id: 'snapshot-id',
+        id: 'd4f1c1a2-1234-4a5b-9c8d-1234567890ab',
         owner_id: body.p_owner_id,
         schema_version: body.p_schema_version,
         revision: 5,
@@ -173,7 +173,7 @@ test('snapshot writes reject a database response with altered checksum metadata'
     }
     const body = JSON.parse(String(init?.body));
     return new Response(JSON.stringify([{
-      id: 'snapshot-id',
+      id: 'd4f1c1a2-1234-4a5b-9c8d-1234567890ab',
       owner_id: ownerId,
       schema_version: body.p_schema_version,
       revision: 1,
@@ -197,7 +197,7 @@ test('snapshot loading rejects structurally incomplete stored Alchemy state', as
       return new Response(JSON.stringify({ id: ownerId }), { status: 200 });
     }
     return new Response(JSON.stringify([{
-      id: 'snapshot-id',
+      id: 'd4f1c1a2-1234-4a5b-9c8d-1234567890ab',
       owner_id: ownerId,
       schema_version: 1,
       revision: 1,
@@ -244,7 +244,7 @@ test('snapshot loading rejects a payload whose stored hash does not match', asyn
       return new Response(JSON.stringify({ id: ownerId }), { status: 200 });
     }
     return new Response(JSON.stringify([{
-      id: 'snapshot-id',
+      id: 'd4f1c1a2-1234-4a5b-9c8d-1234567890ab',
       owner_id: ownerId,
       schema_version: 1,
       revision: 1,
@@ -267,7 +267,7 @@ test('snapshot integrity is stable when PostgreSQL jsonb returns object keys in 
       return new Response(JSON.stringify({ id: ownerId }), { status: 200 });
     }
     return new Response(JSON.stringify([{
-      id: 'snapshot-id',
+      id: 'd4f1c1a2-1234-4a5b-9c8d-1234567890ab',
       owner_id: ownerId,
       schema_version: 1,
       revision: 1,
