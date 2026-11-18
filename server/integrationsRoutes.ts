@@ -159,19 +159,13 @@ router.post("/connect/:service", (req: Request, res: Response) => {
     }
 
     case "health_connect": {
-      if (!req.body.verified) {
-        return res.status(400).json({ error: "Health Connect/Google Fit vereist geverifieerde OAuth/API data." });
-      }
-      serverState.healthConnect = {
-        status: "connected",
-        platform: req.body.platform === "android" ? "android" : "web",
-        lastSync: now,
-        stepsToday: typeof req.body.stepsToday === "number" ? req.body.stepsToday : undefined,
-        activeMinutes: req.body.activeMinutes ?? 0,
-        isStepsOnly: true,
-        isPrivateOnly: true,
-      };
-      return res.json({ success: true, service: "health_connect", data: serverState.healthConnect });
+      // The web client currently has no native Android Health Connect bridge.
+      // Never mark a client-reported "verified" flag as a real provider connection.
+      return res.status(501).json({
+        success: false,
+        service: "health_connect",
+        error: "Native Android Health Connect integration is not implemented yet.",
+      });
     }
 
     case "instagram":
