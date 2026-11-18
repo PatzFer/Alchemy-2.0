@@ -117,27 +117,6 @@ export class IntegrationsService {
   }
 
   /**
-   * Disconnect a service and report server status accurately.
-   */
-  static async disconnectService(
-    serviceId: 'google_calendar' | 'mariluna_gmail' | 'health_connect' | 'mariluna_instagram' | 'push_notifications'
-  ): Promise<{ success: boolean; local?: boolean; error?: string }> {
-    try {
-      const res = await fetch(`/api/integrations/disconnect/${serviceId}`, {
-        method: 'POST',
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        return { success: false, error: data?.error || `Serververbreking mislukt (${res.status}).` };
-      }
-      return { success: true };
-    } catch (err) {
-      console.warn(`[Integrations] Could not disconnect ${serviceId} via server API:`, err);
-      return { success: false, local: true, error: 'Lokale status aangepast; serverstatus kon niet worden bevestigd.' };
-    }
-  }
-
-  /**
    * Test push notification
    */
   static async testPush() {
