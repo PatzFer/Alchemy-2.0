@@ -397,3 +397,9 @@ Incremental implementation commits on `design/phase-1`:
 - Added tests for the full state contract, incomplete state, tampered write responses, incomplete stored snapshots and JSONB key-order/checksum behavior.
 - CI passed on commit `e5cbde6ef8dc4e55f4df03486012837ab3f0ff4c` (TypeScript, migration checks, privacy tests and production build). Later commits containing additional checksum assertions and this log entry are being validated independently.
 - No Supabase database has been provisioned or migrated; no client cutover has been made. The localStorage state remains the active app source of truth and must be preserved until staging restore tests pass.
+
+## Progress log — 18 November 2026 (explicit browser persistence adapter)
+
+- Added a typed client adapter for reading and writing owner snapshots through `/api/persistence/snapshot`. It requires an explicit Supabase user access token, never sends a service-role credential, validates server responses and treats a missing remote snapshot as a normal first-run state.
+- Added client adapter tests for missing tokens, bearer-only authorization headers, first-run empty state, malformed server data and server-side configuration errors. Added the new test file to the CI test command.
+- The adapter is intentionally not connected to React startup or autosave. No credentials or live Supabase project are available, and activating remote persistence before Auth and restore testing would risk user data. localStorage remains the source of truth and rollback copy.
