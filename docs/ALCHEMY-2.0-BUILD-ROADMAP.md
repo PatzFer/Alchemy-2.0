@@ -218,3 +218,12 @@ Incremental implementation commits on `design/phase-1`:
 - Removed the Instagram sync handler's fabricated last-sync timestamp. The UI now reports that Meta Graph API refresh is not implemented and retains existing imported data without falsely claiming a fresh sync.
 - Provider connection status is now based on a successful provider OAuth/API read in the client rather than a client-posted `verified` flag to the ephemeral server registry. This still does not provide durable multi-device connection storage; that needs a proper authenticated persistent integration model.
 - No build, TypeScript/lint check, automated tests, browser/mobile tests, or live provider tests have run. Phases A/B/C remain in progress.
+
+
+## Progress log — 18 November 2026 (integration UI cleanup and storage security review)
+
+- Removed remaining client calls to the server's process-local integration disconnect registry. Disconnecting Calendar, Gmail or Instagram now updates the app's local provider state only; it no longer implies a durable server-side revocation. Actual Google token revocation/credential deletion still needs a dedicated implementation.
+- Removed the now-unreachable Health Connect connected-data panel and legacy action affordances. The UI always presents native Health Connect as not yet available; it cannot show old Google Fit values as a live Health Connect feed.
+- Source audit confirmed app state, including private and sensitive records, is currently serialized as plaintext JSON into browser localStorage. The security vault and sessions are also in-memory on the server. This means current app authentication does not by itself establish encrypted-at-rest storage or durable multi-device security. Do not claim those protections; a proper key-management, encryption and persistent-auth design is required before production handling of sensitive data.
+- The current TypeScript configuration does not enable noUnusedLocals/noUnusedParameters. No compiler, build, automated test, browser/mobile test, storage migration test or OAuth revocation test has run in this environment.
+- Phases A/B/C remain in progress. Sensitive-data persistence and integration credential lifecycle are explicit open security requirements.
