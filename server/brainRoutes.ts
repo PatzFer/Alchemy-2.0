@@ -1,6 +1,7 @@
 import { Router, Request, Response } from "express";
 import { GoogleGenAI } from "@google/genai";
 import { classifyIntent, buildIntentAwareResponse, isDutchMessage } from "./brainEngine";
+import { requireAppAuth } from "./security";
 
 const router = Router();
 
@@ -39,7 +40,7 @@ DATA SEPARATIE & PRIVACY:
  * POST /api/brain/brief
  * Generates an intelligent, calm morning brief for Today
  */
-router.post("/brief", async (req: Request, res: Response) => {
+router.post("/brief", requireAppAuth, async (req: Request, res: Response) => {
   try {
     const { deterministicBrief } = req.body;
     const ai = getAI();
@@ -93,7 +94,7 @@ Geen extra tekst, alleen JSON.`;
  * POST /api/brain/split-task
  * Breaks an oversized task into 3-5 manageable micro-steps
  */
-router.post("/split-task", async (req: Request, res: Response) => {
+router.post("/split-task", requireAppAuth, async (req: Request, res: Response) => {
   try {
     const { taskTitle, estimatedDuration } = req.body;
     const ai = getAI();
@@ -148,7 +149,7 @@ Geef een JSON terug in dit format:
  * POST /api/brain/query
  * Strategic, contextual thinking partner endpoint
  */
-router.post("/query", async (req: Request, res: Response) => {
+router.post("/query", requireAppAuth, async (req: Request, res: Response) => {
   try {
     const { query = '', context = {}, relevance } = req.body;
     const ai = getAI();
@@ -208,7 +209,7 @@ Geef een kort, doordacht, warm en praktisch antwoord in ${isDutch ? "helder Nede
  * POST /api/brain/evaluate-styling
  * Visual clothing assessment for "Past dit bij mij?" using Gemini vision & stored profile
  */
-router.post("/evaluate-styling", async (req: Request, res: Response) => {
+router.post("/evaluate-styling", requireAppAuth, async (req: Request, res: Response) => {
   try {
     const { imageBase64, mimeType = "image/jpeg", profileContext = {}, optionalNotes = "", optionalUrl = "" } = req.body;
     const ai = getAI();
