@@ -305,7 +305,7 @@ router.post('/webauthn/register-options', requireAppAuth, requireStepUpAuth, asy
     res.json(options);
   } catch (error: any) {
     console.error('WebAuthn register-options error:', error);
-    res.status(500).json({ error: error.message || 'Failed to generate passkey registration options' });
+    res.status(500).json({ error: 'Unable to start passkey registration.' });
   }
 });
 
@@ -359,7 +359,7 @@ router.post('/webauthn/register-verify', requireAppAuth, async (req: Request, re
     }
   } catch (error: any) {
     console.error('WebAuthn register-verify error:', error);
-    res.status(400).json({ error: error.message || 'Verification error' });
+    res.status(400).json({ error: 'Passkey registration verification failed.' });
   }
 });
 
@@ -390,7 +390,7 @@ router.post('/webauthn/auth-options', async (req: Request, res: Response) => {
     res.json(options);
   } catch (error: any) {
     console.error('WebAuthn auth-options error:', error);
-    res.status(500).json({ error: error.message || 'Failed to generate auth options' });
+    res.status(500).json({ error: 'Unable to start passkey authentication.' });
   }
 });
 
@@ -465,7 +465,7 @@ router.post('/webauthn/auth-verify', async (req: Request, res: Response) => {
   } catch (error: any) {
     console.error('WebAuthn auth-verify error:', error);
     securityVault.recordFailedAttempt(failureKey);
-    res.status(400).json({ error: error.message || 'Verification failed' });
+    res.status(400).json({ error: 'Passkey authentication verification failed.' });
   }
 });
 
