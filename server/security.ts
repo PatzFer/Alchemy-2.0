@@ -556,10 +556,10 @@ class SecurityVault {
       sanitized[key] = sanitized[key].filter((item: any) => {
         const realm = item?.realm || item?.world;
         if (realm === 'personal') {
-          return this.permissions.allowPersonalDataToAI && (world === 'personal' || world === 'all' || !world);
+          return this.permissions.allowPersonalDataToAI && (world === 'personal' || world === 'all' || world === 'balanced' || !world);
         }
         if (realm === 'mariluna') {
-          return this.permissions.allowMarilunaDataToAI && (world === 'mariluna' || world === 'all');
+          return this.permissions.allowMarilunaDataToAI && (world === 'mariluna' || world === 'all' || world === 'balanced');
         }
         return false;
       });
