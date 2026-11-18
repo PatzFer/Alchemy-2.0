@@ -103,7 +103,7 @@ router.post('/unlock-app', async (req: Request, res: Response) => {
 
   if (verified) {
     securityVault.clearFailedAttempts(session.ip);
-    const updatedSession = securityVault.authenticateApp(session.id, method);
+    securityVault.authenticateApp(session.id, method);
     return res.json({
       success: true,
       isAppAuthenticated: true,
@@ -130,7 +130,7 @@ router.post('/preview-unlock', (req: Request, res: Response) => {
   }
   const session = getOrCreateSession(req, res);
   securityVault.clearFailedAttempts(session.ip);
-  const updatedSession = securityVault.authenticateApp(session.id, 'preview_test_mode');
+  securityVault.authenticateApp(session.id, 'preview_test_mode');
   return res.json({
     success: true,
     isAppAuthenticated: true,
