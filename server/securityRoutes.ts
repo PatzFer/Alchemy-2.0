@@ -199,8 +199,10 @@ router.post('/unlock-sensitive', async (req: Request, res: Response) => {
   } else if (method === 'recovery_code' && credential) {
     verified = securityVault.verifyAndConsumeRecoveryCode(String(credential));
   } else if (method === 'passkey') {
-    // Verified via /webauthn/auth-verify
-    verified = true;
+    // Never trust a client-supplied method flag; require a live server-verified passkey step-up.
+    verified = session.isAppAuthenticated &&
+      session.authenticatedWith === 'passkey' &&
+      session.stepUpExpiresAt > Date.now();
   }
 
   if (verified) {
