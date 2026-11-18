@@ -333,3 +333,9 @@ Incremental implementation commits on `design/phase-1`:
 - Renamed backup actions to describe their actual integrity-checking behavior ("Export verified backup" and "Verify & restore backup").
 - Latest commit `fa78d539a8ee1d8118444ae7658186a8f40d8413` passed GitHub Actions: dependency install, TypeScript check, privacy/backup regression tests and production build.
 - No live Supabase project is connected. No database migration or live browser restore test has been run. Browser localStorage remains plaintext, and SHA-256 checksums detect accidental/unauthorized file changes only when the checksum itself is not also recomputed; they are not encryption or a digital signature.
+
+### Follow-up — backup metadata validation
+
+- Extended backup verification to reject invalid app schema versions and malformed export timestamps before a restore can proceed.
+- Added regression tests for both invalid metadata cases.
+- CI for commit `8af1894f952546148eb1bd68269040730a3af0a6` completed successfully: dependency install, TypeScript, privacy/backup tests and production build.
