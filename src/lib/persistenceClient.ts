@@ -6,7 +6,7 @@ export interface AlchemySnapshot {
   schema_version: number;
   revision: number;
   payload: Record<string, unknown>;
-  payload_sha256: string | null;
+  payload_sha256: string;
   source: 'migration' | 'autosave' | 'manual_backup' | 'restore';
   created_at: string;
 }
@@ -40,7 +40,7 @@ function isValidSnapshot(value: unknown): value is AlchemySnapshot {
     Number.isInteger(value.revision) && Number(value.revision) > 0 &&
     Number.isInteger(value.schema_version) && Number(value.schema_version) > 0 &&
     isCompleteAlchemyPayload(value.payload) &&
-    (value.payload_sha256 === null || (typeof value.payload_sha256 === 'string' && /^[a-f0-9]{64}$/i.test(value.payload_sha256))) &&
+    typeof value.payload_sha256 === 'string' && /^[a-f0-9]{64}$/i.test(value.payload_sha256) &&
     ['migration', 'autosave', 'manual_backup', 'restore'].includes(String(value.source)) &&
     typeof value.created_at === 'string' && Number.isFinite(Date.parse(value.created_at));
 }
