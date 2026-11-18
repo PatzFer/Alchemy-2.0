@@ -42,6 +42,7 @@ export async function sendChatMessage(
       role: 'assistant',
       content,
       timestamp: new Date().toISOString(),
+      world: world === 'mariluna' ? 'mariluna' : world === 'all' ? 'all' : 'personal',
       suggestedAction,
     };
   } catch (error: any) {
@@ -65,6 +66,7 @@ export async function sendChatMessage(
       role: 'assistant',
       content: fallbackText,
       timestamp: new Date().toISOString(),
+      world: world === 'mariluna' ? 'mariluna' : world === 'all' ? 'all' : 'personal',
     };
   }
 }
