@@ -162,6 +162,10 @@ export default function App() {
   const [isQuickTaskModalOpen, setIsQuickTaskModalOpen] = useState(false);
   const [quickTitle, setQuickTitle] = useState('');
   const [quickRealm, setQuickRealm] = useState<'personal' | 'mariluna'>('personal');
+  const [quickKind, setQuickKind] = useState<'task' | 'reminder' | 'idea' | 'note' | 'appointment'>('task');
+  const [quickDetails, setQuickDetails] = useState('');
+  const [quickDate, setQuickDate] = useState(new Date().toISOString().split('T')[0]);
+  const [quickStartTime, setQuickStartTime] = useState('09:00');
 
   // Automatically persist changes to local storage
   useEffect(() => {
@@ -1260,85 +1264,117 @@ export default function App() {
         activeContextItem={activeContextItem}
       />
 
-      {/* Quick Add Task Modal */}
+      {/* Universal Quick Capture */}
       {isQuickTaskModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#1A1816]/40 backdrop-blur-xs p-4">
-          <div className="w-full max-w-sm rounded-2xl bg-[#FAF8F3] border border-[#E3DCD0] p-5 shadow-2xl">
-            <h3 className="font-serif text-lg font-medium text-[#2C2825] mb-3">
-              Add Today's Focus
-            </h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/65 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md rounded-2xl border border-[var(--border-strong)] bg-[var(--surface-1)] p-5 shadow-2xl">
+            <div className="mb-4">
+              <p className="text-[10px] uppercase tracking-[0.2em] text-[var(--accent-secondary)]">Alchemy · Quick Capture</p>
+              <h3 className="mt-1 font-serif text-2xl text-[var(--text-primary)]">Leg het even vast</h3>
+              <p className="mt-1 text-xs text-[var(--text-secondary)]">Eerst bewaren, later verfijnen.</p>
+            </div>
             <form
               onSubmit={(e) => {
                 e.preventDefault();
-                if (!quickTitle.trim()) return;
-                handleSaveTask({
-                  id: 't-' + Date.now(),
-                  title: quickTitle.trim(),
-                  description: '',
-                  realm: quickRealm,
-                  category: quickRealm === 'mariluna' ? 'business' : 'personal',
-                  priority: 'high',
-                  dueDate: new Date().toISOString().split('T')[0],
-                  estimatedDuration: 30,
-                  recurring: 'none',
-                  status: 'todo',
-                  subtasks: [],
-                  createdAt: new Date().toISOString().split('T')[0],
-                });
+                const title = quickTitle.trim();
+                if (!title) return;
+                const id = Date.now();
+                const today = new Date().toISOString().split('T')[0];
+                if (quickKind === 'idea' || quickKind === 'note') {
+                  handleSaveIdea({
+                    id: 'i-' + id,
+                    title,
+                    content: quickDetails.trim(),
+                    realm: quickRealm,
+                    category: quickKind === 'note' ? 'note' : 'quick-capture',
+                    status: 'raw',
+                    createdAt: today,
+                    lastRevisitedAt: today,
+                  });
+                } else if (quickKind === 'appointment') {
+                  handleAddCalendarEvent({
+                    id: 'evt-' + id,
+                    title,
+                    date: quickDate,
+                    startTime: quickStartTime,
+                    endTime: (() => {
+                      const [hours, minutes] = quickStartTime.split(':').map(Number);
+                      const total = hours * 60 + minutes + 60;
+                      return String(Math.floor(total / 60) % 24).padStart(2, '0') + ':' + String(total % 60).padStart(2, '0');
+                    })(),
+                    realm: quickRealm,
+                    type: 'appointment',
+                    notes: quickDetails.trim(),
+                  });
+                } else {
+                  handleSaveTask({
+                    id: 't-' + id,
+                    title,
+                    description: quickDetails.trim(),
+                    realm: quickRealm,
+                    category: quickRealm === 'mariluna' ? 'business' : 'personal',
+                    priority: quickKind === 'reminder' ? 'high' : 'medium',
+                    dueDate: quickDate,
+                    estimatedDuration: 30,
+                    recurring: 'none',
+                    status: 'todo',
+                    subtasks: [],
+                    createdAt: today,
+                  });
+                }
                 setQuickTitle('');
+                setQuickDetails('');
+                setQuickKind('task');
+                setQuickDate(today);
                 setIsQuickTaskModalOpen(false);
               }}
-              className="space-y-3"
+              className="space-y-4"
             >
-              <input
-                type="text"
-                required
-                autoFocus
-                value={quickTitle}
-                onChange={(e) => setQuickTitle(e.target.value)}
-                placeholder="e.g. Confirm guest speaker, swim at noon"
-                className="w-full bg-[#FFFFFF] border border-[#D5CCBE] rounded-xl px-3.5 py-2 text-xs text-[#2C2825] focus:outline-hidden focus:border-[#8C7654]"
-              />
-
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setQuickRealm('personal')}
-                  className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition ${
-                    quickRealm === 'personal'
-                      ? 'bg-[#FFFFFF] border border-[#D5CCBE] text-[#2C2825] shadow-xs'
-                      : 'text-[#8C8377]'
-                  }`}
-                >
-                  Personal
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setQuickRealm('mariluna')}
-                  className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition ${
-                    quickRealm === 'mariluna'
-                      ? 'bg-[#2C2825] text-[#F9F7F2]'
-                      : 'text-[#8C8377]'
-                  }`}
-                >
-                  Mariluna Studio
-                </button>
+              <div className="grid grid-cols-3 gap-2">
+                {([
+                  ['task', 'Taak'],
+                  ['reminder', 'Herinnering'],
+                  ['idea', 'Idee'],
+                  ['note', 'Notitie'],
+                  ['appointment', 'Afspraak'],
+                ] as const).map(([kind, label]) => (
+                  <button key={kind} type="button" onClick={() => setQuickKind(kind)}
+                    className={`rounded-lg border px-2 py-2 text-xs transition ${quickKind === kind ? 'border-[var(--accent-secondary)] bg-[var(--surface-raised)] text-[var(--text-primary)]' : 'border-[var(--border-subtle)] text-[var(--text-secondary)]'}`}>
+                    {label}
+                  </button>
+                ))}
               </div>
-
-              <div className="flex items-center justify-end gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setIsQuickTaskModalOpen(false)}
-                  className="px-3 py-1.5 text-xs text-[#7A7167] hover:bg-[#EFE9DE] rounded-lg"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-1.5 bg-[#2C2825] text-[#F9F7F2] text-xs font-medium rounded-lg hover:bg-[#453E38]"
-                >
-                  Save Focus
-                </button>
+              <input type="text" required autoFocus value={quickTitle}
+                onChange={(e) => setQuickTitle(e.target.value)}
+                placeholder={quickKind === 'appointment' ? 'Waarvoor is de afspraak?' : 'Wat wil je vastleggen?'}
+                className="w-full rounded-xl border border-[var(--border-strong)] bg-[var(--surface-2)] px-3.5 py-3 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)]" />
+              <textarea value={quickDetails} onChange={(e) => setQuickDetails(e.target.value)}
+                placeholder={quickKind === 'note' ? 'Je notitie…' : 'Extra context (optioneel)'}
+                rows={3} className="w-full resize-y rounded-xl border border-[var(--border-strong)] bg-[var(--surface-2)] px-3.5 py-2.5 text-xs text-[var(--text-primary)] placeholder:text-[var(--text-muted)]" />
+              {(quickKind === 'task' || quickKind === 'reminder' || quickKind === 'appointment') && (
+                <div className="grid grid-cols-2 gap-3">
+                  <label className="space-y-1 text-[11px] text-[var(--text-secondary)]">
+                    <span>Datum</span>
+                    <input type="date" value={quickDate} onChange={(e) => setQuickDate(e.target.value)}
+                      className="w-full rounded-lg border border-[var(--border-strong)] bg-[var(--surface-2)] px-2 py-2 text-xs text-[var(--text-primary)]" />
+                  </label>
+                  {quickKind === 'appointment' && <label className="space-y-1 text-[11px] text-[var(--text-secondary)]">
+                    <span>Startuur</span>
+                    <input type="time" value={quickStartTime} onChange={(e) => setQuickStartTime(e.target.value)}
+                      className="w-full rounded-lg border border-[var(--border-strong)] bg-[var(--surface-2)] px-2 py-2 text-xs text-[var(--text-primary)]" />
+                  </label>}
+                </div>
+              )}
+              <div className="flex items-center gap-2">
+                <button type="button" onClick={() => setQuickRealm('personal')}
+                  className={`flex-1 rounded-lg border py-2 text-xs ${quickRealm === 'personal' ? 'border-[#B49A7A] bg-[#39312B] text-[#F0EBDD]' : 'border-[var(--border-subtle)] text-[var(--text-secondary)]'}`}>Privé</button>
+                <button type="button" onClick={() => setQuickRealm('mariluna')}
+                  className={`flex-1 rounded-lg border py-2 text-xs ${quickRealm === 'mariluna' ? 'border-[#A9B88A] bg-[#263D35] text-[#F0EBDD]' : 'border-[var(--border-subtle)] text-[var(--text-secondary)]'}`}>Mariluna</button>
+              </div>
+              <div className="flex justify-end gap-2 pt-1">
+                <button type="button" onClick={() => setIsQuickTaskModalOpen(false)}
+                  className="rounded-lg px-3 py-2 text-xs text-[var(--text-secondary)] hover:bg-[var(--surface-2)]">Annuleren</button>
+                <button type="submit" className="rounded-lg bg-[var(--accent-primary)] px-4 py-2 text-xs font-semibold text-[#171916] hover:brightness-110">Bewaren</button>
               </div>
             </form>
           </div>
