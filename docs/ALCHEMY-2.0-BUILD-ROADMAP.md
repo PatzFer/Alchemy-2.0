@@ -143,3 +143,11 @@ Incremental implementation commits on `design/phase-1`:
 **Validation status:** GitHub file updates are committed on the feature branch. No production build, TypeScript check, automated test suite, live integration test or device/browser review has been run in this environment. Do not treat the current checkpoint as a release-ready phase boundary.
 
 **Next implementation focus:** complete domain-specific dashboard/module routing and shared planner behavior, then address the Shared capture model and its migration/privacy implications before declaring Phase C complete.
+
+
+## Progress log — 18 November 2026 (continued)
+
+- Calendar event creation now defaults its realm to the active domain (Mariluna when the Mariluna filter is active; otherwise Private), reducing accidental cross-domain placement while preserving the explicit realm selector.
+- Task status counters now respect the active domain filter, so the Active and Completed totals match the task list currently shown.
+- Task creation and due-date defaults now use local calendar dates rather than UTC ISO date slicing, avoiding date shifts around local midnight/time zones.
+- These are incremental improvements to phases A/B/C; no phase is complete. No build, TypeScript/lint, automated test, or browser/mobile validation has been run yet.
