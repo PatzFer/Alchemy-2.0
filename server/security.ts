@@ -664,7 +664,9 @@ export function getOrCreateSession(req: Request, res: Response): ActiveSession {
   // The opaque session token is accepted only from the HttpOnly cookie.
   // A caller-controlled header must never act as an alternate session credential.
   const sessionId = req.cookies?.pm_alchemy_session;
-  if (sessionId) {
+  // Session IDs are 256-bit random hex values. Reject malformed or oversized
+  // cookie values before consulting the in-memory session registry.
+  if (typeof sessionId === 'string' && /^[a-f0-9]{64}$/i.test(sessionId)) {
     const existing = securityVault.getSession(sessionId);
     if (existing) {
       return existing;
