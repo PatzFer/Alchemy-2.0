@@ -89,10 +89,12 @@ export default function App() {
         if (data.isSensitiveUnlocked !== undefined) setIsSensitiveUnlocked(data.isSensitiveUnlocked);
         if (data.inactivityTimeoutMinutes) setInactivityTimeoutMins(data.inactivityTimeoutMinutes);
       } else {
-        setIsAppAuthenticated(true);
+        // Fail closed: an unavailable auth endpoint must never unlock private data.
+        setIsAppAuthenticated(false);
       }
     } catch {
-      setIsAppAuthenticated(true);
+      // Fail closed when the auth service cannot be reached.
+      setIsAppAuthenticated(false);
     }
   };
 
