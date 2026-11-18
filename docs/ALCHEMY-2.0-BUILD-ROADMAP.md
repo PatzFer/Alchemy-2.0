@@ -227,3 +227,13 @@ Incremental implementation commits on `design/phase-1`:
 - Source audit confirmed app state, including private and sensitive records, is currently serialized as plaintext JSON into browser localStorage. The security vault and sessions are also in-memory on the server. This means current app authentication does not by itself establish encrypted-at-rest storage or durable multi-device security. Do not claim those protections; a proper key-management, encryption and persistent-auth design is required before production handling of sensitive data.
 - The current TypeScript configuration does not enable noUnusedLocals/noUnusedParameters. No compiler, build, automated test, browser/mobile test, storage migration test or OAuth revocation test has run in this environment.
 - Phases A/B/C remain in progress. Sensitive-data persistence and integration credential lifecycle are explicit open security requirements.
+
+
+## Progress log — 18 November 2026 (release hardening sprint)
+
+- Added a GitHub Actions quality-gate workflow on `design/phase-1` and pull requests targeting `main`. It installs dependencies, runs the existing TypeScript check (`npm run lint`) and production build (`npm run build`). The repository currently has no npm lockfile, so CI does not enable lockfile caching. Workflow execution and results still need to be observed; adding the workflow is not proof that the checks pass.
+- Aligned the installed PWA manifest identity with the product name `P & M Alchemy` and changed its theme/background colors to the dark-first app shell (`#171916`). Updated the document theme color and body fallback classes to match.
+- Removed the obsolete Google Fit REST step-count helper from the Google auth service. The app's Health Connect integration remains explicitly unavailable until a native Android bridge is built; this removes dead legacy API code, not the Health Connect feature gap.
+- Source review of disconnect behavior found that Calendar and Gmail currently share one in-memory Google access-token cache. Disconnecting either clears the shared cache, but does not revoke the provider token. This is not a correct independent credential lifecycle and must be redesigned before claiming reliable provider disconnect/security. No speculative quick fix was applied.
+- A combined commit status query for the CI workflow commit currently returned no reported statuses. No successful CI run, build, typecheck, automated tests, browser rendering or Android device validation is claimed yet.
+- A/B/C remain in progress. Production security and integration lifecycle gaps remain release blockers until implemented and tested.
