@@ -473,3 +473,12 @@ Incremental implementation commits on `design/phase-1`:
 - Financial data now has its own independent consent boundary. Prices, invoices, expenses, tax/admin records and revenue/profit metrics are withheld unless financial AI consent is enabled, even when general Mariluna AI context is allowed.
 - Goal and idea prompts use bounded input values. Chat payloads are capped to the latest 20 messages and 8,000 characters per message.
 - Added regression tests for mixed-workspace filtering and financial-data quarantine. These privacy settings still live in the in-memory security vault until durable owner identity/settings storage is connected.
+
+
+## Progress log — 18 November 2026 (session lifecycle and authentication abuse controls)
+
+- Application sessions now have a 30-day absolute lifetime aligned with the HttpOnly cookie lifetime. Expired sessions are rejected and pruned from the active-device inventory.
+- The in-memory session registry has a hard capacity of 10,000 entries and evicts the least-recently-active entry only when the registry reaches that cap.
+- Failed-authentication counters now expire after 30 minutes and are bounded to 10,000 keys, preventing unbounded growth from unauthenticated traffic. The five-failure / 15-minute lockout behavior remains covered by regression tests.
+- WebAuthn endpoints return generic client-facing errors rather than forwarding internal verification exception messages. Detailed diagnostics remain server-side only.
+- These lifecycle and rate-limit controls are still process-local. A restart clears sessions, credentials, counters and permissions until the durable Supabase identity layer is provisioned and connected.
