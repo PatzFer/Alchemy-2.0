@@ -129,7 +129,7 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
 
       const authRes = await googleSignInForService([
         'https://www.googleapis.com/auth/calendar.readonly',
-      ]);
+      ], 'calendar');
 
       if (!authRes || !authRes.accessToken) {
         throw new Error('OAuth authenticatie is niet voltooid.');
@@ -185,7 +185,7 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
 
   const handleDisconnectCalendar = async () => {
     setSyncingService('calendar');
-    setCachedAccessToken(null);
+    setCachedAccessToken('calendar', null);
     if (onSyncCalendarEvents) {
       onSyncCalendarEvents([]);
     }
@@ -207,11 +207,11 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
     setAuthError(null);
     setSyncingService('calendar');
     try {
-      let token = getCachedAccessToken();
+      let token = getCachedAccessToken('calendar');
       if (!token) {
         const authRes = await googleSignInForService([
           'https://www.googleapis.com/auth/calendar.readonly',
-        ]);
+        ], 'calendar');
         token = authRes.accessToken;
       }
 
@@ -264,7 +264,7 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
 
       const authRes = await googleSignInForService([
         'https://www.googleapis.com/auth/gmail.readonly',
-      ]);
+      ], 'gmail');
 
       if (!authRes || !authRes.accessToken) {
         throw new Error('Geen OAuth toegang gekregen.');
@@ -322,7 +322,7 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
 
   const handleDisconnectGmail = async () => {
     setSyncingService('gmail');
-    setCachedAccessToken(null);
+    setCachedAccessToken('gmail', null);
     onUpdateIntegrations((prev) => ({
       ...prev,
       gmail: {
@@ -348,11 +348,11 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
         gmail: { ...prev.gmail, status: 'syncing' },
       }));
 
-      let token = getCachedAccessToken();
+      let token = getCachedAccessToken('gmail');
       if (!token) {
         const authRes = await googleSignInForService([
           'https://www.googleapis.com/auth/gmail.readonly',
-        ]);
+        ], 'gmail');
         token = authRes.accessToken;
       }
 
