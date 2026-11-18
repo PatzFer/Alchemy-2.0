@@ -92,3 +92,16 @@ test('persistence routes fail closed on malformed Supabase configuration', async
     }
   });
 });
+
+
+test('snapshot write route rejects incomplete Alchemy state objects', async () => {
+  await withPersistenceServer(configured, async (baseUrl) => {
+    const response = await fetch(`${baseUrl}/api/persistence/snapshot`, {
+      method: 'POST',
+      headers: { Authorization: 'Bearer test-token', 'Content-Type': 'application/json' },
+      body: JSON.stringify({ payload: { tasks: [], foundation: {}, integrations: {} } }),
+    });
+    assert.equal(response.status, 400);
+    assert.deepEqual(await response.json(), { error: 'A valid Alchemy state object is required.' });
+  });
+});
