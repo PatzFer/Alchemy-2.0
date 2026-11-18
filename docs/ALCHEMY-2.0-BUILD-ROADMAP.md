@@ -169,3 +169,12 @@ Incremental implementation commits on `design/phase-1`:
 - Updated key planner copy to Dutch and corrected the calendar working-hours subtitle.
 - Confirmed in source review that the remaining Shared model is cross-cutting: Tasks, Ideas, Calendar Events, Goals, Projects, Routines, Commitments and Memory currently share the Realm type in different privacy contexts. No schema migration has been made yet; adding Shared without explicit scoping would risk exposing records to the wrong domain or assistant context.
 - Source-level review only. No executable build, TypeScript/lint check, unit tests, browser rendering, mobile review, or persistence migration test has run. Phases A/B/C remain in progress and are not signed off.
+
+
+## Progress log — 18 November 2026 (domain dashboard and navigation refinement)
+
+- Extended the semantic dark palette from the shared planner into the Mariluna and Private dashboard cards, secondary panels, dialogs and form surfaces, while retaining the distinct forest-green and espresso domain headers.
+- Corrected navigation contrast on the Jarvis action and mobile world switcher, and localized the mobile world labels and security/settings tooltips.
+- Updated the app authentication-loading and setup wrapper surfaces to use the dark design foundation rather than reverting to the old light shell.
+- Follow-up source review still finds legacy light/dark literal styling in deeper nested module content, so the visual migration is not considered globally complete. Further focused audits are required.
+- No executable build, typecheck, lint, automated tests, browser rendering or device review has been run. Phases A/B/C remain in progress.
