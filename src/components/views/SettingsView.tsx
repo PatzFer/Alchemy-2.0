@@ -548,7 +548,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 Data Sovereignty & Local Storage
               </h3>
               <p className="text-xs text-[var(--text-secondary)] mt-1 font-light">
-                Your data is stored securely in your browser's persistent storage. You can export a complete JSON snapshot at any time.
+                Your data is currently stored in this browser. Browser storage is not encrypted yet; export a private backup regularly and keep the file somewhere safe. Cloud storage is not connected.
               </p>
             </div>
 
@@ -579,12 +579,12 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 className="flex items-center justify-center gap-2 p-4 rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-2)] hover:bg-[var(--surface-1)] transition text-xs font-medium text-[var(--text-primary)] cursor-pointer shadow-xs"
               >
                 <Download className="w-4 h-4 text-[#8C7654]" />
-                <span>Export Complete Backup (JSON)</span>
+                <span>Export verified backup (JSON)</span>
               </button>
 
               <label className="flex items-center justify-center gap-2 p-4 rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-2)] hover:bg-[var(--surface-1)] transition text-xs font-medium text-[var(--text-primary)] cursor-pointer shadow-xs">
                 <Upload className="w-4 h-4 text-[#8C7654]" />
-                <span>Restore Backup (JSON)</span>
+                <span>Verify & restore backup (JSON)</span>
                 <input
                   type="file"
                   accept=".json"
