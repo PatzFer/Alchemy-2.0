@@ -52,7 +52,7 @@ export const DEFAULT_INTEGRATIONS_STATE: IntegrationsState = {
     messages: [],
   },
   healthConnect: {
-    status: typeof window !== 'undefined' && ('HealthConnect' in window || (typeof navigator !== 'undefined' && navigator.userAgent.includes('Android'))) ? 'not_connected' : 'unavailable',
+    status: 'unavailable',
     platform: typeof window !== 'undefined' && typeof navigator !== 'undefined' && navigator.userAgent.includes('Android') ? 'android' : 'web',
     isStepsOnly: true,
     isPrivateOnly: true,
@@ -900,6 +900,11 @@ export function loadState(): AppState {
         healthConnect: {
           ...DEFAULT_INTEGRATIONS_STATE.healthConnect,
           ...(parsed.integrations?.healthConnect || {}),
+          // Historical Google Fit OAuth status is not proof of a native Health Connect link.
+          status: 'unavailable',
+          error: parsed.integrations?.healthConnect?.status === 'connected'
+            ? 'Historische Google Fit-koppeling; native Health Connect is nog niet geïmplementeerd.'
+            : parsed.integrations?.healthConnect?.error,
         },
         instagram: {
           ...DEFAULT_INTEGRATIONS_STATE.instagram,
