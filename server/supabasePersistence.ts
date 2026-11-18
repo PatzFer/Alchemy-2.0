@@ -210,6 +210,9 @@ export class SupabasePersistence {
     );
     const snapshot = rows[0] ?? null;
     if (!snapshot) return null;
+    if (snapshot.owner_id !== owner.id) {
+      throw new Error('Stored Alchemy snapshot owner does not match the authenticated owner.');
+    }
     if (!isValidSnapshotRecord(snapshot, owner.id)) {
       throw new Error('Stored Alchemy snapshot metadata is invalid.');
     }
