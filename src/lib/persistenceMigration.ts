@@ -28,7 +28,48 @@ function countRecords(value: unknown): number {
 }
 
 function countStateRecords(state: Record<string, unknown>): number {
-  return COLLECTIONS.reduce((total, key) => total + countRecords(state[key]), 0);
+  let total = COLLECTIONS.reduce((sum, key) => sum + countRecords(state[key]), 0);
+
+  const foundation = state.foundation as Record<string, unknown> | undefined;
+  const aboutYou = foundation?.aboutYou as Record<string, unknown> | undefined;
+  if (aboutYou) {
+    total += Object.values(aboutYou).filter((value) =>
+      typeof value === 'string' ? value.trim().length > 0 : value !== null && value !== undefined
+    ).length;
+  }
+  if (foundation?.isCompleted === true) total += 1;
+
+  const cycle = state.cycleProfile as Record<string, unknown> | undefined;
+  if (cycle?.trackingEnabled === true) total += 1;
+  if (typeof cycle?.lastPeriodStartDate === 'string' && cycle.lastPeriodStartDate.trim()) total += 1;
+
+  const profileKeys = ['workingDays', 'routines', 'commitments'] as const;
+  const lifeProfile = state.lifeProfile as Record<string, unknown> | undefined;
+  total += profileKeys.reduce((sum, key) => sum + countRecords(lifeProfile?.[key]), 0);
+
+  const personalStyle = state.personalStyle as Record<string, unknown> | undefined;
+  total += ['colorPalette', 'preferredSilhouettes', 'dislikedStyles', 'occasions']
+    .reduce((sum, key) => sum + countRecords(personalStyle?.[key]), 0);
+  if (typeof personalStyle?.measurementsNotes === 'string' && personalStyle.measurementsNotes.trim()) total += 1;
+
+  const nutrition = state.nutrition as Record<string, unknown> | undefined;
+  total += ['dislikes', 'partnerSharedDinners', 'inventory', 'shoppingList', 'mealHistory', 'pastWeeklyPlans']
+    .reduce((sum, key) => sum + countRecords(nutrition?.[key]), 0);
+  if (typeof nutrition?.dietaryNotes === 'string' && nutrition.dietaryNotes.trim()) total += 1;
+
+  const admin = state.marilunaAdmin as Record<string, unknown> | undefined;
+  total += ['items', 'expenses', 'invoices', 'deadlines']
+    .reduce((sum, key) => sum + countRecords(admin?.[key]), 0);
+  const metrics = state.marilunaMetrics as Record<string, unknown> | undefined;
+  total += countRecords(metrics?.metrics) + countRecords(metrics?.records);
+
+  const integrations = state.integrations as Record<string, unknown> | undefined;
+  if (integrations && Object.values(integrations).some((value) =>
+    value !== null && typeof value === 'object' && !Array.isArray(value) &&
+    (value as Record<string, unknown>).status === 'connected'
+  )) total += 1;
+
+  return total;
 }
 
 /**
