@@ -272,3 +272,12 @@ Incremental implementation commits on `design/phase-1`:
 
 
 - Final source inspection caught that the first strict-origin edit had changed registration verification but left the login verification on the previous permissive fallback. Corrected the login verifier as well: both registration and authentication now require exact request origin/RP ID and user verification. This was found by rereading the committed source, not by a passing test.
+
+## Progress log — 18 November 2026 (reproducible CI and first green build)
+
+- The first observed CI run reached the TypeScript check and exposed a stale Calendar token call in `src/App.tsx` after the token cache was split by service. Updated event creation to request the Calendar token explicitly.
+- The corrected run passed both `npm run lint` (TypeScript) and `npm run build` (Vite client plus bundled Express server).
+- The repository contains a committed `bun.lock`, so CI was updated to use Bun with `bun install --frozen-lockfile` rather than an unlocked npm install. The frozen install, TypeScript check and production build all passed on commit `d83dfc2467f38e7f790f17468dd68fa7d40f3184`.
+- Added `docs/ALCHEMY-1.0-RELEASE-TEST-CHECKLIST.md` to distinguish checks that have actually run from those that remain outstanding.
+- This is the first confirmed green automated quality gate. It is not a browser, mobile, OAuth, authentication regression or penetration test, and it does not remove the current production blockers: plaintext browser persistence, process-memory-only security vault/sessions, incomplete provider token revocation, and unavailable native Health Connect.
+- The type model still uses only `personal` and `mariluna` realms. A Shared realm remains a cross-cutting migration and was deliberately not introduced as a superficial enum change.
