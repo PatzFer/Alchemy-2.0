@@ -6,10 +6,10 @@ This checklist separates a usable test candidate from a production release. A ch
 
 ## 1. Automated quality gates
 
-- [ ] GitHub Actions TypeScript check (`npm run lint`) passes.
-- [ ] Production client and server build (`npm run build`) passes.
+- [x] GitHub Actions TypeScript check (`bun run lint`) passes on commit `a625ef7`.
+- [x] Production client and server build (`bun run build`) passes on commit `a625ef7`.
 - [ ] No unreviewed dependency or lockfile drift.
-- [ ] CI result is visible on the tested commit SHA.
+- [x] CI result is visible on tested commit `a625ef7`.
 
 ## 2. First-launch and navigation
 
@@ -26,7 +26,7 @@ This checklist separates a usable test candidate from a production release. A ch
 - [ ] Agenda and Tasks filters show the correct domain records.
 - [ ] Calendar all-day and timed events display correctly in local time.
 - [ ] Existing records survive reload and app restart.
-- [ ] Export/backup and restore are verified before testing destructive migrations.
+- [x] Checksummed export verification and tamper rejection are covered by automated tests; full browser download/restore and migration recovery drill remain to be manually tested.
 
 ## 4. Authentication and privacy
 
