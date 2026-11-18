@@ -254,3 +254,10 @@ Incremental implementation commits on `design/phase-1`:
 - Removed the direct `method: 'passkey'` success path from the generic `/unlock-app` credential endpoint. Passkey unlock must flow through the WebAuthn challenge and signature verification endpoint.
 - Improved data recoverability: if stored Alchemy JSON is unreadable, the loader now attempts to preserve the original raw payload under a timestamped recovery key before the app can autosave its fallback state over the main key. This is a recovery safeguard, not encryption; localStorage still contains plaintext data and remains a production blocker for sensitive information.
 - Source changes are committed on `design/phase-1`. No executable tests, build, browser checks, authentication penetration tests or storage recovery tests have been run here. The new CI workflow must still be observed passing.
+
+
+## Progress log — 18 November 2026 (second sensitive-unlock bypass closed)
+
+- A follow-up audit found a second client-flag bypass in `POST /api/auth/unlock-sensitive`: sending `method: 'passkey'` was accepted without checking a verified credential. The endpoint now requires the current server-side session to be authenticated, authenticated specifically through a passkey, and still inside its server-issued step-up window.
+- The first hard-coded demo recovery bypass and generic app-unlock passkey shortcut remain removed. The lock screen no longer displays or prefills the demo recovery code.
+- Remaining security limitations are substantial: the security vault/session state is process-memory only, the browser stores app state in plaintext localStorage, and no automated penetration or authentication regression tests have run. This work closes identified bypass paths; it does not establish production-grade security.
