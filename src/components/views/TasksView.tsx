@@ -15,6 +15,13 @@ import {
 } from 'lucide-react';
 import { Task, Realm, ActiveWorldFilter, Goal, Project } from '../../types';
 
+const getLocalDateString = (date = new Date()): string => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 interface TasksViewProps {
   tasks: Task[];
   goals: Goal[];
@@ -46,7 +53,7 @@ export const TasksView: React.FC<TasksViewProps> = ({
   const [formCategory, setFormCategory] = useState('self-care');
   const [formPriority, setFormPriority] = useState<'high' | 'medium' | 'low'>('medium');
   const [formDuration, setFormDuration] = useState<number>(30);
-  const [formDueDate, setFormDueDate] = useState(new Date().toISOString().split('T')[0]);
+  const [formDueDate, setFormDueDate] = useState(getLocalDateString());
   const [formRecurring, setFormRecurring] = useState<'none' | 'daily' | 'weekly' | 'monthly'>('none');
   const [formSubtasks, setFormSubtasks] = useState<{ id: string; title: string; completed: boolean }[]>([]);
   const [subtaskInput, setSubtaskInput] = useState('');
