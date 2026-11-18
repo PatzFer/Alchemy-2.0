@@ -58,6 +58,19 @@ test('persistence routes require a Supabase bearer token', async () => {
   });
 });
 
+
+test('persistence routes reject oversized and whitespace-bearing bearer tokens', async () => {
+  await withPersistenceServer(configured, async (baseUrl) => {
+    for (const token of ['x'.repeat(8193), 'token with spaces']) {
+      const response = await fetch(`${baseUrl}/api/persistence/snapshot`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      assert.equal(response.status, 401);
+      assert.deepEqual(await response.json(), { error: 'A Supabase access token is required.' });
+    }
+  });
+});
+
 test('snapshot write route rejects malformed payloads before contacting Supabase', async () => {
   await withPersistenceServer(configured, async (baseUrl) => {
     const response = await fetch(`${baseUrl}/api/persistence/snapshot`, {
