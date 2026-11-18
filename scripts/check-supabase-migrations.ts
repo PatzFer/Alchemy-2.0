@@ -64,6 +64,9 @@ const snapshotRpc = /create\s+or\s+replace\s+function\s+public\.save_app_state_s
 if (!snapshotRpc.test(sql)) {
   throw new Error('Atomic owner-scoped snapshot revision RPC is missing.');
 }
+if (!/security\s+definer[\s\S]*?set\s+search_path\s*=\s*''/i.test(sql)) {
+  throw new Error('Snapshot SECURITY DEFINER RPC must pin an empty search_path.');
+}
 if (!/pg_advisory_xact_lock\s*\(/i.test(sql)) {
   throw new Error('Snapshot revision allocation is not protected by a transaction-scoped lock.');
 }
