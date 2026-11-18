@@ -296,3 +296,11 @@ Incremental implementation commits on `design/phase-1`:
 - Applied the middleware to the legacy Jarvis chat, day-planning, goal-breakdown and idea-analysis endpoints; to all Alchemy Brain endpoints (brief, task split, query and styling evaluation); and to integration status/connect/disconnect/sync/test-push routes.
 - This closes an important gap where the client lock screen could otherwise be bypassed by calling private API endpoints directly. The in-memory session store remains a limitation: server restarts invalidate sessions and multi-instance deployments do not share session state.
 - CI was repeatedly cancelled by the workflow's `cancel-in-progress: true` setting while several small commits landed in quick succession. A clean run against the latest commit is required before treating this authorization change as validated.
+
+## Progress log — 18 November 2026 (privacy defaults and integration trust)
+
+- Changed AI permissions so personal records, Mariluna business records, cycle data and wellbeing data are all excluded from AI context by default. Access requires explicit permission through the protected settings flow.
+- Hardened permission updates with an explicit allowlist of supported boolean settings and AI provider values. Unknown properties are ignored; mandatory confirmation requirements remain immutable.
+- Added regression tests for privacy-by-default and permission allowlisting.
+- Closed a false-connection path in the integration API: client-supplied `verified` flags, email addresses or imported post/message arrays are not proof of Google or Meta authorization. Google Calendar/Gmail and Instagram now return an explicit not-implemented response instead of recording a fake connected state. Native Health Connect remains unavailable until its Android bridge exists. Browser push permission remains a local browser capability.
+- Remaining architecture blockers are unchanged: security state and integration state are in-memory, app data is plaintext in browser local storage, and OAuth token exchange/refresh/revocation is not implemented server-side. These are not production-ready conditions.
