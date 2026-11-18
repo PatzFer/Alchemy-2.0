@@ -1,4 +1,5 @@
 import { Router, Request, Response } from 'express';
+import { resolveWebAuthnRelyingParty } from './webauthnOrigin';
 import crypto from 'crypto';
 import {
   generateRegistrationOptions,
@@ -16,13 +17,13 @@ import {
 
 const router = Router();
 
-// Helper to extract RPID and Origin safely
+// Never infer production WebAuthn trust from the incoming Host or Origin headers.
 function getRPInfo(req: Request) {
-  const host = req.get('host') || 'localhost:3000';
-  const hostname = host.split(':')[0];
-  const protocol = req.protocol === 'https' || req.get('x-forwarded-proto') === 'https' ? 'https' : 'http';
-  const origin = req.get('origin') || `${protocol}://${host}`;
-  return { rpID: hostname, origin, host, protocol };
+  return resolveWebAuthnRelyingParty({
+    host: req.get('host'),
+    origin: req.get('origin'),
+    protocol: req.protocol,
+  });
 }
 
 // ----------------------------------------------------
