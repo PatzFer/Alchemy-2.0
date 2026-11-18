@@ -10,6 +10,7 @@ import {
   securityVault,
   getOrCreateSession,
   requireStepUpAuth,
+  requireAppAuth,
   ActiveSession,
 } from './security';
 
@@ -159,7 +160,7 @@ router.post('/activity', (req: Request, res: Response) => {
   return res.json({ success: false, isAppAuthenticated: false });
 });
 
-router.post('/session-timeout', (req: Request, res: Response) => {
+router.post('/session-timeout', requireAppAuth, (req: Request, res: Response) => {
   const session = getOrCreateSession(req, res);
   const { minutes } = req.body;
   const parsed = Number(minutes);
@@ -227,7 +228,7 @@ router.post('/unlock-sensitive', async (req: Request, res: Response) => {
 // ----------------------------------------------------
 // 3. Step-Up Authentication (Level 3)
 // ----------------------------------------------------
-router.post('/step-up', async (req: Request, res: Response) => {
+router.post('/step-up', requireAppAuth, async (req: Request, res: Response) => {
   const session = getOrCreateSession(req, res);
   const { method, credential } = req.body;
 
@@ -266,7 +267,7 @@ router.post('/step-up', async (req: Request, res: Response) => {
 // ----------------------------------------------------
 // 4. WebAuthn / Passkey Endpoints
 // ----------------------------------------------------
-router.post('/webauthn/register-options', async (req: Request, res: Response) => {
+router.post('/webauthn/register-options', requireAppAuth, async (req: Request, res: Response) => {
   try {
     const session = getOrCreateSession(req, res);
     const { rpID } = getRPInfo(req);
@@ -297,7 +298,7 @@ router.post('/webauthn/register-options', async (req: Request, res: Response) =>
   }
 });
 
-router.post('/webauthn/register-verify', async (req: Request, res: Response) => {
+router.post('/webauthn/register-verify', requireAppAuth, async (req: Request, res: Response) => {
   try {
     const session = getOrCreateSession(req, res);
     const { response, nickname } = req.body;
@@ -435,7 +436,7 @@ router.post('/webauthn/auth-verify', async (req: Request, res: Response) => {
 // ----------------------------------------------------
 // 5. TOTP Authenticator App Endpoints
 // ----------------------------------------------------
-router.post('/totp/setup', (req: Request, res: Response) => {
+router.post('/totp/setup', requireAppAuth, (req: Request, res: Response) => {
   const { secret, uri } = securityVault.generateTotpSetup();
   res.json({
     secret,
@@ -446,7 +447,7 @@ router.post('/totp/setup', (req: Request, res: Response) => {
   });
 });
 
-router.post('/totp/verify-setup', (req: Request, res: Response) => {
+router.post('/totp/verify-setup', requireAppAuth, (req: Request, res: Response) => {
   const { code } = req.body;
   if (!code) return res.status(400).json({ error: '6-digit code required' });
 
@@ -462,7 +463,7 @@ router.post('/totp/verify-setup', (req: Request, res: Response) => {
   res.status(400).json({ error: 'Invalid 6-digit code. Please check time sync on your device.' });
 });
 
-router.post('/totp/disable', requireStepUpAuth, (req: Request, res: Response) => {
+router.post('/totp/disable', requireAppAuth, requireStepUpAuth, (req: Request, res: Response) => {
   securityVault.disableTotp();
   res.json({ success: true, message: 'TOTP Authenticator disabled.' });
 });
@@ -470,7 +471,7 @@ router.post('/totp/disable', requireStepUpAuth, (req: Request, res: Response) =>
 // ----------------------------------------------------
 // 6. One-Time Recovery Codes Endpoints
 // ----------------------------------------------------
-router.post('/recovery/regenerate', requireStepUpAuth, (_req: Request, res: Response) => {
+router.post('/recovery/regenerate', requireAppAuth, requireStepUpAuth, (_req: Request, res: Response) => {
   const newPlainCodes = securityVault.regenerateRecoveryCodesInternal();
   res.json({
     success: true,
@@ -479,7 +480,7 @@ router.post('/recovery/regenerate', requireStepUpAuth, (_req: Request, res: Resp
   });
 });
 
-router.get('/recovery/status', (_req: Request, res: Response) => {
+router.get('/recovery/status', requireAppAuth, (_req: Request, res: Response) => {
   const status = securityVault.getRecoveryCodesStatus();
   res.json(status);
 });
@@ -487,13 +488,13 @@ router.get('/recovery/status', (_req: Request, res: Response) => {
 // ----------------------------------------------------
 // 7. Active Sessions & Device Management
 // ----------------------------------------------------
-router.get('/sessions', (req: Request, res: Response) => {
+router.get('/sessions', requireAppAuth, (req: Request, res: Response) => {
   const currentSession = getOrCreateSession(req, res);
   const sessions = securityVault.getActiveSessions(currentSession.id);
   res.json({ sessions });
 });
 
-router.post('/sessions/revoke', requireStepUpAuth, (req: Request, res: Response) => {
+router.post('/sessions/revoke', requireAppAuth, requireStepUpAuth, (req: Request, res: Response) => {
   const { sessionId } = req.body;
   const currentSession = getOrCreateSession(req, res);
 
@@ -505,7 +506,7 @@ router.post('/sessions/revoke', requireStepUpAuth, (req: Request, res: Response)
   res.json({ success: revoked, message: revoked ? 'Device session revoked.' : 'Session not found.' });
 });
 
-router.post('/sessions/revoke-all-others', requireStepUpAuth, (req: Request, res: Response) => {
+router.post('/sessions/revoke-all-others', requireAppAuth, requireStepUpAuth, (req: Request, res: Response) => {
   const currentSession = getOrCreateSession(req, res);
   securityVault.revokeOtherSessions(currentSession.id);
   res.json({ success: true, message: 'All other active sessions revoked.' });
@@ -514,7 +515,7 @@ router.post('/sessions/revoke-all-others', requireStepUpAuth, (req: Request, res
 // ----------------------------------------------------
 // 8. Passkey Management
 // ----------------------------------------------------
-router.get('/passkeys', (_req: Request, res: Response) => {
+router.get('/passkeys', requireAppAuth, (_req: Request, res: Response) => {
   const passkeys = securityVault.getPasskeys().map((pk) => ({
     id: pk.id,
     nickname: pk.nickname,
@@ -524,7 +525,7 @@ router.get('/passkeys', (_req: Request, res: Response) => {
   res.json({ passkeys });
 });
 
-router.delete('/passkeys/:id', requireStepUpAuth, (req: Request, res: Response) => {
+router.delete('/passkeys/:id', requireAppAuth, requireStepUpAuth, (req: Request, res: Response) => {
   const { id } = req.params;
   const deleted = securityVault.deletePasskey(id);
   res.json({ success: deleted, message: deleted ? 'Passkey deleted.' : 'Passkey not found.' });
@@ -533,12 +534,12 @@ router.delete('/passkeys/:id', requireStepUpAuth, (req: Request, res: Response) 
 // ----------------------------------------------------
 // 9. Permissions & AI Privacy Firewall
 // ----------------------------------------------------
-router.get('/permissions', (_req: Request, res: Response) => {
+router.get('/permissions', requireAppAuth, (_req: Request, res: Response) => {
   const permissions = securityVault.getPermissions();
   res.json(permissions);
 });
 
-router.put('/permissions', requireStepUpAuth, (req: Request, res: Response) => {
+router.put('/permissions', requireAppAuth, requireStepUpAuth, (req: Request, res: Response) => {
   const updates = req.body;
   const updated = securityVault.updatePermissions(updates);
   res.json({ success: true, permissions: updated });
@@ -547,7 +548,7 @@ router.put('/permissions', requireStepUpAuth, (req: Request, res: Response) => {
 // ----------------------------------------------------
 // 10. Connected Services & Granular Scopes
 // ----------------------------------------------------
-router.get('/connected-services', (_req: Request, res: Response) => {
+router.get('/connected-services', requireAppAuth, (_req: Request, res: Response) => {
   const permissions = securityVault.getPermissions();
   res.json({
     services: [
@@ -595,7 +596,7 @@ router.get('/connected-services', (_req: Request, res: Response) => {
 // ----------------------------------------------------
 // 11. Critical Data Operations (Level 3 Step-Up Enforced)
 // ----------------------------------------------------
-router.post('/export-data', requireStepUpAuth, (_req: Request, res: Response) => {
+router.post('/export-data', requireAppAuth, requireStepUpAuth, (_req: Request, res: Response) => {
   // Generates server-attested export payload
   const timestamp = new Date().toISOString();
   const signature = crypto.createHmac('sha256', 'pm_alchemy_master_secret')
@@ -610,7 +611,7 @@ router.post('/export-data', requireStepUpAuth, (_req: Request, res: Response) =>
   });
 });
 
-router.post('/delete-all-data', requireStepUpAuth, (req: Request, res: Response) => {
+router.post('/delete-all-data', requireAppAuth, requireStepUpAuth, (req: Request, res: Response) => {
   const { confirmationPhrase } = req.body;
   if (confirmationPhrase !== 'DELETE ALL MY DATA PERMANENTLY') {
     return res.status(400).json({
