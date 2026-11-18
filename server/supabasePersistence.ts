@@ -99,30 +99,21 @@ export class SupabasePersistence {
       throw new Error('schemaVersion must be a positive integer.');
     }
     const owner = await this.verifyOwner(accessToken);
-    const latest = await this.request<Array<{ revision: number }>>(
-      `/rest/v1/app_state_snapshots?owner_id=eq.${owner.id}&select=revision&order=revision.desc&limit=1`,
-      {
-        method: 'GET',
-        headers: this.serviceHeaders(),
-      },
-    );
-    const revision = (latest[0]?.revision ?? 0) + 1;
-    const serialized = stableJson(payload);
-    const payloadSha256 = createHash('sha256').update(serialized).digest('hex');
-    const rows = await this.request<SnapshotRecord[]>('/rest/v1/app_state_snapshots', {
+    const payloadSha256 = createHash('sha256').update(stableJson(payload)).digest('hex');
+    // Revision allocation and insertion happen in one database transaction. This
+    // avoids duplicate revisions when autosaves from multiple tabs race.
+    const rows = await this.request<SnapshotRecord[]>('/rest/v1/rpc/save_app_state_snapshot', {
       method: 'POST',
       headers: {
         ...this.serviceHeaders(),
         'Content-Type': 'application/json',
-        Prefer: 'return=representation',
       },
       body: JSON.stringify({
-        owner_id: owner.id,
-        schema_version: schemaVersion,
-        revision,
-        payload,
-        payload_sha256: payloadSha256,
-        source,
+        p_owner_id: owner.id,
+        p_schema_version: schemaVersion,
+        p_payload: payload,
+        p_payload_sha256: payloadSha256,
+        p_source: source,
       }),
     });
     if (!rows[0]) throw new Error('Supabase did not return the saved snapshot.');
