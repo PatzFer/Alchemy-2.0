@@ -30,7 +30,7 @@ begin
   if p_payload_sha256 is null or p_payload_sha256 !~ '^[a-f0-9]{64}$' then
     raise exception 'snapshot checksum is invalid';
   end if;
-  if p_source not in ('migration', 'autosave', 'manual_backup', 'restore') then
+  if p_source is null or p_source not in ('migration', 'autosave', 'manual_backup', 'restore') then
     raise exception 'snapshot source is invalid';
   end if;
 
