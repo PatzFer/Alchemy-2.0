@@ -724,10 +724,13 @@ I've gently kept your active high-priority task list to just two items today so 
 
 export function loadState(): AppState {
   if (typeof window === 'undefined') return INITIAL_STATE;
+  let raw: string | null = null;
+  let sourceKey = STORAGE_KEY;
   try {
-    let raw = localStorage.getItem(STORAGE_KEY);
+    raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) {
       raw = localStorage.getItem(LEGACY_STORAGE_KEY);
+      sourceKey = LEGACY_STORAGE_KEY;
     }
     if (!raw) return INITIAL_STATE;
     const parsed = JSON.parse(raw);
@@ -930,7 +933,16 @@ export function loadState(): AppState {
       brain: parsed.brain ? { ...DEFAULT_BRAIN_STATE, ...parsed.brain } : DEFAULT_BRAIN_STATE,
     };
   } catch (err) {
-    console.error('Failed to load state from localStorage, falling back to default:', err);
+    // Preserve the original payload before the app's autosave can replace it with defaults.
+    if (raw && typeof window !== 'undefined') {
+      try {
+        const recoveryKey = `${sourceKey}_recovery_${new Date().toISOString().replace(/[:.]/g, '-')}`;
+        if (!localStorage.getItem(recoveryKey)) localStorage.setItem(recoveryKey, raw);
+      } catch (backupError) {
+        console.error('Could not preserve the unreadable Alchemy data payload:', backupError);
+      }
+    }
+    console.error('Failed to load state from localStorage; original payload preserved when possible:', err);
     return INITIAL_STATE;
   }
 }
