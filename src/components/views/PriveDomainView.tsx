@@ -360,7 +360,7 @@ export const PriveDomainView: React.FC<PriveDomainViewProps> = ({
           {/* Personal Styling 2.0 Feature Banner */}
           <div
             onClick={() => setActiveSubTab('style')}
-            className="rounded-2xl border border-[#D5C7B3] bg-gradient-to-r from-[var(--surface-1)] to-[#F4EFE6] p-5 hover:border-[var(--accent-secondary)] transition cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs"
+            className="rounded-2xl border border-[#D5C7B3] bg-gradient-to-r from-[var(--surface-1)] to-[var(--surface-2)] p-5 hover:border-[var(--accent-secondary)] transition cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs"
           >
             <div className="space-y-1">
               <div className="flex items-center gap-2">
@@ -463,7 +463,7 @@ export const PriveDomainView: React.FC<PriveDomainViewProps> = ({
                         <div className="font-medium text-[var(--text-primary)]">{event.title}</div>
                         <div className="text-[10px] text-[var(--text-muted)]">{event.date}</div>
                       </div>
-                      <span className="text-[11px] font-mono text-[var(--text-secondary)] bg-[#F5EFE4] px-2 py-0.5 rounded-md">
+                      <span className="text-[11px] font-mono text-[var(--text-secondary)] bg-[var(--surface-2)] px-2 py-0.5 rounded-md">
                         {event.startTime} - {event.endTime}
                       </span>
                     </div>
@@ -627,7 +627,7 @@ export const PriveDomainView: React.FC<PriveDomainViewProps> = ({
                   <div className="flex items-start justify-between gap-2">
                     <h4 className="font-serif text-base text-[var(--text-primary)] font-medium">{goal.title}</h4>
                     {goal.targetDate && (
-                      <span className="text-[10px] text-[var(--accent-secondary)] bg-[#F2ECE1] px-2 py-0.5 rounded-md shrink-0">
+                      <span className="text-[10px] text-[var(--accent-secondary)] bg-[var(--surface-2)] px-2 py-0.5 rounded-md shrink-0">
                         {goal.targetDate}
                       </span>
                     )}
@@ -665,7 +665,7 @@ export const PriveDomainView: React.FC<PriveDomainViewProps> = ({
           {/* Goal Modal */}
           {isGoalModalOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs">
-              <div className="bg-[var(--surface-1)] border border-[#DDD4C5] rounded-3xl max-w-sm w-full p-6 space-y-4 shadow-xl text-[var(--text-primary)]">
+              <div className="bg-[var(--surface-1)] border border-[var(--border-subtle)] rounded-3xl max-w-sm w-full p-6 space-y-4 shadow-xl text-[var(--text-primary)]">
                 <h3 className="font-serif text-lg text-[var(--text-primary)]">
                   {isNl ? 'Nieuw Persoonlijk Doel' : 'New Personal Goal'}
                 </h3>
@@ -675,14 +675,14 @@ export const PriveDomainView: React.FC<PriveDomainViewProps> = ({
                     placeholder={isNl ? 'Titel doel (bijv. Dagelijks ochtendritueel behouden)' : 'Goal title'}
                     value={newGoalTitle}
                     onChange={(e) => setNewGoalTitle(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl bg-[var(--surface-2)] border border-[#DDD4C5] text-xs text-[var(--text-primary)]"
+                    className="w-full px-3 py-2 rounded-xl bg-[var(--surface-2)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)]"
                     autoFocus
                   />
                   <input
                     type="date"
                     value={newGoalTargetDate}
                     onChange={(e) => setNewGoalTargetDate(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl bg-[var(--surface-2)] border border-[#DDD4C5] text-xs text-[var(--text-primary)]"
+                    className="w-full px-3 py-2 rounded-xl bg-[var(--surface-2)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)]"
                   />
                   <div className="flex justify-end gap-2 pt-2">
                     <button
@@ -734,7 +734,7 @@ export const PriveDomainView: React.FC<PriveDomainViewProps> = ({
                   <div className="flex items-center gap-2.5">
                     <Clock className="w-3.5 h-3.5 text-[var(--accent-secondary)]" />
                     <span className="font-medium text-[var(--text-primary)]">{routine.title}</span>
-                    <span className="text-[10px] text-[var(--text-secondary)] bg-[#F2ECE1] px-2 py-0.5 rounded-md capitalize">
+                    <span className="text-[10px] text-[var(--text-secondary)] bg-[var(--surface-2)] px-2 py-0.5 rounded-md capitalize">
                       {routine.timeOfDay} • {routine.durationMinutes}m
                     </span>
                   </div>
@@ -756,12 +756,12 @@ export const PriveDomainView: React.FC<PriveDomainViewProps> = ({
                 placeholder={isNl ? 'Nieuwe routine (bijv. Ochtendthee & ademhaling)' : 'New ritual title'}
                 value={newRoutineTitle}
                 onChange={(e) => setNewRoutineTitle(e.target.value)}
-                className="flex-1 min-w-[200px] px-3 py-2 rounded-xl bg-[var(--surface-2)] border border-[#DDD4C5] text-xs text-[var(--text-primary)]"
+                className="flex-1 min-w-[200px] px-3 py-2 rounded-xl bg-[var(--surface-2)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)]"
               />
               <select
                 value={newRoutineTime}
                 onChange={(e) => setNewRoutineTime(e.target.value as any)}
-                className="px-2.5 py-2 rounded-xl bg-[var(--surface-2)] border border-[#DDD4C5] text-xs text-[var(--text-primary)]"
+                className="px-2.5 py-2 rounded-xl bg-[var(--surface-2)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)]"
               >
                 <option value="morning">{isNl ? 'Ochtend' : 'Morning'}</option>
                 <option value="afternoon">{isNl ? 'Middag' : 'Afternoon'}</option>
@@ -771,7 +771,7 @@ export const PriveDomainView: React.FC<PriveDomainViewProps> = ({
                 type="number"
                 value={newRoutineDuration}
                 onChange={(e) => setNewRoutineDuration(Number(e.target.value))}
-                className="w-16 px-2 py-2 rounded-xl bg-[var(--surface-2)] border border-[#DDD4C5] text-xs text-[var(--text-primary)] text-center"
+                className="w-16 px-2 py-2 rounded-xl bg-[var(--surface-2)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] text-center"
               />
               <button
                 type="submit"
