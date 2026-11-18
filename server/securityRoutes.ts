@@ -380,8 +380,10 @@ router.post('/webauthn/auth-options', async (req: Request, res: Response) => {
 });
 
 router.post('/webauthn/auth-verify', async (req: Request, res: Response) => {
+  let failureKey = req.ip || '127.0.0.1';
   try {
     const session = getOrCreateSession(req, res);
+    failureKey = session.ip;
     const rateLimit = securityVault.checkRateLimit(session.ip);
     if (!rateLimit.allowed) {
       return res.status(429).json({
@@ -441,8 +443,7 @@ router.post('/webauthn/auth-verify', async (req: Request, res: Response) => {
     }
   } catch (error: any) {
     console.error('WebAuthn auth-verify error:', error);
-    const failedSession = req.cookies?.pm_alchemy_session;
-    securityVault.recordFailedAttempt(typeof failedSession === 'string' ? failedSession : (req.ip || '127.0.0.1'));
+    securityVault.recordFailedAttempt(failureKey);
     res.status(400).json({ error: error.message || 'Verification failed' });
   }
 });
