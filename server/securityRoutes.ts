@@ -308,9 +308,11 @@ router.post('/webauthn/register-verify', async (req: Request, res: Response) => 
     const verification = await verifyRegistrationResponse({
       response,
       expectedChallenge,
-      expectedOrigin: [origin, `https://${req.get('host')}`, `http://${req.get('host')}`],
-      expectedRPID: [rpID, 'localhost'],
-      requireUserVerification: false,
+      // Validate only the exact origin and RP ID derived for this request host.
+      // Never accept localhost or alternate schemes as production fallbacks.
+      expectedOrigin: origin,
+      expectedRPID: rpID,
+      requireUserVerification: true,
     });
 
     if (verification.verified && verification.registrationInfo) {
