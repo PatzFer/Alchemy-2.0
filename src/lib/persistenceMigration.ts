@@ -41,7 +41,6 @@ function countStateRecords(state: Record<string, unknown>): number {
         (typeof value === 'string' ? value.trim().length > 0 : value !== null && value !== undefined);
     }).length;
   }
-  if (foundation?.isCompleted === true) total += 1;
 
   const cycle = state.cycleProfile as Record<string, unknown> | undefined;
   if (cycle?.trackingEnabled === true) total += 1;
