@@ -1,7 +1,7 @@
 import { Router, Request, Response } from "express";
 import { GoogleGenAI } from "@google/genai";
 import { classifyIntent, buildIntentAwareResponse, isDutchMessage } from "./brainEngine";
-import { requireAppAuth } from "./security";
+import { requireAppAuth, securityVault } from "./security";
 
 const router = Router();
 
@@ -43,14 +43,16 @@ DATA SEPARATIE & PRIVACY:
 router.post("/brief", requireAppAuth, async (req: Request, res: Response) => {
   try {
     const { deterministicBrief } = req.body;
+    const world = req.body.world === 'mariluna' ? 'mariluna' : 'personal';
+    const safeBrief = securityVault.sanitizeContextForAi(deterministicBrief || {}, world);
     const ai = getAI();
 
     if (!ai) {
-      return res.json({ brief: deterministicBrief });
+      return res.json({ brief: safeBrief });
     }
 
     const prompt = `Hier is de deterministische dagbriefing van Patricia voor vandaag:
-${JSON.stringify(deterministicBrief)}
+${JSON.stringify(safeBrief)}
 
 Herschrijf deze briefing indien nodig zodat hij ultra-kort, rustig en natuurlijk klinkt.
 Behoud exact deze structuur als JSON:
@@ -80,13 +82,13 @@ Geen extra tekst, alleen JSON.`;
     const parsed = JSON.parse(text);
     return res.json({
       brief: {
-        ...deterministicBrief,
+        ...safeBrief,
         ...parsed,
       },
     });
   } catch (err) {
     // Return deterministic brief gracefully
-    return res.json({ brief: req.body.deterministicBrief });
+    return res.json({ brief: securityVault.sanitizeContextForAi(req.body.deterministicBrief || {}, req.body.world === 'mariluna' ? 'mariluna' : 'personal') });
   }
 });
 
@@ -151,14 +153,17 @@ Geef een JSON terug in dit format:
  */
 router.post("/query", requireAppAuth, async (req: Request, res: Response) => {
   try {
-    const { query = '', context = {}, relevance } = req.body;
+    const { query = '', context = {} } = req.body;
+    const world = req.body.world === 'mariluna' ? 'mariluna' : 'personal';
+    // Client-side filtering is useful for UX, but the server is the actual privacy boundary.
+    const safeContext = securityVault.sanitizeContextForAi(context, world);
     const ai = getAI();
 
-    const intentObj = classifyIntent(query, [], context);
+    const intentObj = classifyIntent(query, [], safeContext);
 
     if (!ai) {
       return res.json({
-        answer: buildIntentAwareResponse(intentObj, query, context, "all"),
+        answer: buildIntentAwareResponse(intentObj, query, safeContext, world),
       });
     }
 
@@ -170,10 +175,10 @@ GECLASSIFICEERDE INTENTIE: ${intentObj.intent.toUpperCase()}
 TARGET TIMEFRAME/DAG: ${intentObj.resolvedTargetDay || "N/A"}
 
 TOEGESTANE CONTEXT:
-${JSON.stringify(context || {})}
+${JSON.stringify(safeContext || {})}
 
 RELEVANTIE EN FILTERTOELICHTING:
-${relevance?.privacyRationale || "Filter actief."}
+Server-side privacy filtering is enforced for the selected workspace.
 
 INTENTIE-SPECIFIEKE REGELS:
 - Indien INTENTIE = GREETING ("Hallo"): Geef een korte, warme groet van 1-2 zinnen. Geen strategische coaching speech.
@@ -195,7 +200,7 @@ Geef een kort, doordacht, warm en praktisch antwoord in ${isDutch ? "helder Nede
     });
 
     return res.json({
-      answer: response.text?.trim() || buildIntentAwareResponse(intentObj, query, context, "all"),
+      answer: response.text?.trim() || buildIntentAwareResponse(intentObj, query, safeContext, world),
     });
   } catch (err: any) {
     console.error("Brain query error:", err);
