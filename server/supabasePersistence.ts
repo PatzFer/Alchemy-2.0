@@ -208,6 +208,9 @@ export class SupabasePersistence {
         headers: this.serviceHeaders(),
       },
     );
+    if (!Array.isArray(rows)) {
+      throw new Error('Supabase returned an invalid snapshot collection.');
+    }
     const snapshot = rows[0] ?? null;
     if (!snapshot) return null;
     if (snapshot.owner_id !== owner.id) {
