@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { securityVault, requireAppAuth } from './security';
+import { buildIntentAwareResponse } from './brainEngine';
 
 test('Mariluna AI context excludes personal events, projects, memories and private preferences', () => {
   securityVault.updatePermissions({ allowPersonalDataToAI: true, allowMarilunaDataToAI: true });
@@ -448,4 +449,28 @@ test('Jarvis receives only active confirmed memories allowed by realm and sensit
     allowCycleDataToAI: false,
     allowFinancialDataToAI: false,
   });
+});
+
+
+test('local Jarvis can retrieve only the confirmed memories supplied by the privacy filter', () => {
+  const answer = buildIntentAwareResponse(
+    { intent: 'ambiguous' },
+    'Wat weet je nog?',
+    {
+      memoryItems: [
+        { content: 'Prefers calm, realistic planning.', category: 'Planning', realm: 'personal', type: 'explicit' },
+      ],
+    },
+    'personal',
+  );
+  assert.match(answer, /Prefers calm, realistic planning/);
+  assert.match(answer, /bevestigde herinneringen/i);
+
+  const emptyAnswer = buildIntentAwareResponse(
+    { intent: 'ambiguous' },
+    'Wat herinner je je?',
+    { memoryItems: [] },
+    'personal',
+  );
+  assert.match(emptyAnswer, /geen bevestigde herinneringen/i);
 });
