@@ -289,7 +289,7 @@ router.post('/webauthn/register-options', requireAppAuth, async (req: Request, r
       })),
       authenticatorSelection: {
         authenticatorAttachment: 'platform', // Hardware device biometrics (Touch ID / Face ID / Android / Windows Hello)
-        userVerification: 'preferred',
+        userVerification: 'required',
         residentKey: 'preferred',
       },
     });
@@ -382,6 +382,15 @@ router.post('/webauthn/auth-options', async (req: Request, res: Response) => {
 router.post('/webauthn/auth-verify', async (req: Request, res: Response) => {
   try {
     const session = getOrCreateSession(req, res);
+    const rateLimit = securityVault.checkRateLimit(session.ip);
+    if (!rateLimit.allowed) {
+      return res.status(429).json({
+        error: 'Too many failed authentication attempts.',
+        locked: true,
+        remainingLockoutSeconds: rateLimit.remainingLockoutSeconds,
+      });
+    }
+
     const { response } = req.body;
     const { rpID, origin } = getRPInfo(req);
     const expectedChallenge = securityVault.consumeChallenge(`auth_${session.id}`);
@@ -432,7 +441,8 @@ router.post('/webauthn/auth-verify', async (req: Request, res: Response) => {
     }
   } catch (error: any) {
     console.error('WebAuthn auth-verify error:', error);
-    securityVault.recordFailedAttempt(req.ip || '127.0.0.1');
+    const failedSession = req.cookies?.pm_alchemy_session;
+    securityVault.recordFailedAttempt(typeof failedSession === 'string' ? failedSession : (req.ip || '127.0.0.1'));
     res.status(400).json({ error: error.message || 'Verification failed' });
   }
 });
