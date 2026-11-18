@@ -64,6 +64,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   // Open Modal prefilled with selected date
   const handleOpenAddModal = (overrideDate?: string) => {
     setNewDate(overrideDate || currentDateStr);
+    setNewRealm(activeWorld === 'mariluna' ? 'mariluna' : 'personal');
     setNewTitle('');
     setNewLocation('');
     setNewStartTime('10:00');
