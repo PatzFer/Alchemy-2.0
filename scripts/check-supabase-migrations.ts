@@ -60,17 +60,17 @@ if (!/owner_id\s*=\s*\(select\s+auth\.uid\(\)\)/i.test(sql)) {
 }
 
 
-const snapshotRpc = /create\\s+or\\s+replace\\s+function\\s+public\\.save_app_state_snapshot\\s*\\(/i;
+const snapshotRpc = /create\s+or\s+replace\s+function\s+public\.save_app_state_snapshot\s*\(/i;
 if (!snapshotRpc.test(sql)) {
   throw new Error('Atomic owner-scoped snapshot revision RPC is missing.');
 }
-if (!/pg_advisory_xact_lock\\s*\\(/i.test(sql)) {
+if (!/pg_advisory_xact_lock\s*\(/i.test(sql)) {
   throw new Error('Snapshot revision allocation is not protected by a transaction-scoped lock.');
 }
-if (!/revoke\\s+all\\s+on\\s+function\\s+public\\.save_app_state_snapshot\\s*\\([^;]+?\\)\\s+from\\s+public\\s*,\\s*anon\\s*,\\s*authenticated/i.test(sql)) {
+if (!/revoke\s+all\s+on\s+function\s+public\.save_app_state_snapshot\s*\([^;]+?\)\s+from\s+public\s*,\s*anon\s*,\s*authenticated/i.test(sql)) {
   throw new Error('Snapshot RPC must be revoked from public, anon and authenticated roles.');
 }
-if (!/grant\\s+execute\\s+on\\s+function\\s+public\\.save_app_state_snapshot\\s*\\([^;]+?\\)\\s+to\\s+service_role/i.test(sql)) {
+if (!/grant\s+execute\s+on\s+function\s+public\.save_app_state_snapshot\s*\([^;]+?\)\s+to\s+service_role/i.test(sql)) {
   throw new Error('Snapshot RPC must be executable by service_role.');
 }
 
