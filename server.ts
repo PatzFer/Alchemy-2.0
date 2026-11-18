@@ -549,9 +549,9 @@ app.post("/api/ai/breakdown-goal", requireAppAuth, async (req: Request, res: Res
     }
 
     const prompt = `Break down the following goal into 3 to 5 realistic, gentle, and actionable micro-tasks.
-Goal: "${goalTitle}"
+Goal: "${safeGoalTitle}"
 Realm: "${realm}" (Personal or Mariluna Business)
-Timeframe: "${timeframe}"
+Timeframe: "${safeTimeframe}"
 
 Ensure the tasks feel approachable and do not overwhelm.
 Return a JSON array of objects with keys: title, durationMins, suggestedDay.`;
@@ -605,7 +605,7 @@ app.post("/api/ai/analyze-idea", requireAppAuth, async (req: Request, res: Respo
     }
 
     const prompt = `Analyze this raw brain dump idea:
-"${rawIdea}"
+"${safeRawIdea}"
 World: ${realm}
 
 Provide thoughtful synthesis in JSON:
