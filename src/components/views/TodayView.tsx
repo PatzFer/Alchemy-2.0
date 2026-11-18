@@ -1429,7 +1429,7 @@ export const TodayView: React.FC<TodayViewProps> = ({
                   key={task.id}
                   className={`group p-3.5 rounded-2xl border transition-all ${
                     isDone
-                      ? 'bg-[#F5F2EC]/60 border-[var(--border-subtle)] opacity-60'
+                      ? 'bg-[var(--surface-2)]/60 border-[var(--border-subtle)] opacity-60'
                       : 'bg-[var(--surface-2)] border-[#E5DFD3] hover:border-[var(--text-muted)] shadow-2xs'
                   }`}
                 >
@@ -1576,7 +1576,7 @@ export const TodayView: React.FC<TodayViewProps> = ({
                               if (onRemoveTask) onRemoveTask(task.id);
                               setActiveTaskMenuId(null);
                             }}
-                            className="w-full text-left px-3 py-1.5 rounded-xl hover:bg-[#FBEBEB] text-[#9E3E3E] transition"
+                            className="w-full text-left px-3 py-1.5 rounded-xl hover:bg-[var(--surface-2)] text-[#9E3E3E] transition"
                           >
                             {isNl ? 'Verwijder taak' : 'Delete task'}
                           </button>
