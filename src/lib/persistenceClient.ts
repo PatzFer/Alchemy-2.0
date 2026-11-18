@@ -47,7 +47,7 @@ function isValidSnapshot(value: unknown): value is AlchemySnapshot {
 
 function requireAccessToken(accessToken: string): string {
   const token = accessToken.trim();
-  if (!token || token.length > 8192) {
+  if (!token || token.length > 8192 || /\\s/.test(token)) {
     throw new Error('Een geldige Alchemy-aanmeldsessie is vereist.');
   }
   return token;
