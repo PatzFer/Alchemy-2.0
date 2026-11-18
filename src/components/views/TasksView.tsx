@@ -265,7 +265,7 @@ export const TasksView: React.FC<TasksViewProps> = ({
                 key={task.id}
                 className={`p-4 sm:p-5 rounded-2xl border transition-all ${
                   isCompleted
-                    ? 'bg-[var(--surface-2)]/50 border-[#E2DBD0] opacity-60'
+                    ? 'bg-[var(--surface-2)]/50 border-[var(--border-subtle)] opacity-60'
                     : 'bg-[var(--surface-raised)] border-[var(--border-subtle)] hover:border-[var(--text-muted)] shadow-xs'
                 }`}
               >
@@ -295,7 +295,7 @@ export const TasksView: React.FC<TasksViewProps> = ({
                         <span
                           className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
                             task.realm === 'mariluna'
-                              ? 'bg-[var(--text-primary)] text-[var(--text-primary)]'
+                              ? 'bg-[#263D35] text-[#F0EBDD]'
                               : 'bg-[var(--border-subtle)] text-[var(--text-secondary)]'
                           }`}
                         >
