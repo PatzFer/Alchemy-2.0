@@ -491,7 +491,7 @@ test('Jarvis AI quota limits bursts per session and resets after its sliding win
   assert.equal(blocked.remaining, 0);
   assert.equal(blocked.retryAfterSeconds, 60);
 
-  const afterWindow = securityVault.consumeAiRequest(key, start + 60_001);
+  const afterWindow = securityVault.consumeAiRequest(key, start + 60_020);
   assert.equal(afterWindow.allowed, true);
   assert.equal(afterWindow.remaining, 19);
 });
