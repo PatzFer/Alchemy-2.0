@@ -209,8 +209,7 @@ test('snapshot loading rejects a payload whose stored hash does not match', asyn
 
 test('snapshot integrity is stable when PostgreSQL jsonb returns object keys in a different order', async () => {
   const originalPayload = { ...validPayload, tasks: [{ id: 'task-1', title: 'Private task' }], realm: 'personal' };
-  const canonicalPayload = JSON.stringify(Object.fromEntries(Object.entries(originalPayload).sort(([a], [b]) => a.localeCompare(b))));
-  const expectedHash = createHash('sha256').update(canonicalPayload).digest('hex');
+  const expectedHash = createHash('sha256').update(canonicalJson(originalPayload)).digest('hex');
   const fetcher: FetchLike = async (input) => {
     if (String(input).endsWith('/auth/v1/user')) {
       return new Response(JSON.stringify({ id: ownerId }), { status: 200 });
