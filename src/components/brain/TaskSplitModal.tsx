@@ -30,7 +30,7 @@ export const TaskSplitModal: React.FC<TaskSplitModalProps> = ({
     if (!isOpen || !taskTitle) return;
 
     setLoading(true);
-    splitTaskWithBrain(taskTitle, 60, world)
+    splitTaskWithBrain(taskTitle, 60, world === 'mariluna' ? 'mariluna' : 'personal')
       .then((res) => {
         setSubtasks(
           (res.subtasks || []).map((s) => ({
