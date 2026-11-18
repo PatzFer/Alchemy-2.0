@@ -57,6 +57,13 @@ import { Sparkles } from 'lucide-react';
 import { MorningCheckInModal } from './components/MorningCheckInModal';
 import { purgeExpiredDailyCheckIns } from './lib/healthUtils';
 
+const getLocalDateString = (date = new Date()): string => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 export default function App() {
   const [state, setState] = useState<AppState>(() => loadState());
   const [currentTab, setCurrentTab] = useState<NavTab>('today');
@@ -143,7 +150,7 @@ export default function App() {
   // Morning Check-in trigger once per day
   useEffect(() => {
     if (!isAppAuthenticated) return;
-    const todayStr = new Date().toISOString().split('T')[0];
+    const todayStr = getLocalDateString();
     const lastShown = localStorage.getItem('lastMorningCheckInShownDate');
     const todayCheckIn = state.dailyCheckIns?.find((c) => c.date === todayStr);
 
@@ -153,7 +160,7 @@ export default function App() {
   }, [isAppAuthenticated]);
 
   const handleDismissMorningModal = () => {
-    const todayStr = new Date().toISOString().split('T')[0];
+    const todayStr = getLocalDateString();
     localStorage.setItem('lastMorningCheckInShownDate', todayStr);
     setIsMorningModalOpen(false);
   };
@@ -164,7 +171,7 @@ export default function App() {
   const [quickRealm, setQuickRealm] = useState<'personal' | 'mariluna'>('personal');
   const [quickKind, setQuickKind] = useState<'task' | 'reminder' | 'idea' | 'note' | 'appointment'>('task');
   const [quickDetails, setQuickDetails] = useState('');
-  const [quickDate, setQuickDate] = useState(new Date().toISOString().split('T')[0]);
+  const [quickDate, setQuickDate] = useState(getLocalDateString());
   const [quickStartTime, setQuickStartTime] = useState('09:00');
 
   // Automatically persist changes to local storage
@@ -184,7 +191,7 @@ export default function App() {
       goals: state.goals || [],
       cycleProfile: state.cycleProfile,
       todayCheckIn: (state.dailyCheckIns || []).find(
-        (c) => c.date === new Date().toISOString().split('T')[0]
+        (c) => c.date === getLocalDateString()
       ),
     });
     if (generated && generated.length > 0) {
@@ -306,7 +313,7 @@ export default function App() {
     const newEvent: CalendarEvent = {
       id: evt.id || `evt-${Date.now()}`,
       title: evt.title || 'Nieuwe Afspraak',
-      date: evt.date || new Date().toISOString().split('T')[0],
+      date: evt.date || getLocalDateString(),
       startTime: evt.startTime || '09:00',
       endTime: evt.endTime || '10:00',
       realm: evt.realm || 'personal',
@@ -404,7 +411,7 @@ export default function App() {
 
   // Intentions handlers
   const handleSaveIntention = (title: string, realm: Realm = 'personal', dateStr?: string) => {
-    const targetDate = dateStr || new Date().toISOString().split('T')[0];
+    const targetDate = dateStr || getLocalDateString();
     const cleanTitle = title.trim();
     if (!cleanTitle) return;
 
@@ -439,7 +446,7 @@ export default function App() {
   };
 
   const handleCompleteIntention = (intentionId: string) => {
-    const todayStr = new Date().toISOString().split('T')[0];
+    const todayStr = getLocalDateString();
     setState((prev) => ({
       ...prev,
       intentions: (prev.intentions || []).map((i) =>
@@ -458,7 +465,7 @@ export default function App() {
 
   const handleSnoozeIntention = (intentionId: string, minutes: number = 120) => {
     const snoozedUntilTime = new Date(Date.now() + minutes * 60 * 1000).toISOString();
-    const todayStr = new Date().toISOString().split('T')[0];
+    const todayStr = getLocalDateString();
     setState((prev) => ({
       ...prev,
       intentions: (prev.intentions || []).map((i) =>
@@ -475,7 +482,7 @@ export default function App() {
   };
 
   const handleDismissIntentionPrompt = (intentionId: string) => {
-    const todayStr = new Date().toISOString().split('T')[0];
+    const todayStr = getLocalDateString();
     setState((prev) => ({
       ...prev,
       intentions: (prev.intentions || []).map((i) =>
@@ -502,7 +509,7 @@ export default function App() {
               ? {
                   ...i,
                   ...ideaPayload,
-                  lastRevisitedAt: ideaPayload.lastRevisitedAt || new Date().toISOString().split('T')[0],
+                  lastRevisitedAt: ideaPayload.lastRevisitedAt || getLocalDateString(),
                 }
               : i
           ),
@@ -516,8 +523,8 @@ export default function App() {
         realm: ideaPayload.realm || 'mariluna',
         category: ideaPayload.category,
         status: ideaPayload.status || 'raw',
-        createdAt: ideaPayload.createdAt || new Date().toISOString().split('T')[0],
-        lastRevisitedAt: ideaPayload.lastRevisitedAt || new Date().toISOString().split('T')[0],
+        createdAt: ideaPayload.createdAt || getLocalDateString(),
+        lastRevisitedAt: ideaPayload.lastRevisitedAt || getLocalDateString(),
         ...ideaPayload,
       };
 
@@ -733,12 +740,12 @@ export default function App() {
         realm: payload.realm || 'mariluna',
         category: payload.category || 'strategy',
         priority: 'high',
-        dueDate: new Date().toISOString().split('T')[0],
+        dueDate: getLocalDateString(),
         estimatedDuration: payload.duration || 30,
         recurring: 'none',
         status: 'todo',
         subtasks: [],
-        createdAt: new Date().toISOString().split('T')[0],
+        createdAt: getLocalDateString(),
       });
       setIsAssistantOpen(false);
       setCurrentTab('tasks');
@@ -773,7 +780,7 @@ export default function App() {
     const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(state, null, 2));
     const downloadAnchor = document.createElement('a');
     downloadAnchor.setAttribute('href', dataStr);
-    downloadAnchor.setAttribute('download', `pm-alchemy-backup-${new Date().toISOString().split('T')[0]}.json`);
+    downloadAnchor.setAttribute('download', `pm-alchemy-backup-${getLocalDateString()}.json`);
     document.body.appendChild(downloadAnchor);
     downloadAnchor.click();
     downloadAnchor.remove();
@@ -1296,7 +1303,7 @@ export default function App() {
                 const title = quickTitle.trim();
                 if (!title) return;
                 const id = Date.now();
-                const today = new Date().toISOString().split('T')[0];
+                const today = getLocalDateString();
                 if (quickKind === 'idea' || quickKind === 'note') {
                   handleSaveIdea({
                     id: 'i-' + id,
@@ -1404,8 +1411,8 @@ export default function App() {
           isOpen={isMorningModalOpen}
           onClose={handleDismissMorningModal}
           onSaveCheckIn={handleSaveDailyCheckIn}
-          existingCheckIn={state.dailyCheckIns?.find((c) => c.date === new Date().toISOString().split('T')[0])}
-          todayIntention={(state.intentions || []).find((i) => i.date === new Date().toISOString().split('T')[0])}
+          existingCheckIn={state.dailyCheckIns?.find((c) => c.date === getLocalDateString())}
+          todayIntention={(state.intentions || []).find((i) => i.date === getLocalDateString())}
           lang="nl"
         />
       )}
