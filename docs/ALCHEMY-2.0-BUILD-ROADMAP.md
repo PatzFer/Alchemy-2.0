@@ -489,3 +489,10 @@ Incremental implementation commits on `design/phase-1`:
 - Passkey enrollment options and verification now both require a recent step-up authorization. Registration attempts use the same bounded lockout mechanism as passkey sign-in.
 - TOTP enrollment verification now checks the authentication lockout, records failed codes and clears the counter only after successful verification.
 - Balanced workspace filtering now explicitly recognizes the `balanced` scope as well as `all`; realm-tagged intentions retain their realm metadata so the privacy filter can make the correct decision.
+
+
+## Progress log — 18 November 2026 (workspace-aware AI actions and consent UI)
+
+- Jarvis task splitting now receives the originating task realm from Today, so a Mariluna task cannot accidentally use the personal AI-consent switch (or vice versa). Day-planning requests also carry an explicit realm.
+- Added a separate Financial Data consent toggle in Security & Privacy. Enabling or disabling sensitive workspace/data-sharing permissions requires step-up authorization; the UI now defaults to the same deny-by-default values as the server while status is loading.
+- General Mariluna consent now excludes Mariluna clients, offerings, metrics, admin and integration records when disabled. Financial consent remains a separate gate for prices and financial metrics.
