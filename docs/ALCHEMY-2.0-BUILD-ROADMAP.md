@@ -289,3 +289,10 @@ Incremental implementation commits on `design/phase-1`:
 - Removed personal work-context details and private-derived capacity/check-in signals from the Mariluna structured Brain context. Heritage and personal planning preference fields are also withheld from that business scope.
 - Added Node test-runner regression tests for both realm directions and included them in CI. The test suite, TypeScript check and production build all passed together on commit `994618c39ae7d9c2622aa7626784430aecf4773b`.
 - These tests cover the sanitizer's known payload fields. They are not a complete proof of privacy: the broader client payload schema, other AI endpoints, balanced-mode consent semantics and all future fields still require a systematic audit. Authentication persistence and encrypted at-rest storage remain unresolved production blockers.
+
+## Progress log — 18 November 2026 (server-side authorization boundary)
+
+- Added `requireAppAuth` middleware that rejects requests without an authenticated app session and enforces the configured inactivity timeout at the server boundary. Successful authorized requests refresh session activity.
+- Applied the middleware to the legacy Jarvis chat, day-planning, goal-breakdown and idea-analysis endpoints; to all Alchemy Brain endpoints (brief, task split, query and styling evaluation); and to integration status/connect/disconnect/sync/test-push routes.
+- This closes an important gap where the client lock screen could otherwise be bypassed by calling private API endpoints directly. The in-memory session store remains a limitation: server restarts invalidate sessions and multi-instance deployments do not share session state.
+- CI was repeatedly cancelled by the workflow's `cancel-in-progress: true` setting while several small commits landed in quick succession. A clean run against the latest commit is required before treating this authorization change as validated.
