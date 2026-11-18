@@ -644,6 +644,11 @@ class SecurityVault {
       delete sanitized.currentWeeklyMovement;
       delete sanitized.weeklyMenu;
       delete sanitized.shoppingList;
+      // Nutrition and dietary preferences are private health-adjacent data too.
+      delete sanitized.nutrition;
+      delete sanitized.foodPreferences;
+      delete sanitized.dietaryNotes;
+      delete sanitized.partnerSharedDinners;
     }
 
     return sanitized;
