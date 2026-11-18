@@ -45,6 +45,56 @@ test('owner verification uses Supabase Auth and rejects invalid identities', asy
   await assert.rejects(() => invalidStore.verifyOwner('valid-access-token'), /valid authenticated owner/);
 });
 
+
+test('owner verification rejects malformed UUIDs and oversized tokens', async () => {
+  const invalidFetcher: FetchLike = async () =>
+    new Response(JSON.stringify({ id: 'd4f1c1a2-1234-0a5b-9c8d-1234567890ab' }), { status: 200 });
+  const store = new SupabasePersistence(readSupabaseServerConfig(env)!, invalidFetcher);
+  await assert.rejects(() => store.verifyOwner('valid-access-token'), /valid authenticated owner/);
+  await assert.rejects(() => store.verifyOwner('x'.repeat(8193)), /valid Supabase access token/);
+});
+
+test('snapshot writes reject oversized payloads before calling the database RPC', async () => {
+  let rpcCalled = false;
+  const fetcher: FetchLike = async (input) => {
+    if (String(input).endsWith('/auth/v1/user')) {
+      return new Response(JSON.stringify({ id: ownerId }), { status: 200 });
+    }
+    rpcCalled = true;
+    return new Response('[]', { status: 200 });
+  };
+  const store = new SupabasePersistence(readSupabaseServerConfig(env)!, fetcher);
+  await assert.rejects(
+    () => store.saveSnapshot('verified-token', { large: 'x'.repeat(1_500_001) }),
+    /1.5 MB persistence limit/,
+  );
+  assert.equal(rpcCalled, false);
+});
+
+test('snapshot loading rejects a record returned for a different owner', async () => {
+  const otherOwnerId = 'a4f1c1a2-1234-4a5b-9c8d-1234567890ab';
+  const fetcher: FetchLike = async (input) => {
+    if (String(input).endsWith('/auth/v1/user')) {
+      return new Response(JSON.stringify({ id: ownerId }), { status: 200 });
+    }
+    return new Response(JSON.stringify([{
+      id: 'snapshot-id',
+      owner_id: otherOwnerId,
+      schema_version: 1,
+      revision: 1,
+      payload: { tasks: [] },
+      payload_sha256: createHash('sha256').update('{"tasks":[]}').digest('hex'),
+      source: 'autosave',
+      created_at: new Date().toISOString(),
+    }]), { status: 200 });
+  };
+  const store = new SupabasePersistence(readSupabaseServerConfig(env)!, fetcher);
+  await assert.rejects(
+    () => store.loadLatestSnapshot('verified-token'),
+    /owner does not match/,
+  );
+});
+
 test('snapshot owner comes from verified Supabase identity and stored payload hash is checked', async () => {
   const calls: Array<{ url: string; init?: RequestInit }> = [];
   const payload = { tasks: [{ id: 'task-1', title: 'Private task' }], realm: 'personal' };
