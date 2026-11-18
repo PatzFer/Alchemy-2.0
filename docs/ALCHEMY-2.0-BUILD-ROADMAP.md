@@ -245,3 +245,12 @@ Incremental implementation commits on `design/phase-1`:
 - Hardened the app authentication perimeter to fail closed: if `/api/auth/status` returns a non-success response or cannot be reached, the client now shows the locked state rather than treating the app as authenticated. This prevents an API outage from silently bypassing the lock screen. It does not replace durable server-side sessions or encrypted persistent storage.
 - These are source changes committed to `design/phase-1`; no local build, typecheck, browser test, provider OAuth test or Android device test has run in this environment.
 - CI's initial run failed. The first workflow definition expected an npm lockfile for caching even though none exists; that cache requirement has been removed in a follow-up commit. A successful rerun has not yet been observed, so the quality gate remains open.
+
+
+## Progress log — 18 November 2026 (critical authentication bypass and data recovery)
+
+- Security review found a hard-coded recovery credential (`PMAL-DEMO-2026`) accepted by the server's recovery-code verifier without checking the generated one-time recovery-code hashes. This was a real authentication bypass, not merely a preview convenience.
+- Removed the hard-coded credential acceptance from `server/security.ts` and removed the corresponding quick-unlock / prefilled-demo-code affordances from the lock screen. Preview unlock is separately disabled by default unless explicitly enabled outside production.
+- Removed the direct `method: 'passkey'` success path from the generic `/unlock-app` credential endpoint. Passkey unlock must flow through the WebAuthn challenge and signature verification endpoint.
+- Improved data recoverability: if stored Alchemy JSON is unreadable, the loader now attempts to preserve the original raw payload under a timestamped recovery key before the app can autosave its fallback state over the main key. This is a recovery safeguard, not encryption; localStorage still contains plaintext data and remains a production blocker for sensitive information.
+- Source changes are committed on `design/phase-1`. No executable tests, build, browser checks, authentication penetration tests or storage recovery tests have been run here. The new CI workflow must still be observed passing.
