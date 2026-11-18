@@ -25,7 +25,7 @@ export async function splitTaskWithBrain(
     const res = await fetch('/api/brain/split-task', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ taskTitle, estimatedDuration }),
+      body: JSON.stringify({ taskTitle, estimatedDuration, world: 'personal' }),
     });
 
     if (res.ok) {
@@ -68,6 +68,7 @@ export async function queryBrainAdvisor(
         query,
         context: safeContext,
         relevance,
+        world: effectiveScope === 'mariluna' ? 'mariluna' : 'personal',
       }),
     });
 
