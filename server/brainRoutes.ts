@@ -1,7 +1,7 @@
 import { Router, Request, Response } from "express";
 import { GoogleGenAI } from "@google/genai";
 import { classifyIntent, buildIntentAwareResponse, isDutchMessage } from "./brainEngine";
-import { requireAppAuth, securityVault } from "./security";
+import { requireAppAuth, requireAiRateLimit, securityVault } from "./security";
 
 const router = Router();
 
@@ -43,7 +43,7 @@ DATA SEPARATIE & PRIVACY:
  * POST /api/brain/brief
  * Generates an intelligent, calm morning brief for Today
  */
-router.post("/brief", requireAppAuth, async (req: Request, res: Response) => {
+router.post("/brief", requireAppAuth, requireAiRateLimit, async (req: Request, res: Response) => {
   const world = req.body.world === 'mariluna'
     ? 'mariluna'
     : req.body.world === 'balanced' ? 'balanced' : 'personal';
