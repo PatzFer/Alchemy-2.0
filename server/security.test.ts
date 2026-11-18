@@ -107,6 +107,38 @@ test('private API middleware rejects an unauthenticated session', () => {
   assert.equal(nextCalled, false);
 });
 
+
+test('private API middleware ignores a caller-supplied session header', () => {
+  const authenticatedSession = securityVault.createSession({
+    ip: '127.0.0.3',
+    headers: { 'user-agent': 'Alchemy test runner' },
+    socket: { remoteAddress: '127.0.0.3' },
+  } as any, 'totp', true);
+  const headers: Record<string, string> = {};
+  const req: any = {
+    cookies: {},
+    headers: {
+      'user-agent': 'Alchemy test runner',
+      'x-session-id': authenticatedSession.id,
+    },
+    ip: '127.0.0.4',
+    socket: { remoteAddress: '127.0.0.4' },
+  };
+  const res: any = {
+    statusCode: 200,
+    body: undefined,
+    status(code: number) { this.statusCode = code; return this; },
+    json(body: any) { this.body = body; return this; },
+    cookie(name: string, value: string) { headers[name] = value; return this; },
+  };
+  let nextCalled = false;
+  requireAppAuth(req, res, () => { nextCalled = true; });
+  assert.equal(res.statusCode, 401);
+  assert.equal(res.body.authenticationRequired, true);
+  assert.equal(nextCalled, false);
+  assert.notEqual(headers.pm_alchemy_session, authenticatedSession.id);
+});
+
 test('private API middleware allows a valid authenticated session', () => {
   const session = securityVault.createSession({
     ip: '127.0.0.2',
