@@ -7,7 +7,7 @@ function getBearerToken(req: Request): string | null {
   const authorization = req.get('authorization') || '';
   const match = authorization.match(/^Bearer\s+(.+)$/i);
   const token = match?.[1]?.trim();
-  return token && token.length <= 8192 && !/\\s/.test(token) ? token : null;
+  return token && token.length <= 8192 && !/\s/.test(token) ? token : null;
 }
 
 router.get('/snapshot', async (req: Request, res: Response) => {
