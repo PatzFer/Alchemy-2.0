@@ -69,3 +69,26 @@ test('snapshot write route rejects malformed payloads before contacting Supabase
     assert.deepEqual(await response.json(), { error: 'A valid Alchemy state object is required.' });
   });
 });
+
+
+test('persistence routes fail closed on malformed Supabase configuration', async () => {
+  await withPersistenceServer({
+    SUPABASE_URL: 'not-a-valid-url',
+    SUPABASE_ANON_KEY: 'public-anon-key',
+    SUPABASE_SERVICE_ROLE_KEY: 'server-only-service-role',
+  }, async (baseUrl) => {
+    for (const method of ['GET', 'POST'] as const) {
+      const response = await fetch(`${baseUrl}/api/persistence/snapshot`, {
+        method,
+        headers: method === 'POST'
+          ? { 'Content-Type': 'application/json', Authorization: 'Bearer test-token' }
+          : {},
+        body: method === 'POST' ? JSON.stringify({ payload: { tasks: [] } }) : undefined,
+      });
+      assert.equal(response.status, 503);
+      assert.deepEqual(await response.json(), {
+        error: 'Supabase persistence configuration is invalid.',
+      });
+    }
+  });
+});
