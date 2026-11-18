@@ -185,9 +185,9 @@ export const TasksView: React.FC<TasksViewProps> = ({
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[var(--border-subtle)] pb-5">
         <div>
-          <h1 className="font-serif text-3xl font-normal text-[var(--text-primary)]">Focus & Tasks</h1>
+          <h1 className="font-serif text-3xl font-normal text-[var(--text-primary)]">Focus & Taken</h1>
           <p className="text-xs text-[var(--text-secondary)] mt-1 font-light">
-            Intentional commitments for personal life and Mariluna studio.
+            Bewuste afspraken voor je privéleven en Mariluna.
           </p>
         </div>
 
@@ -197,7 +197,7 @@ export const TasksView: React.FC<TasksViewProps> = ({
           className="flex items-center gap-2 px-4 py-2 rounded-full bg-[var(--text-primary)] text-[var(--text-primary)] text-xs font-medium hover:bg-[var(--surface-raised)] transition shadow-xs cursor-pointer w-fit"
         >
           <Plus className="w-4 h-4" />
-          <span>New Task</span>
+          <span>Nieuwe taak</span>
         </button>
       </div>
 
@@ -232,21 +232,21 @@ export const TasksView: React.FC<TasksViewProps> = ({
                 : 'text-[var(--text-secondary)]'
             }`}
           >
-            All
+            Alles
           </button>
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="text-[var(--text-muted)] text-[11px]">Priority:</span>
+          <span className="text-[var(--text-muted)] text-[11px]">Prioriteit:</span>
           <select
             value={filterPriority}
             onChange={(e) => setFilterPriority(e.target.value)}
             className="rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-raised)] px-2.5 py-1 text-xs text-[var(--text-primary)] focus:outline-hidden"
           >
-            <option value="all">All Priorities</option>
-            <option value="high">High Priority</option>
-            <option value="medium">Medium</option>
-            <option value="low">Low</option>
+            <option value="all">Alle prioriteiten</option>
+            <option value="high">Hoge prioriteit</option>
+            <option value="medium">Gemiddeld</option>
+            <option value="low">Laag</option>
           </select>
         </div>
       </div>
@@ -255,7 +255,7 @@ export const TasksView: React.FC<TasksViewProps> = ({
       <div className="space-y-3">
         {filteredTasks.length === 0 ? (
           <div className="p-12 text-center rounded-2xl border border-dashed border-[var(--border-subtle)] bg-[var(--surface-1)]">
-            <p className="text-xs text-[var(--text-secondary)]">No tasks found under current criteria.</p>
+            <p className="text-xs text-[var(--text-secondary)]">Geen taken gevonden voor deze filters.</p>
           </div>
         ) : (
           filteredTasks.map((task) => {
