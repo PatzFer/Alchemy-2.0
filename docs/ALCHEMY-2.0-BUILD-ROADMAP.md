@@ -482,3 +482,10 @@ Incremental implementation commits on `design/phase-1`:
 - Failed-authentication counters now expire after 30 minutes and are bounded to 10,000 keys, preventing unbounded growth from unauthenticated traffic. The five-failure / 15-minute lockout behavior remains covered by regression tests.
 - WebAuthn endpoints return generic client-facing errors rather than forwarding internal verification exception messages. Detailed diagnostics remain server-side only.
 - These lifecycle and rate-limit controls are still process-local. A restart clears sessions, credentials, counters and permissions until the durable Supabase identity layer is provisioned and connected.
+
+
+## Progress log — 18 November 2026 (authenticator enrollment hardening)
+
+- Passkey enrollment options and verification now both require a recent step-up authorization. Registration attempts use the same bounded lockout mechanism as passkey sign-in.
+- TOTP enrollment verification now checks the authentication lockout, records failed codes and clears the counter only after successful verification.
+- Balanced workspace filtering now explicitly recognizes the `balanced` scope as well as `all`; realm-tagged intentions retain their realm metadata so the privacy filter can make the correct decision.
