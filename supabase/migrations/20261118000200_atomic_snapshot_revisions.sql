@@ -12,7 +12,7 @@ create or replace function public.save_app_state_snapshot(
 returns setof public.app_state_snapshots
 language plpgsql
 security definer
-set search_path = pg_catalog, public
+set search_path = ''
 as $$
 declare
   next_revision bigint;
@@ -40,7 +40,7 @@ begin
     pg_catalog.hashtextextended(p_owner_id::text, 0)
   );
 
-  select coalesce(max(snapshot.revision), 0) + 1
+  select coalesce(pg_catalog.max(snapshot.revision), 0) + 1
     into next_revision
     from public.app_state_snapshots as snapshot
     where snapshot.owner_id = p_owner_id;
