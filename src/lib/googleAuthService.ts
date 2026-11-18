@@ -160,24 +160,50 @@ export const fetchRealCalendarEventsFromApi = async (
   startOfToday.setHours(0, 0, 0, 0);
   const timeMinIso = startOfToday.toISOString();
 
-  const eventsRes = await fetch(
-    `https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${encodeURIComponent(
-      timeMinIso
-    )}&maxResults=250&singleEvents=true&orderBy=startTime`,
-    {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    }
-  );
+  // 3. Fetch every page; Google Calendar may return more than 250 events.
+  const rawItems: any[] = [];
+  let pageToken: string | undefined;
 
-  if (!eventsRes.ok) {
-    if (eventsRes.status === 401 || eventsRes.status === 403) {
-      throw new Error('AUTHENTICATION_EXPIRED');
-    }
-    throw new Error(`Google Calendar API Fout bij afspraken: ${eventsRes.statusText}`);
-  }
+  do {
+    const params = new URLSearchParams({
+      timeMin: timeMinIso,
+      maxResults: '250',
+      singleEvents: 'true',
+      orderBy: 'startTime',
+    });
+    if (pageToken) params.set('pageToken', pageToken);
 
-  const eventsData = await eventsRes.json();
-  const rawItems: any[] = eventsData.items || [];
+    const eventsRes = await fetch(
+      `https://www.googleapis.com/calendar/v3/calendars/primary/events?${params.toString()}`,
+      { headers: { Authorization: `Bearer ${accessToken}` } }
+    );
+
+    if (!eventsRes.ok) {
+      if (eventsRes.status === 401 || eventsRes.status === 403) {
+        throw new Error('AUTHENTICATION_EXPIRED');
+      }
+      throw new Error(`Google Calendar API Fout bij afspraken: ${eventsRes.status} ${eventsRes.statusText}`);
+    }
+
+    const eventsData = await eventsRes.json();
+    rawItems.push(...(eventsData.items || []));
+    pageToken = eventsData.nextPageToken || undefined;
+  } while (pageToken);
+
+  const toLocalDate = (value: string): string => {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return value.split('T')[0];
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  const toLocalTime = (value: string, fallback: string): string => {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return fallback;
+    return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+  };
 
   const convertedEvents: CalendarEvent[] = rawItems
     .filter((item) => item.status !== 'cancelled' && item.summary)
@@ -185,21 +211,18 @@ export const fetchRealCalendarEventsFromApi = async (
       const startDateTime = item.start?.dateTime || item.start?.date || '';
       const endDateTime = item.end?.dateTime || item.end?.date || '';
       const isAllDay = !item.start?.dateTime && Boolean(item.start?.date);
+      const dateStr = isAllDay
+        ? startDateTime
+        : startDateTime
+          ? toLocalDate(startDateTime)
+          : toLocalDate(new Date().toISOString());
 
-      const dateStr = startDateTime ? startDateTime.split('T')[0] : new Date().toISOString().split('T')[0];
-
-      let startTimeStr = '09:00';
-      let endTimeStr = '10:00';
-
-      if (isAllDay) {
-        startTimeStr = '00:00';
-        endTimeStr = '23:59';
-      } else if (startDateTime.includes('T')) {
-        startTimeStr = startDateTime.split('T')[1].slice(0, 5);
-        if (endDateTime.includes('T')) {
-          endTimeStr = endDateTime.split('T')[1].slice(0, 5);
-        }
-      }
+      const startTimeStr = isAllDay
+        ? '00:00'
+        : toLocalTime(startDateTime, '09:00');
+      const endTimeStr = isAllDay
+        ? '23:59'
+        : toLocalTime(endDateTime, '10:00');
 
       return {
         id: `gcal-${item.id}`,
