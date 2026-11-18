@@ -317,7 +317,7 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
 
         {/* Message Thread */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
-          {messages.map((msg) => {
+          {messages.filter((msg) => msg.world === activeWorld).map((msg) => {
             const isUser = msg.role === 'user';
             return (
               <div
