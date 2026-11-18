@@ -136,7 +136,7 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
         throw new Error('OAuth authenticatie is niet voltooid.');
       }
 
-      const { accountEmail, isWriteAccessGranted, totalEventsCount, events } =
+      const { accountEmail, totalEventsCount, events } =
         await fetchRealCalendarEventsFromApi(authRes.accessToken);
 
       if (onSyncCalendarEvents && events) {
@@ -223,7 +223,7 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
         token = authRes.accessToken;
       }
 
-      const { accountEmail, isWriteAccessGranted, totalEventsCount, events } =
+      const { accountEmail, totalEventsCount, events } =
         await fetchRealCalendarEventsFromApi(token);
 
       if (onSyncCalendarEvents && events) {
@@ -984,7 +984,7 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
                 <p className="text-xs text-[var(--text-secondary)] mt-0.5">
                   {isNl
                     ? 'Tijdelijke Google Fit REST-koppeling. Dit is geen Health Connect-integratie; Google Fit API-ondersteuning eindigt eind 2026.'
-                    : 'Neutral daily movement context (steps & active minutes only).'}
+                    : 'Temporary Google Fit REST connection. This is not a Health Connect integration; Google Fit API support ends at the end of 2026.'}
                 </p>
               </div>
             </div>
