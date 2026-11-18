@@ -130,7 +130,6 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
 
       const authRes = await googleSignInForService([
         'https://www.googleapis.com/auth/calendar.readonly',
-        'https://www.googleapis.com/auth/calendar.events',
       ]);
 
       if (!authRes || !authRes.accessToken) {
@@ -152,7 +151,7 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
           status: 'connected',
           accountEmail: accountEmail || authRes.email,
           lastSync: now,
-          readOnly: !isWriteAccessGranted,
+          readOnly: true,
           syncedEventsCount: totalEventsCount,
           isPatriciaOnlySchedule: true,
           error: undefined,
@@ -162,7 +161,7 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
       await IntegrationsService.connectService('google_calendar', {
         accountEmail: accountEmail || authRes.email,
         syncedEventsCount: totalEventsCount,
-        readOnly: !isWriteAccessGranted,
+        readOnly: true,
         verified: true,
       });
     } catch (err: any) {
@@ -220,7 +219,6 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
       if (!token) {
         const authRes = await googleSignInForService([
           'https://www.googleapis.com/auth/calendar.readonly',
-          'https://www.googleapis.com/auth/calendar.events',
         ]);
         token = authRes.accessToken;
       }
@@ -240,7 +238,7 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
           status: 'connected',
           accountEmail: accountEmail || prev.calendar.accountEmail,
           lastSync: now,
-          readOnly: !isWriteAccessGranted,
+          readOnly: true,
           syncedEventsCount: totalEventsCount,
           error: undefined,
         },
@@ -974,18 +972,18 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
               <div>
                 <div className="flex items-center gap-3">
                   <h3 className="font-serif text-lg font-medium text-[var(--text-primary)]">
-                    Health Connect / Google Fit
+                    Google Fit (legacy)
                   </h3>
                   {getStatusBadge(
                     integrations.healthConnect.status,
                     integrations.healthConnect.status === 'connected'
-                      ? (isNl ? 'Verbonden • Google Fit' : 'Connected • Google Fit')
+                      ? (isNl ? 'Verbonden • Google Fit legacy' : 'Connected • Google Fit legacy')
                       : undefined
                   )}
                 </div>
                 <p className="text-xs text-[var(--text-secondary)] mt-0.5">
                   {isNl
-                    ? 'Neutrale dagelijkse bewegingscontext (alleen stappen & actieve minuten).'
+                    ? 'Tijdelijke Google Fit REST-koppeling. Dit is geen Health Connect-integratie; Google Fit API-ondersteuning eindigt eind 2026.'
                     : 'Neutral daily movement context (steps & active minutes only).'}
                 </p>
               </div>
@@ -1013,7 +1011,7 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
                 </>
               ) : integrations.healthConnect.status === 'unavailable' ? (
                 <span className="text-xs text-[var(--text-muted)] italic">
-                  {isNl ? 'Vereist Android toestel met Health Connect app' : 'Requires Android device with Health Connect'}
+                  {isNl ? 'Native Android Health Connect-integratie vereist' : 'Native Android Health Connect integration required'}
                 </span>
               ) : (
                 <button
@@ -1022,7 +1020,7 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
                   className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[var(--text-primary)] text-[var(--surface-1)] text-xs font-medium hover:bg-[var(--surface-raised)] transition cursor-pointer shadow-xs"
                 >
                   <Smartphone className="w-3.5 h-3.5" />
-                  <span>{isNl ? 'Health Connect Koppelen' : 'Connect Health Connect'}</span>
+                  <span>{isNl ? 'Google Fit (legacy) koppelen' : 'Connect Google Fit (legacy)'}</span>
                 </button>
               )}
             </div>
