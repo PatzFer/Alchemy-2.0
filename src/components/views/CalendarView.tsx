@@ -227,7 +227,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
             Agenda & Ritme
           </h1>
           <p className="text-xs text-[var(--text-secondary)] mt-1 font-light">
-            Sovereinty scheduling within your bounded working hours ({lifeProfile.workingHoursStart} –{' '}
+            Je agenda binnen je ingestelde werkuren ({lifeProfile.workingHoursStart} –{' '}
             {lifeProfile.workingHoursEnd}).
           </p>
         </div>
@@ -237,7 +237,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
           {integrations?.calendar?.status === 'connected' ? (
             <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#D0E2D4] bg-[#E8EFE9] text-[11px] text-[#2D5A3C]">
               <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-primary)] animate-pulse" />
-              <span>Google Agenda Gekoppeld • {integrations?.calendar?.readOnly ? 'Alleen-lezen' : 'Lezen & Schrijven'}</span>
+              <span>Google Agenda gekoppeld • {integrations?.calendar?.readOnly ? 'Alleen-lezen' : 'Lezen & Schrijven'}</span>
             </div>
           ) : (
             <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#DCD3C4] bg-[var(--surface-2)] text-[11px] text-[#695B49]">
@@ -358,7 +358,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                   className={`p-4 rounded-xl border transition-all ${
                     evt.realm === 'mariluna'
                       ? 'bg-[var(--surface-1)] border-[var(--border-subtle)]'
-                      : 'bg-[var(--surface-1)] border-[#E8E2D8]'
+                      : 'bg-[var(--surface-1)] border-[var(--border-subtle)]'
                   }`}
                 >
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -384,7 +384,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                             </span>
                           ) : (
                             <span className="text-[9px] px-2 py-0.5 rounded-full bg-[var(--surface-2)] text-[var(--text-secondary)] font-medium border border-[var(--border-subtle)]">
-                              Alchemy Internal
+                              Lokaal in Alchemy
                             </span>
                           )}
                         </div>
