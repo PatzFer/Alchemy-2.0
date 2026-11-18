@@ -31,7 +31,6 @@ import {
   googleSignInForService,
   fetchRealGmailMessagesFromApi,
   fetchRealCalendarEventsFromApi,
-  fetchRealGoogleFitStepsFromApi,
   fetchRealInstagramPostsFromApi,
   getCachedAccessToken,
   setCachedAccessToken,
@@ -387,127 +386,6 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
         },
       }));
       setAuthError('Synchronisatie mislukt. Log opnieuw in bij Google om de verbinding te herstellen.');
-    } finally {
-      setSyncingService(null);
-    }
-  };
-
-  const handleConnectHealthConnect = async () => {
-    setAuthError(null);
-    setSyncingService('healthConnect');
-    try {
-      onUpdateIntegrations((prev) => ({
-        ...prev,
-        healthConnect: { ...prev.healthConnect, status: 'connecting' },
-      }));
-
-      const authRes = await googleSignInForService([
-        'https://www.googleapis.com/auth/fitness.activity.read',
-      ]);
-
-      if (!authRes || !authRes.accessToken) {
-        throw new Error('Geen OAuth toegang gekregen voor Google Fit.');
-      }
-
-      const { stepsToday } = await fetchRealGoogleFitStepsFromApi(authRes.accessToken);
-      const now = new Date().toISOString();
-
-      onUpdateIntegrations((prev) => ({
-        ...prev,
-        healthConnect: {
-          ...prev.healthConnect,
-          status: 'connected',
-          platform: 'web',
-          lastSync: now,
-          stepsToday: stepsToday,
-          todaySteps: stepsToday,
-          isStepsOnly: true,
-          isPrivateOnly: true,
-          error: undefined,
-        },
-      }));
-
-    } catch (err: any) {
-      console.warn('Google Fit OAuth error:', err);
-      const isAuthClosed = err?.message?.includes('geannuleerd');
-      const isAuthExpired = err?.message === 'AUTHENTICATION_EXPIRED';
-
-      const userFacingErr = isAuthClosed
-        ? 'Inlogvenster geannuleerd.'
-        : isAuthExpired
-        ? 'Authenticatie verlopen.'
-        : err?.message || 'Koppelen met Google Fit mislukt.';
-
-      setAuthError(userFacingErr);
-
-      onUpdateIntegrations((prev) => ({
-        ...prev,
-        healthConnect: {
-          ...prev.healthConnect,
-          status: isAuthExpired ? 'authentication_expired' : 'not_connected',
-          error: userFacingErr,
-        },
-      }));
-    } finally {
-      setSyncingService(null);
-    }
-  };
-
-  const handleDisconnectHealthConnect = async () => {
-    setSyncingService('healthConnect');
-    await IntegrationsService.disconnectService('health_connect');
-    onUpdateIntegrations((prev) => ({
-      ...prev,
-      healthConnect: {
-        ...prev.healthConnect,
-        status: 'not_connected',
-        lastSync: undefined,
-        stepsToday: undefined,
-        todaySteps: undefined,
-        error: undefined,
-      },
-    }));
-    setSyncingService(null);
-  };
-
-  const handleSyncHealthConnect = async () => {
-    setAuthError(null);
-    setSyncingService('healthConnect');
-    try {
-      let token = getCachedAccessToken();
-      if (!token) {
-        const authRes = await googleSignInForService([
-          'https://www.googleapis.com/auth/fitness.activity.read',
-        ]);
-        token = authRes.accessToken;
-      }
-
-      const { stepsToday } = await fetchRealGoogleFitStepsFromApi(token);
-      const now = new Date().toISOString();
-
-      onUpdateIntegrations((prev) => ({
-        ...prev,
-        healthConnect: {
-          ...prev.healthConnect,
-          status: 'connected',
-          lastSync: now,
-          stepsToday: stepsToday,
-          todaySteps: stepsToday,
-          error: undefined,
-        },
-      }));
-
-    } catch (err: any) {
-      console.warn('Health sync error:', err);
-      onUpdateIntegrations((prev) => ({
-        ...prev,
-        healthConnect: {
-          ...prev.healthConnect,
-          status: 'sync_error',
-          error: err?.message || 'Fout bij synchroniseren.',
-        },
-      }));
-      setAuthError('Google Fit synchronisatie mislukt.');
     } finally {
       setSyncingService(null);
     }
