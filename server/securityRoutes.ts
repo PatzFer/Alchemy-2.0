@@ -181,6 +181,9 @@ router.post('/lock-sensitive', (req: Request, res: Response) => {
 
 router.post('/unlock-sensitive', async (req: Request, res: Response) => {
   const session = getOrCreateSession(req, res);
+  if (!session.isAppAuthenticated) {
+    return res.status(403).json({ error: 'Unlock the application before accessing sensitive personal data.' });
+  }
   const { method, credential } = req.body;
 
   // Rate limiting check
