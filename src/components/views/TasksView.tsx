@@ -183,10 +183,10 @@ export const TasksView: React.FC<TasksViewProps> = ({
   return (
     <div className="space-y-6 pb-16">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#E8E2D5] pb-5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[var(--border-subtle)] pb-5">
         <div>
-          <h1 className="font-serif text-3xl font-normal text-[#2C2825]">Focus & Tasks</h1>
-          <p className="text-xs text-[#7A7167] mt-1 font-light">
+          <h1 className="font-serif text-3xl font-normal text-[var(--text-primary)]">Focus & Tasks</h1>
+          <p className="text-xs text-[var(--text-secondary)] mt-1 font-light">
             Intentional commitments for personal life and Mariluna studio.
           </p>
         </div>
@@ -203,13 +203,13 @@ export const TasksView: React.FC<TasksViewProps> = ({
 
       {/* Filter Tabs */}
       <div className="flex flex-wrap items-center justify-between gap-3 text-xs">
-        <div className="flex items-center gap-1.5 rounded-full border border-[#E3DCD1] bg-[#F1ECE3] p-0.5">
+        <div className="flex items-center gap-1.5 rounded-full border border-[var(--border-subtle)] bg-[var(--surface-2)] p-0.5">
           <button
             onClick={() => setFilterStatus('active')}
             className={`px-3 py-1 rounded-full transition cursor-pointer ${
               filterStatus === 'active'
-                ? 'bg-[#FFFFFF] text-[#2C2825] shadow-xs font-medium'
-                : 'text-[#7A7167]'
+                ? 'bg-[var(--surface-raised)] text-[var(--text-primary)] shadow-xs font-medium'
+                : 'text-[var(--text-secondary)]'
             }`}
           >
             Actief ({scopedTasks.filter((t) => t.status !== 'completed').length})
@@ -218,8 +218,8 @@ export const TasksView: React.FC<TasksViewProps> = ({
             onClick={() => setFilterStatus('completed')}
             className={`px-3 py-1 rounded-full transition cursor-pointer ${
               filterStatus === 'completed'
-                ? 'bg-[#FFFFFF] text-[#2C2825] shadow-xs font-medium'
-                : 'text-[#7A7167]'
+                ? 'bg-[var(--surface-raised)] text-[var(--text-primary)] shadow-xs font-medium'
+                : 'text-[var(--text-secondary)]'
             }`}
           >
             Afgerond ({scopedTasks.filter((t) => t.status === 'completed').length})
@@ -228,8 +228,8 @@ export const TasksView: React.FC<TasksViewProps> = ({
             onClick={() => setFilterStatus('all')}
             className={`px-3 py-1 rounded-full transition cursor-pointer ${
               filterStatus === 'all'
-                ? 'bg-[#FFFFFF] text-[#2C2825] shadow-xs font-medium'
-                : 'text-[#7A7167]'
+                ? 'bg-[var(--surface-raised)] text-[var(--text-primary)] shadow-xs font-medium'
+                : 'text-[var(--text-secondary)]'
             }`}
           >
             All
@@ -237,11 +237,11 @@ export const TasksView: React.FC<TasksViewProps> = ({
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="text-[#8C8377] text-[11px]">Priority:</span>
+          <span className="text-[var(--text-muted)] text-[11px]">Priority:</span>
           <select
             value={filterPriority}
             onChange={(e) => setFilterPriority(e.target.value)}
-            className="rounded-lg border border-[#DDD5C7] bg-[#FFFFFF] px-2.5 py-1 text-xs text-[#2C2825] focus:outline-hidden"
+            className="rounded-lg border border-[#DDD5C7] bg-[var(--surface-raised)] px-2.5 py-1 text-xs text-[var(--text-primary)] focus:outline-hidden"
           >
             <option value="all">All Priorities</option>
             <option value="high">High Priority</option>
@@ -254,8 +254,8 @@ export const TasksView: React.FC<TasksViewProps> = ({
       {/* Task List */}
       <div className="space-y-3">
         {filteredTasks.length === 0 ? (
-          <div className="p-12 text-center rounded-2xl border border-dashed border-[#DDD5C7] bg-[#FAF8F3]">
-            <p className="text-xs text-[#7A7167]">No tasks found under current criteria.</p>
+          <div className="p-12 text-center rounded-2xl border border-dashed border-[var(--border-subtle)] bg-[var(--surface-1)]">
+            <p className="text-xs text-[var(--text-secondary)]">No tasks found under current criteria.</p>
           </div>
         ) : (
           filteredTasks.map((task) => {
@@ -266,19 +266,19 @@ export const TasksView: React.FC<TasksViewProps> = ({
                 className={`p-4 sm:p-5 rounded-2xl border transition-all ${
                   isCompleted
                     ? 'bg-[#F4F1EA]/50 border-[#E2DBD0] opacity-60'
-                    : 'bg-[#FFFFFF] border-[#E8E1D4] hover:border-[#C4B9A7] shadow-xs'
+                    : 'bg-[var(--surface-raised)] border-[#E8E1D4] hover:border-[#C4B9A7] shadow-xs'
                 }`}
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-start gap-3 flex-1">
                     <button
                       onClick={() => onToggleTask(task.id)}
-                      className="mt-0.5 text-[#8C7654] hover:text-[#2C2825] transition cursor-pointer"
+                      className="mt-0.5 text-[#8C7654] hover:text-[var(--text-primary)] transition cursor-pointer"
                     >
                       {isCompleted ? (
                         <CheckCircle2 className="w-5 h-5 text-[#8C7654]" />
                       ) : (
-                        <Circle className="w-5 h-5 text-[#A89F93] hover:text-[#2C2825]" />
+                        <Circle className="w-5 h-5 text-[#A89F93] hover:text-[var(--text-primary)]" />
                       )}
                     </button>
 
@@ -286,7 +286,7 @@ export const TasksView: React.FC<TasksViewProps> = ({
                       <div className="flex items-center gap-2 flex-wrap">
                         <span
                           className={`text-sm sm:text-base font-medium ${
-                            isCompleted ? 'line-through text-[#8C8377]' : 'text-[#2C2825]'
+                            isCompleted ? 'line-through text-[var(--text-muted)]' : 'text-[var(--text-primary)]'
                           }`}
                         >
                           {task.title}
@@ -302,7 +302,7 @@ export const TasksView: React.FC<TasksViewProps> = ({
                           {task.realm === 'mariluna' ? 'Mariluna' : 'Personal'}
                         </span>
 
-                        <span className="text-[10px] text-[#8C8377] capitalize">
+                        <span className="text-[10px] text-[var(--text-muted)] capitalize">
                           {task.category}
                         </span>
 
@@ -340,7 +340,7 @@ export const TasksView: React.FC<TasksViewProps> = ({
                         </div>
                       )}
 
-                      <div className="flex items-center gap-4 mt-3 text-[11px] text-[#8C8377]">
+                      <div className="flex items-center gap-4 mt-3 text-[11px] text-[var(--text-muted)]">
                         <span className="flex items-center gap-1">
                           <Clock className="w-3 h-3 text-[#A89F93]" />
                           {task.estimatedDuration} min
@@ -363,14 +363,14 @@ export const TasksView: React.FC<TasksViewProps> = ({
                   <div className="flex items-center gap-1">
                     <button
                       onClick={() => openEditModal(task)}
-                      className="p-1.5 rounded-lg text-[#8C8377] hover:text-[#2C2825] hover:bg-[#F2ECE1] transition cursor-pointer"
+                      className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[#F2ECE1] transition cursor-pointer"
                       title="Edit task"
                     >
                       <Edit3 className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => onDeleteTask(task.id)}
-                      className="p-1.5 rounded-lg text-[#8C8377] hover:text-[#733] hover:bg-[#F2ECE1] transition cursor-pointer"
+                      className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-[#733] hover:bg-[#F2ECE1] transition cursor-pointer"
                       title="Delete task"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -387,7 +387,7 @@ export const TasksView: React.FC<TasksViewProps> = ({
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#1A1816]/40 backdrop-blur-xs p-4 overflow-y-auto">
           <div className="w-full max-w-lg rounded-2xl bg-[#FAF8F3] border border-[#E3DCD0] p-6 shadow-2xl my-8">
-            <h2 className="font-serif text-xl font-medium text-[#2C2825] mb-4">
+            <h2 className="font-serif text-xl font-medium text-[var(--text-primary)] mb-4">
               {editingTask ? 'Edit Focus Item' : 'New Focus Item'}
             </h2>
 
@@ -400,7 +400,7 @@ export const TasksView: React.FC<TasksViewProps> = ({
                   value={formTitle}
                   onChange={(e) => setFormTitle(e.target.value)}
                   placeholder="e.g. Curate autumn capsule wardrobe"
-                  className="w-full bg-[#FFFFFF] border border-[#D5CCBE] rounded-xl px-3.5 py-2 text-xs text-[#2C2825] focus:outline-hidden focus:border-[#8C7654]"
+                  className="w-full bg-[var(--surface-raised)] border border-[#D5CCBE] rounded-xl px-3.5 py-2 text-xs text-[var(--text-primary)] focus:outline-hidden focus:border-[#8C7654]"
                 />
               </div>
 
@@ -411,7 +411,7 @@ export const TasksView: React.FC<TasksViewProps> = ({
                   value={formDesc}
                   onChange={(e) => setFormDesc(e.target.value)}
                   placeholder="Additional context or intentions..."
-                  className="w-full bg-[#FFFFFF] border border-[#D5CCBE] rounded-xl px-3.5 py-2 text-xs text-[#2C2825] focus:outline-hidden focus:border-[#8C7654]"
+                  className="w-full bg-[var(--surface-raised)] border border-[#D5CCBE] rounded-xl px-3.5 py-2 text-xs text-[var(--text-primary)] focus:outline-hidden focus:border-[#8C7654]"
                 />
               </div>
 
@@ -421,7 +421,7 @@ export const TasksView: React.FC<TasksViewProps> = ({
                   <select
                     value={formRealm}
                     onChange={(e) => setFormRealm(e.target.value as Realm)}
-                    className="w-full bg-[#FFFFFF] border border-[#D5CCBE] rounded-xl px-3 py-2 text-xs text-[#2C2825]"
+                    className="w-full bg-[var(--surface-raised)] border border-[#D5CCBE] rounded-xl px-3 py-2 text-xs text-[var(--text-primary)]"
                   >
                     <option value="personal">Personal</option>
                     <option value="mariluna">Mariluna Business</option>
@@ -435,7 +435,7 @@ export const TasksView: React.FC<TasksViewProps> = ({
                     value={formCategory}
                     onChange={(e) => setFormCategory(e.target.value)}
                     placeholder="e.g. content, self-care"
-                    className="w-full bg-[#FFFFFF] border border-[#D5CCBE] rounded-xl px-3 py-2 text-xs text-[#2C2825]"
+                    className="w-full bg-[var(--surface-raised)] border border-[#D5CCBE] rounded-xl px-3 py-2 text-xs text-[var(--text-primary)]"
                   />
                 </div>
               </div>
@@ -446,7 +446,7 @@ export const TasksView: React.FC<TasksViewProps> = ({
                   <select
                     value={formPriority}
                     onChange={(e) => setFormPriority(e.target.value as any)}
-                    className="w-full bg-[#FFFFFF] border border-[#D5CCBE] rounded-xl px-2.5 py-2 text-xs text-[#2C2825]"
+                    className="w-full bg-[var(--surface-raised)] border border-[#D5CCBE] rounded-xl px-2.5 py-2 text-xs text-[var(--text-primary)]"
                   >
                     <option value="high">High</option>
                     <option value="medium">Medium</option>
@@ -460,7 +460,7 @@ export const TasksView: React.FC<TasksViewProps> = ({
                     type="number"
                     value={formDuration}
                     onChange={(e) => setFormDuration(Number(e.target.value))}
-                    className="w-full bg-[#FFFFFF] border border-[#D5CCBE] rounded-xl px-3 py-2 text-xs text-[#2C2825]"
+                    className="w-full bg-[var(--surface-raised)] border border-[#D5CCBE] rounded-xl px-3 py-2 text-xs text-[var(--text-primary)]"
                   />
                 </div>
 
@@ -469,7 +469,7 @@ export const TasksView: React.FC<TasksViewProps> = ({
                   <select
                     value={formRecurring}
                     onChange={(e) => setFormRecurring(e.target.value as any)}
-                    className="w-full bg-[#FFFFFF] border border-[#D5CCBE] rounded-xl px-2.5 py-2 text-xs text-[#2C2825]"
+                    className="w-full bg-[var(--surface-raised)] border border-[#D5CCBE] rounded-xl px-2.5 py-2 text-xs text-[var(--text-primary)]"
                   >
                     <option value="none">None</option>
                     <option value="daily">Daily</option>
@@ -485,7 +485,7 @@ export const TasksView: React.FC<TasksViewProps> = ({
                   type="date"
                   value={formDueDate}
                   onChange={(e) => setFormDueDate(e.target.value)}
-                  className="w-full bg-[#FFFFFF] border border-[#D5CCBE] rounded-xl px-3 py-2 text-xs text-[#2C2825]"
+                  className="w-full bg-[var(--surface-raised)] border border-[#D5CCBE] rounded-xl px-3 py-2 text-xs text-[var(--text-primary)]"
                 />
               </div>
 
@@ -497,7 +497,7 @@ export const TasksView: React.FC<TasksViewProps> = ({
                     type="button"
                     onClick={handleAISubtaskGeneration}
                     disabled={!formTitle.trim() || isGeneratingSubtasks}
-                    className="flex items-center gap-1.5 text-xs text-[#8C7654] hover:text-[#2C2825] disabled:opacity-40 transition cursor-pointer"
+                    className="flex items-center gap-1.5 text-xs text-[#8C7654] hover:text-[var(--text-primary)] disabled:opacity-40 transition cursor-pointer"
                   >
                     <Sparkles className="w-3 h-3 text-[#C5A880]" />
                     <span>{isGeneratingSubtasks ? 'Thinking...' : 'AI Suggest Subtasks'}</span>
@@ -516,12 +516,12 @@ export const TasksView: React.FC<TasksViewProps> = ({
                       }
                     }}
                     placeholder="Add step..."
-                    className="flex-1 bg-[#FFFFFF] border border-[#D5CCBE] rounded-lg px-3 py-1.5 text-xs text-[#2C2825]"
+                    className="flex-1 bg-[var(--surface-raised)] border border-[#D5CCBE] rounded-lg px-3 py-1.5 text-xs text-[var(--text-primary)]"
                   />
                   <button
                     type="button"
                     onClick={handleAddSubtask}
-                    className="px-3 py-1.5 rounded-lg bg-[#EFE9DE] text-xs font-medium text-[#2C2825] hover:bg-[#E5DEC7] transition"
+                    className="px-3 py-1.5 rounded-lg bg-[#EFE9DE] text-xs font-medium text-[var(--text-primary)] hover:bg-[#E5DEC7] transition"
                   >
                     Add
                   </button>
@@ -540,7 +540,7 @@ export const TasksView: React.FC<TasksViewProps> = ({
                           onClick={() =>
                             setFormSubtasks(formSubtasks.filter((_, idx) => idx !== i))
                           }
-                          className="text-[#8C8377] hover:text-[#733]"
+                          className="text-[var(--text-muted)] hover:text-[#733]"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
@@ -555,7 +555,7 @@ export const TasksView: React.FC<TasksViewProps> = ({
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 rounded-xl text-xs text-[#7A7167] hover:text-[#2C2825] hover:bg-[#EFE9DE] transition cursor-pointer"
+                  className="px-4 py-2 rounded-xl text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[#EFE9DE] transition cursor-pointer"
                 >
                   Cancel
                 </button>
