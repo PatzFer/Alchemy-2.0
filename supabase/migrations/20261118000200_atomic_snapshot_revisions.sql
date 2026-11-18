@@ -1,4 +1,10 @@
 -- Alchemy 1.0: serialize concurrent snapshot writes per owner.
+-- The original snapshot table predates source attribution. Add it before
+-- defining the RPC that writes and returns this field.
+alter table public.app_state_snapshots
+  add column source text not null default 'autosave'
+  check (source in ('migration', 'autosave', 'manual_backup', 'restore'));
+
 -- The owner ID is supplied only after the API verifies the Supabase access token.
 -- This RPC is service-role only; clients cannot choose an owner or invoke it directly.
 
