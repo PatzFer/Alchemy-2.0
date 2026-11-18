@@ -25,7 +25,7 @@ Do not migrate production user data until a real Supabase project, its redirect 
 | Table | Purpose | Data handling |
 |---|---|---|
 | `owner_profiles` | Owner preferences and schema version | RLS by `auth.uid()` |
-| `app_state_snapshots` | Versioned application state during the first safe migration | One owner-scoped row; JSONB payload, revision, timestamps |
+| `app_state_snapshots` | Versioned application state during the first safe migration | Server-mediated only; JSONB payload, revision, checksum, source and timestamps |
 | `tasks`, `goals`, `ideas`, `projects`, `calendar_events` | Future normalized operational records | Owner + realm columns; RLS |
 | `memory_items` | Explicit/learned Jarvis memories | Owner + realm + memory type; sensitive scopes separately gated |
 | `security_passkeys` | WebAuthn credential public keys and counters | Owner-scoped; never store private keys |
@@ -46,6 +46,14 @@ All tables include immutable owner ownership, created/updated timestamps and ind
 - Server-side AI context assembly remains allowlist-based and permission-gated. Database access controls do not replace the Jarvis privacy firewall.
 - Sensitive cycle, wellbeing, health and nutrition data must have explicit purpose and permission checks. Prefer a separate table or encrypted payload boundary rather than mixing it into a general memory table.
 
+### Snapshot write boundary (implemented on the feature branch)
+
+- Browser roles (`anon` and `authenticated`) have no direct table privileges on `app_state_snapshots`; the server's service-role client is the only data-access path.
+- Snapshot writes use `public.save_app_state_snapshot`, a narrowly scoped SECURITY DEFINER RPC with an empty search path, explicit argument validation, service-role-only execution and a transaction-scoped per-owner advisory lock for revision allocation.
+- The server verifies the Supabase access token with Supabase Auth and derives the owner ID from the verified identity. It does not accept an owner ID from the browser.
+- The API verifies returned snapshot ownership, schema/revision metadata and canonical JSON SHA-256 integrity; request payloads are bounded to 1.5 MB.
+- CI statically checks the migration grants and RPC hardening, and unit tests cover malformed identities, payload limits, owner mismatch, atomic RPC use and snapshot integrity.
+- These changes are committed but remain un-applied to any live Supabase database. They do not yet make the React app use Supabase; localStorage remains the current application store.
 ## 5. Migration strategy (non-destructive)
 
 1. Confirm Supabase project ownership, region, Auth configuration, redirect origins and secrets.
