@@ -241,9 +241,23 @@ class SecurityVault {
     }
   }
 
-  public getActiveSessions(currentSessionId: string): Omit<ActiveSession, 'id' | 'lastActivityMs' | 'stepUpExpiresAt' | 'sensitiveUnlockedUntil'>[] {
+  public getActiveSessions(currentSessionId: string): Array<{
+    id: string;
+    deviceId: string;
+    deviceName: string;
+    ip: string;
+    userAgent: string;
+    createdAt: string;
+    lastActive: string;
+    authenticatedWith: ActiveSession['authenticatedWith'];
+    isAppAuthenticated: boolean;
+    isPreviewMode?: boolean;
+    appAuthenticatedAt?: number;
+    inactivityTimeoutMinutes: number;
+    isCurrent: boolean;
+  }> {
     return Array.from(this.sessions.values()).map((s) => ({
-      publicId: s.publicId,
+      id: s.publicId,
       deviceId: s.deviceId,
       deviceName: s.deviceName,
       ip: s.ip,
