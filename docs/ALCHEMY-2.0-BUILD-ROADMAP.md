@@ -269,3 +269,6 @@ Incremental implementation commits on `design/phase-1`:
 - Sensitive-data unlock now also requires the app session to be authenticated before a TOTP, recovery-code or passkey step-up can be considered. Passkey step-up must still be present and unexpired in the server-side session.
 - The CI workflow is configured to run on pushes to `design/phase-1`, pull requests to `main`, and manual dispatch. Recent commits have been made on the watched branch; the GitHub commit-status endpoint currently reports no statuses for the latest commits, so there is still no evidence that CI has run successfully.
 - The app is not yet ready to label as production 1.0: sessions and security vault remain in-memory, app state remains plaintext in localStorage, provider disconnect/revocation is incomplete, native Health Connect is unavailable, and no automated UI/integration tests exist. This work is moving toward a testable candidate, not certifying production safety.
+
+
+- Final source inspection caught that the first strict-origin edit had changed registration verification but left the login verification on the previous permissive fallback. Corrected the login verifier as well: both registration and authentication now require exact request origin/RP ID and user verification. This was found by rereading the committed source, not by a passing test.
