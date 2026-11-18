@@ -66,10 +66,16 @@ export function isValidAlchemySnapshotPayload(
 }
 
 function stableJson(value: unknown): string {
-  if (value === null || typeof value !== 'object') return JSON.stringify(value);
-  if (Array.isArray(value)) return `[${value.map(stableJson).join(',')}]`;
+  if (value === null) return 'null';
+  if (typeof value !== 'object') return JSON.stringify(value) ?? 'null';
+  if (Array.isArray(value)) {
+    return `[${value.map((item) => stableJson(item)).join(',')}]`;
+  }
   const record = value as Record<string, unknown>;
-  return `{${Object.keys(record).sort().map((key) => `${JSON.stringify(key)}:${stableJson(record[key])}`).join(',')}}`;
+  const keys = Object.keys(record).filter((key) =>
+    record[key] !== undefined && typeof record[key] !== 'function' && typeof record[key] !== 'symbol'
+  ).sort();
+  return `{${keys.map((key) => `${JSON.stringify(key)}:${stableJson(record[key])}`).join(',')}}`;
 }
 
 export function readSupabaseServerConfig(
