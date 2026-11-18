@@ -361,3 +361,12 @@ Incremental implementation commits on `design/phase-1`:
 - The first CI run correctly caught that the migration filename used a 12-digit timestamp. Renamed it to the canonical 14-digit Supabase timestamp and reran the full workflow.
 - Commit `3482929e595665f32d35129a9ef9b741900d6232` passed dependency installation, TypeScript, Supabase migration safety checks, privacy/backup tests and production build.
 - These are static migration checks only. SQL has not been applied to a live Supabase project; database behavior, RLS execution and restore drills remain unverified.
+
+## Progress log — 18 November 2026 (preview and environment safety)
+
+- Replaced fake example values in `.env.example` with blank placeholders so copying the sample cannot accidentally make a fake API key or URL look valid.
+- Added `docs/ALCHEMY-1.0-DEPLOYMENT-PREVIEW.md` documenting the current Express/Vite production shape, the distinction between liveness and readiness, required server-only secrets, and the explicit acceptance gates before a public preview.
+- Reviewed the live security implementation: sessions, passkeys, TOTP, recovery codes, rate-limit state and permissions remain process-memory state. The browser session cookie is HttpOnly/SameSite=Lax, but the underlying session is not durable. No Supabase Auth/JWT verification or owner bootstrap is wired yet.
+- Public `/api/ready` response has been reduced to a generic not-ready status; it no longer enumerates internal security blockers to unauthenticated callers.
+- CI for commit `12111c212d492df31adc52fa6a1f39cafca1cdaa` passed dependency installation, TypeScript, Supabase migration checks, privacy/backup tests and production build.
+- No public preview was deployed: current persistence/auth limitations make that unsafe for real personal or business data.
