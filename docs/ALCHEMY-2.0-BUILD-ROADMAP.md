@@ -178,3 +178,13 @@ Incremental implementation commits on `design/phase-1`:
 - Updated the app authentication-loading and setup wrapper surfaces to use the dark design foundation rather than reverting to the old light shell.
 - Follow-up source review still finds legacy light/dark literal styling in deeper nested module content, so the visual migration is not considered globally complete. Further focused audits are required.
 - No executable build, typecheck, lint, automated tests, browser rendering or device review has been run. Phases A/B/C remain in progress.
+
+
+## Progress log — 18 November 2026 (private modules and system surfaces)
+
+- Migrated the Goals and Ideas modules to semantic dark tokens for cards, forms, filters, text and empty states.
+- Extended the same treatment through Today, Wellbeing, Cycle and MyLife, preserving distinct success/error/health status colors where they communicate meaning rather than replacing them with neutral colors.
+- Applied semantic dark surfaces to Settings, including privacy/memory controls and warning/error surfaces.
+- Follow-up source scans show the largest old light-palette clusters in these audited modules have been reduced; remaining literals are primarily intentional domain accents or semantic status colors. This is source inspection, not rendered visual QA.
+- Integration screens have not yet been redesigned or behaviorally validated; their provider status colors and connection semantics require a separate careful pass.
+- No build, typecheck, lint, automated tests, browser/mobile rendering, or migration tests have run. Phases A/B/C remain in progress.
