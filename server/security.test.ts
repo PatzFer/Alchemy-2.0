@@ -271,3 +271,65 @@ test('device inventory exposes public identifiers, never HttpOnly session creden
   assert.equal(securityVault.revokeSession(listed.id), true);
   assert.equal(securityVault.getSession(session.id), undefined);
 });
+
+
+test('balanced AI context enforces each realm consent on all mixed collections', () => {
+  securityVault.updatePermissions({
+    allowPersonalDataToAI: true,
+    allowMarilunaDataToAI: false,
+    allowWellbeingDataToAI: false,
+  });
+  const mixed = {
+    calendarEvents: [{ id: 'p', realm: 'personal' }, { id: 'm', realm: 'mariluna' }, { id: 'u' }],
+    projects: [{ id: 'p', realm: 'personal' }, { id: 'm', realm: 'mariluna' }],
+    ideas: [{ id: 'p', realm: 'personal' }, { id: 'm', realm: 'mariluna' }],
+    intentions: [{ id: 'p', realm: 'personal' }, { id: 'm', realm: 'mariluna' }],
+    tasks: [{ id: 'p', realm: 'personal' }, { id: 'm', realm: 'mariluna' }, { id: 'u' }],
+    goals: [{ id: 'p', realm: 'personal' }, { id: 'm', realm: 'mariluna' }],
+    offerings: [{ title: 'Business offering' }],
+    contentPlan: { quarterTheme: 'Business theme' },
+    workingHours: 'Private working hours',
+    preferences: { protectEvenings: true },
+    todayIntention: { id: 'm', realm: 'mariluna' },
+    activeContextItem: { id: 'm', realm: 'mariluna' },
+  };
+  const result = securityVault.sanitizeContextForAi(mixed, 'all');
+  for (const key of ['calendarEvents', 'projects', 'ideas', 'intentions', 'tasks', 'goals']) {
+    assert.deepEqual((result as any)[key].map((item: any) => item.id), ['p']);
+  }
+  assert.equal('offerings' in result, false);
+  assert.equal('contentPlan' in result, false);
+  assert.equal(result.workingHours, 'Private working hours');
+  assert.deepEqual(result.preferences, { protectEvenings: true });
+  assert.equal('todayIntention' in result, false);
+  assert.equal('activeContextItem' in result, false);
+  securityVault.updatePermissions({
+    allowPersonalDataToAI: false,
+    allowMarilunaDataToAI: false,
+  });
+});
+
+test('balanced AI context excludes personal records when only Mariluna consent is enabled', () => {
+  securityVault.updatePermissions({
+    allowPersonalDataToAI: false,
+    allowMarilunaDataToAI: true,
+  });
+  const result = securityVault.sanitizeContextForAi({
+    calendarEvents: [{ id: 'p', realm: 'personal' }, { id: 'm', realm: 'mariluna' }],
+    projects: [{ id: 'p', realm: 'personal' }, { id: 'm', realm: 'mariluna' }],
+    tasks: [{ id: 'p', realm: 'personal' }, { id: 'm', realm: 'mariluna' }],
+    goals: [{ id: 'p', realm: 'personal' }, { id: 'm', realm: 'mariluna' }],
+    workingHours: 'Private working hours',
+    preferences: { protectEvenings: true },
+  }, 'all');
+  assert.deepEqual(result.calendarEvents.map((item: any) => item.id), ['m']);
+  assert.deepEqual(result.projects.map((item: any) => item.id), ['m']);
+  assert.deepEqual(result.tasks.map((item: any) => item.id), ['m']);
+  assert.deepEqual(result.goals.map((item: any) => item.id), ['m']);
+  assert.equal('workingHours' in result, false);
+  assert.equal('preferences' in result, false);
+  securityVault.updatePermissions({
+    allowPersonalDataToAI: false,
+    allowMarilunaDataToAI: false,
+  });
+});
