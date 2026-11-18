@@ -214,6 +214,29 @@ test('snapshot loading rejects structurally incomplete stored Alchemy state', as
   );
 });
 
+
+test('snapshot loading rejects records without a mandatory SHA-256 checksum', async () => {
+  const fetcher: FetchLike = async (input) => {
+    if (String(input).endsWith('/auth/v1/user')) {
+      return new Response(JSON.stringify({ id: ownerId }), { status: 200 });
+    }
+    return new Response(JSON.stringify([{
+      id: 'd4f1c1a2-1234-4a5b-9c8d-1234567890ab',
+      owner_id: ownerId,
+      schema_version: 1,
+      revision: 1,
+      payload: validPayload,
+      source: 'autosave',
+      created_at: new Date().toISOString(),
+    }]), { status: 200 });
+  };
+  const store = new SupabasePersistence(readSupabaseServerConfig(env)!, fetcher);
+  await assert.rejects(
+    () => store.loadLatestSnapshot('verified-token'),
+    /metadata is invalid/,
+  );
+});
+
 test('snapshot loading rejects a payload whose stored hash does not match', async () => {
   const fetcher: FetchLike = async (input) => {
     const url = String(input);
