@@ -48,7 +48,7 @@ test('owner verification uses Supabase Auth and rejects invalid identities', asy
 test('snapshot owner comes from verified Supabase identity and stored payload hash is checked', async () => {
   const calls: Array<{ url: string; init?: RequestInit }> = [];
   const payload = { tasks: [{ id: 'task-1', title: 'Private task' }], realm: 'personal' };
-  const payloadHash = createHash('sha256').update(JSON.stringify(payload)).digest('hex');
+  const payloadHash = createHash('sha256').update(JSON.stringify({ realm: 'personal', tasks: [{ id: 'task-1', title: 'Private task' }] })).digest('hex');
   const fetcher: FetchLike = async (input, init) => {
     const url = String(input);
     calls.push({ url, init });
