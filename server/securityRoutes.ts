@@ -58,7 +58,7 @@ router.get('/status', (req: Request, res: Response) => {
     authenticatedWith: session.authenticatedWith || 'unauthenticated',
     inactivityTimeoutMinutes: session.inactivityTimeoutMinutes || 15,
     inactivityRemainingSeconds: remainingInactivity,
-    sessionId: session.id,
+    sessionId: session.publicId,
     deviceId: session.deviceId,
     deviceName: session.deviceName,
     currentSecurityLevel,
@@ -109,7 +109,6 @@ router.post('/unlock-app', async (req: Request, res: Response) => {
       isAppAuthenticated: true,
       authenticatedWith: method,
       message: 'P & M Alchemy unlocked. Welcome back.',
-      session: updatedSession,
     });
   } else {
     securityVault.recordFailedAttempt(session.ip);
@@ -138,7 +137,6 @@ router.post('/preview-unlock', (req: Request, res: Response) => {
     isPreviewMode: true,
     authenticatedWith: 'preview_test_mode',
     message: 'Alchemy unlocked in AI Studio Preview / Test Mode (Sandboxed).',
-    session: updatedSession,
   });
 });
 
@@ -527,7 +525,7 @@ router.post('/sessions/revoke', requireAppAuth, requireStepUpAuth, (req: Request
   const { sessionId } = req.body;
   const currentSession = getOrCreateSession(req, res);
 
-  if (sessionId === currentSession.id) {
+  if (sessionId === currentSession.publicId) {
     return res.status(400).json({ error: 'Cannot revoke your current active session.' });
   }
 
