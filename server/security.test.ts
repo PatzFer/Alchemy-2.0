@@ -371,3 +371,15 @@ test('financial records and prices remain quarantined without financial AI conse
     allowFinancialDataToAI: false,
   });
 });
+
+
+test('application sessions expire after their absolute lifetime', () => {
+  const session = securityVault.createSession({
+    ip: '127.0.0.10',
+    headers: { 'user-agent': 'Alchemy expiry test' },
+    socket: { remoteAddress: '127.0.0.10' },
+  } as any);
+  session.expiresAt = Date.now() - 1;
+  assert.equal(securityVault.getSession(session.id), undefined);
+  assert.equal(securityVault.getActiveSessions(session.id).some((item) => item.id === session.publicId), false);
+});
