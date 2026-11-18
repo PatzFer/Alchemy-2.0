@@ -32,6 +32,8 @@ jobs:
         run: bun install --frozen-lockfile
       - name: TypeScript check
         run: bun run lint
+      - name: Supabase migration safety checks
+        run: bun run check:supabase
       - name: Privacy regression tests
         run: bun run test
       - name: Production build
