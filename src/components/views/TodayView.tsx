@@ -1721,6 +1721,7 @@ export const TodayView: React.FC<TodayViewProps> = ({
           isOpen={!!splitModalTask}
           taskId={splitModalTask.id}
           taskTitle={splitModalTask.title}
+          world={splitModalTask.realm === 'mariluna' ? 'mariluna' : 'personal'}
           onClose={() => setSplitModalTask(null)}
           onConfirmSplit={handleConfirmTaskSplit}
           isNl={isNl}
