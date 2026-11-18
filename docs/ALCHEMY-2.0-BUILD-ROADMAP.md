@@ -435,3 +435,13 @@ Incremental implementation commits on `design/phase-1`:
 - Pending registration and authentication challenges now expire after five minutes and are stored in a bounded in-memory registry; expired entries are pruned and the registry has a hard capacity limit.
 - Registration and authentication verification now atomically consume the challenge before cryptographic verification. A failed attempt therefore cannot reuse the same nonce, and concurrent/replayed submissions cannot both verify against one challenge.
 - Added regression tests for one-time consumption and expiry. These controls remain process-local; durable credential/challenge storage is still part of the future Supabase-backed identity work.
+
+
+## Progress log — 18 November 2026 (WebAuthn origin and verification policy)
+
+- Replaced request-derived WebAuthn trust with an explicit relying-party resolver. Production now fails closed unless `WEBAUTHN_RP_ID` and `WEBAUTHN_ALLOWED_ORIGINS` are configured.
+- The resolver validates exact HTTP(S) origins, rejects path/query/fragment and credential-bearing origin values, binds the browser origin to the request host, and verifies the RP ID is the host itself or a valid parent domain.
+- Development fallback is restricted to loopback hosts; arbitrary preview or public hosts require an explicit allowlist.
+- Passkey registration and authentication options now request required user verification. Passkey verification attempts are rate-limited with the same session-scoped key used by the other authentication routes.
+- Added dedicated allowlist, RP-ID, host-binding and fail-closed tests; registered them in the CI test command.
+- Deployment configuration must set the actual production RP ID and exact allowed origins before passkeys can be enrolled or used. This is intentionally not guessed or deployed automatically.
