@@ -60,17 +60,12 @@ app.get("/api/health", (_req: Request, res: Response) => {
 // Deployment readiness is stricter than process liveness. The current security vault
 // and integration registry are in-memory, so this build must never report production-ready.
 app.get("/api/ready", (_req: Request, res: Response) => {
-  const blockers = [
-    "Durable Supabase identity/session storage is not connected.",
-    "Passkey, TOTP and recovery credentials are held in process memory.",
-    "Integration credentials and connection state are not durably persisted.",
-    "App state is still stored in browser localStorage without encryption.",
-  ];
-  const ready = false;
+  // Keep infrastructure diagnostics deliberately generic on this public endpoint.
+  // Detailed readiness blockers belong in deployment configuration and internal logs,
+  // not in an unauthenticated response that fingerprints the application's defenses.
   res.status(503).json({
-    ready,
-    status: "blocked",
-    blockers,
+    ready: false,
+    status: "not_ready",
     checkedAt: new Date().toISOString(),
   });
 });
