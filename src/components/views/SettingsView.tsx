@@ -492,7 +492,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   return (
                     <label
                       key={item.key}
-                      className="flex items-center justify-between p-3 rounded-xl bg-[var(--surface-1)] border border-[#E7DEC8] cursor-pointer hover:bg-[#F5EFE3] transition"
+                      className="flex items-center justify-between p-3 rounded-xl bg-[var(--surface-1)] border border-[var(--border-subtle)] cursor-pointer hover:bg-[var(--surface-2)] transition"
                     >
                       <span className="text-xs text-[#3E372E] pr-2">{item.label}</span>
                       <input
@@ -606,7 +606,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               </div>
               <button
                 onClick={onResetData}
-                className="px-4 py-1.5 rounded-lg border border-[#EAC4C4] bg-[#FFF8F8] text-xs font-medium text-[#842] hover:bg-[#FFEAEA] transition cursor-pointer"
+                className="px-4 py-1.5 rounded-lg border border-[#6B3B37] bg-[#332321] text-xs font-medium text-[#842] hover:bg-[#49302E] transition cursor-pointer"
               >
                 Reset to Default
               </button>
