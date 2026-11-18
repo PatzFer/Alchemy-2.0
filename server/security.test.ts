@@ -262,7 +262,7 @@ test('device inventory exposes public identifiers, never HttpOnly session creden
     headers: { 'user-agent': 'Alchemy device inventory test' },
     socket: { remoteAddress: '127.0.0.9' },
   } as any);
-  const [listed] = securityVault.getActiveSessions(session.id);
+  const listed = securityVault.getActiveSessions(session.id).find((item) => item.isCurrent);
   assert.ok(listed);
   assert.equal(listed.id, session.publicId);
   assert.notEqual(listed.id, session.id);
