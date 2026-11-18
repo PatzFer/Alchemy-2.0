@@ -33,3 +33,16 @@ test('Alchemy backup verification rejects unsupported formats and incomplete pay
     payload: { ...minimalState, tasks: undefined },
   }), /onvolledig/);
 });
+
+
+test('Alchemy backup verification rejects invalid schema versions and export dates', async () => {
+  const backup = await createAlchemyBackup(minimalState);
+  await assert.rejects(() => verifyAlchemyBackup({
+    ...backup,
+    appSchemaVersion: 0,
+  }), /gegevensversie.*ongeldig/);
+  await assert.rejects(() => verifyAlchemyBackup({
+    ...backup,
+    exportedAt: 'not-a-date',
+  }), /exportdatum.*ongeldig/);
+});
