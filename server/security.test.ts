@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { securityVault, requireAppAuth } from './security';
 
 test('Mariluna AI context excludes personal events, projects, memories and private preferences', () => {
+  securityVault.updatePermissions({ allowPersonalDataToAI: true, allowMarilunaDataToAI: true });
   const result = securityVault.sanitizeContextForAi({
     calendarEvents: [
       { id: 'p1', realm: 'personal', title: 'Private appointment' },
@@ -46,9 +47,11 @@ test('Mariluna AI context excludes personal events, projects, memories and priva
   assert.equal('preferences' in result, false);
   assert.equal('todayIntention' in result, false);
   assert.equal('activeContextItem' in result, false);
+  securityVault.updatePermissions({ allowPersonalDataToAI: false, allowMarilunaDataToAI: false });
 });
 
 test('Personal AI context excludes Mariluna business records and offerings', () => {
+  securityVault.updatePermissions({ allowPersonalDataToAI: true, allowMarilunaDataToAI: true });
   const result = securityVault.sanitizeContextForAi({
     calendarEvents: [
       { id: 'p1', realm: 'personal' },
@@ -78,6 +81,7 @@ test('Personal AI context excludes Mariluna business records and offerings', () 
   assert.equal('offerings' in result, false);
   assert.equal('contentPlan' in result, false);
   assert.equal('memoriesSample' in result, false);
+  securityVault.updatePermissions({ allowPersonalDataToAI: false, allowMarilunaDataToAI: false });
 });
 
 
@@ -125,4 +129,27 @@ test('private API middleware allows a valid authenticated session', () => {
   requireAppAuth(req, res, () => { nextCalled = true; });
   assert.equal(res.statusCode, 200);
   assert.equal(nextCalled, true);
+});
+
+
+test('AI access to personal, business, cycle and wellbeing data is disabled by default', () => {
+  const permissions = securityVault.getPermissions();
+  assert.equal(permissions.allowPersonalDataToAI, false);
+  assert.equal(permissions.allowMarilunaDataToAI, false);
+  assert.equal(permissions.allowCycleDataToAI, false);
+  assert.equal(permissions.allowWellbeingDataToAI, false);
+});
+
+test('permission updates ignore unknown keys and preserve mandatory confirmations', () => {
+  const updated = securityVault.updatePermissions({
+    allowPersonalDataToAI: true,
+    aiRequiresConfirmationForModifications: false,
+    aiRequiresConfirmationForDestructive: false,
+    admin: true,
+  } as any);
+  assert.equal(updated.allowPersonalDataToAI, true);
+  assert.equal(updated.aiRequiresConfirmationForModifications, true);
+  assert.equal(updated.aiRequiresConfirmationForDestructive, true);
+  assert.equal('admin' in updated, false);
+  securityVault.updatePermissions({ allowPersonalDataToAI: false });
 });
