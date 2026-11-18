@@ -8,7 +8,7 @@ import securityRouter from "./server/securityRoutes";
 import integrationsRouter from "./server/integrationsRoutes";
 import brainRouter from "./server/brainRoutes";
 import persistenceRouter from "./server/persistenceRoutes";
-import { securityVault, requireAppAuth } from "./server/security";
+import { securityVault, requireAppAuth, requireAiRateLimit } from "./server/security";
 import { classifyIntent, buildIntentAwareResponse, isDutchMessage } from "./server/brainEngine";
 
 dotenv.config();
@@ -335,7 +335,7 @@ function generateIntentAwareJarvisFallback(userMsg: string, ctx: any, world: str
 }
 
 // Central AI Chat Endpoint (Strategic partner, brain dump analysis, planning advisor)
-app.post("/api/ai/chat", requireAppAuth, async (req: Request, res: Response) => {
+app.post("/api/ai/chat", requireAppAuth, requireAiRateLimit, async (req: Request, res: Response) => {
   try {
     const { context } = req.body;
     const rawMessages = Array.isArray(req.body.messages) ? req.body.messages : [];
