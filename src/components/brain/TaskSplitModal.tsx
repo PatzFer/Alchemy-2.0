@@ -6,6 +6,7 @@ interface TaskSplitModalProps {
   isOpen: boolean;
   taskId: string;
   taskTitle: string;
+  world?: 'personal' | 'mariluna';
   onClose: () => void;
   onConfirmSplit: (taskId: string, subtasks: { title: string; durationMinutes: number }[]) => void;
   isNl?: boolean;
@@ -15,6 +16,7 @@ export const TaskSplitModal: React.FC<TaskSplitModalProps> = ({
   isOpen,
   taskId,
   taskTitle,
+  world = 'personal',
   onClose,
   onConfirmSplit,
   isNl = true,
@@ -28,7 +30,7 @@ export const TaskSplitModal: React.FC<TaskSplitModalProps> = ({
     if (!isOpen || !taskTitle) return;
 
     setLoading(true);
-    splitTaskWithBrain(taskTitle)
+    splitTaskWithBrain(taskTitle, 60, world)
       .then((res) => {
         setSubtasks(
           (res.subtasks || []).map((s) => ({
@@ -48,7 +50,7 @@ export const TaskSplitModal: React.FC<TaskSplitModalProps> = ({
       .finally(() => {
         setLoading(false);
       });
-  }, [isOpen, taskTitle]);
+  }, [isOpen, taskTitle, world]);
 
   if (!isOpen) return null;
 
