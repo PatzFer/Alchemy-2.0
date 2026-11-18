@@ -514,3 +514,11 @@ Incremental implementation commits on `design/phase-1`:
 - Added regression tests for realm/sensitivity consent and memory status filtering. The memory list remains local-first until durable storage is connected.
 
 - The local Jarvis fallback can now answer direct memory-recall questions from the same filtered confirmed-memory list, so basic recall still works when Gemini is disabled or unavailable.
+
+
+## Progress log — 18 November 2026 (Jarvis request protection)
+
+- Added a bounded sliding-window quota to the server security layer: each authenticated session can make up to 20 Jarvis AI requests per minute across the Brain and legacy AI endpoints.
+- Excess requests receive HTTP 429 with a retry interval; the limiter is isolated per session and prunes expired windows while bounding its own memory use.
+- Added regression tests for the limit, reset behavior and session isolation.
+- This is an in-process abuse-control layer, not a substitute for a shared distributed rate limiter when the app runs across multiple server instances. The broader security vault and session store also remain process-local pending durable identity storage.
