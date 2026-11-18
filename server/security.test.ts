@@ -223,6 +223,11 @@ test('default AI privacy firewall removes both private and business records', ()
     wellbeing: { notes: 'private wellbeing data' },
     cycleProfile: { phase: 'luteal' },
     nutrition: { notes: 'private meal data' },
+    marilunaMetrics: { metrics: [{ name: 'Revenue', value: 5000 }] },
+    marilunaClients: [{ name: 'Client record' }],
+    marilunaOfferings: [{ title: 'Business service' }],
+    offerings: [{ title: 'Business service' }],
+    contentPlan: { quarterTheme: 'Business theme' },
   };
 
   const privateResult = securityVault.sanitizeContextForAi(mixedContext, 'personal');
@@ -233,6 +238,11 @@ test('default AI privacy firewall removes both private and business records', ()
   assert.equal('wellbeing' in privateResult, false);
   assert.equal('cycleProfile' in privateResult, false);
   assert.equal('nutrition' in privateResult, false);
+  assert.equal('marilunaMetrics' in privateResult, false);
+  assert.equal('marilunaClients' in privateResult, false);
+  assert.equal('marilunaOfferings' in privateResult, false);
+  assert.equal('offerings' in privateResult, false);
+  assert.equal('contentPlan' in privateResult, false);
 
   assert.deepEqual(businessResult.tasks, []);
   assert.deepEqual(businessResult.goals, []);
