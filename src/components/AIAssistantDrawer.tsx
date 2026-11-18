@@ -159,7 +159,7 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
         const found = (intentions || []).find(
           (i) => i.date === todayStr && (activeWorld === 'all' || i.realm === activeWorld)
         );
-        return found ? { id: found.id, title: found.title, status: found.status, completed: found.completed } : undefined;
+        return found ? { id: found.id, title: found.title, realm: found.realm, status: found.status, completed: found.completed } : undefined;
       })(),
       contentPlan: contentPlan ? {
         quarterTheme: contentPlan.quarterTheme,
