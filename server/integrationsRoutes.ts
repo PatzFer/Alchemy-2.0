@@ -1,4 +1,5 @@
 import express, { Request, Response } from "express";
+import { requireAppAuth } from "./security";
 
 const router = express.Router();
 
@@ -104,7 +105,7 @@ const serverState: ServerIntegrationConfig = {
 };
 
 // GET /api/integrations/status
-router.get("/status", (_req: Request, res: Response) => {
+router.get("/status", requireAppAuth, (_req: Request, res: Response) => {
   res.json({
     status: "ok",
     integrations: serverState,
@@ -117,7 +118,7 @@ router.get("/status", (_req: Request, res: Response) => {
 });
 
 // POST /api/integrations/connect/:service
-router.post("/connect/:service", (req: Request, res: Response) => {
+router.post("/connect/:service", requireAppAuth, (req: Request, res: Response) => {
   const { service } = req.params;
   const now = new Date().toISOString();
 
@@ -198,7 +199,7 @@ router.post("/connect/:service", (req: Request, res: Response) => {
 });
 
 // POST /api/integrations/disconnect/:service
-router.post("/disconnect/:service", (req: Request, res: Response) => {
+router.post("/disconnect/:service", requireAppAuth, (req: Request, res: Response) => {
   const { service } = req.params;
 
   switch (service) {
@@ -262,7 +263,7 @@ router.post("/disconnect/:service", (req: Request, res: Response) => {
 });
 
 // POST /api/integrations/sync/:service
-router.post("/sync/:service", (req: Request, res: Response) => {
+router.post("/sync/:service", requireAppAuth, (req: Request, res: Response) => {
   const { service } = req.params;
   const now = new Date().toISOString();
 
@@ -288,7 +289,7 @@ router.post("/sync/:service", (req: Request, res: Response) => {
 });
 
 // POST /api/integrations/test-push
-router.post("/test-push", (_req: Request, res: Response) => {
+router.post("/test-push", requireAppAuth, (_req: Request, res: Response) => {
   const now = new Date().toISOString();
   serverState.pushNotifications.lastTested = now;
   res.json({
