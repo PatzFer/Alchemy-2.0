@@ -262,7 +262,7 @@ class SecurityVault {
   // Device-management endpoints accept only the public identifier, never the
   // HttpOnly cookie credential used internally to authenticate API requests.
   public revokeSession(publicId: string): boolean {
-    for ( (const [sessionId, session] of this.sessions.entries()) ) {
+    for (const [sessionId, session] of this.sessions.entries()) {
       if (session.publicId === publicId) return this.sessions.delete(sessionId);
     }
     return false;
