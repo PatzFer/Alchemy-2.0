@@ -153,3 +153,35 @@ test('permission updates ignore unknown keys and preserve mandatory confirmation
   assert.equal('admin' in updated, false);
   securityVault.updatePermissions({ allowPersonalDataToAI: false });
 });
+
+
+test('default AI privacy firewall removes both private and business records', () => {
+  const mixedContext = {
+    tasks: [
+      { id: 'private-task', realm: 'personal' },
+      { id: 'business-task', realm: 'mariluna' },
+    ],
+    goals: [
+      { id: 'private-goal', realm: 'personal' },
+      { id: 'business-goal', realm: 'mariluna' },
+    ],
+    wellbeing: { notes: 'private wellbeing data' },
+    cycleProfile: { phase: 'luteal' },
+    nutrition: { notes: 'private meal data' },
+  };
+
+  const privateResult = securityVault.sanitizeContextForAi(mixedContext, 'personal');
+  const businessResult = securityVault.sanitizeContextForAi(mixedContext, 'mariluna');
+
+  assert.deepEqual(privateResult.tasks, []);
+  assert.deepEqual(privateResult.goals, []);
+  assert.equal('wellbeing' in privateResult, false);
+  assert.equal('cycleProfile' in privateResult, false);
+  assert.equal('nutrition' in privateResult, false);
+
+  assert.deepEqual(businessResult.tasks, []);
+  assert.deepEqual(businessResult.goals, []);
+  assert.equal('wellbeing' in businessResult, false);
+  assert.equal('cycleProfile' in businessResult, false);
+  assert.equal('nutrition' in businessResult, false);
+});
