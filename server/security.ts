@@ -82,7 +82,9 @@ class SecurityVault {
   private readonly challengeTtlMs = 5 * 60 * 1000;
   private readonly maxPendingChallenges = 5000;
   // Rate limiting / lockouts
-  private failedAttempts: Map<string, { count: number; lockedUntil: number }> = new Map();
+  private failedAttempts: Map<string, { count: number; lockedUntil: number; updatedAt: number }> = new Map();
+  private readonly failedAttemptTtlMs = 30 * 60 * 1000;
+  private readonly maxFailedAttemptKeys = 10000;
   // Permissions
   private permissions: SecurityPermissions = {
     calendarRead: true,
@@ -110,6 +112,10 @@ class SecurityVault {
   public checkRateLimit(key: string): { allowed: boolean; remainingLockoutSeconds?: number } {
     const record = this.failedAttempts.get(key);
     const now = Date.now();
+    if (record && now - record.updatedAt > this.failedAttemptTtlMs) {
+      this.failedAttempts.delete(key);
+      return { allowed: true };
+    }
     if (record && record.lockedUntil > now) {
       return {
         allowed: false,
@@ -120,7 +126,17 @@ class SecurityVault {
   }
 
   public recordFailedAttempt(key: string): void {
-    const record = this.failedAttempts.get(key) || { count: 0, lockedUntil: 0 };
+    const now = Date.now();
+    for (const [attemptKey, attempt] of this.failedAttempts.entries()) {
+      if (now - attempt.updatedAt > this.failedAttemptTtlMs) this.failedAttempts.delete(attemptKey);
+    }
+    while (this.failedAttempts.size >= this.maxFailedAttemptKeys && !this.failedAttempts.has(key)) {
+      const oldestKey = this.failedAttempts.keys().next().value;
+      if (oldestKey === undefined) break;
+      this.failedAttempts.delete(oldestKey);
+    }
+    const record = this.failedAttempts.get(key) || { count: 0, lockedUntil: 0, updatedAt: now };
+    record.updatedAt = now;
     record.count += 1;
     if (record.count >= 5) {
       // 15-minute lock out
