@@ -427,7 +427,109 @@ class SecurityVault {
     const sanitized = JSON.parse(JSON.stringify(rawContext));
 
     // Domain Separation Principle:
-    // When operating in the Mariluna business realm, NEVER leak intimate personal sanctuary data
+    // Treat each realm as an allowlisted view of mixed client payloads.
+    // Arrays are filtered by their explicit realm; ambiguous personal payloads are dropped.
+    if (world === 'mariluna') {
+      if (Array.isArray(sanitized.calendarEvents)) {
+        sanitized.calendarEvents = sanitized.calendarEvents.filter((item: any) => item?.realm === 'mariluna');
+      }
+      if (Array.isArray(sanitized.projects)) {
+        sanitized.projects = sanitized.projects.filter((item: any) => item?.realm === 'mariluna');
+      }
+      if (Array.isArray(sanitized.ideas)) {
+        sanitized.ideas = sanitized.ideas.filter((item: any) => item?.realm === 'mariluna');
+      }
+      if (Array.isArray(sanitized.intentions)) {
+        sanitized.intentions = sanitized.intentions.filter((item: any) => item?.realm === 'mariluna');
+      }
+      if (sanitized.todayIntention?.realm !== 'mariluna') delete sanitized.todayIntention;
+      if (sanitized.activeContextItem && sanitized.activeContextItem.realm !== 'mariluna') delete sanitized.activeContextItem;
+      // These fields are private/personal by origin or cannot be safely partitioned.
+      delete sanitized.memoriesSample;
+      delete sanitized.workingHours;
+      delete sanitized.preferences;
+      delete sanitized.wellbeing;
+      delete sanitized.dailyCheckIns;
+      delete sanitized.personalRoutines;
+      delete sanitized.lifestyle;
+      delete sanitized.lifeProfile;
+      delete sanitized.health;
+      delete sanitized.nutrition;
+      delete sanitized.foodPreferences;
+      delete sanitized.dietaryNotes;
+      delete sanitized.partnerSharedDinners;
+      delete sanitized.personalStyle;
+      delete sanitized.stylePreferences;
+      delete sanitized.cycleProfile;
+      delete sanitized.cyclePhase;
+      delete sanitized.menstrual;
+      delete sanitized.follicular;
+      delete sanitized.luteal;
+      delete sanitized.ovulatory;
+      delete sanitized.currentPhase;
+      delete sanitized.symptoms;
+      delete sanitized.cycleDay;
+      delete sanitized.progressLogs;
+      delete sanitized.bodyMeasurements;
+      delete sanitized.measurements;
+      delete sanitized.bodyComposition;
+      delete sanitized.weightKg;
+      delete sanitized.movementHistory;
+      delete sanitized.currentWeeklyMovement;
+      delete sanitized.weeklyMenu;
+      delete sanitized.shoppingList;
+      delete sanitized.health;
+      delete sanitized.lifeProfile;
+      delete sanitized.personalRoutines;
+      delete sanitized.lifestyle;
+      delete sanitized.dailyCheckIns;
+      delete sanitized.wellbeing;
+      delete sanitized.progressLogs;
+      delete sanitized.bodyMeasurements;
+      delete sanitized.measurements;
+      delete sanitized.bodyComposition;
+      delete sanitized.weightKg;
+      delete sanitized.movementHistory;
+      delete sanitized.currentWeeklyMovement;
+      delete sanitized.weeklyMenu;
+      delete sanitized.shoppingList;
+      if (Array.isArray(sanitized.tasks)) {
+        sanitized.tasks = sanitized.tasks.filter((item: any) => item?.realm === 'mariluna');
+      }
+      if (Array.isArray(sanitized.goals)) {
+        sanitized.goals = sanitized.goals.filter((item: any) => item?.realm === 'mariluna');
+      }
+    } else if (world === 'personal') {
+      if (Array.isArray(sanitized.calendarEvents)) {
+        sanitized.calendarEvents = sanitized.calendarEvents.filter((item: any) => item?.realm === 'personal');
+      }
+      if (Array.isArray(sanitized.projects)) {
+        sanitized.projects = sanitized.projects.filter((item: any) => item?.realm === 'personal');
+      }
+      if (Array.isArray(sanitized.ideas)) {
+        sanitized.ideas = sanitized.ideas.filter((item: any) => item?.realm === 'personal');
+      }
+      if (Array.isArray(sanitized.intentions)) {
+        sanitized.intentions = sanitized.intentions.filter((item: any) => item?.realm === 'personal');
+      }
+      if (sanitized.todayIntention?.realm !== 'personal') delete sanitized.todayIntention;
+      if (sanitized.activeContextItem && sanitized.activeContextItem.realm !== 'personal') delete sanitized.activeContextItem;
+      if (Array.isArray(sanitized.tasks)) {
+        sanitized.tasks = sanitized.tasks.filter((item: any) => item?.realm === 'personal');
+      }
+      if (Array.isArray(sanitized.goals)) {
+        sanitized.goals = sanitized.goals.filter((item: any) => item?.realm === 'personal');
+      }
+      delete sanitized.offerings;
+      delete sanitized.contentPlan;
+      delete sanitized.marilunaData;
+      delete sanitized.marilunaAdmin;
+      delete sanitized.projectsBusiness;
+      delete sanitized.instagram;
+      delete sanitized.gmail;
+      delete sanitized.unreadBusinessInquiriesCount;
+    }
+
     if (world === 'mariluna') {
       delete sanitized.cycleProfile;
       delete sanitized.cyclePhase;
