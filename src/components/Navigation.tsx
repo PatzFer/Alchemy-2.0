@@ -244,7 +244,7 @@ export const Navigation: React.FC<NavigationProps> = ({
           <button
             onClick={() => onSelectTab('security')}
             id="security-center-btn"
-            title="Security & Privacy Center (Passkeys, Levels, Data Firewall)"
+            title={isNl ? "Beveiliging & privacy" : "Security & Privacy Center"}
             className={`relative p-2 rounded-full border border-transparent transition cursor-pointer ${
               currentTab === 'security'
                 ? 'bg-[#30352f] text-[#F0EBDD]'
@@ -267,7 +267,7 @@ export const Navigation: React.FC<NavigationProps> = ({
           <button
             onClick={() => onSelectTab('settings')}
             id="settings-tab-btn"
-            title="Settings & System Memory"
+            title={isNl ? "Instellingen & systeemgeheugen" : "Settings & System Memory"}
             className={`p-2 rounded-full border border-transparent transition cursor-pointer ${
               currentTab === 'settings'
                 ? 'bg-[#30352f] text-[#F0EBDD]'
