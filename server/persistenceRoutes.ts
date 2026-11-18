@@ -22,9 +22,9 @@ router.get('/snapshot', async (req: Request, res: Response) => {
     const snapshot = await persistence.loadLatestSnapshot(token);
     return res.json({ snapshot });
   } catch (error) {
-    return res.status(401).json({
-      error: error instanceof Error ? error.message : 'Unable to load the authenticated owner snapshot.',
-    });
+    const status = error instanceof Error && error.message.includes('(401)') ? 401 :
+      error instanceof Error && error.message.includes('(403)') ? 403 : 500;
+    return res.status(status).json({ error: 'Unable to load the authenticated owner snapshot.' });
   }
 });
 
@@ -52,9 +52,9 @@ router.post('/snapshot', async (req: Request, res: Response) => {
     const snapshot = await persistence.saveSnapshot(token, payload, schemaVersion ?? 1, source ?? 'autosave');
     return res.status(201).json({ snapshot });
   } catch (error) {
-    return res.status(401).json({
-      error: error instanceof Error ? error.message : 'Unable to save the authenticated owner snapshot.',
-    });
+    const status = error instanceof Error && error.message.includes('(401)') ? 401 :
+      error instanceof Error && error.message.includes('(403)') ? 403 : 500;
+    return res.status(status).json({ error: 'Unable to save the authenticated owner snapshot.' });
   }
 });
 
