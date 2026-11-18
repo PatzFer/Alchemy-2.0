@@ -281,6 +281,10 @@ router.post('/step-up', requireAppAuth, async (req: Request, res: Response) => {
 router.post('/webauthn/register-options', requireAppAuth, requireStepUpAuth, async (req: Request, res: Response) => {
   try {
     const session = getOrCreateSession(req, res);
+    const rateLimit = securityVault.checkRateLimit(session.ip);
+    if (!rateLimit.allowed) {
+      return res.status(429).json({ error: 'Too many failed authentication attempts.', locked: true });
+    }
     const { rpID } = getRPInfo(req);
     const existingPasskeys = securityVault.getPasskeys();
 
@@ -309,9 +313,15 @@ router.post('/webauthn/register-options', requireAppAuth, requireStepUpAuth, asy
   }
 });
 
-router.post('/webauthn/register-verify', requireAppAuth, async (req: Request, res: Response) => {
+router.post('/webauthn/register-verify', requireAppAuth, requireStepUpAuth, async (req: Request, res: Response) => {
+  let failureKey = req.ip || '127.0.0.1';
   try {
     const session = getOrCreateSession(req, res);
+    failureKey = session.ip;
+    const rateLimit = securityVault.checkRateLimit(session.ip);
+    if (!rateLimit.allowed) {
+      return res.status(429).json({ error: 'Too many failed authentication attempts.', locked: true });
+    }
     const { response, nickname } = req.body;
     const { rpID, origin } = getRPInfo(req);
     const expectedChallenge = securityVault.consumeChallenge(`reg_${session.id}`);
@@ -347,6 +357,7 @@ router.post('/webauthn/register-verify', requireAppAuth, async (req: Request, re
       });
 
       securityVault.deleteChallenge(`reg_${session.id}`);
+      securityVault.clearFailedAttempts(session.ip);
       securityVault.grantStepUp(session.id, 15);
 
       res.json({
@@ -355,10 +366,12 @@ router.post('/webauthn/register-verify', requireAppAuth, async (req: Request, re
         message: 'Passkey securely enrolled with hardware platform protection.',
       });
     } else {
+      securityVault.recordFailedAttempt(session.ip);
       res.status(400).json({ error: 'Passkey registration verification failed.' });
     }
   } catch (error: any) {
     console.error('WebAuthn register-verify error:', error);
+    securityVault.recordFailedAttempt(failureKey);
     res.status(400).json({ error: 'Passkey registration verification failed.' });
   }
 });
@@ -484,18 +497,24 @@ router.post('/totp/setup', requireAppAuth, requireStepUpAuth, (req: Request, res
 });
 
 router.post('/totp/verify-setup', requireAppAuth, requireStepUpAuth, (req: Request, res: Response) => {
+  const session = getOrCreateSession(req, res);
+  const rateLimit = securityVault.checkRateLimit(session.ip);
+  if (!rateLimit.allowed) {
+    return res.status(429).json({ error: 'Too many failed authentication attempts.', locked: true });
+  }
   const { code } = req.body;
   if (!code) return res.status(400).json({ error: '6-digit code required' });
 
   const success = securityVault.verifyAndEnableTotp(String(code));
   if (success) {
-    const session = getOrCreateSession(req, res);
+    securityVault.clearFailedAttempts(session.ip);
     securityVault.grantStepUp(session.id, 10);
     return res.json({
       success: true,
       message: 'TOTP Authenticator enabled and verified as secondary authentication.',
     });
   }
+  securityVault.recordFailedAttempt(session.ip);
   res.status(400).json({ error: 'Invalid 6-digit code. Please check time sync on your device.' });
 });
 
