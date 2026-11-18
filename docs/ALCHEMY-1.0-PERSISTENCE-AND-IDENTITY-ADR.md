@@ -54,7 +54,8 @@ All tables include immutable owner ownership, created/updated timestamps and ind
 - The API verifies returned snapshot ownership, schema/revision metadata and canonical JSON SHA-256 integrity; request payloads are bounded to 1.5 MB. Canonical hashing follows JSON transport semantics, omitting undefined object properties so the checksum matches the JSONB payload actually stored.
 - Snapshot writes and reads also validate the required Alchemy state structure (module arrays, Foundation data and integration state) before accepting or returning a snapshot.
 - CI statically checks the migration grants and RPC hardening, and unit tests cover malformed identities, payload limits, owner mismatch, atomic RPC use and snapshot integrity.
-- These changes are committed but remain un-applied to any live Supabase database. They do not yet make the React app use Supabase; localStorage remains the current application store.
+- A typed browser persistence adapter now calls only the server-mediated snapshot API with an explicitly supplied Supabase user access token. It never contains a service-role key. The adapter is deliberately not wired to autosave or startup reads yet; localStorage remains the current application store until Supabase Auth is integrated and staging restore tests pass.
+- These changes are committed but remain un-applied to any live Supabase database.
 
 ## 5. Migration strategy (non-destructive)
 
