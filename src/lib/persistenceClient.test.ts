@@ -91,6 +91,27 @@ test('snapshot loading rejects malformed server data', async () => {
   await assert.rejects(() => loadAlchemySnapshot('user-access-token', fetcher), /ongeldig of onvolledig/);
 });
 
+
+test('snapshot loading rejects a complete-looking record without a checksum', async () => {
+  const fetcher: PersistenceFetch = async () =>
+    new Response(JSON.stringify({
+      snapshot: {
+        id: 'snapshot-id',
+        owner_id: 'd4f1c1a2-1234-4a5b-9c8d-1234567890ab',
+        schema_version: 1,
+        revision: 1,
+        payload: INITIAL_STATE,
+        payload_sha256: null,
+        source: 'autosave',
+        created_at: new Date().toISOString(),
+      },
+    }), { status: 200 });
+  await assert.rejects(
+    () => loadAlchemySnapshot('user-access-token', fetcher),
+    /ongeldig of onvolledig/,
+  );
+});
+
 test('client persistence returns a safe error when the server rejects the request', async () => {
   const fetcher: PersistenceFetch = async () =>
     new Response(JSON.stringify({ error: 'Supabase persistence is not configured.' }), { status: 503 });
