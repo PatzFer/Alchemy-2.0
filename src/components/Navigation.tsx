@@ -168,13 +168,13 @@ export const Navigation: React.FC<NavigationProps> = ({
                     ? isMariluna
                       ? 'bg-[#F0EBDD] text-[#20231f] shadow-xs font-semibold'
                       : isPrive
-                      ? 'bg-[#F0EBDD] text-[#F0EBDD] shadow-xs font-semibold'
+                      ? 'bg-[#39312B] text-[#F0EBDD] shadow-xs font-semibold'
                       : 'bg-[#30352f] text-[#F0EBDD] shadow-xs font-semibold'
                     : isMariluna
-                    ? 'text-[#4A3E31] bg-[#263D35] hover:bg-[#304b40] hover:text-[#F0EBDD]'
+                    ? 'text-[#F0EBDD] bg-[#263D35] hover:bg-[#304b40]'
                     : isPrive
                     ? 'text-[#F0EBDD] bg-[#282c27] hover:bg-[#39312B] hover:text-[#F0EBDD]'
-                    : 'text-[#B7B7A9] hover:text-[#F0EBDD] hover:bg-[#F2ECE1]'
+                    : 'text-[#B7B7A9] hover:text-[#F0EBDD] hover:bg-[#30352f]'
                 }`}
               >
                 {isMariluna && <span className="w-1.5 h-1.5 rounded-full bg-[#D6C69B]" />}
@@ -198,7 +198,7 @@ export const Navigation: React.FC<NavigationProps> = ({
                   className={`px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
                     isActive
                       ? 'bg-[#30352f] text-[#F0EBDD] font-semibold'
-                      : 'text-[#B7B7A9] hover:text-[#F0EBDD] hover:bg-[#F2ECE1]'
+                      : 'text-[#B7B7A9] hover:text-[#F0EBDD] hover:bg-[#30352f]'
                   }`}
                 >
                   {item.label}
