@@ -449,7 +449,7 @@ REAL SYSTEM CONTEXT PROVIDED:
 });
 
 // Intelligent Planning & Schedule Analysis Endpoint
-app.post("/api/ai/plan-day", requireAppAuth, async (req: Request, res: Response) => {
+app.post("/api/ai/plan-day", requireAppAuth, requireAiRateLimit, async (req: Request, res: Response) => {
   try {
     const { tasks, calendarEvents, workingHours, preferences, realm } = req.body;
     if (realm !== 'personal' && realm !== 'mariluna') {
@@ -530,7 +530,7 @@ Return a concise JSON with:
 });
 
 // Goal Breakdown Endpoint
-app.post("/api/ai/breakdown-goal", requireAppAuth, async (req: Request, res: Response) => {
+app.post("/api/ai/breakdown-goal", requireAppAuth, requireAiRateLimit, async (req: Request, res: Response) => {
   try {
     const { goalTitle, realm, timeframe } = req.body;
     if (realm !== 'personal' && realm !== 'mariluna') {
@@ -584,7 +584,7 @@ Return a JSON array of objects with keys: title, durationMins, suggestedDay.`;
 });
 
 // Idea Exploration & Structuring Endpoint
-app.post("/api/ai/analyze-idea", requireAppAuth, async (req: Request, res: Response) => {
+app.post("/api/ai/analyze-idea", requireAppAuth, requireAiRateLimit, async (req: Request, res: Response) => {
   try {
     const { rawIdea, realm } = req.body;
     if (realm !== 'personal' && realm !== 'mariluna') {
