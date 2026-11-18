@@ -133,7 +133,7 @@ export async function getOrRefreshAlchemyBrief(
       body: JSON.stringify({
         date: targetDate,
         deterministicBrief: deterministic,
-        world: 'personal',
+        world: 'balanced',
         checkIn: state.dailyCheckIns?.find((c) => c.date === targetDate),
       }),
     });
