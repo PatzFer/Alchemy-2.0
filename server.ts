@@ -51,6 +51,24 @@ app.get("/api/health", (_req: Request, res: Response) => {
   });
 });
 
+// Deployment readiness is stricter than process liveness. The current security vault
+// and integration registry are in-memory, so this build must never report production-ready.
+app.get("/api/ready", (_req: Request, res: Response) => {
+  const blockers = [
+    "Durable Supabase identity/session storage is not connected.",
+    "Passkey, TOTP and recovery credentials are held in process memory.",
+    "Integration credentials and connection state are not durably persisted.",
+    "App state is still stored in browser localStorage without encryption.",
+  ];
+  const ready = false;
+  res.status(503).json({
+    ready,
+    status: "blocked",
+    blockers,
+    checkedAt: new Date().toISOString(),
+  });
+});
+
 // Helper to detect if a user message is primarily Dutch
 function isDutchText(text: string): boolean {
   if (!text) return true;
