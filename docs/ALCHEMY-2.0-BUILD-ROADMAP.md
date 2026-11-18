@@ -198,3 +198,13 @@ Incremental implementation commits on `design/phase-1`:
 - External official Android documentation checked 18 November 2026: Google states Google Fit APIs, including REST, are supported only until the end of 2026; Health Connect is a native Android/on-device SDK integration with Android manifest and runtime permissions, not a browser OAuth connection. The proper long-term path for the Android app is a native Health Connect bridge, not relabeling the existing Google Fit code.
 - Renpho direct sync remains unverified; do not promise a provider API or claim a connection. Evaluate supported Health Connect sharing or explicit export/import during the integration design.
 - No build, typecheck, lint, automated tests, browser/device validation or live provider authorization tests have run. Phases A/B/C remain in progress.
+
+
+## Progress log — 18 November 2026 (integration truthfulness and calendar reliability)
+
+- Google Calendar event retrieval now follows all `nextPageToken` pages instead of silently stopping after the first 250 events.
+- Timed Google Calendar events are converted from their API instants into the device's local date/time before being shown in the local planner. All-day events retain their date-only semantics.
+- Hardened the Health Connect integration boundary: the server no longer accepts a client-supplied `verified: true` flag as proof of a real provider connection and returns HTTP 501 until a native Android bridge exists.
+- New installs now show Health Connect as unavailable until the native bridge is implemented. Existing persisted Google Fit OAuth status is normalized to unavailable while historical step values are retained; the UI now describes the actual native Health Connect status rather than presenting Google Fit as Health Connect.
+- This is a deliberate safety/accuracy improvement, not completion of Health Connect sync. Native Android permissions, data reading, provider provenance, sync lifecycle and device tests remain outstanding.
+- No build, typecheck, lint, automated tests, browser/device tests or live OAuth/provider tests have run. Phases A/B/C remain in progress.
