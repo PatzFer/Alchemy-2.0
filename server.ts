@@ -408,6 +408,7 @@ REAL SYSTEM CONTEXT PROVIDED:
 - Mariluna Products & Services (Offerings): ${JSON.stringify(sanitizedContext?.offerings || [])}
 - Strategic Focus / Theme: ${sanitizedContext?.contentPlan?.quarterTheme || "Geen specifieke focus"}
 - Working Hours: ${sanitizedContext?.workingHours || "09:00 - 17:00"}
+- Confirmed Memories: ${JSON.stringify(sanitizedContext?.memoryItems || [])}
 `;
 
     // Format conversation history for Gemini 3.8 Flash
