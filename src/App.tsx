@@ -3,6 +3,7 @@ import {
   Navigation,
   NavTab,
 } from './components/Navigation';
+import { HomeLauncher } from './components/HomeLauncher';
 import { AIAssistantDrawer } from './components/AIAssistantDrawer';
 import { OfflineIndicator } from './components/OfflineIndicator';
 import { NotificationCenterModal } from './components/NotificationCenterModal';
@@ -926,61 +927,41 @@ export default function App() {
       {/* Offline Status Badge */}
       <OfflineIndicator />
 
-      {/* Top Header & Mobile Bar */}
-      <Navigation
-        currentTab={currentTab}
-        onSelectTab={setCurrentTab}
-        activeWorld={activeWorld}
-        onSelectWorld={setActiveWorld}
-        onOpenAssistant={() => setIsAssistantOpen(true)}
-        isAssistantOpen={isAssistantOpen}
-        sampleDataActive={state.isSampleData}
-        unreadNotificationCount={unreadNotificationCount}
-        onOpenNotifications={() => setIsNotificationCenterOpen(true)}
-        securityLevel={securityLevel}
-        isSensitiveUnlocked={isSensitiveUnlocked}
-        onLockApp={handleLockApp}
-        lang={userLang}
-      />
+      {/* Global navigation remains available inside each domain. Home is the neutral launcher. */}
+      {currentTab !== 'today' && (
+        <Navigation
+          currentTab={currentTab}
+          onSelectTab={(tab) => {
+            if (tab === 'mariluna') setActiveWorld('mariluna');
+            else if (tab === 'prive') setActiveWorld('personal');
+            setCurrentTab(tab);
+          }}
+          activeWorld={activeWorld}
+          onSelectWorld={setActiveWorld}
+          onOpenAssistant={() => setIsAssistantOpen(true)}
+          isAssistantOpen={isAssistantOpen}
+          sampleDataActive={state.isSampleData}
+          unreadNotificationCount={unreadNotificationCount}
+          onOpenNotifications={() => setIsNotificationCenterOpen(true)}
+          securityLevel={securityLevel}
+          isSensitiveUnlocked={isSensitiveUnlocked}
+          onLockApp={handleLockApp}
+          lang={userLang}
+        />
+      )}
 
       {/* Main Content Area */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8 pb-24 lg:pb-16">
         {currentTab === 'today' && (
-          <TodayView
-            tasks={state.tasks}
-            onToggleTask={handleToggleTask}
-            onSaveTask={handleSaveTask}
-            calendarEvents={state.calendarEvents}
-            onAddCalendarEvent={handleAddCalendarEvent}
-            goals={state.goals}
-            projects={state.projects}
-            lifeProfile={state.lifeProfile}
-            activeWorld={activeWorld}
-            onOpenAssistant={() => setIsAssistantOpen(true)}
-            onOpenTaskModal={() => setIsQuickTaskModalOpen(true)}
-            onRescheduleTask={handleRescheduleTask}
-            onSimplifyTask={handleSimplifyTask}
-            onRemoveTask={handleDeleteTask}
-            cycleProfile={state.cycleProfile}
-            dailyCheckIns={state.dailyCheckIns}
-            onSaveDailyCheckIn={handleSaveDailyCheckIn}
-            intentions={state.intentions}
-            onSaveIntention={handleSaveIntention}
-            onCompleteIntention={handleCompleteIntention}
-            onSnoozeIntention={handleSnoozeIntention}
-            onDismissIntention={handleDismissIntentionPrompt}
-            proactiveSuggestions={state.proactiveSuggestions}
-            onDismissSuggestion={handleDismissSuggestion}
-            onSelectTab={setCurrentTab}
-            onOpenAssistantWithPrompt={openAssistantWithPrompt}
-            wellbeing={state.wellbeing}
-            foundation={state.foundation}
-            onUpdateFoundation={handleUpdateFoundation}
+          <HomeLauncher
+            onEnterMariluna={() => { setActiveWorld('mariluna'); setCurrentTab('mariluna'); }}
+            onEnterPrivate={() => { setActiveWorld('personal'); setCurrentTab('prive'); }}
+            onQuickCapture={() => { setQuickRealm(activeWorld === 'mariluna' ? 'mariluna' : 'personal'); setIsQuickTaskModalOpen(true); }}
+            onOpenJarvis={() => setIsAssistantOpen(true)}
+            onOpenNotifications={() => setIsNotificationCenterOpen(true)}
+            onOpenSettings={() => setCurrentTab('settings')}
+            unreadNotificationCount={unreadNotificationCount}
             lang={userLang}
-            onOpenSetup={() => setIsSetupWizardOpen(true)}
-            integrations={state.integrations}
-            nutrition={state.nutrition}
-            onAddMemory={handleAddMemory}
           />
         )}
 
