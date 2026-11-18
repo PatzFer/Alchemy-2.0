@@ -30,6 +30,7 @@ GitHub remains the canonical source of truth throughout implementation. Work sta
 - Privé identity: Earthbound — espresso #39312B, copper #B49A7A, muted taupe and soft cream.
 - Preserve existing modules and stored data; evolve rather than rebuild from scratch.
 - Keep Gemini as the current AI provider and target no additional AI spend.
+- Integrations requested for Version 1.0: calendar/agenda, health data and Renpho smart-scale data, subject to supported APIs and explicit user consent.
 - AI Studio transition happens only after the Version 1.0 build and verification.
 
 ## Delivery phases
@@ -62,6 +63,10 @@ GitHub remains the canonical source of truth throughout implementation. Work sta
 - Add tests for allowed and denied context paths.
 
 ### Phase E — Platform foundations and resilience
+- Implement a provider-based integration layer for calendar/agenda, Android health data (evaluate Health Connect as the platform bridge), and Renpho smart-scale data.
+- Determine whether Renpho exposes or exports measurements through Health Connect, Google Fit or another supported method; do not assume a direct public API exists.
+- Import only user-approved data types, with field-level permissions, source attribution, timestamps, deduplication and disconnect/delete controls.
+- Keep health and body measurements in the sensitive Private scope; never expose them to Mariluna or Jarvis by default.
 - Define and implement durable persistence, authentication and recovery.
 - Resolve local-first/offline behavior, cloud sync, data ownership, conflict handling, export and deletion.
 - Harden integrations and accurately represent authorization/sync status.
@@ -102,3 +107,20 @@ Version 1.0 is not ready if:
 ## Current starting point
 
 The source-level audit found a React 19 + Vite + TypeScript client, an Express/Node server, Gemini integration, Firebase/OAuth code, PWA behavior, localStorage persistence and substantial existing modules. The audit did not run a build, tests, live integrations or security tests. The first implementation changes must therefore be incremental, with validation as soon as an executable environment is available.
+
+## Integration requirements added by user
+
+The user wants Alchemy to synchronize with three existing apps/services:
+
+1. **Agenda / calendar** — connect the calendar app/account the user uses and bring events into the shared Alchemy planner. Confirm the exact provider during integration setup; Google Calendar support already exists in the repository but its current sync behavior needs review.
+2. **Health** — connect the user's health app/data source. On Android, evaluate Health Connect as the preferred interoperability layer and identify whether the actual source is Samsung Health, Google Fit/Fitbit or another app. Do not equate a connected status with successful data access.
+3. **Renpho** — import smart-scale measurements if a supported export/API/Health Connect route is available. First verify the available pathway and which measurements can be read. Do not scrape private endpoints or store Renpho credentials directly.
+
+Integration principles:
+- Read-only import by default; writing back to external apps requires a separate explicit decision.
+- User chooses data categories and sync direction/frequency.
+- Health and body-composition data are sensitive Private data, with least-privilege access and no Mariluna/Jarvis cross-domain access by default.
+- Every imported record retains provider/source, measurement type, unit, measured-at timestamp and import timestamp.
+- Deduplicate repeated imports and handle corrections/deletions where the provider supports them.
+- Provide connection status, last successful sync, errors, disconnect and local-data deletion controls.
+- If an app cannot provide a supported integration, clearly state the limitation and offer a user-controlled export/import alternative.
