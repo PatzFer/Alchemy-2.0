@@ -237,3 +237,11 @@ Incremental implementation commits on `design/phase-1`:
 - Source review of disconnect behavior found that Calendar and Gmail currently share one in-memory Google access-token cache. Disconnecting either clears the shared cache, but does not revoke the provider token. This is not a correct independent credential lifecycle and must be redesigned before claiming reliable provider disconnect/security. No speculative quick fix was applied.
 - A combined commit status query for the CI workflow commit currently returned no reported statuses. No successful CI run, build, typecheck, automated tests, browser rendering or Android device validation is claimed yet.
 - A/B/C remain in progress. Production security and integration lifecycle gaps remain release blockers until implemented and tested.
+
+
+## Progress log — 18 November 2026 (authentication and integration isolation)
+
+- Replaced the shared Google OAuth access-token cache with independent in-memory caches for Calendar and Gmail. Both connection and refresh flows now request/store the correct service-specific token, and disconnect clears only that service's cache. This fixes accidental cross-service cache invalidation; provider-side token revocation is still not implemented.
+- Hardened the app authentication perimeter to fail closed: if `/api/auth/status` returns a non-success response or cannot be reached, the client now shows the locked state rather than treating the app as authenticated. This prevents an API outage from silently bypassing the lock screen. It does not replace durable server-side sessions or encrypted persistent storage.
+- These are source changes committed to `design/phase-1`; no local build, typecheck, browser test, provider OAuth test or Android device test has run in this environment.
+- CI's initial run failed. The first workflow definition expected an npm lockfile for caching even though none exists; that cache requirement has been removed in a follow-up commit. A successful rerun has not yet been observed, so the quality gate remains open.
