@@ -59,6 +59,12 @@ export async function verifyAlchemyBackup(input: unknown): Promise<AlchemyBackup
   if (candidate.checksumAlgorithm !== 'SHA-256' || typeof candidate.checksum !== 'string') {
     throw new Error('De integriteitscontrole ontbreekt of wordt niet ondersteund.');
   }
+  if (!Number.isInteger(candidate.appSchemaVersion) || (candidate.appSchemaVersion ?? 0) < 1) {
+    throw new Error('De appgegevensversie in deze back-up is ongeldig.');
+  }
+  if (typeof candidate.exportedAt !== 'string' || Number.isNaN(Date.parse(candidate.exportedAt))) {
+    throw new Error('De exportdatum in deze back-up is ongeldig.');
+  }
 
   const payload = candidate.payload as AppState;
   const requiredArrays: (keyof AppState)[] = [
