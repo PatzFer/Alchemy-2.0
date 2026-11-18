@@ -41,6 +41,40 @@ test('snapshot save sends only the user bearer token and confirms the saved revi
   assert.equal(body.payload.setupStatus, INITIAL_STATE.setupStatus);
 });
 
+
+test('snapshot save refuses incomplete local state without contacting the server', async () => {
+  let called = false;
+  const fetcher: PersistenceFetch = async () => {
+    called = true;
+    return new Response('{}', { status: 200 });
+  };
+  await assert.rejects(
+    () => saveAlchemySnapshot('user-access-token', { tasks: [] } as any, fetcher),
+    /lokale Alchemy-gegevens zijn onvolledig/,
+  );
+  assert.equal(called, false);
+});
+
+test('snapshot save rejects a response that confirms a different source', async () => {
+  const fetcher: PersistenceFetch = async () =>
+    new Response(JSON.stringify({
+      snapshot: {
+        id: 'snapshot-id',
+        owner_id: 'd4f1c1a2-1234-4a5b-9c8d-1234567890ab',
+        schema_version: 1,
+        revision: 3,
+        payload: INITIAL_STATE,
+        payload_sha256: 'a'.repeat(64),
+        source: 'autosave',
+        created_at: new Date().toISOString(),
+      },
+    }), { status: 201 });
+  await assert.rejects(
+    () => saveAlchemySnapshot('user-access-token', INITIAL_STATE, fetcher),
+    /geldige Alchemy-back-up bevestigd/,
+  );
+});
+
 test('snapshot loading handles an owner with no remote snapshot', async () => {
   const fetcher: PersistenceFetch = async (_input, init) => {
     assert.equal(init?.method, 'GET');
