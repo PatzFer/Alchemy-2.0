@@ -52,6 +52,26 @@ function getAI(): GoogleGenAI | null {
   return aiClient;
 }
 
+type AiWorkspace = 'personal' | 'mariluna' | 'all';
+
+function resolveAiWorkspace(value: unknown): AiWorkspace {
+  return value === 'mariluna' || value === 'all' ? value : 'personal';
+}
+
+function hasAiWorkspaceConsent(
+  workspace: AiWorkspace,
+  permissions: ReturnType<typeof securityVault.getPermissions>,
+): boolean {
+  if (workspace === 'all') {
+    return permissions.allowPersonalDataToAI &&
+      permissions.allowMarilunaDataToAI &&
+      permissions.allowWellbeingDataToAI;
+  }
+  return workspace === 'mariluna'
+    ? permissions.allowMarilunaDataToAI
+    : permissions.allowPersonalDataToAI;
+}
+
 // Health check endpoint
 app.get("/api/health", (_req: Request, res: Response) => {
   res.json({
@@ -317,18 +337,22 @@ function generateIntentAwareJarvisFallback(userMsg: string, ctx: any, world: str
 // Central AI Chat Endpoint (Strategic partner, brain dump analysis, planning advisor)
 app.post("/api/ai/chat", requireAppAuth, async (req: Request, res: Response) => {
   try {
-    const { messages = [], context, world } = req.body;
+    const { context } = req.body;
+    const rawMessages = Array.isArray(req.body.messages) ? req.body.messages : [];
+    const messages = rawMessages.slice(-20).map((message: any) => ({
+      role: message?.role === 'user' ? 'user' : 'assistant',
+      content: typeof message?.content === 'string' ? message.content.slice(0, 8000) : '',
+    })).filter((message: { content: string }) => message.content.length > 0);
+    const world = resolveAiWorkspace(req.body.world);
     const permissions = securityVault.getPermissions();
 
     const sanitizedContext = securityVault.sanitizeContextForAi(context, world);
-    const lastUserMsg = messages.length > 0 ? messages[messages.length - 1].content : "";
+    const lastUserMsg = [...messages].reverse().find((message) => message.role === 'user')?.content || '';
     const isDutch = isDutchMessage(lastUserMsg);
-
-    // Classify user intent
     const intentObj = classifyIntent(lastUserMsg, messages, sanitizedContext);
 
-    // Check if user has restricted to local rules only
-    if (permissions.activeAiProvider === "local-rules") {
+    // The workspace privacy switches are enforced here, not trusted to the browser.
+    if (permissions.activeAiProvider !== "gemini-server" || !hasAiWorkspaceConsent(world, permissions)) {
       const localResp = buildIntentAwareResponse(intentObj, lastUserMsg, sanitizedContext, world);
       return res.json({
         role: "assistant",
@@ -375,7 +399,7 @@ DOMAINS & PRIVACY BOUNDARIES:
     }
 
 REAL SYSTEM CONTEXT PROVIDED:
-- Active Realm: ${world || "Balanced (Personal + Mariluna)"}
+- Active Realm: ${world}
 - Current Date: ${sanitizedContext?.currentDate || new Date().toISOString().split('T')[0]}
 - Active Context Item: ${JSON.stringify(sanitizedContext?.activeContextItem || null)}
 - Calendar Events: ${JSON.stringify(sanitizedContext?.calendarEvents || [])}
@@ -409,11 +433,13 @@ REAL SYSTEM CONTEXT PROVIDED:
   } catch (error: any) {
     console.error("AI Chat Error:", error);
     const lastUserMsg = req.body.messages?.slice(-1)[0]?.content || "";
-    const sanitizedContext = securityVault.sanitizeContextForAi(req.body.context, req.body.world);
-    const intentObj = classifyIntent(lastUserMsg, req.body.messages || [], sanitizedContext);
+    const safeWorld = resolveAiWorkspace(req.body.world);
+    const sanitizedContext = securityVault.sanitizeContextForAi(req.body.context, safeWorld);
+    const safeMessages = Array.isArray(req.body.messages) ? req.body.messages : [];
+    const intentObj = classifyIntent(lastUserMsg, safeMessages, sanitizedContext);
     res.json({
       role: "assistant",
-      content: buildIntentAwareResponse(intentObj, lastUserMsg, sanitizedContext, req.body.world),
+      content: buildIntentAwareResponse(intentObj, lastUserMsg, sanitizedContext, safeWorld),
     });
   }
 });
@@ -435,7 +461,9 @@ app.post("/api/ai/plan-day", requireAppAuth, async (req: Request, res: Response)
     const safeCalendarEvents = safeContext.calendarEvents || [];
     const safeWorkingHours = safeContext.workingHours;
     const safePreferences = safeContext.preferences;
-    const ai = getAI();
+    const permissions = securityVault.getPermissions();
+    const ai = permissions.activeAiProvider === 'gemini-server' &&
+      hasAiWorkspaceConsent(realm, permissions) ? getAI() : null;
 
     if (!ai) {
       // Return smart algorithmic heuristic recommendations
@@ -506,7 +534,9 @@ app.post("/api/ai/breakdown-goal", requireAppAuth, async (req: Request, res: Res
     }
     const safeGoalTitle = typeof goalTitle === 'string' ? goalTitle.slice(0, 500) : '';
     const safeTimeframe = typeof timeframe === 'string' ? timeframe.slice(0, 100) : '';
-    const ai = getAI();
+    const permissions = securityVault.getPermissions();
+    const ai = permissions.activeAiProvider === 'gemini-server' &&
+      hasAiWorkspaceConsent(realm, permissions) ? getAI() : null;
 
     if (!ai) {
       return res.json({
@@ -557,7 +587,9 @@ app.post("/api/ai/analyze-idea", requireAppAuth, async (req: Request, res: Respo
       return res.status(400).json({ error: 'A valid Personal or Mariluna realm is required.' });
     }
     const safeRawIdea = typeof rawIdea === 'string' ? rawIdea.slice(0, 5000) : '';
-    const ai = getAI();
+    const permissions = securityVault.getPermissions();
+    const ai = permissions.activeAiProvider === 'gemini-server' &&
+      hasAiWorkspaceConsent(realm, permissions) ? getAI() : null;
 
     if (!ai) {
       return res.json({
