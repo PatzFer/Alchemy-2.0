@@ -30,6 +30,7 @@ export interface ActiveSession {
   ip: string;
   userAgent: string;
   createdAt: string;
+  expiresAt: number;
   lastActive: string;
   lastActivityMs: number;
   authenticatedWith: 'passkey' | 'totp' | 'recovery_code' | 'preview_test_mode' | 'unauthenticated';
@@ -162,6 +163,7 @@ class SecurityVault {
       ip,
       userAgent,
       createdAt: new Date().toISOString(),
+      expiresAt: now + 30 * 24 * 60 * 60 * 1000,
       lastActive: new Date().toISOString(),
       lastActivityMs: now,
       authenticatedWith: authMethod,
@@ -182,6 +184,10 @@ class SecurityVault {
     const session = this.sessions.get(sessionId);
     if (session) {
       const now = Date.now();
+      if (session.expiresAt <= now) {
+        this.sessions.delete(sessionId);
+        return undefined;
+      }
       // Check inactivity timeout if app is authenticated
       if (session.isAppAuthenticated) {
         const timeoutMs = (session.inactivityTimeoutMinutes || 15) * 60 * 1000;
@@ -256,6 +262,10 @@ class SecurityVault {
     inactivityTimeoutMinutes: number;
     isCurrent: boolean;
   }> {
+    const now = Date.now();
+    for (const [sessionId, session] of this.sessions.entries()) {
+      if (session.expiresAt <= now) this.sessions.delete(sessionId);
+    }
     return Array.from(this.sessions.values()).map((s) => ({
       id: s.publicId,
       deviceId: s.deviceId,
