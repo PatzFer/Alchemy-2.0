@@ -99,3 +99,28 @@ test('snapshot loading rejects a payload whose stored hash does not match', asyn
   const store = new SupabasePersistence(readSupabaseServerConfig(env)!, fetcher);
   await assert.rejects(() => store.loadLatestSnapshot('verified-token'), /integrity check failed/);
 });
+
+
+test('snapshot integrity is stable when PostgreSQL jsonb returns object keys in a different order', async () => {
+  const originalPayload = { tasks: [{ id: 'task-1', title: 'Private task' }], realm: 'personal' };
+  const canonicalPayload = JSON.stringify({ realm: 'personal', tasks: [{ id: 'task-1', title: 'Private task' }] });
+  const expectedHash = createHash('sha256').update(canonicalPayload).digest('hex');
+  const fetcher: FetchLike = async (input) => {
+    if (String(input).endsWith('/auth/v1/user')) {
+      return new Response(JSON.stringify({ id: ownerId }), { status: 200 });
+    }
+    return new Response(JSON.stringify([{
+      id: 'snapshot-id',
+      owner_id: ownerId,
+      schema_version: 1,
+      revision: 1,
+      payload: originalPayload,
+      payload_sha256: expectedHash,
+      source: 'autosave',
+      created_at: new Date().toISOString(),
+    }]), { status: 200 });
+  };
+  const store = new SupabasePersistence(readSupabaseServerConfig(env)!, fetcher);
+  const loaded = await store.loadLatestSnapshot('verified-token');
+  assert.deepEqual(loaded?.payload, originalPayload);
+});
