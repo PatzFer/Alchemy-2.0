@@ -333,3 +333,42 @@ test('balanced AI context excludes personal records when only Mariluna consent i
     allowMarilunaDataToAI: false,
   });
 });
+
+
+test('financial records and prices remain quarantined without financial AI consent', () => {
+  securityVault.updatePermissions({
+    allowMarilunaDataToAI: true,
+    allowFinancialDataToAI: false,
+  });
+  const result = securityVault.sanitizeContextForAi({
+    offerings: [
+      { id: 'service-1', title: 'Reading', price: 75, description: 'A service' },
+    ],
+    marilunaMetrics: {
+      revenueTargetYear: 12000,
+      metrics: [
+        { id: 'revenue', name: 'Revenue', value: 5000, unit: '€' },
+        { id: 'followers', name: 'Instagram followers', value: 800, unit: 'people' },
+      ],
+    },
+    financialData: { balance: 1200, bankTransactions: [{ amount: 100 }] },
+    tasks: [{ id: 'business-task', realm: 'mariluna', title: 'Publish a post' }],
+  }, 'mariluna');
+
+  assert.deepEqual(result.offerings, [
+    { id: 'service-1', title: 'Reading', description: 'A service' },
+  ]);
+  assert.equal('financialData' in result, false);
+  assert.equal('marilunaAdmin' in result, false);
+  assert.equal('marilunaFinance' in result, false);
+  assert.equal('revenueTargetYear' in result.marilunaMetrics, false);
+  assert.deepEqual(result.marilunaMetrics.metrics, [
+    { id: 'revenue', name: 'Revenue', value: 5000, unit: '€' },
+    { id: 'followers', name: 'Instagram followers', value: 800, unit: 'people' },
+  ]);
+  assert.deepEqual(result.tasks.map((item: any) => item.id), ['business-task']);
+  securityVault.updatePermissions({
+    allowMarilunaDataToAI: false,
+    allowFinancialDataToAI: false,
+  });
+});
