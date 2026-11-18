@@ -873,11 +873,11 @@ export default function App() {
   // Perimeter Authentication Guard
   if (isAppAuthenticated === null) {
     return (
-      <div className="min-h-screen bg-[#FAF8F3] flex flex-col items-center justify-center p-6">
-        <div className="w-10 h-10 rounded-full border border-[#D5CCBE] bg-[#F3EDE2] flex items-center justify-center mb-3 animate-pulse">
-          <span className="font-serif text-xs font-semibold text-[#7E694E]">P&M</span>
+      <div className="min-h-screen bg-[var(--app-bg)] flex flex-col items-center justify-center p-6">
+        <div className="w-10 h-10 rounded-full border border-[var(--border-subtle)] bg-[var(--surface-1)] flex items-center justify-center mb-3 animate-pulse">
+          <span className="font-serif text-xs font-semibold text-[var(--accent-secondary)]">P&M</span>
         </div>
-        <span className="font-serif text-xs tracking-[0.2em] uppercase text-[#2C2825]">ALCHEMY</span>
+        <span className="font-serif text-xs tracking-[0.2em] uppercase text-[var(--text-primary)]">ALCHEMY</span>
       </div>
     );
   }
@@ -898,12 +898,12 @@ export default function App() {
   // Optional First-Time Setup Wizard (launched when requested by user)
   if (isSetupWizardOpen) {
     return (
-      <div className="relative min-h-screen bg-[#FAF8F3]">
+      <div className="relative min-h-screen bg-[var(--app-bg)]">
         <div className="fixed top-4 right-4 z-50">
           <button
             type="button"
             onClick={() => setIsSetupWizardOpen(false)}
-            className="px-4 py-2 rounded-full bg-[#FFFFFF] border border-[#DDD4C5] text-xs font-medium text-[#2C2825] hover:bg-[#F2ECE1] transition shadow-xs cursor-pointer flex items-center gap-1.5"
+            className="px-4 py-2 rounded-full bg-[var(--surface-1)] border border-[var(--border-subtle)] text-xs font-medium text-[var(--text-primary)] hover:bg-[var(--surface-2)] transition shadow-xs cursor-pointer flex items-center gap-1.5"
           >
             <span>✕</span>
             <span>{state.foundation?.aboutYou?.preferredLanguage === 'nl' ? 'Terug naar Dashboard' : 'Back to Dashboard'}</span>
