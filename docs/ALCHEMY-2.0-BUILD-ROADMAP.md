@@ -411,3 +411,10 @@ Incremental implementation commits on `design/phase-1`:
 - Server snapshot reads now require a complete UUID-backed record and a valid mandatory checksum before returning it. Owner mismatch, incomplete metadata and integrity failure are separate rejection paths.
 - Added regression coverage for malformed bearer tokens, incomplete local state, source mismatch, missing checksums and structurally valid-but-tampered snapshot records.
 - The persistence adapter remains deliberately disconnected from app startup/autosave. No remote read can overwrite the local state until a staging restore flow is proven safe.
+
+## Progress log — 18 November 2026 (non-destructive migration planning)
+
+- Added a read-only migration planner for the four meaningful first-run states: clean start, local-only data, remote-only data and data on both sides.
+- Uploading local state and restoring cloud state both require explicit confirmation. If both local and remote records exist, the planner explicitly refuses to choose a winner or merge/overwrite automatically.
+- The plan reports record counts and the remote revision/timestamp so a future migration screen can present a clear choice before any write.
+- Added tests for all four states and registered them in CI. The planner is intentionally separate from app startup and has no write capability.
