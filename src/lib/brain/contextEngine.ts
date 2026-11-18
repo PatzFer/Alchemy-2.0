@@ -34,10 +34,10 @@ export function buildBrainContext(
   const identity: BrainContextLayer1Identity = {
     name: foundation?.patzIdentity?.preferredName || foundation?.aboutYou?.name || 'Patricia',
     preferredLanguage: foundation?.aboutYou?.preferredLanguage || 'nl',
-    roots: foundation?.patzIdentity?.heritage || foundation?.patzIdentity?.bornIn || 'Portugal / België',
+    roots: isMarilunaScope ? '' : (foundation?.patzIdentity?.heritage || foundation?.patzIdentity?.bornIn || 'Portugal / België'),
     communicationStyle: foundation?.communication?.preferredTone || 'Kort, direct, warm, praktisch',
     personalValues: ['Rust', 'Vrijheid', 'Schoonheid'],
-    planningPreference: foundation?.planning?.avoidUnrealisticPlanning ? 'Ruim, ongehaast, met ademruimte' : 'Gestructureerd',
+    planningPreference: isMarilunaScope ? 'Gestructureerd en realistisch' : (foundation?.planning?.avoidUnrealisticPlanning ? 'Ruim, ongehaast, met ademruimte' : 'Gestructureerd'),
   };
 
   // -------------------------------------------------------------
