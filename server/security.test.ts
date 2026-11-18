@@ -108,6 +108,29 @@ test('private API middleware rejects an unauthenticated session', () => {
 });
 
 
+
+test('private API middleware rejects malformed session cookies and creates a fresh locked session', () => {
+  const cookies: Record<string, string> = {};
+  const req: any = {
+    cookies: { pm_alchemy_session: 'not-a-64-character-session-token' },
+    headers: { 'user-agent': 'Alchemy test runner' },
+    ip: '127.0.0.5',
+    socket: { remoteAddress: '127.0.0.5' },
+  };
+  const res: any = {
+    statusCode: 200,
+    body: undefined,
+    status(code: number) { this.statusCode = code; return this; },
+    json(body: any) { this.body = body; return this; },
+    cookie(name: string, value: string) { cookies[name] = value; return this; },
+  };
+  let nextCalled = false;
+  requireAppAuth(req, res, () => { nextCalled = true; });
+  assert.equal(res.statusCode, 401);
+  assert.equal(nextCalled, false);
+  assert.match(cookies.pm_alchemy_session, /^[a-f0-9]{64}$/);
+});
+
 test('private API middleware ignores a caller-supplied session header', () => {
   const authenticatedSession = securityVault.createSession({
     ip: '127.0.0.3',
