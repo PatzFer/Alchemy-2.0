@@ -94,8 +94,6 @@ router.post('/unlock-app', async (req: Request, res: Response) => {
     verified = securityVault.verifyTotp(String(credential));
   } else if (method === 'recovery_code' && credential) {
     verified = securityVault.verifyAndConsumeRecoveryCode(String(credential));
-  } else if (method === 'passkey') {
-    verified = true; // Verified through /webauthn/auth-verify
   }
 
   if (verified) {
@@ -122,6 +120,10 @@ router.post('/unlock-app', async (req: Request, res: Response) => {
 // Uses sandboxed session without exposing real production credentials.
 // ----------------------------------------------------
 router.post('/preview-unlock', (req: Request, res: Response) => {
+  // Preview bypass is disabled unless explicitly enabled for a trusted sandbox.
+  if (process.env.ENABLE_PREVIEW_AUTH !== 'true' || process.env.NODE_ENV === 'production') {
+    return res.status(404).json({ error: 'Preview authentication is disabled.' });
+  }
   const session = getOrCreateSession(req, res);
   securityVault.clearFailedAttempts(session.ip);
   const updatedSession = securityVault.authenticateApp(session.id, 'preview_test_mode');
