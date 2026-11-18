@@ -9,6 +9,13 @@ import {
 } from './supabasePersistence';
 
 const ownerId = 'd4f1c1a2-1234-4a5b-9c8d-1234567890ab';
+
+function canonicalJson(value: unknown): string {
+  if (value === null || typeof value !== 'object') return JSON.stringify(value);
+  if (Array.isArray(value)) return `[${value.map(canonicalJson).join(',')}]`;
+  const record = value as Record<string, unknown>;
+  return `{${Object.keys(record).sort().map((key) => `${JSON.stringify(key)}:${canonicalJson(record[key])}`).join(',')}}`;
+}
 const validPayload = {
   tasks: [], goals: [], ideas: [], projects: [], calendarEvents: [], memories: [],
   dailyCheckIns: [], notifications: [], proactiveSuggestions: [], chatHistory: [],
@@ -118,7 +125,7 @@ test('snapshot loading rejects a record returned for a different owner', async (
 test('snapshot owner comes from verified Supabase identity and stored payload hash is checked', async () => {
   const calls: Array<{ url: string; init?: RequestInit }> = [];
   const payload = { ...validPayload, tasks: [{ id: 'task-1', title: 'Private task' }], realm: 'personal' };
-  const payloadHash = createHash('sha256').update(JSON.stringify(Object.fromEntries(Object.entries(payload).sort(([a], [b]) => a.localeCompare(b))))).digest('hex');
+  const payloadHash = createHash('sha256').update(canonicalJson(payload)).digest('hex');
   const fetcher: FetchLike = async (input, init) => {
     const url = String(input);
     calls.push({ url, init });
