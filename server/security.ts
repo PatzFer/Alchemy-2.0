@@ -426,6 +426,10 @@ class SecurityVault {
     if (!rawContext || typeof rawContext !== 'object') return rawContext;
     const sanitized = JSON.parse(JSON.stringify(rawContext));
 
+    // The legacy chat payload sends memory contents as untagged strings.
+    // Without realm metadata they cannot be safely partitioned in either domain.
+    delete sanitized.memoriesSample;
+
     // Domain Separation Principle:
     // Treat each realm as an allowlisted view of mixed client payloads.
     // Arrays are filtered by their explicit realm; ambiguous personal payloads are dropped.
