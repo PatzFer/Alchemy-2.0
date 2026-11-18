@@ -403,3 +403,11 @@ Incremental implementation commits on `design/phase-1`:
 - Added a typed client adapter for reading and writing owner snapshots through `/api/persistence/snapshot`. It requires an explicit Supabase user access token, never sends a service-role credential, validates server responses and treats a missing remote snapshot as a normal first-run state.
 - Added client adapter tests for missing tokens, bearer-only authorization headers, first-run empty state, malformed server data and server-side configuration errors. Added the new test file to the CI test command.
 - The adapter is intentionally not connected to React startup or autosave. No credentials or live Supabase project are available, and activating remote persistence before Auth and restore testing would risk user data. localStorage remains the source of truth and rollback copy.
+
+## Progress log — 18 November 2026 (snapshot boundary hardening)
+
+- Browser snapshot responses are now checked against the full Alchemy state contract, owner UUID, revision/schema metadata, source, timestamp and mandatory SHA-256 checksum. A remote record without a checksum is not considered restorable.
+- The browser refuses to send an incomplete local state and rejects malformed access tokens before making a network request. The API applies the same bearer-token size/whitespace checks.
+- Server snapshot reads now require a complete UUID-backed record and a valid mandatory checksum before returning it. Owner mismatch, incomplete metadata and integrity failure are separate rejection paths.
+- Added regression coverage for malformed bearer tokens, incomplete local state, source mismatch, missing checksums and structurally valid-but-tampered snapshot records.
+- The persistence adapter remains deliberately disconnected from app startup/autosave. No remote read can overwrite the local state until a staging restore flow is proven safe.
