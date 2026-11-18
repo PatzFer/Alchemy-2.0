@@ -512,3 +512,5 @@ Incremental implementation commits on `design/phase-1`:
 - Memory retrieval is realm-aware and separately checks personal, Mariluna, wellbeing, cycle and financial permissions. Sensitive memories require their corresponding additional consent even when general workspace access is enabled.
 - Jarvis receives confirmed memories as context, with explicit prompt guidance that memory text is data rather than instructions and never overrides the current user request.
 - Added regression tests for realm/sensitivity consent and memory status filtering. The memory list remains local-first until durable storage is connected.
+
+- The local Jarvis fallback can now answer direct memory-recall questions from the same filtered confirmed-memory list, so basic recall still works when Gemini is disabled or unavailable.
