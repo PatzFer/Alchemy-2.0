@@ -215,6 +215,21 @@ test('snapshot loading rejects structurally incomplete stored Alchemy state', as
 });
 
 
+
+test('snapshot loading rejects a malformed collection response from Supabase', async () => {
+  const fetcher: FetchLike = async (input) => {
+    if (String(input).endsWith('/auth/v1/user')) {
+      return new Response(JSON.stringify({ id: ownerId }), { status: 200 });
+    }
+    return new Response(JSON.stringify({ snapshot: validPayload }), { status: 200 });
+  };
+  const store = new SupabasePersistence(readSupabaseServerConfig(env)!, fetcher);
+  await assert.rejects(
+    () => store.loadLatestSnapshot('verified-token'),
+    /invalid snapshot collection/,
+  );
+});
+
 test('snapshot loading rejects records without a mandatory SHA-256 checksum', async () => {
   const fetcher: FetchLike = async (input) => {
     if (String(input).endsWith('/auth/v1/user')) {
