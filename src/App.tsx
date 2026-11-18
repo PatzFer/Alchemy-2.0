@@ -100,6 +100,13 @@ export default function App() {
   };
 
   useEffect(() => {
+    // AI Studio development preview only: allow the interface to be explored
+    // without a configured perimeter-auth session. Production builds retain
+    // the server-verified authentication flow and fail-closed behavior.
+    if (import.meta.env.DEV) {
+      setIsAppAuthenticated(true);
+      return;
+    }
     checkAuthStatus();
   }, []);
 
