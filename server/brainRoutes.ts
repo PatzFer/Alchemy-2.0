@@ -45,7 +45,9 @@ router.post("/brief", requireAppAuth, async (req: Request, res: Response) => {
     const { deterministicBrief } = req.body;
     const world = req.body.world === 'mariluna' ? 'mariluna' : 'personal';
     const safeBrief = securityVault.sanitizeContextForAi(deterministicBrief || {}, world);
-    const ai = getAI();
+    const permissions = securityVault.getPermissions();
+    const worldPermission = world === 'mariluna' ? permissions.allowMarilunaDataToAI : permissions.allowPersonalDataToAI;
+    const ai = permissions.activeAiProvider === 'gemini-server' && worldPermission ? getAI() : null;
 
     if (!ai) {
       return res.json({ brief: safeBrief });
@@ -99,7 +101,10 @@ Geen extra tekst, alleen JSON.`;
 router.post("/split-task", requireAppAuth, async (req: Request, res: Response) => {
   try {
     const { taskTitle, estimatedDuration } = req.body;
-    const ai = getAI();
+    const world = req.body.world === 'mariluna' ? 'mariluna' : 'personal';
+    const permissions = securityVault.getPermissions();
+    const worldPermission = world === 'mariluna' ? permissions.allowMarilunaDataToAI : permissions.allowPersonalDataToAI;
+    const ai = permissions.activeAiProvider === 'gemini-server' && worldPermission ? getAI() : null;
 
     if (!ai) {
       return res.json({
@@ -157,7 +162,9 @@ router.post("/query", requireAppAuth, async (req: Request, res: Response) => {
     const world = req.body.world === 'mariluna' ? 'mariluna' : 'personal';
     // Client-side filtering is useful for UX, but the server is the actual privacy boundary.
     const safeContext = securityVault.sanitizeContextForAi(context, world);
-    const ai = getAI();
+    const permissions = securityVault.getPermissions();
+    const worldPermission = world === 'mariluna' ? permissions.allowMarilunaDataToAI : permissions.allowPersonalDataToAI;
+    const ai = permissions.activeAiProvider === 'gemini-server' && worldPermission ? getAI() : null;
 
     const intentObj = classifyIntent(query, [], safeContext);
 
@@ -217,7 +224,12 @@ Geef een kort, doordacht, warm en praktisch antwoord in ${isDutch ? "helder Nede
 router.post("/evaluate-styling", requireAppAuth, async (req: Request, res: Response) => {
   try {
     const { imageBase64, mimeType = "image/jpeg", profileContext = {}, optionalNotes = "", optionalUrl = "" } = req.body;
-    const ai = getAI();
+    const permissions = securityVault.getPermissions();
+    if (!permissions.allowPersonalDataToAI) {
+      return res.status(403).json({ error: 'Personal AI access is disabled. Enable personal data sharing in Security & Privacy to use image-based styling analysis.' });
+    }
+    const safeProfileContext = securityVault.sanitizeContextForAi(profileContext, 'personal');
+    const ai = permissions.activeAiProvider === 'gemini-server' ? getAI() : null;
 
     const STYLING_SYSTEM_PROMPT = `Je bent ALCHEMY PERSONAL STYLING PARTNER voor Patricia ("Patz").
 
@@ -290,7 +302,7 @@ STRIKT JSON FORMAT:
     }
 
     let userPromptText = `Beoordeel dit kledingstuk op de foto voor Patricia.
-Opgeslagen profielcontext: ${JSON.stringify(profileContext)}`;
+Opgeslagen profielcontext: ${JSON.stringify(safeProfileContext)}`;
 
     if (optionalNotes) {
       userPromptText += `\nExtra opmerking: "${optionalNotes}"`;
