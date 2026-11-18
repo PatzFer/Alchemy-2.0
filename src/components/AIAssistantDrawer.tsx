@@ -177,7 +177,7 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
       })),
       workingHours: `${lifeProfile.workingHoursStart} - ${lifeProfile.workingHoursEnd}`,
       preferences: lifeProfile.preferences,
-      memoriesSample: (memories || []).map((m) => m.content),
+      memoryItems: (memories || []).map((m) => ({ content: m.content, category: m.category, realm: m.realm, type: m.type, status: m.status, confidence: m.confidence, expiresAt: m.expiresAt })),
       wellbeing:
         wellbeing && wellbeing.preferences?.allowWellbeingDataToAI
           ? {
