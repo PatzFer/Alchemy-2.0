@@ -652,6 +652,27 @@ export function getOrCreateSession(req: Request, res: Response): ActiveSession {
   return newSession;
 }
 
+/**
+ * Protect AI and private-data endpoints at the server boundary.
+ * A client-side lock screen is not an authorization mechanism.
+ */
+export function requireAppAuth(req: Request, res: Response, next: NextFunction) {
+  const session = getOrCreateSession(req, res);
+  if (!session.isAppAuthenticated) {
+    return res.status(401).json({ error: 'Application authentication required.', authenticationRequired: true });
+  }
+
+  const timeoutMs = (session.inactivityTimeoutMinutes || 15) * 60 * 1000;
+  const lastActivity = session.lastActivityMs || 0;
+  if (!lastActivity || Date.now() - lastActivity > timeoutMs) {
+    securityVault.lockApp(session.id);
+    return res.status(401).json({ error: 'Session expired due to inactivity.', authenticationRequired: true });
+  }
+
+  securityVault.touchActivity(session.id);
+  return next();
+}
+
 export function requireStepUpAuth(req: Request, res: Response, next: NextFunction) {
   const session = getOrCreateSession(req, res);
   const now = Date.now();
