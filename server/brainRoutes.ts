@@ -41,12 +41,18 @@ DATA SEPARATIE & PRIVACY:
  * Generates an intelligent, calm morning brief for Today
  */
 router.post("/brief", requireAppAuth, async (req: Request, res: Response) => {
+  const world = req.body.world === 'mariluna'
+    ? 'mariluna'
+    : req.body.world === 'balanced' ? 'balanced' : 'personal';
   try {
     const { deterministicBrief } = req.body;
-    const world = req.body.world === 'mariluna' ? 'mariluna' : 'personal';
     const safeBrief = securityVault.sanitizeContextForAi(deterministicBrief || {}, world);
     const permissions = securityVault.getPermissions();
-    const worldPermission = world === 'mariluna' ? permissions.allowMarilunaDataToAI : permissions.allowPersonalDataToAI;
+    // The Today brief deliberately combines personal, wellbeing and Mariluna signals.
+    // Require consent for every included domain before sending the combined summary.
+    const worldPermission = world === 'balanced'
+      ? permissions.allowPersonalDataToAI && permissions.allowMarilunaDataToAI && permissions.allowWellbeingDataToAI
+      : world === 'mariluna' ? permissions.allowMarilunaDataToAI : permissions.allowPersonalDataToAI;
     const ai = permissions.activeAiProvider === 'gemini-server' && worldPermission ? getAI() : null;
 
     if (!ai) {
@@ -90,7 +96,7 @@ Geen extra tekst, alleen JSON.`;
     });
   } catch (err) {
     // Return deterministic brief gracefully
-    return res.json({ brief: securityVault.sanitizeContextForAi(req.body.deterministicBrief || {}, req.body.world === 'mariluna' ? 'mariluna' : 'personal') });
+    return res.json({ brief: securityVault.sanitizeContextForAi(req.body.deterministicBrief || {}, req.body.world === 'mariluna' ? 'mariluna' : req.body.world === 'balanced' ? 'balanced' : 'personal') });
   }
 });
 
