@@ -86,6 +86,11 @@ class SecurityVault {
   private failedAttempts: Map<string, { count: number; lockedUntil: number; updatedAt: number }> = new Map();
   private readonly failedAttemptTtlMs = 30 * 60 * 1000;
   private readonly maxFailedAttemptKeys = 10000;
+  // Sliding-window quota for AI routes, independent from authentication lockouts.
+  private aiRequestWindows: Map<string, number[]> = new Map();
+  private readonly aiWindowMs = 60 * 1000;
+  private readonly aiMaxRequestsPerWindow = 20;
+  private readonly maxAiRateLimitKeys = 10000;
   // Permissions
   private permissions: SecurityPermissions = {
     calendarRead: true,
@@ -149,6 +154,32 @@ class SecurityVault {
 
   public clearFailedAttempts(key: string): void {
     this.failedAttempts.delete(key);
+  }
+
+  public consumeAiRequest(
+    key: string,
+    now = Date.now(),
+  ): { allowed: boolean; remaining: number; retryAfterSeconds?: number } {
+    // Prune expired windows and bound per-session state.
+    for (const [sessionKey, timestamps] of this.aiRequestWindows.entries()) {
+      const active = timestamps.filter((timestamp) => now - timestamp < this.aiWindowMs);
+      if (active.length === 0) this.aiRequestWindows.delete(sessionKey);
+      else this.aiRequestWindows.set(sessionKey, active);
+    }
+
+    const timestamps = this.aiRequestWindows.get(key) || [];
+    if (timestamps.length >= this.aiMaxRequestsPerWindow) {
+      const retryAfterSeconds = Math.max(1, Math.ceil((timestamps[0] + this.aiWindowMs - now) / 1000));
+      return { allowed: false, remaining: 0, retryAfterSeconds };
+    }
+
+    if (!this.aiRequestWindows.has(key) && this.aiRequestWindows.size >= this.maxAiRateLimitKeys) {
+      const oldestKey = this.aiRequestWindows.keys().next().value;
+      if (oldestKey !== undefined) this.aiRequestWindows.delete(oldestKey);
+    }
+    timestamps.push(now);
+    this.aiRequestWindows.set(key, timestamps);
+    return { allowed: true, remaining: this.aiMaxRequestsPerWindow - timestamps.length };
   }
 
   // ----------------------------------------------------
@@ -914,6 +945,19 @@ export function getOrCreateSession(req: Request, res: Response): ActiveSession {
  * Protect AI and private-data endpoints at the server boundary.
  * A client-side lock screen is not an authorization mechanism.
  */
+export function requireAiRateLimit(req: Request, res: Response, next: NextFunction) {
+  const session = getOrCreateSession(req, res);
+  const quota = securityVault.consumeAiRequest(session.id);
+  if (!quota.allowed) {
+    res.setHeader('Retry-After', String(quota.retryAfterSeconds || 60));
+    return res.status(429).json({
+      error: 'Jarvis is receiving requests too quickly. Please try again shortly.',
+      retryAfterSeconds: quota.retryAfterSeconds || 60,
+    });
+  }
+  return next();
+}
+
 export function requireAppAuth(req: Request, res: Response, next: NextFunction) {
   const session = getOrCreateSession(req, res);
   if (!session.isAppAuthenticated) {
