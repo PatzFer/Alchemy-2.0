@@ -418,3 +418,5 @@ Incremental implementation commits on `design/phase-1`:
 - Uploading local state and restoring cloud state both require explicit confirmation. If both local and remote records exist, the planner explicitly refuses to choose a winner or merge/overwrite automatically.
 - The plan reports record counts and the remote revision/timestamp so a future migration screen can present a clear choice before any write.
 - Added tests for all four states and registered them in CI. The planner is intentionally separate from app startup and has no write capability.
+
+- Refined migration detection to ignore prefilled Foundation defaults while still detecting completed/changed identity profiles, cycle tracking, styling/nutrition records, connected integrations and nested Mariluna finance/metrics data. This avoids both false positives on a clean first start and false negatives for business-only records.
