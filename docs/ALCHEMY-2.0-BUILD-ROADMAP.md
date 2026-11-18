@@ -339,3 +339,11 @@ Incremental implementation commits on `design/phase-1`:
 - Extended backup verification to reject invalid app schema versions and malformed export timestamps before a restore can proceed.
 - Added regression tests for both invalid metadata cases.
 - CI for commit `8af1894f952546148eb1bd68269040730a3af0a6` completed successfully: dependency install, TypeScript, privacy/backup tests and production build.
+
+## Progress log — 18 November 2026 (rollback protection for destructive data actions)
+
+- Restore now offers an automatic checksummed download of the current app state before replacing it with an imported backup.
+- Full reset now also downloads a checksummed rollback backup before resetting. If the backup cannot be created, the reset is cancelled instead of proceeding without a recovery copy.
+- Updated confirmation text to explain the automatic rollback download. This reduces reliance on the user remembering to export first.
+- GitHub Actions for commit `50cdb44f394605a684ab5b4175031ffaa09f097b` passed dependency installation, TypeScript, privacy/backup regression tests and production build.
+- Limitation: the rollback file download is initiated by the browser; this code cannot verify that the user retained the file. A later persistent server-side snapshot/restore mechanism is still required before cloud migration.
