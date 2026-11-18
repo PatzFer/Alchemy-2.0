@@ -664,7 +664,7 @@ export const CycleView: React.FC<CycleViewProps> = ({
         </div>
 
         {/* Privacy & Medical Safeguards */}
-        <div className="rounded-2xl border border-[#E2DDD2] bg-[#F5EFE4] p-5 shadow-xs space-y-3">
+        <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-2)] p-5 shadow-xs space-y-3">
           <div className="flex items-center gap-2 text-[var(--text-primary)]">
             <ShieldCheck className="w-4 h-4 text-[var(--accent-secondary)]" />
             <h4 className="font-serif text-sm font-medium">Sanctuary Privacy & Safety</h4>
