@@ -474,3 +474,33 @@ test('local Jarvis can retrieve only the confirmed memories supplied by the priv
   );
   assert.match(emptyAnswer, /geen bevestigde herinneringen/i);
 });
+
+
+test('Jarvis AI quota limits bursts per session and resets after its sliding window', () => {
+  const key = 'ai-quota-regression-test-session';
+  const start = 1_800_000_000_000;
+
+  for (let index = 0; index < 20; index += 1) {
+    const result = securityVault.consumeAiRequest(key, start + index);
+    assert.equal(result.allowed, true);
+    assert.equal(result.remaining, 19 - index);
+  }
+
+  const blocked = securityVault.consumeAiRequest(key, start + 20);
+  assert.equal(blocked.allowed, false);
+  assert.equal(blocked.remaining, 0);
+  assert.equal(blocked.retryAfterSeconds, 60);
+
+  const afterWindow = securityVault.consumeAiRequest(key, start + 60_001);
+  assert.equal(afterWindow.allowed, true);
+  assert.equal(afterWindow.remaining, 19);
+});
+
+test('Jarvis AI quota is isolated between sessions', () => {
+  const first = securityVault.consumeAiRequest('ai-quota-session-one', 1_800_000_100_000);
+  const second = securityVault.consumeAiRequest('ai-quota-session-two', 1_800_000_100_000);
+  assert.equal(first.allowed, true);
+  assert.equal(second.allowed, true);
+  assert.equal(first.remaining, 19);
+  assert.equal(second.remaining, 19);
+});
