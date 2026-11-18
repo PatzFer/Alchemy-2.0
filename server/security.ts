@@ -673,9 +673,13 @@ class SecurityVault {
         sanitized.goals = sanitized.goals.filter((item: any) => item?.realm === 'personal');
       }
       delete sanitized.offerings;
+      delete sanitized.marilunaOfferings;
       delete sanitized.contentPlan;
       delete sanitized.marilunaData;
       delete sanitized.marilunaAdmin;
+      delete sanitized.marilunaMetrics;
+      delete sanitized.marilunaClients;
+      delete sanitized.clients;
       delete sanitized.projectsBusiness;
       delete sanitized.instagram;
       delete sanitized.gmail;
