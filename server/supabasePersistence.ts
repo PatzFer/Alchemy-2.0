@@ -24,6 +24,23 @@ export interface SnapshotRecord {
 
 export type FetchLike = typeof fetch;
 
+const REQUIRED_STATE_ARRAYS = [
+  'tasks', 'goals', 'ideas', 'projects', 'calendarEvents', 'memories',
+  'dailyCheckIns', 'notifications', 'proactiveSuggestions',
+] as const;
+
+export function isValidAlchemySnapshotPayload(
+  value: unknown,
+): value is Record<string, unknown> {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  const state = value as Record<string, unknown>;
+  if (!REQUIRED_STATE_ARRAYS.every((key) => Array.isArray(state[key]))) return false;
+  return Boolean(
+    state.foundation && typeof state.foundation === 'object' && !Array.isArray(state.foundation) &&
+    state.integrations && typeof state.integrations === 'object' && !Array.isArray(state.integrations)
+  );
+}
+
 function stableJson(value: unknown): string {
   if (value === null || typeof value !== 'object') return JSON.stringify(value);
   if (Array.isArray(value)) return `[${value.map(stableJson).join(',')}]`;
@@ -99,8 +116,8 @@ export class SupabasePersistence {
       throw new Error('schemaVersion must be a positive integer.');
     }
     const owner = await this.verifyOwner(accessToken);
-    if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
-      throw new Error('Snapshot payload must be a JSON object.');
+    if (!isValidAlchemySnapshotPayload(payload)) {
+      throw new Error('Snapshot payload does not match the required Alchemy state structure.');
     }
     const serializedPayload = stableJson(payload);
     if (Buffer.byteLength(serializedPayload, 'utf8') > 1_500_000) {
@@ -146,7 +163,7 @@ export class SupabasePersistence {
     }
     if (!Number.isInteger(snapshot.revision) || snapshot.revision < 1 ||
         !Number.isInteger(snapshot.schema_version) || snapshot.schema_version < 1 ||
-        !snapshot.payload || typeof snapshot.payload !== 'object' || Array.isArray(snapshot.payload)) {
+        !isValidAlchemySnapshotPayload(snapshot.payload)) {
       throw new Error('Stored Alchemy snapshot metadata is invalid.');
     }
     const actualHash = createHash('sha256').update(stableJson(snapshot.payload)).digest('hex');
