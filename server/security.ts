@@ -512,6 +512,32 @@ class SecurityVault {
     if (!rawContext || typeof rawContext !== 'object') return rawContext;
     const sanitized = JSON.parse(JSON.stringify(rawContext));
 
+    // Filter every mixed-realm collection using server-owned consent settings.
+    // Missing realm metadata is ambiguous and therefore excluded from AI context.
+    const collectionKeys = ['calendarEvents', 'projects', 'ideas', 'intentions', 'tasks', 'goals'];
+    for (const key of collectionKeys) {
+      if (!Array.isArray(sanitized[key])) continue;
+      sanitized[key] = sanitized[key].filter((item: any) => {
+        const realm = item?.realm || item?.world;
+        if (realm === 'personal') {
+          return this.permissions.allowPersonalDataToAI && (world === 'personal' || world === 'all' || !world);
+        }
+        if (realm === 'mariluna') {
+          return this.permissions.allowMarilunaDataToAI && (world === 'mariluna' || world === 'all');
+        }
+        return false;
+      });
+    }
+
+    const isAllowedRealmItem = (item: any): boolean => {
+      const realm = item?.realm || item?.world;
+      if (realm === 'personal') return this.permissions.allowPersonalDataToAI && (world === 'personal' || world === 'all' || !world);
+      if (realm === 'mariluna') return this.permissions.allowMarilunaDataToAI && (world === 'mariluna' || world === 'all');
+      return false;
+    };
+    if (sanitized.todayIntention && !isAllowedRealmItem(sanitized.todayIntention)) delete sanitized.todayIntention;
+    if (sanitized.activeContextItem && !isAllowedRealmItem(sanitized.activeContextItem)) delete sanitized.activeContextItem;
+
     // The legacy chat payload sends memory contents as untagged strings.
     // Without realm metadata they cannot be safely partitioned in either domain.
     delete sanitized.memoriesSample;
@@ -674,6 +700,12 @@ class SecurityVault {
 
     // Firewall Rule 2: Personal data isolation
     if (!this.permissions.allowPersonalDataToAI) {
+      delete sanitized.workingHours;
+      delete sanitized.preferences;
+      delete sanitized.lifeProfile;
+      delete sanitized.personalStyle;
+      delete sanitized.stylePreferences;
+      delete sanitized.health;
       delete sanitized.personalRoutines;
       delete sanitized.lifestyle;
       delete sanitized.dailyCheckIns;
@@ -687,7 +719,14 @@ class SecurityVault {
 
     // Firewall Rule 3: Mariluna business isolation
     if (!this.permissions.allowMarilunaDataToAI) {
+      delete sanitized.offerings;
+      delete sanitized.contentPlan;
       delete sanitized.marilunaData;
+      delete sanitized.marilunaAdmin;
+      delete sanitized.projectsBusiness;
+      delete sanitized.instagram;
+      delete sanitized.gmail;
+      delete sanitized.unreadBusinessInquiriesCount;
       if (Array.isArray(sanitized.tasks)) {
         sanitized.tasks = sanitized.tasks.filter((t: any) => t.world !== 'mariluna' && t.realm !== 'mariluna');
       }
