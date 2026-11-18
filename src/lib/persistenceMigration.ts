@@ -34,7 +34,7 @@ function countStateRecords(state: Record<string, unknown>): number {
   const foundation = state.foundation as Record<string, unknown> | undefined;
   const aboutYou = foundation?.aboutYou as Record<string, unknown> | undefined;
   if (aboutYou) {
-    const defaultAboutYou = DEFAULT_FOUNDATION_DATA.aboutYou as Record<string, unknown>;
+    const defaultAboutYou = DEFAULT_FOUNDATION_DATA.aboutYou as unknown as Record<string, unknown>;
     total += Object.entries(aboutYou).filter(([key, value]) => {
       const defaultValue = defaultAboutYou[key];
       return value !== defaultValue &&
