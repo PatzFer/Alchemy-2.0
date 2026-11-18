@@ -380,3 +380,11 @@ Incremental implementation commits on `design/phase-1`:
 - CI on commit `afff35882aabd2f4e4b64d8eabe6809f2d6eb54f` passed TypeScript, migration safety, privacy tests and production build. Further changes after that commit are being validated separately; do not carry forward the earlier green status as proof for later commits.
 - This is still a server-side persistence foundation, not a live client cutover. The React app continues to use localStorage; Supabase credentials/project are not configured in the repository. No SQL was applied to a live database and no user data was migrated.
 - Next: complete the persistence adapter's route-level tests and identity/session strategy before any client cutover. Preserve localStorage as the rollback source until a staging Supabase project and restore drill are verified.
+
+## Progress log — 18 November 2026 (snapshot API validation hardening)
+
+- Added fail-closed handling for malformed Supabase server configuration on both snapshot read and write routes. Invalid configuration now returns a generic 503 response instead of escaping the route handler.
+- Added structural validation for persisted Alchemy state: required module arrays, Foundation data and integration state must be present. The same validation is applied before writes and after reads, so a syntactically valid but incomplete JSON object cannot silently become the latest snapshot.
+- Added route-level regression tests for malformed environment configuration and incomplete payloads; added persistence validation fixtures and tests.
+- The earlier commit `0ba74472a730f8de93f9f0ddc46e17d61fba3671` passed the complete CI workflow, including the new API route tests. Commits after it are still awaiting their own final CI result; no green status is inferred from earlier commits.
+- This hardening remains limited to the server-side snapshot foundation. The browser app still uses localStorage, Supabase is not configured or migrated, and the existing in-memory custom security vault is not yet durable.
