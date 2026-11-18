@@ -399,7 +399,20 @@ REAL SYSTEM CONTEXT PROVIDED:
 // Intelligent Planning & Schedule Analysis Endpoint
 app.post("/api/ai/plan-day", async (req: Request, res: Response) => {
   try {
-    const { tasks, calendarEvents, workingHours, preferences } = req.body;
+    const { tasks, calendarEvents, workingHours, preferences, realm } = req.body;
+    if (realm !== 'personal' && realm !== 'mariluna') {
+      return res.status(400).json({ error: 'A valid Personal or Mariluna realm is required.' });
+    }
+    const safeContext = securityVault.sanitizeContextForAi({
+      tasks: Array.isArray(tasks) ? tasks : [],
+      calendarEvents: Array.isArray(calendarEvents) ? calendarEvents : [],
+      workingHours,
+      preferences,
+    }, realm);
+    const safeTasks = safeContext.tasks || [];
+    const safeCalendarEvents = safeContext.calendarEvents || [];
+    const safeWorkingHours = safeContext.workingHours;
+    const safePreferences = safeContext.preferences;
     const ai = getAI();
 
     if (!ai) {
@@ -466,12 +479,17 @@ Return a concise JSON with:
 app.post("/api/ai/breakdown-goal", async (req: Request, res: Response) => {
   try {
     const { goalTitle, realm, timeframe } = req.body;
+    if (realm !== 'personal' && realm !== 'mariluna') {
+      return res.status(400).json({ error: 'A valid Personal or Mariluna realm is required.' });
+    }
+    const safeGoalTitle = typeof goalTitle === 'string' ? goalTitle.slice(0, 500) : '';
+    const safeTimeframe = typeof timeframe === 'string' ? timeframe.slice(0, 100) : '';
     const ai = getAI();
 
     if (!ai) {
       return res.json({
         milestones: [
-          { title: `Clarify core outcome for ${goalTitle}`, durationMins: 30, suggestedDay: "Tomorrow" },
+          { title: `Clarify core outcome for ${safeGoalTitle}`, durationMins: 30, suggestedDay: "Tomorrow" },
           { title: "First incremental execution sprint", durationMins: 45, suggestedDay: "Thursday" },
           { title: "Review progress and adjust cadence", durationMins: 20, suggestedDay: "Sunday" },
         ],
@@ -513,14 +531,18 @@ Return a JSON array of objects with keys: title, durationMins, suggestedDay.`;
 app.post("/api/ai/analyze-idea", async (req: Request, res: Response) => {
   try {
     const { rawIdea, realm } = req.body;
+    if (realm !== 'personal' && realm !== 'mariluna') {
+      return res.status(400).json({ error: 'A valid Personal or Mariluna realm is required.' });
+    }
+    const safeRawIdea = typeof rawIdea === 'string' ? rawIdea.slice(0, 5000) : '';
     const ai = getAI();
 
     if (!ai) {
       return res.json({
-        summary: `Strategic concept: ${rawIdea.slice(0, 60)}...`,
+        summary: `Strategic concept: ${safeRawIdea.slice(0, 60)}...`,
         category: realm === "mariluna" ? "Strategy & Offering" : "Personal Vision",
         suggestedNextAction: "Frame a 1-page outline or exploratory brainstorm",
-        potentialProjectName: "Exploration: " + rawIdea.slice(0, 30),
+        potentialProjectName: "Exploration: " + safeRawIdea.slice(0, 30),
         followUpQuestions: [
           "What is the primary transformation this brings?",
           "Does this align with your current quarterly theme?",
