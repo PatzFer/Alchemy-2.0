@@ -370,3 +370,13 @@ Incremental implementation commits on `design/phase-1`:
 - Public `/api/ready` response has been reduced to a generic not-ready status; it no longer enumerates internal security blockers to unauthenticated callers.
 - CI for commit `12111c212d492df31adc52fa6a1f39cafca1cdaa` passed dependency installation, TypeScript, Supabase migration checks, privacy/backup tests and production build.
 - No public preview was deployed: current persistence/auth limitations make that unsafe for real personal or business data.
+
+## Progress log — 18 November 2026 (server-mediated snapshot hardening)
+
+- Added a follow-up migration that removes direct `anon` and `authenticated` table privileges on `app_state_snapshots`. Snapshot reads/writes are intended to go through the server API using the server-only Supabase service role.
+- Added the `save_app_state_snapshot` RPC with per-owner transaction-scoped advisory locking, validated inputs, an empty `search_path`, and execution granted only to `service_role`. The RPC allocates revisions and inserts a snapshot in one database transaction.
+- Updated the server persistence adapter to use the atomic RPC instead of a read-then-insert revision sequence. It verifies the Supabase Auth identity, bounds snapshots to 1.5 MB, checks returned owner identity and validates stored schema/revision metadata and canonical SHA-256 integrity.
+- Added regression coverage for malformed owner UUIDs, oversized tokens/payloads, cross-owner snapshot responses, atomic RPC arguments and existing integrity cases. Added static migration checks for direct table grants and RPC security configuration.
+- CI on commit `afff35882aabd2f4e4b64d8eabe6809f2d6eb54f` passed TypeScript, migration safety, privacy tests and production build. Further changes after that commit are being validated separately; do not carry forward the earlier green status as proof for later commits.
+- This is still a server-side persistence foundation, not a live client cutover. The React app continues to use localStorage; Supabase credentials/project are not configured in the repository. No SQL was applied to a live database and no user data was migrated.
+- Next: complete the persistence adapter's route-level tests and identity/session strategy before any client cutover. Preserve localStorage as the rollback source until a staging Supabase project and restore drill are verified.
