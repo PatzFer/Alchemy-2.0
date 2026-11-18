@@ -102,8 +102,8 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
         );
       case 'unavailable':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-[#F2EFE9] text-[#7A7167] border border-[#E3DDCF]">
-            <Smartphone className="w-3.5 h-3.5 text-[#8C8377]" />
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-[var(--surface-2)] text-[var(--text-secondary)] border border-[#E3DDCF]">
+            <Smartphone className="w-3.5 h-3.5 text-[var(--text-muted)]" />
             {customLabel || (isNl ? 'Niet beschikbaar op dit platform' : 'Not available on platform')}
           </span>
         );
@@ -111,7 +111,7 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
       case 'not_connected':
       default:
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-[#FAF6F0] text-[#8C8377] border border-[#E8E2D6]">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-[var(--surface-1)] text-[var(--text-muted)] border border-[var(--border-subtle)]">
             <span className="w-1.5 h-1.5 rounded-full bg-[#B5ACA0]" />
             {customLabel || (isNl ? 'Niet verbonden' : 'Not connected')}
           </span>
@@ -716,11 +716,11 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
   return (
     <div className="space-y-6 pb-16">
       {/* Header */}
-      <div className="border-b border-[#E8E2D5] pb-5">
-        <h1 className="font-serif text-3xl font-normal text-[#2C2825]">
+      <div className="border-b border-[var(--border-subtle)] pb-5">
+        <h1 className="font-serif text-3xl font-normal text-[var(--text-primary)]">
           Integraties & Koppelingen
         </h1>
-        <p className="text-xs text-[#7A7167] mt-1 font-light max-w-2xl leading-relaxed">
+        <p className="text-xs text-[var(--text-secondary)] mt-1 font-light max-w-2xl leading-relaxed">
           Beheer verbindingen met externe diensten. Transparante, eerlijke status met strikte scheiding tussen de Mariluna zakelijke wereld en je privéleven.
         </p>
       </div>
@@ -743,15 +743,15 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
         {/* ============================================================ */}
         {/* 1. GOOGLE CALENDAR                                          */}
         {/* ============================================================ */}
-        <div className="rounded-2xl border border-[#E8E2D6] bg-[#FAF8F3] p-5 sm:p-6 space-y-4 shadow-xs">
+        <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-1)] p-5 sm:p-6 space-y-4 shadow-xs">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-start gap-3.5">
-              <div className="w-10 h-10 rounded-xl bg-[#FFFFFF] border border-[#E8E2D6] flex items-center justify-center shrink-0 text-[#2C2825] shadow-xs">
-                <Calendar className="w-5 h-5 text-[#8C7654]" />
+              <div className="w-10 h-10 rounded-xl bg-[var(--surface-2)] border border-[var(--border-subtle)] flex items-center justify-center shrink-0 text-[var(--text-primary)] shadow-xs">
+                <Calendar className="w-5 h-5 text-[var(--accent-secondary)]" />
               </div>
               <div>
                 <div className="flex items-center gap-3">
-                  <h3 className="font-serif text-lg font-medium text-[#2C2825]">
+                  <h3 className="font-serif text-lg font-medium text-[var(--text-primary)]">
                     Google Agenda
                   </h3>
                   {getStatusBadge(
@@ -763,7 +763,7 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
                       : undefined
                   )}
                 </div>
-                <p className="text-xs text-[#7A7167] mt-0.5">
+                <p className="text-xs text-[var(--text-secondary)] mt-0.5">
                   {isNl
                     ? "Inzage in Patricia's persoonlijke afspraken om overboeking te voorkomen."
                     : "Read access to Patricia's personal events to prevent schedule congestion."}
@@ -778,7 +778,7 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
                     type="button"
                     onClick={handleSyncCalendar}
                     disabled={syncingService === 'calendar'}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#FFFFFF] border border-[#DDD4C5] text-xs font-medium text-[#5A5145] hover:bg-[#F5EFE6] transition cursor-pointer"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[var(--surface-2)] border border-[var(--border-subtle)] text-xs font-medium text-[var(--text-secondary)] hover:bg-[var(--surface-raised)] transition cursor-pointer"
                   >
                     <RefreshCw className={`w-3.5 h-3.5 ${syncingService === 'calendar' ? 'animate-spin' : ''}`} />
                     <span>{isNl ? 'Synchroniseren' : 'Sync'}</span>
@@ -786,7 +786,7 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
                   <button
                     type="button"
                     onClick={handleDisconnectCalendar}
-                    className="px-3 py-1.5 rounded-xl text-xs font-medium text-[#A64A38] hover:bg-[#F9ECE9] transition cursor-pointer"
+                    className="px-3 py-1.5 rounded-xl text-xs font-medium text-[#A64A38] hover:bg-[var(--surface-2)] transition cursor-pointer"
                   >
                     {isNl ? 'Verbreken' : 'Disconnect'}
                   </button>
@@ -796,7 +796,7 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
                   type="button"
                   onClick={handleConnectCalendar}
                   disabled={syncingService === 'calendar'}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#2C2825] text-[#FAF8F3] text-xs font-medium hover:bg-[#433D37] transition cursor-pointer shadow-xs disabled:opacity-50"
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[var(--text-primary)] text-[var(--surface-1)] text-xs font-medium hover:bg-[var(--surface-raised)] transition cursor-pointer shadow-xs disabled:opacity-50"
                 >
                   <ExternalLink className="w-3.5 h-3.5" />
                   <span>{isNl ? 'Verbinden via Google OAuth' : 'Connect via Google OAuth'}</span>
@@ -806,14 +806,14 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
           </div>
 
           {integrations.calendar.status === 'connected' && (
-            <div className="flex flex-wrap items-center gap-4 text-xs text-[#7A7167] pt-2 border-t border-[#EAE3D5]">
+            <div className="flex flex-wrap items-center gap-4 text-xs text-[var(--text-secondary)] pt-2 border-t border-[var(--border-subtle)]">
               <div>
-                <span className="text-[#8C8377]">{isNl ? 'Account:' : 'Account:'} </span>
-                <span className="font-mono text-[#2C2825]">{integrations.calendar.accountEmail || (isNl ? 'Gekoppeld account' : 'Connected account')}</span>
+                <span className="text-[var(--text-muted)]">{isNl ? 'Account:' : 'Account:'} </span>
+                <span className="font-mono text-[var(--text-primary)]">{integrations.calendar.accountEmail || (isNl ? 'Gekoppeld account' : 'Connected account')}</span>
               </div>
               {integrations.calendar.lastSync && (
                 <div>
-                  <span className="text-[#8C8377]">{isNl ? 'Laatst gesynchroniseerd:' : 'Last sync:'} </span>
+                  <span className="text-[var(--text-muted)]">{isNl ? 'Laatst gesynchroniseerd:' : 'Last sync:'} </span>
                   <span>{new Date(integrations.calendar.lastSync).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                 </div>
               )}
@@ -824,15 +824,15 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
         {/* ============================================================ */}
         {/* 2. MARILUNA GMAIL                                            */}
         {/* ============================================================ */}
-        <div className="rounded-2xl border border-[#E8E2D6] bg-[#FAF8F3] p-5 sm:p-6 space-y-4 shadow-xs">
+        <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-1)] p-5 sm:p-6 space-y-4 shadow-xs">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-start gap-3.5">
-              <div className="w-10 h-10 rounded-xl bg-[#FFFFFF] border border-[#E8E2D6] flex items-center justify-center shrink-0 text-[#2C2825] shadow-xs">
-                <Mail className="w-5 h-5 text-[#8C7654]" />
+              <div className="w-10 h-10 rounded-xl bg-[var(--surface-2)] border border-[var(--border-subtle)] flex items-center justify-center shrink-0 text-[var(--text-primary)] shadow-xs">
+                <Mail className="w-5 h-5 text-[var(--accent-secondary)]" />
               </div>
               <div>
                 <div className="flex items-center gap-3">
-                  <h3 className="font-serif text-lg font-medium text-[#2C2825]">
+                  <h3 className="font-serif text-lg font-medium text-[var(--text-primary)]">
                     Mariluna Gmail
                   </h3>
                   {getStatusBadge(
@@ -842,7 +842,7 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
                       : undefined
                   )}
                 </div>
-                <p className="text-xs text-[#7A7167] mt-0.5">
+                <p className="text-xs text-[var(--text-secondary)] mt-0.5">
                   {isNl
                     ? 'Zakelijke e-mail communicatie voor Mariluna cliëntcontext en studio-aanvragen.'
                     : 'Business email communication for Mariluna client context and studio requests.'}
@@ -857,7 +857,7 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
                     type="button"
                     onClick={handleSyncGmail}
                     disabled={syncingService === 'gmail'}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#FFFFFF] border border-[#DDD4C5] text-xs font-medium text-[#5A5145] hover:bg-[#F5EFE6] transition cursor-pointer"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[var(--surface-2)] border border-[var(--border-subtle)] text-xs font-medium text-[var(--text-secondary)] hover:bg-[var(--surface-raised)] transition cursor-pointer"
                   >
                     <RefreshCw className={`w-3.5 h-3.5 ${syncingService === 'gmail' ? 'animate-spin' : ''}`} />
                     <span>{isNl ? 'Synchroniseren' : 'Sync'}</span>
@@ -865,7 +865,7 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
                   <button
                     type="button"
                     onClick={handleDisconnectGmail}
-                    className="px-3 py-1.5 rounded-xl text-xs font-medium text-[#A64A38] hover:bg-[#F9ECE9] transition cursor-pointer"
+                    className="px-3 py-1.5 rounded-xl text-xs font-medium text-[#A64A38] hover:bg-[var(--surface-2)] transition cursor-pointer"
                   >
                     {isNl ? 'Verbreken' : 'Disconnect'}
                   </button>
@@ -875,7 +875,7 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
                   type="button"
                   onClick={handleConnectGmail}
                   disabled={syncingService === 'gmail'}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#2C2825] text-[#FAF8F3] text-xs font-medium hover:bg-[#433D37] transition cursor-pointer shadow-xs disabled:opacity-50"
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[var(--text-primary)] text-[var(--surface-1)] text-xs font-medium hover:bg-[var(--surface-raised)] transition cursor-pointer shadow-xs disabled:opacity-50"
                 >
                   <ExternalLink className="w-3.5 h-3.5" />
                   <span>{isNl ? 'Inloggen met Mariluna Gmail' : 'Connect Mariluna Gmail'}</span>
@@ -885,10 +885,10 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
           </div>
 
           {/* Business Realm Boundary Note */}
-          <div className="rounded-xl bg-[#FFFFFF] border border-[#EDE7DC] p-3.5 flex items-start gap-2.5 text-xs text-[#6A6155] leading-relaxed">
-            <Lock className="w-4 h-4 text-[#8C7654] shrink-0 mt-0.5" />
+          <div className="rounded-xl bg-[var(--surface-2)] border border-[var(--surface-2)] p-3.5 flex items-start gap-2.5 text-xs text-[var(--text-secondary)] leading-relaxed">
+            <Lock className="w-4 h-4 text-[var(--accent-secondary)] shrink-0 mt-0.5" />
             <div>
-              <span className="font-medium text-[#2C2825]">
+              <span className="font-medium text-[var(--text-primary)]">
                 {isNl ? 'Strikte Zakelijke Scheiding:' : 'Strict Business Realm Isolation:'}{' '}
               </span>
               {isNl
@@ -898,19 +898,19 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
           </div>
 
           {(integrations.gmail.status === 'connected' || integrations.gmail.status === 'synced') && (
-            <div className="space-y-3 pt-3 border-t border-[#EAE3D5]">
-              <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-[#7A7167]">
+            <div className="space-y-3 pt-3 border-t border-[var(--border-subtle)]">
+              <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-[var(--text-secondary)]">
                 <div>
-                  <span className="text-[#8C8377]">{isNl ? 'Zakelijk adres:' : 'Business email:'} </span>
-                  <span className="font-mono text-[#2C2825] font-medium">{integrations.gmail.accountEmail}</span>
+                  <span className="text-[var(--text-muted)]">{isNl ? 'Zakelijk adres:' : 'Business email:'} </span>
+                  <span className="font-mono text-[var(--text-primary)] font-medium">{integrations.gmail.accountEmail}</span>
                 </div>
                 <div>
-                  <span className="text-[#8C8377]">{isNl ? 'Gesynchroniseerde e-mails:' : 'Synced emails:'} </span>
-                  <span className="font-medium text-[#2C2825]">{integrations.gmail.messages.length}</span>
+                  <span className="text-[var(--text-muted)]">{isNl ? 'Gesynchroniseerde e-mails:' : 'Synced emails:'} </span>
+                  <span className="font-medium text-[var(--text-primary)]">{integrations.gmail.messages.length}</span>
                 </div>
                 {integrations.gmail.lastSync && (
                   <div>
-                    <span className="text-[#8C8377]">{isNl ? 'Laatst bijgewerkt:' : 'Last sync:'} </span>
+                    <span className="text-[var(--text-muted)]">{isNl ? 'Laatst bijgewerkt:' : 'Last sync:'} </span>
                     <span>{new Date(integrations.gmail.lastSync).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                   </div>
                 )}
@@ -918,17 +918,17 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
 
               {/* Real Email Display List */}
               <div className="space-y-2 pt-2">
-                <h4 className="text-xs font-serif font-medium text-[#2C2825] flex items-center gap-1.5">
-                  <MessageSquare className="w-3.5 h-3.5 text-[#8C7654]" />
+                <h4 className="text-xs font-serif font-medium text-[var(--text-primary)] flex items-center gap-1.5">
+                  <MessageSquare className="w-3.5 h-3.5 text-[var(--accent-secondary)]" />
                   <span>{isNl ? 'Gesynchroniseerde Berichten' : 'Synced Messages'}</span>
                 </h4>
 
                 {integrations.gmail.messages.length === 0 ? (
-                  <div className="p-4 rounded-xl border border-dashed border-[#DDD4C5] bg-[#FFFFFF] text-xs text-[#7A7167] text-center space-y-1">
-                    <p className="font-medium text-[#2C2825]">
+                  <div className="p-4 rounded-xl border border-dashed border-[var(--border-subtle)] bg-[var(--surface-2)] text-xs text-[var(--text-secondary)] text-center space-y-1">
+                    <p className="font-medium text-[var(--text-primary)]">
                       {isNl ? 'Geen e-mails gevonden in Mariluna Gmail' : 'No messages found in Mariluna Gmail'}
                     </p>
-                    <p className="text-[11px] text-[#8C8377]">
+                    <p className="text-[11px] text-[var(--text-muted)]">
                       {isNl
                         ? 'Geen recente berichten aangetroffen. Klik op "Synchroniseren" om opnieuw te controleren.'
                         : 'No recent messages retrieved. Click "Sync" to check again.'}
@@ -939,18 +939,18 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
                     {integrations.gmail.messages.map((msg) => (
                       <div
                         key={msg.id}
-                        className="p-3.5 rounded-xl bg-[#FFFFFF] border border-[#E8E2D6] shadow-2xs space-y-1 text-xs"
+                        className="p-3.5 rounded-xl bg-[var(--surface-2)] border border-[var(--border-subtle)] shadow-2xs space-y-1 text-xs"
                       >
                         <div className="flex items-center justify-between gap-2">
-                          <span className="font-semibold text-[#2C2825] truncate">
-                            {msg.sender} <span className="text-[#8C8377] font-normal">({msg.senderEmail})</span>
+                          <span className="font-semibold text-[var(--text-primary)] truncate">
+                            {msg.sender} <span className="text-[var(--text-muted)] font-normal">({msg.senderEmail})</span>
                           </span>
-                          <span className="text-[10px] text-[#8C8377] shrink-0 font-mono">{msg.date}</span>
+                          <span className="text-[10px] text-[var(--text-muted)] shrink-0 font-mono">{msg.date}</span>
                         </div>
-                        <div className="font-medium text-[#7E694E] text-xs truncate">
+                        <div className="font-medium text-[var(--accent-secondary)] text-xs truncate">
                           {msg.subject}
                         </div>
-                        <p className="text-[11px] text-[#6C6358] line-clamp-2 leading-relaxed">
+                        <p className="text-[11px] text-[var(--text-secondary)] line-clamp-2 leading-relaxed">
                           {msg.snippet}
                         </p>
                       </div>
@@ -965,15 +965,15 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
         {/* ============================================================ */}
         {/* 3. GOOGLE HEALTH CONNECT                                    */}
         {/* ============================================================ */}
-        <div className="rounded-2xl border border-[#E8E2D6] bg-[#FAF8F3] p-5 sm:p-6 space-y-4 shadow-xs">
+        <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-1)] p-5 sm:p-6 space-y-4 shadow-xs">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-start gap-3.5">
-              <div className="w-10 h-10 rounded-xl bg-[#FFFFFF] border border-[#E8E2D6] flex items-center justify-center shrink-0 text-[#2C2825] shadow-xs">
-                <Activity className="w-5 h-5 text-[#8C7654]" />
+              <div className="w-10 h-10 rounded-xl bg-[var(--surface-2)] border border-[var(--border-subtle)] flex items-center justify-center shrink-0 text-[var(--text-primary)] shadow-xs">
+                <Activity className="w-5 h-5 text-[var(--accent-secondary)]" />
               </div>
               <div>
                 <div className="flex items-center gap-3">
-                  <h3 className="font-serif text-lg font-medium text-[#2C2825]">
+                  <h3 className="font-serif text-lg font-medium text-[var(--text-primary)]">
                     Health Connect / Google Fit
                   </h3>
                   {getStatusBadge(
@@ -983,7 +983,7 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
                       : undefined
                   )}
                 </div>
-                <p className="text-xs text-[#7A7167] mt-0.5">
+                <p className="text-xs text-[var(--text-secondary)] mt-0.5">
                   {isNl
                     ? 'Neutrale dagelijkse bewegingscontext (alleen stappen & actieve minuten).'
                     : 'Neutral daily movement context (steps & active minutes only).'}
@@ -998,7 +998,7 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
                     type="button"
                     onClick={handleSyncHealthConnect}
                     disabled={syncingService === 'healthConnect'}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#FFFFFF] border border-[#DDD4C5] text-xs font-medium text-[#5A5145] hover:bg-[#F5EFE6] transition cursor-pointer"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[var(--surface-2)] border border-[var(--border-subtle)] text-xs font-medium text-[var(--text-secondary)] hover:bg-[var(--surface-raised)] transition cursor-pointer"
                   >
                     <RefreshCw className={`w-3.5 h-3.5 ${syncingService === 'healthConnect' ? 'animate-spin' : ''}`} />
                     <span>{isNl ? 'Synchroniseren' : 'Sync'}</span>
@@ -1006,20 +1006,20 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
                   <button
                     type="button"
                     onClick={handleDisconnectHealthConnect}
-                    className="px-3 py-1.5 rounded-xl text-xs font-medium text-[#A64A38] hover:bg-[#F9ECE9] transition cursor-pointer"
+                    className="px-3 py-1.5 rounded-xl text-xs font-medium text-[#A64A38] hover:bg-[var(--surface-2)] transition cursor-pointer"
                   >
                     {isNl ? 'Verbreken' : 'Disconnect'}
                   </button>
                 </>
               ) : integrations.healthConnect.status === 'unavailable' ? (
-                <span className="text-xs text-[#8C8377] italic">
+                <span className="text-xs text-[var(--text-muted)] italic">
                   {isNl ? 'Vereist Android toestel met Health Connect app' : 'Requires Android device with Health Connect'}
                 </span>
               ) : (
                 <button
                   type="button"
                   onClick={handleConnectHealthConnect}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#2C2825] text-[#FAF8F3] text-xs font-medium hover:bg-[#433D37] transition cursor-pointer shadow-xs"
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[var(--text-primary)] text-[var(--surface-1)] text-xs font-medium hover:bg-[var(--surface-raised)] transition cursor-pointer shadow-xs"
                 >
                   <Smartphone className="w-3.5 h-3.5" />
                   <span>{isNl ? 'Health Connect Koppelen' : 'Connect Health Connect'}</span>
@@ -1029,10 +1029,10 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
           </div>
 
           {integrations.healthConnect.status === 'connected' && (
-            <div className="flex flex-wrap items-center gap-4 text-xs text-[#7A7167] pt-2 border-t border-[#EAE3D5]">
+            <div className="flex flex-wrap items-center gap-4 text-xs text-[var(--text-secondary)] pt-2 border-t border-[var(--border-subtle)]">
               <div>
-                <span className="text-[#8C8377]">{isNl ? 'Stappen vandaag:' : 'Steps today:'} </span>
-                <span className="font-mono text-[#2C2825] font-semibold">
+                <span className="text-[var(--text-muted)]">{isNl ? 'Stappen vandaag:' : 'Steps today:'} </span>
+                <span className="font-mono text-[var(--text-primary)] font-semibold">
                   {(integrations.healthConnect.stepsToday ?? integrations.healthConnect.todaySteps) !== undefined
                     ? (integrations.healthConnect.stepsToday ?? integrations.healthConnect.todaySteps ?? 0).toLocaleString(isNl ? 'nl-NL' : 'en-US')
                     : (isNl ? 'Geen stapgegevens beschikbaar' : 'No step data available')}
@@ -1040,7 +1040,7 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
               </div>
               {integrations.healthConnect.lastSync && (
                 <div>
-                  <span className="text-[#8C8377]">{isNl ? 'Laatst gesynchroniseerd:' : 'Last sync:'} </span>
+                  <span className="text-[var(--text-muted)]">{isNl ? 'Laatst gesynchroniseerd:' : 'Last sync:'} </span>
                   <span>{new Date(integrations.healthConnect.lastSync).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                 </div>
               )}
@@ -1051,20 +1051,20 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
         {/* ============================================================ */}
         {/* 4. MARILUNA INSTAGRAM                                        */}
         {/* ============================================================ */}
-        <div className="rounded-2xl border border-[#E8E2D6] bg-[#FAF8F3] p-5 sm:p-6 space-y-4 shadow-xs">
+        <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-1)] p-5 sm:p-6 space-y-4 shadow-xs">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-start gap-3.5">
-              <div className="w-10 h-10 rounded-xl bg-[#FFFFFF] border border-[#E8E2D6] flex items-center justify-center shrink-0 text-[#2C2825] shadow-xs">
-                <Instagram className="w-5 h-5 text-[#8C7654]" />
+              <div className="w-10 h-10 rounded-xl bg-[var(--surface-2)] border border-[var(--border-subtle)] flex items-center justify-center shrink-0 text-[var(--text-primary)] shadow-xs">
+                <Instagram className="w-5 h-5 text-[var(--accent-secondary)]" />
               </div>
               <div>
                 <div className="flex items-center gap-3">
-                  <h3 className="font-serif text-lg font-medium text-[#2C2825]">
+                  <h3 className="font-serif text-lg font-medium text-[var(--text-primary)]">
                     Mariluna Instagram
                   </h3>
                   {getStatusBadge(integrations.instagram.status)}
                 </div>
-                <p className="text-xs text-[#7A7167] mt-0.5">
+                <p className="text-xs text-[var(--text-secondary)] mt-0.5">
                   {isNl
                     ? 'Inzichten in recente atelierposts en bereik voor contentplanning.'
                     : 'Insights into recent studio posts and reach for content planning.'}
@@ -1079,7 +1079,7 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
                     type="button"
                     onClick={handleSyncInstagram}
                     disabled={syncingService === 'instagram'}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#FFFFFF] border border-[#DDD4C5] text-xs font-medium text-[#5A5145] hover:bg-[#F5EFE6] transition cursor-pointer"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[var(--surface-2)] border border-[var(--border-subtle)] text-xs font-medium text-[var(--text-secondary)] hover:bg-[var(--surface-raised)] transition cursor-pointer"
                   >
                     <RefreshCw className={`w-3.5 h-3.5 ${syncingService === 'instagram' ? 'animate-spin' : ''}`} />
                     <span>{isNl ? 'Synchroniseren' : 'Sync'}</span>
@@ -1087,7 +1087,7 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
                   <button
                     type="button"
                     onClick={handleDisconnectInstagram}
-                    className="px-3 py-1.5 rounded-xl text-xs font-medium text-[#A64A38] hover:bg-[#F9ECE9] transition cursor-pointer"
+                    className="px-3 py-1.5 rounded-xl text-xs font-medium text-[#A64A38] hover:bg-[var(--surface-2)] transition cursor-pointer"
                   >
                     {isNl ? 'Verbreken' : 'Disconnect'}
                   </button>
@@ -1096,7 +1096,7 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
                 <button
                   type="button"
                   onClick={() => setConnectModalService('instagram')}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#2C2825] text-[#FAF8F3] text-xs font-medium hover:bg-[#433D37] transition cursor-pointer shadow-xs"
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[var(--text-primary)] text-[var(--surface-1)] text-xs font-medium hover:bg-[var(--surface-raised)] transition cursor-pointer shadow-xs"
                 >
                   <ExternalLink className="w-3.5 h-3.5" />
                   <span>{isNl ? 'Koppelen met Instagram' : 'Connect Instagram'}</span>
@@ -1109,15 +1109,15 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
         {/* ============================================================ */}
         {/* 5. PUSH NOTIFICATIES                                         */}
         {/* ============================================================ */}
-        <div className="rounded-2xl border border-[#E8E2D6] bg-[#FAF8F3] p-5 sm:p-6 space-y-4 shadow-xs">
+        <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-1)] p-5 sm:p-6 space-y-4 shadow-xs">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-start gap-3.5">
-              <div className="w-10 h-10 rounded-xl bg-[#FFFFFF] border border-[#E8E2D6] flex items-center justify-center shrink-0 text-[#2C2825] shadow-xs">
-                <Bell className="w-5 h-5 text-[#8C7654]" />
+              <div className="w-10 h-10 rounded-xl bg-[var(--surface-2)] border border-[var(--border-subtle)] flex items-center justify-center shrink-0 text-[var(--text-primary)] shadow-xs">
+                <Bell className="w-5 h-5 text-[var(--accent-secondary)]" />
               </div>
               <div>
                 <div className="flex items-center gap-3">
-                  <h3 className="font-serif text-lg font-medium text-[#2C2825]">
+                  <h3 className="font-serif text-lg font-medium text-[var(--text-primary)]">
                     Push Notificaties
                   </h3>
                   {getStatusBadge(
@@ -1125,7 +1125,7 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
                     notificationStatusDetails.label
                   )}
                 </div>
-                <p className="text-xs text-[#7A7167] mt-0.5">
+                <p className="text-xs text-[var(--text-secondary)] mt-0.5">
                   {notificationStatusDetails.subtext}
                 </p>
               </div>
@@ -1137,8 +1137,8 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
                 onClick={handleToggleNotifications}
                 className={`px-4 py-2 rounded-xl text-xs font-medium transition cursor-pointer ${
                   integrations.pushNotifications.enabled
-                    ? 'bg-[#EAE4D7] text-[#554C42] hover:bg-[#DDD5C7]'
-                    : 'bg-[#2C2825] text-[#FAF8F3] hover:bg-[#433D37]'
+                    ? 'bg-[var(--surface-2)] text-[var(--text-secondary)] hover:bg-[var(--border-subtle)]'
+                    : 'bg-[var(--text-primary)] text-[var(--surface-1)] hover:bg-[var(--surface-raised)]'
                 }`}
               >
                 {integrations.pushNotifications.enabled
@@ -1150,7 +1150,7 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
                   type="button"
                   onClick={handleTestNotification}
                   title="Development testnotificatie"
-                  className="px-3 py-2 rounded-xl bg-[#FFFFFF] border border-[#DDD4C5] text-xs font-medium text-[#5A5145] hover:bg-[#F5EFE6] transition cursor-pointer"
+                  className="px-3 py-2 rounded-xl bg-[var(--surface-2)] border border-[var(--border-subtle)] text-xs font-medium text-[var(--text-secondary)] hover:bg-[var(--surface-raised)] transition cursor-pointer"
                 >
                   {isNl ? '[DEV] Testmelding' : '[DEV] Test'}
                 </button>
@@ -1170,22 +1170,22 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
       {/* Instagram Connect Modal */}
       {connectModalService === 'instagram' && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs">
-          <div className="bg-[#FAF8F3] border border-[#DDD4C5] rounded-3xl max-w-sm w-full p-6 space-y-4 shadow-xl text-[#2C2825]">
+          <div className="bg-[var(--surface-1)] border border-[var(--border-subtle)] rounded-3xl max-w-sm w-full p-6 space-y-4 shadow-xl text-[var(--text-primary)]">
             <div className="flex items-center justify-between">
-              <h3 className="font-serif text-lg text-[#2C2825]">
+              <h3 className="font-serif text-lg text-[var(--text-primary)]">
                 {isNl ? 'Mariluna Instagram Koppelen' : 'Connect Instagram'}
               </h3>
               <button
                 type="button"
                 onClick={() => setConnectModalService(null)}
-                className="p-1 rounded-full text-[#8C8377] hover:text-[#2C2825]"
+                className="p-1 rounded-full text-[var(--text-muted)] hover:text-[var(--text-primary)]"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
             <div className="space-y-3">
               <div>
-                <label className="block text-xs font-medium text-[#5A5145] mb-1">
+                <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">
                   {isNl ? 'Instagram Gebruikersnaam' : 'Instagram Username'}
                 </label>
                 <input
@@ -1193,12 +1193,12 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
                   placeholder="@mariluna.studio"
                   value={usernameInput}
                   onChange={(e) => setUsernameInput(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl bg-[#FFFFFF] border border-[#D5CCBE] text-xs text-[#2C2825]"
+                  className="w-full px-3.5 py-2 rounded-xl bg-[var(--surface-2)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)]"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-[#5A5145] mb-1">
+                <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">
                   {isNl ? 'Meta Graph API Access Token' : 'Meta Graph API Access Token'}
                 </label>
                 <input
@@ -1206,10 +1206,10 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
                   placeholder="EAAG..."
                   value={instagramTokenInput}
                   onChange={(e) => setInstagramTokenInput(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl bg-[#FFFFFF] border border-[#D5CCBE] text-xs text-[#2C2825]"
+                  className="w-full px-3.5 py-2 rounded-xl bg-[var(--surface-2)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)]"
                   autoFocus
                 />
-                <p className="text-[10px] text-[#8C8377] mt-1 leading-relaxed">
+                <p className="text-[10px] text-[var(--text-muted)] mt-1 leading-relaxed">
                   {isNl
                     ? 'Vul je actieve Instagram/Meta Graph API token in om posts te synchroniseren. Geen verbinding mogelijk zonder geverifieerde token.'
                     : 'Provide your active Meta Graph API token to sync posts.'}
@@ -1220,14 +1220,14 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
               <button
                 type="button"
                 onClick={() => setConnectModalService(null)}
-                className="px-3 py-1.5 rounded-xl text-xs text-[#7A7167] hover:bg-[#EFE9DD] transition"
+                className="px-3 py-1.5 rounded-xl text-xs text-[var(--text-secondary)] hover:bg-[var(--surface-raised)] transition"
               >
                 {isNl ? 'Annuleren' : 'Cancel'}
               </button>
               <button
                 type="button"
                 onClick={handleConnectInstagram}
-                className="px-4 py-1.5 rounded-xl bg-[#2C2825] text-[#FAF8F3] text-xs font-medium hover:bg-[#433D37] transition"
+                className="px-4 py-1.5 rounded-xl bg-[var(--text-primary)] text-[var(--surface-1)] text-xs font-medium hover:bg-[var(--surface-raised)] transition"
               >
                 {isNl ? 'Koppelen' : 'Connect'}
               </button>
