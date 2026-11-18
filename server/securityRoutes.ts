@@ -17,6 +17,15 @@ import {
 
 const router = Router();
 
+// Security status, recovery codes, device inventory and authentication responses
+// must never be stored by browsers or intermediary caches.
+router.use((_req: Request, res: Response, next) => {
+  res.setHeader('Cache-Control', 'no-store, private');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Vary', 'Cookie');
+  next();
+});
+
 // Never infer production WebAuthn trust from the incoming Host or Origin headers.
 function getRPInfo(req: Request) {
   return resolveWebAuthnRelyingParty({
