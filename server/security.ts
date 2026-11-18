@@ -735,7 +735,37 @@ class SecurityVault {
       }
     }
 
-    // Firewall Rule 4: Wellbeing & body progress data quarantine (Never sent to AI unless explicit permission granted)
+    // Firewall Rule 4: Financial data requires its own explicit consent,
+    // separate from general Mariluna/business context permission.
+    if (!this.permissions.allowFinancialDataToAI) {
+      const financialKeys = new Set([
+        'financialData', 'finance', 'finances', 'bookkeeping', 'accounting',
+        'expenses', 'invoices', 'invoiceNumber', 'amount', 'vatAmount',
+        'revenue', 'profit', 'cashFlow', 'balanceSheet', 'bankTransactions',
+        'taxRecords', 'socialContributions', 'revenueTargetYear',
+        'price', 'unitPrice', 'cost', 'costs', 'margin', 'turnover',
+      ]);
+      const stripFinancialFields = (value: any): any => {
+        if (Array.isArray(value)) return value.map(stripFinancialFields);
+        if (!value || typeof value !== 'object') return value;
+        const result: Record<string, any> = {};
+        for (const [key, nested] of Object.entries(value)) {
+          if (financialKeys.has(key)) continue;
+          result[key] = stripFinancialFields(nested);
+        }
+        return result;
+      };
+
+      const scrubbed = stripFinancialFields(sanitized);
+      for (const key of Object.keys(sanitized)) delete sanitized[key];
+      Object.assign(sanitized, scrubbed);
+      delete sanitized.marilunaAdmin;
+      delete sanitized.marilunaFinance;
+      delete sanitized.financialSummary;
+      delete sanitized.financeSummary;
+    }
+
+    // Firewall Rule 5: Wellbeing & body progress data quarantine (Never sent to AI unless explicit permission granted)
     if (!this.permissions.allowWellbeingDataToAI) {
       delete sanitized.wellbeing;
       delete sanitized.progressLogs;
