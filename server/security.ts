@@ -74,8 +74,11 @@ class SecurityVault {
   private recoveryCodes: RecoveryCodeItem[] = [];
   // Active sessions
   private sessions: Map<string, ActiveSession> = new Map();
-  // Challenges for WebAuthn in-flight
-  private currentChallenges: Map<string, string> = new Map();
+  // WebAuthn challenges are one-time, short-lived nonces. Keep the registry
+  // bounded so abandoned browser ceremonies cannot grow server memory forever.
+  private currentChallenges: Map<string, { challenge: string; expiresAt: number }> = new Map();
+  private readonly challengeTtlMs = 5 * 60 * 1000;
+  private readonly maxPendingChallenges = 5000;
   // Rate limiting / lockouts
   private failedAttempts: Map<string, { count: number; lockedUntil: number }> = new Map();
   // Permissions
@@ -281,12 +284,33 @@ class SecurityVault {
   // ----------------------------------------------------
   // Passkey / WebAuthn Operations
   // ----------------------------------------------------
-  public setChallenge(key: string, challenge: string): void {
-    this.currentChallenges.set(key, challenge);
+  public setChallenge(key: string, challenge: string, ttlMs: number = this.challengeTtlMs): void {
+    const now = Date.now();
+    for (const [pendingKey, pending] of this.currentChallenges) {
+      if (pending.expiresAt <= now) this.currentChallenges.delete(pendingKey);
+    }
+
+    // Bound memory use even if a client repeatedly requests new ceremonies.
+    while (this.currentChallenges.size >= this.maxPendingChallenges) {
+      const oldestKey = this.currentChallenges.keys().next().value;
+      if (oldestKey === undefined) break;
+      this.currentChallenges.delete(oldestKey);
+    }
+
+    this.currentChallenges.set(key, {
+      challenge,
+      expiresAt: now + Math.max(1, Math.min(ttlMs, this.challengeTtlMs)),
+    });
   }
 
   public getChallenge(key: string): string | undefined {
-    return this.currentChallenges.get(key);
+    const pending = this.currentChallenges.get(key);
+    if (!pending) return undefined;
+    if (pending.expiresAt <= Date.now()) {
+      this.currentChallenges.delete(key);
+      return undefined;
+    }
+    return pending.challenge;
   }
 
   public deleteChallenge(key: string): void {
