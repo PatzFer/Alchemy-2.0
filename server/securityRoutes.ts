@@ -306,7 +306,7 @@ router.post('/webauthn/register-verify', requireAppAuth, async (req: Request, re
     const session = getOrCreateSession(req, res);
     const { response, nickname } = req.body;
     const { rpID, origin } = getRPInfo(req);
-    const expectedChallenge = securityVault.getChallenge(`reg_${session.id}`);
+    const expectedChallenge = securityVault.consumeChallenge(`reg_${session.id}`);
 
     if (!expectedChallenge) {
       return res.status(400).json({ error: 'Registration challenge expired or missing.' });
@@ -383,7 +383,7 @@ router.post('/webauthn/auth-verify', async (req: Request, res: Response) => {
     const session = getOrCreateSession(req, res);
     const { response } = req.body;
     const { rpID, origin } = getRPInfo(req);
-    const expectedChallenge = securityVault.getChallenge(`auth_${session.id}`);
+    const expectedChallenge = securityVault.consumeChallenge(`auth_${session.id}`);
 
     if (!expectedChallenge) {
       return res.status(400).json({ error: 'Authentication challenge expired or missing.' });
