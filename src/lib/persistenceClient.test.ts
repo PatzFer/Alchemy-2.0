@@ -11,6 +11,7 @@ test('client persistence requires an explicit access token and makes no request 
   };
   await assert.rejects(() => loadAlchemySnapshot(' ', fetcher), /geldige Alchemy-aanmeldsessie/);
   await assert.rejects(() => saveAlchemySnapshot('', INITIAL_STATE, fetcher), /geldige Alchemy-aanmeldsessie/);
+  await assert.rejects(() => loadAlchemySnapshot('token with spaces', fetcher), /geldige Alchemy-aanmeldsessie/);
   assert.equal(called, false);
 });
 
