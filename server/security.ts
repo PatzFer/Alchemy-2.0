@@ -86,8 +86,9 @@ class SecurityVault {
     aiRequiresConfirmationForModifications: true, // Non-negotiable
     aiRequiresConfirmationForDestructive: true, // Non-negotiable
     allowCycleDataToAI: false, // Strict default: Cycle stays strictly within Personal domain
-    allowPersonalDataToAI: true,
-    allowMarilunaDataToAI: true,
+    // Explicit opt-in: no personal or business records are sent to Gemini by default.
+    allowPersonalDataToAI: false,
+    allowMarilunaDataToAI: false,
     allowFinancialDataToAI: false,
     allowWellbeingDataToAI: false, // Default quarantined: user explicitly permits in settings/module
     activeAiProvider: 'gemini-server',
