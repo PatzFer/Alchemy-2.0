@@ -83,7 +83,7 @@ export class SupabasePersistence {
         Authorization: `Bearer ${accessToken}`,
       },
     });
-    if (!owner || typeof owner.id !== 'string' || !/^[0-9a-f]{8}-[0-9a-f-]{27,}$/i.test(owner.id)) {
+    if (!owner || typeof owner.id !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(owner.id)) {
       throw new Error('Supabase did not return a valid authenticated owner.');
     }
     return owner;
@@ -99,7 +99,14 @@ export class SupabasePersistence {
       throw new Error('schemaVersion must be a positive integer.');
     }
     const owner = await this.verifyOwner(accessToken);
-    const payloadSha256 = createHash('sha256').update(stableJson(payload)).digest('hex');
+    if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+      throw new Error('Snapshot payload must be a JSON object.');
+    }
+    const serializedPayload = stableJson(payload);
+    if (Buffer.byteLength(serializedPayload, 'utf8') > 1_500_000) {
+      throw new Error('Snapshot payload exceeds the 1.5 MB persistence limit.');
+    }
+    const payloadSha256 = createHash('sha256').update(serializedPayload).digest('hex');
     // Revision allocation and insertion happen in one database transaction. This
     // avoids duplicate revisions when autosaves from multiple tabs race.
     const rows = await this.request<SnapshotRecord[]>('/rest/v1/rpc/save_app_state_snapshot', {
@@ -117,6 +124,9 @@ export class SupabasePersistence {
       }),
     });
     if (!rows[0]) throw new Error('Supabase did not return the saved snapshot.');
+    if (rows[0].owner_id !== owner.id) {
+      throw new Error('Supabase returned a snapshot for a different owner.');
+    }
     return rows[0];
   }
 
@@ -131,6 +141,14 @@ export class SupabasePersistence {
     );
     const snapshot = rows[0] ?? null;
     if (!snapshot) return null;
+    if (snapshot.owner_id !== owner.id) {
+      throw new Error('Stored Alchemy snapshot owner does not match the authenticated owner.');
+    }
+    if (!Number.isInteger(snapshot.revision) || snapshot.revision < 1 ||
+        !Number.isInteger(snapshot.schema_version) || snapshot.schema_version < 1 ||
+        !snapshot.payload || typeof snapshot.payload !== 'object' || Array.isArray(snapshot.payload)) {
+      throw new Error('Stored Alchemy snapshot metadata is invalid.');
+    }
     const actualHash = createHash('sha256').update(stableJson(snapshot.payload)).digest('hex');
     if (snapshot.payload_sha256 && actualHash !== snapshot.payload_sha256) {
       throw new Error('Stored Alchemy snapshot integrity check failed.');
