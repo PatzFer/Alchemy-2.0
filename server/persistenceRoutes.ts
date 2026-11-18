@@ -10,7 +10,12 @@ function getBearerToken(req: Request): string | null {
 }
 
 router.get('/snapshot', async (req: Request, res: Response) => {
-  const persistence = createSupabasePersistence();
+  let persistence;
+  try {
+    persistence = createSupabasePersistence();
+  } catch {
+    return res.status(503).json({ error: 'Supabase persistence configuration is invalid.' });
+  }
   if (!persistence) {
     return res.status(503).json({ error: 'Supabase persistence is not configured.' });
   }
