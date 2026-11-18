@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { securityVault } from './security';
+import { securityVault, requireAppAuth } from './security';
 
 test('Mariluna AI context excludes personal events, projects, memories and private preferences', () => {
   const result = securityVault.sanitizeContextForAi({
@@ -78,4 +78,51 @@ test('Personal AI context excludes Mariluna business records and offerings', () 
   assert.equal('offerings' in result, false);
   assert.equal('contentPlan' in result, false);
   assert.equal('memoriesSample' in result, false);
+});
+
+
+test('private API middleware rejects an unauthenticated session', () => {
+  const headers: Record<string, string> = {};
+  const req: any = {
+    cookies: {},
+    headers: { 'user-agent': 'Alchemy test runner' },
+    ip: '127.0.0.1',
+    socket: { remoteAddress: '127.0.0.1' },
+  };
+  const res: any = {
+    statusCode: 200,
+    body: undefined,
+    status(code: number) { this.statusCode = code; return this; },
+    json(body: any) { this.body = body; return this; },
+    cookie(name: string, value: string) { headers[name] = value; return this; },
+  };
+  let nextCalled = false;
+  requireAppAuth(req, res, () => { nextCalled = true; });
+  assert.equal(res.statusCode, 401);
+  assert.equal(res.body.authenticationRequired, true);
+  assert.equal(nextCalled, false);
+});
+
+test('private API middleware allows a valid authenticated session', () => {
+  const session = securityVault.createSession({
+    ip: '127.0.0.2',
+    headers: { 'user-agent': 'Alchemy test runner' },
+    socket: { remoteAddress: '127.0.0.2' },
+  } as any, 'totp', true);
+  const req: any = {
+    cookies: { pm_alchemy_session: session.id },
+    headers: { 'user-agent': 'Alchemy test runner' },
+    ip: '127.0.0.2',
+    socket: { remoteAddress: '127.0.0.2' },
+  };
+  const res: any = {
+    statusCode: 200,
+    status(code: number) { this.statusCode = code; return this; },
+    json(body: any) { this.body = body; return this; },
+    cookie() { return this; },
+  };
+  let nextCalled = false;
+  requireAppAuth(req, res, () => { nextCalled = true; });
+  assert.equal(res.statusCode, 200);
+  assert.equal(nextCalled, true);
 });
