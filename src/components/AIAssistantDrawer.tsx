@@ -159,7 +159,7 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
         const found = (intentions || []).find(
           (i) => i.date === todayStr && (activeWorld === 'all' || i.realm === activeWorld)
         );
-        return found ? { id: found.id, title: found.title, status: found.status, completed: found.completed } : undefined;
+        return found ? { id: found.id, title: found.title, realm: found.realm, status: found.status, completed: found.completed } : undefined;
       })(),
       contentPlan: contentPlan ? {
         quarterTheme: contentPlan.quarterTheme,
@@ -177,7 +177,7 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
       })),
       workingHours: `${lifeProfile.workingHoursStart} - ${lifeProfile.workingHoursEnd}`,
       preferences: lifeProfile.preferences,
-      memoriesSample: (memories || []).map((m) => m.content),
+      memoryItems: (memories || []).map((m) => ({ content: m.content, category: m.category, realm: m.realm, type: m.type, status: m.status, confidence: m.confidence, expiresAt: m.expiresAt })),
       wellbeing:
         wellbeing && wellbeing.preferences?.allowWellbeingDataToAI
           ? {
@@ -212,12 +212,12 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
     if (!isOpen || isThinking || messages.length === 0) return;
 
     const lastMsg = messages[messages.length - 1];
-    if (lastMsg.role === 'user' && lastMsg.id !== lastProcessedMsgIdRef.current) {
+    if (lastMsg.role === 'user' && lastMsg.world === activeWorld && lastMsg.id !== lastProcessedMsgIdRef.current) {
       lastProcessedMsgIdRef.current = lastMsg.id;
       setIsThinking(true);
 
       const context = buildContextPayload();
-      const historyPayload = messages.map((m) => ({
+      const historyPayload = messages.filter((m) => m.world === activeWorld).map((m) => ({
         role: m.role,
         content: m.content,
       }));
@@ -225,7 +225,7 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
       sendChatMessage(historyPayload, context, activeWorld)
         .then((response) => {
           setIsThinking(false);
-          onAddMessage(response);
+          onAddMessage({ ...response, world: activeWorld });
         })
         .catch((err) => {
           console.error('Error in assistant auto-response:', err);
@@ -243,6 +243,7 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
       role: 'user',
       content: textToSend,
       timestamp: new Date().toISOString(),
+      world: activeWorld,
     };
 
     onAddMessage(userMessage);
@@ -251,7 +252,7 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
     lastProcessedMsgIdRef.current = userMessage.id;
 
     const context = buildContextPayload(customContextItem);
-    const historyPayload = [...messages, userMessage].map((m) => ({
+    const historyPayload = [...messages.filter((m) => m.world === activeWorld), userMessage].map((m) => ({
       role: m.role,
       content: m.content,
     }));
@@ -259,7 +260,7 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
     try {
       const response = await sendChatMessage(historyPayload, context, activeWorld);
       setIsThinking(false);
-      onAddMessage(response);
+      onAddMessage({ ...response, world: activeWorld });
     } catch (err) {
       console.error('Error sending message:', err);
       setIsThinking(false);
@@ -316,7 +317,7 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
 
         {/* Message Thread */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
-          {messages.map((msg) => {
+          {messages.filter((msg) => msg.world === activeWorld).map((msg) => {
             const isUser = msg.role === 'user';
             return (
               <div

@@ -124,11 +124,11 @@ export const MyLifeView: React.FC<MyLifeViewProps> = ({
   return (
     <div className="space-y-8 pb-16">
       {/* Header */}
-      <div className="border-b border-[#E8E2D5] pb-5">
-        <h1 className="font-serif text-3xl font-normal text-[#2C2825]">
+      <div className="border-b border-[var(--border-subtle)] pb-5">
+        <h1 className="font-serif text-3xl font-normal text-[var(--text-primary)]">
           My Life & Permanent Foundations
         </h1>
-        <p className="text-xs text-[#7A7167] mt-1 font-light">
+        <p className="text-xs text-[var(--text-secondary)] mt-1 font-light">
           Entered once, permanently respected. The intelligent planning engine consults this baseline to protect your working boundaries and rest.
         </p>
 
@@ -148,8 +148,8 @@ export const MyLifeView: React.FC<MyLifeViewProps> = ({
                 onClick={() => setActiveTab(tab.id as any)}
                 className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full transition cursor-pointer shrink-0 ${
                   activeTab === tab.id
-                    ? 'bg-[#2C2825] text-[#F9F7F2] font-medium shadow-xs'
-                    : 'bg-[#FFFFFF] border border-[#E3DCD1] text-[#695F54] hover:bg-[#F2ECE1]'
+                    ? 'bg-[var(--text-primary)] text-[var(--text-primary)] font-medium shadow-xs'
+                    : 'bg-[var(--surface-2)] border border-[var(--border-subtle)] text-[var(--text-secondary)] hover:bg-[var(--surface-2)]'
                 }`}
               >
                 <Icon className="w-3.5 h-3.5" />
@@ -163,8 +163,8 @@ export const MyLifeView: React.FC<MyLifeViewProps> = ({
       {/* Tab 1: Working Schedule & Bounds */}
       {activeTab === 'profile' && (
         <div className="space-y-6">
-          <div className="rounded-2xl border border-[#E8E1D4] bg-[#FFFFFF] p-6 shadow-xs">
-            <h2 className="font-serif text-lg font-medium text-[#2C2825] mb-4">
+          <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-2)] p-6 shadow-xs">
+            <h2 className="font-serif text-lg font-medium text-[var(--text-primary)] mb-4">
               Protected Working Boundaries
             </h2>
 
@@ -177,7 +177,7 @@ export const MyLifeView: React.FC<MyLifeViewProps> = ({
                   type="time"
                   value={workingStart}
                   onChange={(e) => setWorkingStart(e.target.value)}
-                  className="w-full bg-[#FAF8F4] border border-[#D5CCBE] rounded-xl px-3.5 py-2 text-xs text-[#2C2825]"
+                  className="w-full bg-[var(--surface-1)] border border-[var(--border-subtle)] rounded-xl px-3.5 py-2 text-xs text-[var(--text-primary)]"
                 />
               </div>
 
@@ -189,9 +189,9 @@ export const MyLifeView: React.FC<MyLifeViewProps> = ({
                   type="time"
                   value={workingEnd}
                   onChange={(e) => setWorkingEnd(e.target.value)}
-                  className="w-full bg-[#FAF8F4] border border-[#D5CCBE] rounded-xl px-3.5 py-2 text-xs text-[#2C2825]"
+                  className="w-full bg-[var(--surface-1)] border border-[var(--border-subtle)] rounded-xl px-3.5 py-2 text-xs text-[var(--text-primary)]"
                 />
-                <span className="text-[10px] text-[#8C7654] mt-1 block">
+                <span className="text-[10px] text-[var(--accent-secondary)] mt-1 block">
                   Evenings automatically protected after this hour.
                 </span>
               </div>
@@ -204,7 +204,7 @@ export const MyLifeView: React.FC<MyLifeViewProps> = ({
                   type="number"
                   value={bufferTime}
                   onChange={(e) => setBufferTime(Number(e.target.value))}
-                  className="w-full bg-[#FAF8F4] border border-[#D5CCBE] rounded-xl px-3.5 py-2 text-xs text-[#2C2825]"
+                  className="w-full bg-[var(--surface-1)] border border-[var(--border-subtle)] rounded-xl px-3.5 py-2 text-xs text-[var(--text-primary)]"
                 />
               </div>
             </div>
@@ -212,7 +212,7 @@ export const MyLifeView: React.FC<MyLifeViewProps> = ({
             <div className="mt-5 pt-4 border-t border-[#F0EBE1] flex justify-end">
               <button
                 onClick={handleSaveHours}
-                className="px-5 py-2 rounded-xl bg-[#2C2825] text-[#F9F7F2] text-xs font-medium hover:bg-[#453E38] transition cursor-pointer"
+                className="px-5 py-2 rounded-xl bg-[var(--text-primary)] text-[var(--text-primary)] text-xs font-medium hover:bg-[var(--text-primary)] transition cursor-pointer"
               >
                 Save Schedule Baseline
               </button>
@@ -225,8 +225,8 @@ export const MyLifeView: React.FC<MyLifeViewProps> = ({
       {activeTab === 'routines' && (
         <div className="space-y-6">
           {/* Add routine form */}
-          <div className="rounded-2xl border border-[#E8E1D4] bg-[#FFFFFF] p-5 shadow-xs">
-            <h3 className="font-serif text-base font-medium text-[#2C2825] mb-3">
+          <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-2)] p-5 shadow-xs">
+            <h3 className="font-serif text-base font-medium text-[var(--text-primary)] mb-3">
               Add Routine
             </h3>
             <form onSubmit={handleAddRoutine} className="flex flex-col sm:flex-row gap-3">
@@ -236,12 +236,12 @@ export const MyLifeView: React.FC<MyLifeViewProps> = ({
                 value={newRoutineTitle}
                 onChange={(e) => setNewRoutineTitle(e.target.value)}
                 placeholder="e.g. Sensory tea ritual, morning breathwork"
-                className="flex-1 bg-[#FAF8F4] border border-[#D5CCBE] rounded-xl px-3.5 py-2 text-xs text-[#2C2825]"
+                className="flex-1 bg-[var(--surface-1)] border border-[var(--border-subtle)] rounded-xl px-3.5 py-2 text-xs text-[var(--text-primary)]"
               />
               <select
                 value={newRoutineTime}
                 onChange={(e) => setNewRoutineTime(e.target.value as any)}
-                className="bg-[#FAF8F4] border border-[#D5CCBE] rounded-xl px-3 py-2 text-xs text-[#2C2825]"
+                className="bg-[var(--surface-1)] border border-[var(--border-subtle)] rounded-xl px-3 py-2 text-xs text-[var(--text-primary)]"
               >
                 <option value="morning">Morning</option>
                 <option value="afternoon">Afternoon</option>
@@ -250,7 +250,7 @@ export const MyLifeView: React.FC<MyLifeViewProps> = ({
               <select
                 value={newRoutineRecurrence}
                 onChange={(e) => setNewRoutineRecurrence(e.target.value as any)}
-                className="bg-[#FAF8F4] border border-[#D5CCBE] rounded-xl px-3 py-2 text-xs text-[#2C2825]"
+                className="bg-[var(--surface-1)] border border-[var(--border-subtle)] rounded-xl px-3 py-2 text-xs text-[var(--text-primary)]"
               >
                 <option value="permanent">Permanent</option>
                 <option value="recurring">Recurring</option>
@@ -260,12 +260,12 @@ export const MyLifeView: React.FC<MyLifeViewProps> = ({
                 type="number"
                 value={newRoutineDuration}
                 onChange={(e) => setNewRoutineDuration(Number(e.target.value))}
-                className="w-20 bg-[#FAF8F4] border border-[#D5CCBE] rounded-xl px-3 py-2 text-xs text-[#2C2825]"
+                className="w-20 bg-[var(--surface-1)] border border-[var(--border-subtle)] rounded-xl px-3 py-2 text-xs text-[var(--text-primary)]"
                 placeholder="Mins"
               />
               <button
                 type="submit"
-                className="px-4 py-2 rounded-xl bg-[#2C2825] text-[#F9F7F2] text-xs font-medium hover:bg-[#453E38] transition cursor-pointer"
+                className="px-4 py-2 rounded-xl bg-[var(--text-primary)] text-[var(--text-primary)] text-xs font-medium hover:bg-[var(--text-primary)] transition cursor-pointer"
               >
                 Add Routine
               </button>
@@ -279,13 +279,13 @@ export const MyLifeView: React.FC<MyLifeViewProps> = ({
               return (
                 <div
                   key={timeSlot}
-                  className="rounded-2xl border border-[#E8E1D4] bg-[#FAF8F4] p-5 shadow-xs"
+                  className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-1)] p-5 shadow-xs"
                 >
-                  <div className="flex items-center justify-between pb-3 border-b border-[#EDE7DC] mb-3">
-                    <span className="font-serif text-base capitalize text-[#2C2825] font-medium">
+                  <div className="flex items-center justify-between pb-3 border-b border-[var(--surface-2)] mb-3">
+                    <span className="font-serif text-base capitalize text-[var(--text-primary)] font-medium">
                       {timeSlot} Rituals
                     </span>
-                    <span className="text-xs text-[#8C7654] font-medium">
+                    <span className="text-xs text-[var(--accent-secondary)] font-medium">
                       {list.length}
                     </span>
                   </div>
@@ -294,13 +294,13 @@ export const MyLifeView: React.FC<MyLifeViewProps> = ({
                     {list.map((item) => (
                       <div
                         key={item.id}
-                        className="p-3 rounded-xl bg-[#FFFFFF] border border-[#E2D8C7] flex items-center justify-between shadow-xs"
+                        className="p-3 rounded-xl bg-[var(--surface-2)] border border-[var(--border-subtle)] flex items-center justify-between shadow-xs"
                       >
                         <div>
-                          <div className="text-xs font-medium text-[#2C2825]">
+                          <div className="text-xs font-medium text-[var(--text-primary)]">
                             {item.title}
                           </div>
-                          <div className="flex items-center gap-2 mt-1 text-[10px] text-[#8C8377]">
+                          <div className="flex items-center gap-2 mt-1 text-[10px] text-[var(--text-muted)]">
                             <span>{item.durationMinutes} min</span>
                             <span>•</span>
                             <span className="capitalize">{item.recurrence}</span>
@@ -325,8 +325,8 @@ export const MyLifeView: React.FC<MyLifeViewProps> = ({
       {/* Tab 3: Commitments */}
       {activeTab === 'commitments' && (
         <div className="space-y-6">
-          <div className="rounded-2xl border border-[#E8E1D4] bg-[#FFFFFF] p-5 shadow-xs">
-            <h3 className="font-serif text-base font-medium text-[#2C2825] mb-3">
+          <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-2)] p-5 shadow-xs">
+            <h3 className="font-serif text-base font-medium text-[var(--text-primary)] mb-3">
               Add Recurring Weekly Commitment
             </h3>
             <form onSubmit={handleAddCommitment} className="flex flex-col sm:flex-row gap-3">
@@ -336,12 +336,12 @@ export const MyLifeView: React.FC<MyLifeViewProps> = ({
                 value={newCommitTitle}
                 onChange={(e) => setNewCommitTitle(e.target.value)}
                 placeholder="e.g. Pilates reformer, Studio review"
-                className="flex-1 bg-[#FAF8F4] border border-[#D5CCBE] rounded-xl px-3.5 py-2 text-xs text-[#2C2825]"
+                className="flex-1 bg-[var(--surface-1)] border border-[var(--border-subtle)] rounded-xl px-3.5 py-2 text-xs text-[var(--text-primary)]"
               />
               <select
                 value={newCommitDay}
                 onChange={(e) => setNewCommitDay(e.target.value)}
-                className="bg-[#FAF8F4] border border-[#D5CCBE] rounded-xl px-3 py-2 text-xs text-[#2C2825]"
+                className="bg-[var(--surface-1)] border border-[var(--border-subtle)] rounded-xl px-3 py-2 text-xs text-[var(--text-primary)]"
               >
                 {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map(
                   (d) => (
@@ -355,17 +355,17 @@ export const MyLifeView: React.FC<MyLifeViewProps> = ({
                 type="time"
                 value={newCommitStart}
                 onChange={(e) => setNewCommitStart(e.target.value)}
-                className="bg-[#FAF8F4] border border-[#D5CCBE] rounded-xl px-3 py-2 text-xs text-[#2C2825]"
+                className="bg-[var(--surface-1)] border border-[var(--border-subtle)] rounded-xl px-3 py-2 text-xs text-[var(--text-primary)]"
               />
               <input
                 type="time"
                 value={newCommitEnd}
                 onChange={(e) => setNewCommitEnd(e.target.value)}
-                className="bg-[#FAF8F4] border border-[#D5CCBE] rounded-xl px-3 py-2 text-xs text-[#2C2825]"
+                className="bg-[var(--surface-1)] border border-[var(--border-subtle)] rounded-xl px-3 py-2 text-xs text-[var(--text-primary)]"
               />
               <button
                 type="submit"
-                className="px-4 py-2 rounded-xl bg-[#2C2825] text-[#F9F7F2] text-xs font-medium hover:bg-[#453E38] transition cursor-pointer"
+                className="px-4 py-2 rounded-xl bg-[var(--text-primary)] text-[var(--text-primary)] text-xs font-medium hover:bg-[var(--text-primary)] transition cursor-pointer"
               >
                 Save
               </button>
@@ -376,20 +376,20 @@ export const MyLifeView: React.FC<MyLifeViewProps> = ({
             {lifeProfile.commitments.map((c) => (
               <div
                 key={c.id}
-                className="p-4 rounded-xl bg-[#FFFFFF] border border-[#E8E1D4] flex items-center justify-between shadow-xs"
+                className="p-4 rounded-xl bg-[var(--surface-2)] border border-[var(--border-subtle)] flex items-center justify-between shadow-xs"
               >
                 <div className="flex items-center gap-3">
                   <span className="w-2.5 h-2.5 rounded-full bg-[#C5A880]" />
                   <div>
-                    <span className="text-xs font-semibold text-[#2C2825]">{c.title}</span>
-                    <span className="text-xs text-[#8C8377] block">
+                    <span className="text-xs font-semibold text-[var(--text-primary)]">{c.title}</span>
+                    <span className="text-xs text-[var(--text-muted)] block">
                       Every {c.dayOfWeek} from {c.startTime} to {c.endTime}
                     </span>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <span className="text-[10px] uppercase tracking-wider font-semibold px-2 py-0.5 rounded-full bg-[#F2ECE1] text-[#60564C]">
+                  <span className="text-[10px] uppercase tracking-wider font-semibold px-2 py-0.5 rounded-full bg-[var(--surface-2)] text-[var(--text-secondary)]">
                     {c.recurrence}
                   </span>
                   <button
@@ -408,17 +408,17 @@ export const MyLifeView: React.FC<MyLifeViewProps> = ({
       {/* Tab 4: Personal Style Architecture */}
       {activeTab === 'style' && (
         <div className="space-y-6">
-          <div className="rounded-2xl border border-[#E8E1D4] bg-[#FFFFFF] p-6 shadow-xs">
+          <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-2)] p-6 shadow-xs">
             <div className="flex items-center justify-between pb-3 border-b border-[#F0EBE1] mb-4">
               <div>
-                <h3 className="font-serif text-lg font-medium text-[#2C2825]">
+                <h3 className="font-serif text-lg font-medium text-[var(--text-primary)]">
                   Personal Style & Capsule Architecture
                 </h3>
-                <p className="text-xs text-[#7A7167]">
+                <p className="text-xs text-[var(--text-secondary)]">
                   Seasonal color harmony and silhouette alignment.
                 </p>
               </div>
-              <span className="text-[11px] px-2.5 py-1 rounded-full bg-[#F2ECE1] text-[#60564C] font-medium">
+              <span className="text-[11px] px-2.5 py-1 rounded-full bg-[var(--surface-2)] text-[var(--text-secondary)] font-medium">
                 Module Ready
               </span>
             </div>
@@ -432,17 +432,17 @@ export const MyLifeView: React.FC<MyLifeViewProps> = ({
                 {personalStyle.colorPalette.map((col, idx) => (
                   <div
                     key={idx}
-                    className="p-3 rounded-xl border border-[#E2DBD0] bg-[#FAF8F4] flex items-center gap-3"
+                    className="p-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-1)] flex items-center gap-3"
                   >
                     <div
                       style={{ backgroundColor: col.hex }}
-                      className="w-8 h-8 rounded-lg border border-[#D5CCBF] shadow-xs shrink-0"
+                      className="w-8 h-8 rounded-lg border border-[var(--border-subtle)] shadow-xs shrink-0"
                     />
                     <div>
-                      <span className="text-xs font-semibold text-[#2C2825] block">
+                      <span className="text-xs font-semibold text-[var(--text-primary)] block">
                         {col.name}
                       </span>
-                      <span className="text-[10px] text-[#8C8377]">{col.role}</span>
+                      <span className="text-[10px] text-[var(--text-muted)]">{col.role}</span>
                     </div>
                   </div>
                 ))}
@@ -458,7 +458,7 @@ export const MyLifeView: React.FC<MyLifeViewProps> = ({
                 {personalStyle.preferredSilhouettes.map((s, idx) => (
                   <span
                     key={idx}
-                    className="text-xs px-3 py-1.5 rounded-xl bg-[#F4EFE6] border border-[#DDD5C7] text-[#3E3832]"
+                    className="text-xs px-3 py-1.5 rounded-xl bg-[var(--surface-2)] border border-[var(--border-subtle)] text-[var(--text-primary)]"
                   >
                     {s}
                   </span>
@@ -471,7 +471,7 @@ export const MyLifeView: React.FC<MyLifeViewProps> = ({
               <label className="text-xs font-semibold text-[#5A524A] uppercase tracking-wider block mb-1">
                 Measurements & Tailoring Notes
               </label>
-              <p className="text-xs text-[#554C42] bg-[#FAF8F4] p-3 rounded-xl border border-[#E2DBD0]">
+              <p className="text-xs text-[var(--text-secondary)] bg-[var(--surface-1)] p-3 rounded-xl border border-[var(--border-subtle)]">
                 {personalStyle.measurementsNotes}
               </p>
             </div>
@@ -482,39 +482,39 @@ export const MyLifeView: React.FC<MyLifeViewProps> = ({
       {/* Tab 5: Nutrition & Nourishment */}
       {activeTab === 'nutrition' && (
         <div className="space-y-6">
-          <div className="rounded-2xl border border-[#E8E1D4] bg-[#FFFFFF] p-6 shadow-xs">
+          <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-2)] p-6 shadow-xs">
             <div className="flex items-center justify-between pb-3 border-b border-[#F0EBE1] mb-4">
               <div>
-                <h3 className="font-serif text-lg font-medium text-[#2C2825]">
+                <h3 className="font-serif text-lg font-medium text-[var(--text-primary)]">
                   Nourishment & Dining Philosophy
                 </h3>
-                <p className="text-xs text-[#7A7167]">
+                <p className="text-xs text-[var(--text-secondary)]">
                   Harmonious meals honoring available preparation time.
                 </p>
               </div>
-              <span className="text-[11px] px-2.5 py-1 rounded-full bg-[#F2ECE1] text-[#60564C] font-medium">
+              <span className="text-[11px] px-2.5 py-1 rounded-full bg-[var(--surface-2)] text-[var(--text-secondary)] font-medium">
                 Module Ready
               </span>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-              <div className="p-4 rounded-xl bg-[#FAF8F4] border border-[#E2DBD0]">
-                <span className="text-xs font-semibold text-[#8C7654] uppercase tracking-wider block mb-1">
+              <div className="p-4 rounded-xl bg-[var(--surface-1)] border border-[var(--border-subtle)]">
+                <span className="text-xs font-semibold text-[var(--accent-secondary)] uppercase tracking-wider block mb-1">
                   Dietary Ethos
                 </span>
-                <p className="text-xs text-[#3E3832] leading-relaxed">
+                <p className="text-xs text-[var(--text-primary)] leading-relaxed">
                   {nutrition.dietaryNotes}
                 </p>
               </div>
 
-              <div className="p-4 rounded-xl bg-[#FAF8F4] border border-[#E2DBD0]">
-                <span className="text-xs font-semibold text-[#8C7654] uppercase tracking-wider block mb-1">
+              <div className="p-4 rounded-xl bg-[var(--surface-1)] border border-[var(--border-subtle)]">
+                <span className="text-xs font-semibold text-[var(--accent-secondary)] uppercase tracking-wider block mb-1">
                   Partner Shared Dinners
                 </span>
-                <p className="text-xs text-[#3E3832]">
+                <p className="text-xs text-[var(--text-primary)]">
                   Evenings: {nutrition.partnerSharedDinners.join(', ')}
                 </p>
-                <span className="text-[11px] text-[#8C8377] block mt-1">
+                <span className="text-[11px] text-[var(--text-muted)] block mt-1">
                   Weekday cooking window: {nutrition.cookingTimeAvailableWeekdays} min
                 </span>
               </div>

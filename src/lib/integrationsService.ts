@@ -117,64 +117,6 @@ export class IntegrationsService {
   }
 
   /**
-   * Connect a service via server endpoint or local fallback
-   */
-  static async connectService(
-    serviceId: 'google_calendar' | 'mariluna_gmail' | 'health_connect' | 'mariluna_instagram' | 'push_notifications',
-    params?: Record<string, unknown>
-  ) {
-    try {
-      const res = await fetch(`/api/integrations/connect/${serviceId}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(params || {}),
-      });
-      if (res.ok) {
-        return await res.json();
-      }
-    } catch (err) {
-      console.warn(`[Integrations] Could not connect ${serviceId} via server API:`, err);
-    }
-    return { success: true, local: true };
-  }
-
-  /**
-   * Disconnect a service
-   */
-  static async disconnectService(
-    serviceId: 'google_calendar' | 'mariluna_gmail' | 'health_connect' | 'mariluna_instagram' | 'push_notifications'
-  ) {
-    try {
-      const res = await fetch(`/api/integrations/disconnect/${serviceId}`, {
-        method: 'POST',
-      });
-      if (res.ok) {
-        return await res.json();
-      }
-    } catch (err) {
-      console.warn(`[Integrations] Could not disconnect ${serviceId} via server API:`, err);
-    }
-    return { success: true, local: true };
-  }
-
-  /**
-   * Trigger a manual sync for an active integration
-   */
-  static async syncService(serviceId: string) {
-    try {
-      const res = await fetch(`/api/integrations/sync/${serviceId}`, {
-        method: 'POST',
-      });
-      if (res.ok) {
-        return await res.json();
-      }
-    } catch (err) {
-      console.warn(`[Integrations] Could not sync ${serviceId}:`, err);
-    }
-    return { success: true, lastSync: new Date().toISOString() };
-  }
-
-  /**
    * Test push notification
    */
   static async testPush() {

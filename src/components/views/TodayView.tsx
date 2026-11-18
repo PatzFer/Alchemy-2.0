@@ -611,17 +611,17 @@ export const TodayView: React.FC<TodayViewProps> = ({
   }, [dateObj, safeLang]);
 
   return (
-    <div className="max-w-2xl mx-auto space-y-7 px-3 sm:px-4 py-4 sm:py-6 pb-24 text-[#2C2825]">
+    <div className="max-w-2xl mx-auto space-y-7 px-3 sm:px-4 py-4 sm:py-6 pb-24 text-[var(--text-primary)]">
       {/* ============================================================ */}
       {/* 1. DATE + WEATHER                                            */}
       {/* ============================================================ */}
       <header className="space-y-1.5 pt-1">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <span className="text-xs uppercase tracking-[0.2em] font-medium text-[#8C8377] font-sans block capitalize">
+            <span className="text-xs uppercase tracking-[0.2em] font-medium text-[var(--text-muted)] font-sans block capitalize">
               {dayName}
             </span>
-            <h1 className="font-serif text-2xl sm:text-3xl text-[#2C2825] font-normal tracking-tight mt-0.5">
+            <h1 className="font-serif text-2xl sm:text-3xl text-[var(--text-primary)] font-normal tracking-tight mt-0.5">
               {formattedDate}
             </h1>
           </div>
@@ -629,24 +629,24 @@ export const TodayView: React.FC<TodayViewProps> = ({
           {/* Weather compact block */}
           <div className="text-right shrink-0">
             {isLoadingWeather ? (
-              <div className="inline-flex items-center gap-1.5 text-xs text-[#8C8377] animate-pulse">
-                <CloudSun className="w-3.5 h-3.5 text-[#B5ABA0]" />
+              <div className="inline-flex items-center gap-1.5 text-xs text-[var(--text-muted)] animate-pulse">
+                <CloudSun className="w-3.5 h-3.5 text-[var(--text-muted)]" />
                 <span>{isNl ? 'Weer laden...' : 'Loading weather...'}</span>
               </div>
             ) : weather ? (
               <button
                 type="button"
                 onClick={() => setIsLocationModalOpen(true)}
-                className="group inline-flex items-center gap-1.5 text-xs text-[#524B43] hover:text-[#2C2825] transition cursor-pointer"
+                className="group inline-flex items-center gap-1.5 text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition cursor-pointer"
                 title={isNl ? 'Klik om locatie te wijzigen' : 'Click to change location'}
               >
-                <CloudSun className="w-4 h-4 text-[#7E694E] group-hover:scale-105 transition" />
-                <span className="font-medium text-[#2C2825]">
+                <CloudSun className="w-4 h-4 text-[var(--accent-secondary)] group-hover:scale-105 transition" />
+                <span className="font-medium text-[var(--text-primary)]">
                   {weather.temperature}°C
                 </span>
-                <span className="text-[#8C8377]">·</span>
-                <span className="text-[#6D6356]">{weather.description}</span>
-                <span className="text-[10px] text-[#A69C8E] hidden sm:inline">
+                <span className="text-[var(--text-muted)]">·</span>
+                <span className="text-[var(--text-secondary)]">{weather.description}</span>
+                <span className="text-[10px] text-[var(--text-muted)] hidden sm:inline">
                   ({weather.locationName})
                 </span>
               </button>
@@ -654,9 +654,9 @@ export const TodayView: React.FC<TodayViewProps> = ({
               <button
                 type="button"
                 onClick={() => setIsLocationModalOpen(true)}
-                className="inline-flex items-center gap-1 text-xs text-[#8C8377] hover:text-[#2C2825] transition cursor-pointer px-2 py-1 rounded-lg hover:bg-[#F2ECE1]"
+                className="inline-flex items-center gap-1 text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] transition cursor-pointer px-2 py-1 rounded-lg hover:bg-[var(--surface-2)]"
               >
-                <MapPin className="w-3 h-3 text-[#A89F93]" />
+                <MapPin className="w-3 h-3 text-[var(--text-muted)]" />
                 <span>{isNl ? 'Locatie instellen voor weer' : 'Set location for weather'}</span>
               </button>
             )}
@@ -695,10 +695,10 @@ export const TodayView: React.FC<TodayViewProps> = ({
             <button
               type="button"
               onClick={() => onSelectTab && onSelectTab('prive')}
-              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FAF8F3] border border-[#E8E2D6] text-[#7A7167] text-xs font-medium hover:bg-[#F2ECE1] transition cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--surface-1)] border border-[var(--border-subtle)] text-[var(--text-secondary)] text-xs font-medium hover:bg-[var(--surface-2)] transition cursor-pointer"
               title={isNl ? 'Check-in invullen in Privé' : 'Complete check-in in Private'}
             >
-              <Clock className="w-3.5 h-3.5 text-[#8C7654]" />
+              <Clock className="w-3.5 h-3.5 text-[var(--accent-secondary)]" />
               <span>{isNl ? 'Nog niet ingecheckt' : 'Not checked in yet'}</span>
             </button>
           )}
@@ -711,14 +711,14 @@ export const TodayView: React.FC<TodayViewProps> = ({
           const stepCount = integrations.healthConnect.todaySteps ?? integrations.healthConnect.stepsToday ?? 0;
           if (stepCount <= 0) return null;
           return (
-            <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#FAF6EE] border border-[#E5DFD3] text-xs text-[#5C5449] w-fit shadow-2xs select-none">
-              <Footprints className="w-3.5 h-3.5 text-[#8C7654]" />
+            <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[var(--surface-2)] border border-[#E5DFD3] text-xs text-[var(--text-secondary)] w-fit shadow-2xs select-none">
+              <Footprints className="w-3.5 h-3.5 text-[var(--accent-secondary)]" />
               <span>
                 {isNl
                   ? `${stepCount.toLocaleString('nl-NL')} stappen vandaag`
                   : `${stepCount.toLocaleString('en-US')} steps today`}
               </span>
-              <span className="text-[10px] text-[#A69C8E]">• Health Connect</span>
+              <span className="text-[10px] text-[var(--text-muted)]">• Health Connect</span>
             </div>
           );
         })()
@@ -727,20 +727,20 @@ export const TodayView: React.FC<TodayViewProps> = ({
       {/* Location Setup Modal */}
       {isLocationModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs">
-          <div className="bg-[#FAF8F3] border border-[#DDD4C5] rounded-3xl max-w-sm w-full p-6 space-y-4 shadow-xl text-[#2C2825]">
+          <div className="bg-[var(--surface-1)] border border-[var(--border-subtle)] rounded-3xl max-w-sm w-full p-6 space-y-4 shadow-xl text-[var(--text-primary)]">
             <div className="flex items-center justify-between">
-              <h3 className="font-serif text-lg text-[#2C2825]">
+              <h3 className="font-serif text-lg text-[var(--text-primary)]">
                 {isNl ? 'Locatie voor Weer' : 'Location for Weather'}
               </h3>
               <button
                 type="button"
                 onClick={() => setIsLocationModalOpen(false)}
-                className="p-1 rounded-full text-[#8C8377] hover:text-[#2C2825]"
+                className="p-1 rounded-full text-[var(--text-muted)] hover:text-[var(--text-primary)]"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
-            <p className="text-xs text-[#7A7167]">
+            <p className="text-xs text-[var(--text-secondary)]">
               {isNl
                 ? 'Voer je woonplaats of regio in. We halen actuele weersinformatie rechtstreeks op zonder fictieve data.'
                 : 'Enter your city or region. We fetch real weather data directly with zero fictional data.'}
@@ -751,7 +751,7 @@ export const TodayView: React.FC<TodayViewProps> = ({
                 placeholder={isNl ? 'bijv. Amsterdam, Gent, Utrecht' : 'e.g. London, Amsterdam, Paris'}
                 value={newLocationInput}
                 onChange={(e) => setNewLocationInput(e.target.value)}
-                className="w-full px-3.5 py-2 rounded-xl bg-[#FFFFFF] border border-[#D5CCBE] text-xs text-[#2C2825] focus:outline-none focus:border-[#7E694E]"
+                className="w-full px-3.5 py-2 rounded-xl bg-[var(--surface-2)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-secondary)]"
                 autoFocus
               />
             </div>
@@ -759,7 +759,7 @@ export const TodayView: React.FC<TodayViewProps> = ({
               <button
                 type="button"
                 onClick={() => setIsLocationModalOpen(false)}
-                className="px-3 py-1.5 rounded-xl text-xs text-[#7A7167] hover:bg-[#EFE9DD] transition"
+                className="px-3 py-1.5 rounded-xl text-xs text-[var(--text-secondary)] hover:bg-[var(--surface-2)] transition"
               >
                 {isNl ? 'Annuleren' : 'Cancel'}
               </button>
@@ -767,7 +767,7 @@ export const TodayView: React.FC<TodayViewProps> = ({
                 type="button"
                 onClick={handleSaveLocation}
                 disabled={!newLocationInput.trim()}
-                className="px-4 py-1.5 rounded-xl bg-[#2C2825] text-[#FAF8F3] text-xs font-medium hover:bg-[#433D37] transition disabled:opacity-50"
+                className="px-4 py-1.5 rounded-xl bg-[var(--text-primary)] text-[var(--surface-1)] text-xs font-medium hover:bg-[var(--text-primary)] transition disabled:opacity-50"
               >
                 {isNl ? 'Opslaan' : 'Save'}
               </button>
@@ -778,12 +778,12 @@ export const TodayView: React.FC<TodayViewProps> = ({
 
       {/* Optional Foundation Setup Prompt */}
       {onOpenSetup && (!foundation?.configuredSections || foundation.configuredSections.length === 0) && (
-        <div className="p-4 rounded-2xl bg-[#F7F3EB] border border-[#E0D4C2] flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+        <div className="p-4 rounded-2xl bg-[var(--surface-2)] border border-[#E0D4C2] flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
           <div className="space-y-0.5">
-            <span className="font-serif font-medium text-[#2C2825] block">
+            <span className="font-serif font-medium text-[var(--text-primary)] block">
               {isNl ? 'Welkom bij Alchemy' : 'Welcome to Alchemy'}
             </span>
-            <p className="text-[#7A6D5E] font-light">
+            <p className="text-[var(--text-secondary)] font-light">
               {isNl
                 ? 'Configureer jouw levensritme, doelen en welzijn via de First-Time Onboarding Wizard.'
                 : 'Configure your life rhythm, goals, and wellbeing via the First-Time Onboarding Wizard.'}
@@ -792,7 +792,7 @@ export const TodayView: React.FC<TodayViewProps> = ({
           <button
             type="button"
             onClick={onOpenSetup}
-            className="shrink-0 px-3.5 py-1.5 rounded-xl bg-[#2C2825] text-[#F9F7F2] text-xs font-medium hover:bg-[#433D37] transition cursor-pointer shadow-xs self-start sm:self-auto"
+            className="shrink-0 px-3.5 py-1.5 rounded-xl bg-[var(--text-primary)] text-[var(--text-primary)] text-xs font-medium hover:bg-[var(--text-primary)] transition cursor-pointer shadow-xs self-start sm:self-auto"
           >
             {isNl ? 'Start Setup Wizard →' : 'Start Setup Wizard →'}
           </button>
@@ -819,11 +819,11 @@ export const TodayView: React.FC<TodayViewProps> = ({
       {/* ============================================================ */}
       {/* 1.6 TODAY'S INTENTION (Subtle Daily Focus Anchor)            */}
       {/* ============================================================ */}
-      <div className="p-4 rounded-2xl bg-[#FFFFFF] border border-[#E8E2D5] shadow-xs space-y-2.5">
-        <div className="flex items-center justify-between border-b border-[#F2ECE1] pb-2 text-xs">
+      <div className="p-4 rounded-2xl bg-[var(--surface-2)] border border-[var(--border-subtle)] shadow-xs space-y-2.5">
+        <div className="flex items-center justify-between border-b border-[var(--surface-2)] pb-2 text-xs">
           <div className="flex items-center gap-2">
-            <Sparkles className="w-3.5 h-3.5 text-[#8C7654]" />
-            <span className="font-serif font-medium text-[#2C2825] uppercase tracking-wider text-[11px]">
+            <Sparkles className="w-3.5 h-3.5 text-[var(--accent-secondary)]" />
+            <span className="font-serif font-medium text-[var(--text-primary)] uppercase tracking-wider text-[11px]">
               {isNl ? 'Dagelijkse Intentie' : "Today's Intention"}
             </span>
           </div>
@@ -834,7 +834,7 @@ export const TodayView: React.FC<TodayViewProps> = ({
                 setIntentionInputText(todayIntention.title);
                 setIsIntentionInputOpen(true);
               }}
-              className="text-[11px] text-[#8C8377] hover:text-[#2C2825] transition cursor-pointer"
+              className="text-[11px] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition cursor-pointer"
             >
               {isNl ? 'Wijzigen' : 'Edit'}
             </button>
@@ -844,10 +844,10 @@ export const TodayView: React.FC<TodayViewProps> = ({
         {todayIntention ? (
           <div className="flex items-center justify-between text-xs pt-0.5">
             <div className="space-y-0.5">
-              <p className="font-serif text-sm text-[#2C2825] font-medium">
+              <p className="font-serif text-sm text-[var(--text-primary)] font-medium">
                 "{todayIntention.title}"
               </p>
-              <p className="text-[11px] text-[#7A7167]">
+              <p className="text-[11px] text-[var(--text-secondary)]">
                 {todayIntention.completed
                   ? (isNl ? '✓ Vandaag gedaan' : '✓ Completed today')
                   : (isNl ? '○ Nog niet gedaan' : '○ Active focus')}
@@ -863,9 +863,9 @@ export const TodayView: React.FC<TodayViewProps> = ({
               <button
                 type="button"
                 onClick={() => onCompleteIntention && onCompleteIntention(todayIntention.id)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#2C2825] text-[#FAF8F5] text-xs font-medium hover:bg-[#433D38] transition cursor-pointer shadow-xs"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[var(--text-primary)] text-[var(--surface-1)] text-xs font-medium hover:bg-[var(--text-primary)] transition cursor-pointer shadow-xs"
               >
-                <Check className="w-3.5 h-3.5 text-[#E6D7BD]" />
+                <Check className="w-3.5 h-3.5 text-[var(--border-subtle)]" />
                 <span>{isNl ? 'Markeer als gedaan' : 'Mark as done'}</span>
               </button>
             )}
@@ -888,32 +888,32 @@ export const TodayView: React.FC<TodayViewProps> = ({
                   value={intentionInputText}
                   onChange={(e) => setIntentionInputText(e.target.value)}
                   placeholder={isNl ? 'bijv. Ademhaling, Rust, Vandaag niet haasten' : 'e.g. Breathing, Calm pacing, No rushing'}
-                  className="flex-1 px-3 py-1.5 rounded-xl border border-[#D5CCBE] bg-[#FAF8F4] text-xs text-[#2C2825] focus:outline-hidden focus:border-[#8C7654]"
+                  className="flex-1 px-3 py-1.5 rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-1)] text-xs text-[var(--text-primary)] focus:outline-hidden focus:border-[var(--accent-secondary)]"
                   autoFocus
                 />
                 <button
                   type="submit"
-                  className="px-3.5 py-1.5 rounded-xl bg-[#2C2825] text-[#FAF8F5] text-xs font-medium hover:bg-[#433D38] transition cursor-pointer shrink-0"
+                  className="px-3.5 py-1.5 rounded-xl bg-[var(--text-primary)] text-[var(--surface-1)] text-xs font-medium hover:bg-[var(--text-primary)] transition cursor-pointer shrink-0"
                 >
                   {isNl ? 'Opslaan' : 'Save'}
                 </button>
                 <button
                   type="button"
                   onClick={() => setIsIntentionInputOpen(false)}
-                  className="p-1.5 text-[#8C8377] hover:text-[#2C2825]"
+                  className="p-1.5 text-[var(--text-muted)] hover:text-[var(--text-primary)]"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </form>
             ) : (
               <div className="flex items-center justify-between text-xs">
-                <span className="text-[#7A7167] font-light">
+                <span className="text-[var(--text-secondary)] font-light">
                   {isNl ? 'Nog geen intentie ingesteld voor vandaag.' : 'No intention set for today yet.'}
                 </span>
                 <button
                   type="button"
                   onClick={() => setIsIntentionInputOpen(true)}
-                  className="inline-flex items-center gap-1 text-xs text-[#8C7654] font-medium hover:text-[#2C2825] transition cursor-pointer"
+                  className="inline-flex items-center gap-1 text-xs text-[var(--accent-secondary)] font-medium hover:text-[var(--text-primary)] transition cursor-pointer"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   <span>{isNl ? 'Stel intentie in' : 'Set intention'}</span>
@@ -928,18 +928,18 @@ export const TodayView: React.FC<TodayViewProps> = ({
       {/* 1.7 PROACTIVE INTENTION PROMPT (Gentle Daily Follow-up)       */}
       {/* ============================================================ */}
       {shouldShowProactivePrompt && todayIntention && (
-        <div className="p-4 rounded-2xl bg-[#FAF6EE] border border-[#E6DBCE] shadow-xs space-y-3 animate-fade-in text-[#2C2825]">
-          <div className="flex items-center justify-between border-b border-[#E8DCC9] pb-2">
+        <div className="p-4 rounded-2xl bg-[var(--surface-2)] border border-[var(--border-subtle)] shadow-xs space-y-3 animate-fade-in text-[var(--text-primary)]">
+          <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-2">
             <div className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-[#8C7654]" />
-              <span className="font-serif font-medium text-xs text-[#8C7654] uppercase tracking-wider">
+              <Sparkles className="w-4 h-4 text-[var(--accent-secondary)]" />
+              <span className="font-serif font-medium text-xs text-[var(--accent-secondary)] uppercase tracking-wider">
                 {isNl ? 'Proactieve Guidance' : 'Proactive Guidance'}
               </span>
             </div>
           </div>
 
-          <p className="text-xs text-[#5F5547] leading-relaxed font-light">
-            Je had vandaag <strong className="font-medium text-[#2C2825]">"{todayIntention.title}"</strong> als intentie gekozen.
+          <p className="text-xs text-[var(--text-secondary)] leading-relaxed font-light">
+            Je had vandaag <strong className="font-medium text-[var(--text-primary)]">"{todayIntention.title}"</strong> als intentie gekozen.
             Heb je daar nu een moment voor?
           </p>
 
@@ -947,25 +947,25 @@ export const TodayView: React.FC<TodayViewProps> = ({
             <button
               type="button"
               onClick={() => onCompleteIntention && onCompleteIntention(todayIntention.id)}
-              className="px-4 py-2 rounded-xl bg-[#2C2825] text-[#FAF8F5] font-medium hover:bg-[#433D38] transition cursor-pointer shadow-xs flex items-center gap-1.5"
+              className="px-4 py-2 rounded-xl bg-[var(--text-primary)] text-[var(--surface-1)] font-medium hover:bg-[var(--text-primary)] transition cursor-pointer shadow-xs flex items-center gap-1.5"
             >
-              <Check className="w-3.5 h-3.5 text-[#E6D7BD]" />
+              <Check className="w-3.5 h-3.5 text-[var(--border-subtle)]" />
               <span>{isNl ? 'Ja, nu doen' : 'Yes, do now'}</span>
             </button>
 
             <button
               type="button"
               onClick={() => onSnoozeIntention && onSnoozeIntention(todayIntention.id, 120)}
-              className="px-3.5 py-2 rounded-xl bg-[#FFFFFF] border border-[#D5CCBE] text-[#63594C] font-medium hover:bg-[#F7F2E9] transition cursor-pointer flex items-center gap-1"
+              className="px-3.5 py-2 rounded-xl bg-[var(--surface-2)] border border-[var(--border-subtle)] text-[var(--text-secondary)] font-medium hover:bg-[var(--surface-2)] transition cursor-pointer flex items-center gap-1"
             >
-              <Clock className="w-3.5 h-3.5 text-[#8C7654]" />
+              <Clock className="w-3.5 h-3.5 text-[var(--accent-secondary)]" />
               <span>{isNl ? 'Snooze (2u)' : 'Snooze'}</span>
             </button>
 
             <button
               type="button"
               onClick={() => onDismissIntention && onDismissIntention(todayIntention.id)}
-              className="px-3 py-2 text-[#8C8377] hover:text-[#2C2825] transition cursor-pointer font-light"
+              className="px-3 py-2 text-[var(--text-muted)] hover:text-[var(--text-primary)] transition cursor-pointer font-light"
             >
               {isNl ? 'Niet vandaag' : 'Not today'}
             </button>
@@ -979,13 +979,13 @@ export const TodayView: React.FC<TodayViewProps> = ({
       <section className="space-y-2.5">
         <div className="flex items-center justify-between pb-0.5">
           <div className="flex items-center gap-2">
-            <h2 className="font-serif text-lg font-medium text-[#2C2825]">
+            <h2 className="font-serif text-lg font-medium text-[var(--text-primary)]">
               {isNl ? 'Agenda van vandaag' : "Today's Calendar"}
             </h2>
-            <span className="text-xs px-2 py-0.5 rounded-full bg-[#EADFCF] text-[#554C42] font-medium font-sans">
+            <span className="text-xs px-2 py-0.5 rounded-full bg-[#EADFCF] text-[var(--text-secondary)] font-medium font-sans">
               {todayEvents.length} {isNl ? (todayEvents.length === 1 ? 'afspraak' : 'afspraken') : (todayEvents.length === 1 ? 'event' : 'events')}
             </span>
-            <span className="text-[11px] text-[#8C8377] font-sans">
+            <span className="text-[11px] text-[var(--text-muted)] font-sans">
               ({capacity.formattedFreeTime} {isNl ? 'vrije tijd' : 'free capacity'})
             </span>
             {integrations?.calendar?.status === 'connected' && (
@@ -999,7 +999,7 @@ export const TodayView: React.FC<TodayViewProps> = ({
             <button
               type="button"
               onClick={() => setIsAddEventOpen(!isAddEventOpen)}
-              className="text-[#7E694E] hover:text-[#2C2825] font-medium transition cursor-pointer flex items-center gap-1"
+              className="text-[var(--accent-secondary)] hover:text-[var(--text-primary)] font-medium transition cursor-pointer flex items-center gap-1"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>{isNl ? 'Afspraak' : 'Event'}</span>
@@ -1008,7 +1008,7 @@ export const TodayView: React.FC<TodayViewProps> = ({
               <button
                 type="button"
                 onClick={() => onSelectTab('calendar')}
-                className="text-[#8C8377] hover:text-[#2C2825] transition cursor-pointer"
+                className="text-[var(--text-muted)] hover:text-[var(--text-primary)] transition cursor-pointer"
               >
                 {isNl ? 'Agenda →' : 'Calendar →'}
               </button>
@@ -1020,9 +1020,9 @@ export const TodayView: React.FC<TodayViewProps> = ({
         {isAddEventOpen && (
           <form
             onSubmit={handleCreateEvent}
-            className="p-3.5 rounded-2xl bg-[#FFFFFF] border border-[#DDD4C5] shadow-xs space-y-3 text-xs"
+            className="p-3.5 rounded-2xl bg-[var(--surface-2)] border border-[var(--border-subtle)] shadow-xs space-y-3 text-xs"
           >
-            <div className="font-medium text-[#2C2825]">
+            <div className="font-medium text-[var(--text-primary)]">
               {isNl ? 'Nieuwe afspraak voor vandaag' : 'New appointment for today'}
             </div>
             <input
@@ -1030,40 +1030,40 @@ export const TodayView: React.FC<TodayViewProps> = ({
               placeholder={isNl ? 'Titel afspraak (bijv. Werk, Familiefeest, Tandarts)' : 'Title (e.g. Work, Family gathering)'}
               value={eventTitle}
               onChange={(e) => setEventTitle(e.target.value)}
-              className="w-full px-3 py-1.5 rounded-xl bg-[#FAF8F3] border border-[#DDD4C5] text-[#2C2825] focus:outline-none focus:border-[#7E694E]"
+              className="w-full px-3 py-1.5 rounded-xl bg-[var(--surface-1)] border border-[var(--border-subtle)] text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-secondary)]"
               autoFocus
             />
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
               <div>
-                <label className="text-[10px] text-[#8C8377] uppercase tracking-wider block mb-1">
+                <label className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider block mb-1">
                   {isNl ? 'Starttijd' : 'Start'}
                 </label>
                 <input
                   type="time"
                   value={eventStart}
                   onChange={(e) => setEventStart(e.target.value)}
-                  className="w-full px-2.5 py-1.5 rounded-xl bg-[#FAF8F3] border border-[#DDD4C5] text-[#2C2825]"
+                  className="w-full px-2.5 py-1.5 rounded-xl bg-[var(--surface-1)] border border-[var(--border-subtle)] text-[var(--text-primary)]"
                 />
               </div>
               <div>
-                <label className="text-[10px] text-[#8C8377] uppercase tracking-wider block mb-1">
+                <label className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider block mb-1">
                   {isNl ? 'Eindtijd' : 'End'}
                 </label>
                 <input
                   type="time"
                   value={eventEnd}
                   onChange={(e) => setEventEnd(e.target.value)}
-                  className="w-full px-2.5 py-1.5 rounded-xl bg-[#FAF8F3] border border-[#DDD4C5] text-[#2C2825]"
+                  className="w-full px-2.5 py-1.5 rounded-xl bg-[var(--surface-1)] border border-[var(--border-subtle)] text-[var(--text-primary)]"
                 />
               </div>
               <div className="col-span-2 sm:col-span-1">
-                <label className="text-[10px] text-[#8C8377] uppercase tracking-wider block mb-1">
+                <label className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider block mb-1">
                   {isNl ? 'Domein' : 'Domain'}
                 </label>
                 <select
                   value={eventRealm}
                   onChange={(e) => setEventRealm(e.target.value as 'personal' | 'mariluna')}
-                  className="w-full px-2.5 py-1.5 rounded-xl bg-[#FAF8F3] border border-[#DDD4C5] text-[#2C2825]"
+                  className="w-full px-2.5 py-1.5 rounded-xl bg-[var(--surface-1)] border border-[var(--border-subtle)] text-[var(--text-primary)]"
                 >
                   <option value="personal">{isNl ? 'Persoonlijk' : 'Personal'}</option>
                   <option value="mariluna">Mariluna</option>
@@ -1074,14 +1074,14 @@ export const TodayView: React.FC<TodayViewProps> = ({
               <button
                 type="button"
                 onClick={() => setIsAddEventOpen(false)}
-                className="px-3 py-1 rounded-xl text-xs text-[#7A7167] hover:bg-[#F2ECE1]"
+                className="px-3 py-1 rounded-xl text-xs text-[var(--text-secondary)] hover:bg-[var(--surface-2)]"
               >
                 {isNl ? 'Annuleren' : 'Cancel'}
               </button>
               <button
                 type="submit"
                 disabled={!eventTitle.trim()}
-                className="px-3.5 py-1 rounded-xl bg-[#2C2825] text-[#FAF8F3] text-xs font-medium hover:bg-[#433D37] disabled:opacity-40"
+                className="px-3.5 py-1 rounded-xl bg-[var(--text-primary)] text-[var(--surface-1)] text-xs font-medium hover:bg-[var(--text-primary)] disabled:opacity-40"
               >
                 {isNl ? 'Toevoegen' : 'Add'}
               </button>
@@ -1091,9 +1091,9 @@ export const TodayView: React.FC<TodayViewProps> = ({
 
         {/* Real Calendar Events List */}
         {todayEvents.length === 0 ? (
-          <div className="p-4 rounded-2xl border border-dashed border-[#DDD4C5] bg-[#FAF8F4] text-xs text-[#7A7167] flex items-center justify-between">
+          <div className="p-4 rounded-2xl border border-dashed border-[var(--border-subtle)] bg-[var(--surface-1)] text-xs text-[var(--text-secondary)] flex items-center justify-between">
             <span>{isNl ? 'Geen afspraken vandaag' : 'No appointments today'}</span>
-            <span className="text-[11px] text-[#A69C8E]">
+            <span className="text-[11px] text-[var(--text-muted)]">
               {isNl ? 'Volledige agenda is vrij' : 'All hours free'}
             </span>
           </div>
@@ -1102,23 +1102,23 @@ export const TodayView: React.FC<TodayViewProps> = ({
             {todayEvents.map((event) => (
               <div
                 key={event.id}
-                className="p-3.5 rounded-2xl border border-[#E5DFD3] bg-[#FFFFFF] shadow-2xs flex items-center justify-between gap-3"
+                className="p-3.5 rounded-2xl border border-[#E5DFD3] bg-[var(--surface-2)] shadow-2xs flex items-center justify-between gap-3"
               >
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-8 h-8 rounded-xl bg-[#F4EFE6] text-[#7E694E] flex items-center justify-center shrink-0 border border-[#E8E0D1]">
+                  <div className="w-8 h-8 rounded-xl bg-[var(--surface-2)] text-[var(--accent-secondary)] flex items-center justify-center shrink-0 border border-[var(--border-subtle)]">
                     <CalendarIcon className="w-4 h-4" />
                   </div>
                   <div className="min-w-0">
-                    <div className="text-xs sm:text-sm font-medium text-[#2C2825] truncate">
+                    <div className="text-xs sm:text-sm font-medium text-[var(--text-primary)] truncate">
                       {event.title}
                     </div>
-                    <div className="text-[11px] text-[#7A7167] mt-0.5 flex items-center gap-2">
-                      <span className="font-medium text-[#2C2825]">
+                    <div className="text-[11px] text-[var(--text-secondary)] mt-0.5 flex items-center gap-2">
+                      <span className="font-medium text-[var(--text-primary)]">
                         {event.startTime}–{event.endTime}
                       </span>
                       {event.location && (
                         <>
-                          <span className="text-[#D0C7B7]">•</span>
+                          <span className="text-[var(--border-subtle)]">•</span>
                           <span className="truncate">{event.location}</span>
                         </>
                       )}
@@ -1129,8 +1129,8 @@ export const TodayView: React.FC<TodayViewProps> = ({
                 <span
                   className={`text-[9px] uppercase px-2 py-0.5 rounded-full font-semibold tracking-wider shrink-0 ${
                     event.realm === 'mariluna'
-                      ? 'bg-[#2C2825] text-[#F9F7F2]'
-                      : 'bg-[#EAE3D4] text-[#554C42]'
+                      ? 'bg-[var(--text-primary)] text-[var(--text-primary)]'
+                      : 'bg-[var(--surface-2)] text-[var(--text-secondary)]'
                   }`}
                 >
                   {event.realm === 'mariluna' ? 'Mariluna' : (isNl ? 'Persoonlijk' : 'Personal')}
@@ -1144,13 +1144,13 @@ export const TodayView: React.FC<TodayViewProps> = ({
       {/* ============================================================ */}
       {/* 3. DAILY CHECK-IN                                            */}
       {/* ============================================================ */}
-      <section className="rounded-2xl border border-[#E5DFD3] bg-[#FAF6EE] p-4 sm:p-4.5 space-y-3 shadow-2xs">
+      <section className="rounded-2xl border border-[#E5DFD3] bg-[var(--surface-2)] p-4 sm:p-4.5 space-y-3 shadow-2xs">
         <div className="flex items-center justify-between">
           <div className="space-y-0.5">
-            <span className="text-[10px] uppercase tracking-wider font-semibold text-[#7E694E] font-sans">
+            <span className="text-[10px] uppercase tracking-wider font-semibold text-[var(--accent-secondary)] font-sans">
               {isNl ? 'DAGELIJKSE CHECK-IN' : 'DAILY CHECK-IN'}
             </span>
-            <h3 className="font-serif text-base text-[#2C2825]">
+            <h3 className="font-serif text-base text-[var(--text-primary)]">
               {isNl ? 'Hoe voel je je vandaag?' : 'How are you feeling today?'}
             </h3>
           </div>
@@ -1162,7 +1162,7 @@ export const TodayView: React.FC<TodayViewProps> = ({
                 setIsEditingCheckIn(true);
                 setPendingFeeling(null);
               }}
-              className="text-[11px] px-2.5 py-1 rounded-lg bg-[#EFE8DC] text-[#6E5D47] hover:bg-[#E4DBCB] font-medium transition cursor-pointer"
+              className="text-[11px] px-2.5 py-1 rounded-lg bg-[var(--surface-2)] text-[var(--text-secondary)] hover:bg-[var(--border-subtle)] font-medium transition cursor-pointer"
             >
               {isNl ? 'Wijzigen' : 'Change'}
             </button>
@@ -1172,7 +1172,7 @@ export const TodayView: React.FC<TodayViewProps> = ({
         {/* If Check-In is recorded and not currently editing */}
         {todayCheckIn && !isEditingCheckIn ? (
           <div className="space-y-1 text-xs">
-            <div className="flex items-center gap-2 font-medium text-[#2C2825]">
+            <div className="flex items-center gap-2 font-medium text-[var(--text-primary)]">
               {todayCheckIn.feeling === 'good' && (
                 <>
                   <span>🙂</span>
@@ -1207,7 +1207,7 @@ export const TodayView: React.FC<TodayViewProps> = ({
             </div>
 
             {capacity.explanation && (
-              <p className="text-[11px] text-[#7A6D5E] font-light leading-relaxed">
+              <p className="text-[11px] text-[var(--text-secondary)] font-light leading-relaxed">
                 {capacity.explanation}
               </p>
             )}
@@ -1222,16 +1222,16 @@ export const TodayView: React.FC<TodayViewProps> = ({
                 onClick={() => handleSelectFeeling('good')}
                 className={`p-3 rounded-xl border text-left transition cursor-pointer flex items-start gap-2.5 ${
                   pendingFeeling === 'good'
-                    ? 'bg-[#FFFFFF] border-[#7E694E] ring-1 ring-[#7E694E]'
-                    : 'bg-[#FFFFFF] border-[#E3D9C9] hover:border-[#7E694E] hover:bg-[#FDFBF7]'
+                    ? 'bg-[var(--surface-2)] border-[var(--accent-secondary)] ring-1 ring-[var(--accent-secondary)]'
+                    : 'bg-[var(--surface-2)] border-[var(--border-subtle)] hover:border-[var(--accent-secondary)] hover:bg-[var(--surface-1)]'
                 }`}
               >
                 <span className="text-lg leading-none">🙂</span>
                 <div className="min-w-0">
-                  <div className="text-xs font-semibold text-[#2C2825]">
+                  <div className="text-xs font-semibold text-[var(--text-primary)]">
                     {isNl ? 'Goed' : 'Good'}
                   </div>
-                  <div className="text-[11px] text-[#7A7167]">
+                  <div className="text-[11px] text-[var(--text-secondary)]">
                     {isNl ? 'Ik voel me normaal / goed' : 'I feel normal / energetic'}
                   </div>
                 </div>
@@ -1242,16 +1242,16 @@ export const TodayView: React.FC<TodayViewProps> = ({
                 onClick={() => handleSelectFeeling('lower')}
                 className={`p-3 rounded-xl border text-left transition cursor-pointer flex items-start gap-2.5 ${
                   pendingFeeling === 'lower'
-                    ? 'bg-[#FFFFFF] border-[#7E694E] ring-1 ring-[#7E694E]'
-                    : 'bg-[#FFFFFF] border-[#E3D9C9] hover:border-[#7E694E] hover:bg-[#FDFBF7]'
+                    ? 'bg-[var(--surface-2)] border-[var(--accent-secondary)] ring-1 ring-[var(--accent-secondary)]'
+                    : 'bg-[var(--surface-2)] border-[var(--border-subtle)] hover:border-[var(--accent-secondary)] hover:bg-[var(--surface-1)]'
                 }`}
               >
                 <span className="text-lg leading-none">😐</span>
                 <div className="min-w-0">
-                  <div className="text-xs font-semibold text-[#2C2825]">
+                  <div className="text-xs font-semibold text-[var(--text-primary)]">
                     {isNl ? 'Lager dan normaal' : 'Lower than normal'}
                   </div>
-                  <div className="text-[11px] text-[#7A7167]">
+                  <div className="text-[11px] text-[var(--text-secondary)]">
                     {isNl ? 'Ik ben moe, gestrest of heb minder energie' : 'Tired, stressed, or lower energy'}
                   </div>
                 </div>
@@ -1262,16 +1262,16 @@ export const TodayView: React.FC<TodayViewProps> = ({
                 onClick={() => handleSelectFeeling('sick')}
                 className={`p-3 rounded-xl border text-left transition cursor-pointer flex items-start gap-2.5 ${
                   pendingFeeling === 'sick'
-                    ? 'bg-[#FFFFFF] border-[#7E694E] ring-1 ring-[#7E694E]'
-                    : 'bg-[#FFFFFF] border-[#E3D9C9] hover:border-[#7E694E] hover:bg-[#FDFBF7]'
+                    ? 'bg-[var(--surface-2)] border-[var(--accent-secondary)] ring-1 ring-[var(--accent-secondary)]'
+                    : 'bg-[var(--surface-2)] border-[var(--border-subtle)] hover:border-[var(--accent-secondary)] hover:bg-[var(--surface-1)]'
                 }`}
               >
                 <span className="text-lg leading-none">🤒</span>
                 <div className="min-w-0">
-                  <div className="text-xs font-semibold text-[#2C2825]">
+                  <div className="text-xs font-semibold text-[var(--text-primary)]">
                     {isNl ? 'Ziek / niet oké' : 'Sick / unwell'}
                   </div>
-                  <div className="text-[11px] text-[#7A7167]">
+                  <div className="text-[11px] text-[var(--text-secondary)]">
                     {isNl ? 'Mijn lichaam vraagt vandaag om rust' : 'My body needs complete rest today'}
                   </div>
                 </div>
@@ -1282,16 +1282,16 @@ export const TodayView: React.FC<TodayViewProps> = ({
                 onClick={() => handleSelectFeeling('mentally_heavy')}
                 className={`p-3 rounded-xl border text-left transition cursor-pointer flex items-start gap-2.5 ${
                   pendingFeeling === 'mentally_heavy'
-                    ? 'bg-[#FFFFFF] border-[#7E694E] ring-1 ring-[#7E694E]'
-                    : 'bg-[#FFFFFF] border-[#E3D9C9] hover:border-[#7E694E] hover:bg-[#FDFBF7]'
+                    ? 'bg-[var(--surface-2)] border-[var(--accent-secondary)] ring-1 ring-[var(--accent-secondary)]'
+                    : 'bg-[var(--surface-2)] border-[var(--border-subtle)] hover:border-[var(--accent-secondary)] hover:bg-[var(--surface-1)]'
                 }`}
               >
                 <span className="text-lg leading-none">😔</span>
                 <div className="min-w-0">
-                  <div className="text-xs font-semibold text-[#2C2825]">
+                  <div className="text-xs font-semibold text-[var(--text-primary)]">
                     {isNl ? 'Mentaal zwaar' : 'Mentally heavy'}
                   </div>
-                  <div className="text-[11px] text-[#7A7167]">
+                  <div className="text-[11px] text-[var(--text-secondary)]">
                     {isNl ? 'Ik voel me emotioneel of mentaal uitgeput' : 'Emotionally or mentally drained'}
                   </div>
                 </div>
@@ -1301,42 +1301,42 @@ export const TodayView: React.FC<TodayViewProps> = ({
             {/* ONE Short Follow-Up Question when useful */}
             {pendingFeeling && pendingFeeling !== 'good' && (
               <div className="pt-2 border-t border-[#EAE1D3] space-y-2">
-                <span className="text-xs font-medium text-[#2C2825] block">
+                <span className="text-xs font-medium text-[var(--text-primary)] block">
                   {isNl ? 'Wat beïnvloedt je vandaag voornamelijk?' : 'What is mainly affecting you today?'}
                 </span>
                 <div className="flex flex-wrap gap-1.5">
                   <button
                     type="button"
                     onClick={() => handleSelectDriver('poor_sleep')}
-                    className="px-3 py-1.5 rounded-full bg-[#FFFFFF] border border-[#DDD3C2] hover:border-[#7E694E] hover:bg-[#FAF8F4] text-xs text-[#2C2825] transition cursor-pointer"
+                    className="px-3 py-1.5 rounded-full bg-[var(--surface-2)] border border-[var(--border-subtle)] hover:border-[var(--accent-secondary)] hover:bg-[var(--surface-1)] text-xs text-[var(--text-primary)] transition cursor-pointer"
                   >
                     😴 {isNl ? 'Slecht geslapen' : 'Poor sleep'}
                   </button>
                   <button
                     type="button"
                     onClick={() => handleSelectDriver('low_energy')}
-                    className="px-3 py-1.5 rounded-full bg-[#FFFFFF] border border-[#DDD3C2] hover:border-[#7E694E] hover:bg-[#FAF8F4] text-xs text-[#2C2825] transition cursor-pointer"
+                    className="px-3 py-1.5 rounded-full bg-[var(--surface-2)] border border-[var(--border-subtle)] hover:border-[var(--accent-secondary)] hover:bg-[var(--surface-1)] text-xs text-[var(--text-primary)] transition cursor-pointer"
                   >
                     🔋 {isNl ? 'Weinig energie' : 'Low energy'}
                   </button>
                   <button
                     type="button"
                     onClick={() => handleSelectDriver('cycle')}
-                    className="px-3 py-1.5 rounded-full bg-[#FFFFFF] border border-[#DDD3C2] hover:border-[#7E694E] hover:bg-[#FAF8F4] text-xs text-[#2C2825] transition cursor-pointer"
+                    className="px-3 py-1.5 rounded-full bg-[var(--surface-2)] border border-[var(--border-subtle)] hover:border-[var(--accent-secondary)] hover:bg-[var(--surface-1)] text-xs text-[var(--text-primary)] transition cursor-pointer"
                   >
                     🩸 {isNl ? 'Cyclus' : 'Cycle'}
                   </button>
                   <button
                     type="button"
                     onClick={() => handleSelectDriver('stress')}
-                    className="px-3 py-1.5 rounded-full bg-[#FFFFFF] border border-[#DDD3C2] hover:border-[#7E694E] hover:bg-[#FAF8F4] text-xs text-[#2C2825] transition cursor-pointer"
+                    className="px-3 py-1.5 rounded-full bg-[var(--surface-2)] border border-[var(--border-subtle)] hover:border-[var(--accent-secondary)] hover:bg-[var(--surface-1)] text-xs text-[var(--text-primary)] transition cursor-pointer"
                   >
                     🧠 {isNl ? 'Stress' : 'Stress'}
                   </button>
                   <button
                     type="button"
                     onClick={() => handleSelectDriver('other')}
-                    className="px-3 py-1.5 rounded-full bg-[#FFFFFF] border border-[#DDD3C2] hover:border-[#7E694E] hover:bg-[#FAF8F4] text-xs text-[#2C2825] transition cursor-pointer"
+                    className="px-3 py-1.5 rounded-full bg-[var(--surface-2)] border border-[var(--border-subtle)] hover:border-[var(--accent-secondary)] hover:bg-[var(--surface-1)] text-xs text-[var(--text-primary)] transition cursor-pointer"
                   >
                     ❓ {isNl ? 'Iets anders' : 'Something else'}
                   </button>
@@ -1353,10 +1353,10 @@ export const TodayView: React.FC<TodayViewProps> = ({
       <section className="space-y-3">
         <div className="flex items-center justify-between pb-0.5">
           <div className="flex items-center gap-2">
-            <h2 className="font-serif text-lg font-medium text-[#2C2825]">
+            <h2 className="font-serif text-lg font-medium text-[var(--text-primary)]">
               {isNl ? 'Taken voor vandaag' : "Today's Tasks"}
             </h2>
-            <span className="text-xs text-[#8C8377] font-sans">
+            <span className="text-xs text-[var(--text-muted)] font-sans">
               ({todayTasks.filter((t) => t.status !== 'completed').length}{' '}
               {isNl ? 'open' : 'remaining'})
             </span>
@@ -1365,7 +1365,7 @@ export const TodayView: React.FC<TodayViewProps> = ({
             <button
               type="button"
               onClick={onOpenTaskModal}
-              className="text-[#7E694E] hover:text-[#2C2825] font-medium transition cursor-pointer flex items-center gap-1"
+              className="text-[var(--accent-secondary)] hover:text-[var(--text-primary)] font-medium transition cursor-pointer flex items-center gap-1"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>{isNl ? 'Taak toevoegen' : 'Add task'}</span>
@@ -1374,7 +1374,7 @@ export const TodayView: React.FC<TodayViewProps> = ({
               <button
                 type="button"
                 onClick={() => onSelectTab('tasks')}
-                className="text-[#8C8377] hover:text-[#2C2825] transition cursor-pointer"
+                className="text-[var(--text-muted)] hover:text-[var(--text-primary)] transition cursor-pointer"
               >
                 {isNl ? 'Alle taken →' : 'All Tasks →'}
               </button>
@@ -1384,13 +1384,13 @@ export const TodayView: React.FC<TodayViewProps> = ({
 
         {/* Reschedule Suggestion Banner (Adaptive AI interpretation) */}
         {capacity.rescheduleCandidate && (
-          <div className="p-3.5 rounded-2xl bg-[#FAF6EE] border border-[#E4DC CE] flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+          <div className="p-3.5 rounded-2xl bg-[var(--surface-2)] border border-[#E4DC CE] flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
             <div className="space-y-0.5">
-              <span className="font-medium text-[#2C2825] flex items-center gap-1.5">
-                <AlertCircle className="w-3.5 h-3.5 text-[#7E694E] shrink-0" />
+              <span className="font-medium text-[var(--text-primary)] flex items-center gap-1.5">
+                <AlertCircle className="w-3.5 h-3.5 text-[var(--accent-secondary)] shrink-0" />
                 {isNl ? 'Alchemy suggestie:' : 'Alchemy suggestion:'}
               </span>
-              <p className="text-[#6D6356] font-light leading-relaxed">
+              <p className="text-[var(--text-secondary)] font-light leading-relaxed">
                 {isNl
                   ? `Je energie is lager of je dag zit vol. Wil je "${capacity.rescheduleCandidate.title}" verplaatsen naar morgen om ademruimte te creëren?`
                   : `Your capacity is tight. Would you like to reschedule "${capacity.rescheduleCandidate.title}" to tomorrow to preserve breathing room?`}
@@ -1399,7 +1399,7 @@ export const TodayView: React.FC<TodayViewProps> = ({
             <button
               type="button"
               onClick={() => handleMoveToTomorrow(capacity.rescheduleCandidate!.id)}
-              className="shrink-0 px-3.5 py-1.5 rounded-xl bg-[#2C2825] text-[#FAF8F3] font-medium hover:bg-[#433D37] transition cursor-pointer shadow-xs self-start sm:self-auto"
+              className="shrink-0 px-3.5 py-1.5 rounded-xl bg-[var(--text-primary)] text-[var(--surface-1)] font-medium hover:bg-[var(--text-primary)] transition cursor-pointer shadow-xs self-start sm:self-auto"
             >
               {isNl ? 'Verplaats naar morgen' : 'Move to tomorrow'}
             </button>
@@ -1408,11 +1408,11 @@ export const TodayView: React.FC<TodayViewProps> = ({
 
         {/* Task List */}
         {todayTasks.length === 0 ? (
-          <div className="p-6 rounded-2xl border border-dashed border-[#DDD4C5] text-center bg-[#FAF8F4] space-y-1.5">
-            <p className="text-xs text-[#7A7167]">
+          <div className="p-6 rounded-2xl border border-dashed border-[var(--border-subtle)] text-center bg-[var(--surface-1)] space-y-1.5">
+            <p className="text-xs text-[var(--text-secondary)]">
               {isNl ? 'Geen taken gepland voor vandaag.' : 'No tasks scheduled for today.'}
             </p>
-            <p className="text-[11px] text-[#A69C8E]">
+            <p className="text-[11px] text-[var(--text-muted)]">
               {isNl
                 ? 'Geniet van de natuurlijke ruimte, of voeg bewust één taak toe.'
                 : 'Enjoy the spaciousness, or choose one intentional task.'}
@@ -1429,8 +1429,8 @@ export const TodayView: React.FC<TodayViewProps> = ({
                   key={task.id}
                   className={`group p-3.5 rounded-2xl border transition-all ${
                     isDone
-                      ? 'bg-[#F5F2EC]/60 border-[#E2DBD0] opacity-60'
-                      : 'bg-[#FFFFFF] border-[#E5DFD3] hover:border-[#C4BEB3] shadow-2xs'
+                      ? 'bg-[var(--surface-2)]/60 border-[var(--border-subtle)] opacity-60'
+                      : 'bg-[var(--surface-2)] border-[#E5DFD3] hover:border-[var(--text-muted)] shadow-2xs'
                   }`}
                 >
                   <div className="flex items-start justify-between gap-2.5">
@@ -1439,13 +1439,13 @@ export const TodayView: React.FC<TodayViewProps> = ({
                       <button
                         type="button"
                         onClick={() => onToggleTask(task.id)}
-                        className="mt-0.5 text-[#8C7654] hover:text-[#2C2825] transition cursor-pointer shrink-0"
+                        className="mt-0.5 text-[var(--accent-secondary)] hover:text-[var(--text-primary)] transition cursor-pointer shrink-0"
                         title={isDone ? 'Markeer onvoltooid' : 'Markeer voltooid'}
                       >
                         {isDone ? (
-                          <CheckCircle2 className="w-5 h-5 text-[#8C7654]" />
+                          <CheckCircle2 className="w-5 h-5 text-[var(--accent-secondary)]" />
                         ) : (
-                          <Circle className="w-5 h-5 text-[#B5ABA0] group-hover:text-[#2C2825]" />
+                          <Circle className="w-5 h-5 text-[var(--text-muted)] group-hover:text-[var(--text-primary)]" />
                         )}
                       </button>
 
@@ -1453,7 +1453,7 @@ export const TodayView: React.FC<TodayViewProps> = ({
                         <div className="flex items-center gap-2 flex-wrap">
                           <span
                             className={`text-xs sm:text-sm font-medium ${
-                              isDone ? 'line-through text-[#8C8377]' : 'text-[#2C2825]'
+                              isDone ? 'line-through text-[var(--text-muted)]' : 'text-[var(--text-primary)]'
                             }`}
                           >
                             {task.title}
@@ -1463,8 +1463,8 @@ export const TodayView: React.FC<TodayViewProps> = ({
                           <span
                             className={`text-[9px] uppercase px-2 py-0.5 rounded-full font-semibold tracking-wider shrink-0 ${
                               task.realm === 'mariluna'
-                                ? 'bg-[#2C2825] text-[#F9F7F2]'
-                                : 'bg-[#EAE3D4] text-[#554C42]'
+                                ? 'bg-[var(--text-primary)] text-[var(--text-primary)]'
+                                : 'bg-[var(--surface-2)] text-[var(--text-secondary)]'
                             }`}
                           >
                             {task.realm === 'mariluna' ? 'Mariluna' : (isNl ? 'Persoonlijk' : 'Personal')}
@@ -1482,10 +1482,10 @@ export const TodayView: React.FC<TodayViewProps> = ({
                               }
                               className={`text-[9px] uppercase px-2 py-0.5 rounded-full font-semibold tracking-wider cursor-pointer border appearance-none pr-3 ${
                                 task.priority === 'high'
-                                  ? 'bg-[#F2ECE1] text-[#7E694E] border-[#D8CEBF]'
+                                  ? 'bg-[var(--surface-2)] text-[var(--accent-secondary)] border-[var(--border-subtle)]'
                                   : task.priority === 'low'
-                                  ? 'bg-[#F7F5F0] text-[#8C8377] border-[#E8E2D6]'
-                                  : 'bg-[#FAF8F4] text-[#6D6356] border-[#DDD4C5]'
+                                  ? 'bg-[var(--surface-2)] text-[var(--text-muted)] border-[var(--border-subtle)]'
+                                  : 'bg-[var(--surface-1)] text-[var(--text-secondary)] border-[var(--border-subtle)]'
                               }`}
                             >
                               <option value="high">{isNl ? 'Hoge Prioriteit' : 'High Priority'}</option>
@@ -1496,9 +1496,9 @@ export const TodayView: React.FC<TodayViewProps> = ({
                         </div>
 
                         {/* Metadata row */}
-                        <div className="flex items-center gap-3 mt-1.5 text-[11px] text-[#8A8175] flex-wrap">
+                        <div className="flex items-center gap-3 mt-1.5 text-[11px] text-[var(--text-muted)] flex-wrap">
                           <span className="flex items-center gap-1">
-                            <Clock className="w-3 h-3 text-[#A89F93]" />
+                            <Clock className="w-3 h-3 text-[var(--text-muted)]" />
                             {task.estimatedDuration}m
                           </span>
 
@@ -1507,20 +1507,20 @@ export const TodayView: React.FC<TodayViewProps> = ({
                           )}
 
                           {project && (
-                            <span className="text-[#7E694E] truncate max-w-[140px]">
+                            <span className="text-[var(--accent-secondary)] truncate max-w-[140px]">
                               📁 {project.title}
                             </span>
                           )}
 
                           {task.recurring && task.recurring !== 'none' && (
-                            <span className="flex items-center gap-1 text-[#8C8377]">
+                            <span className="flex items-center gap-1 text-[var(--text-muted)]">
                               <Repeat className="w-3 h-3" />
                               <span className="capitalize">{task.recurring}</span>
                             </span>
                           )}
 
                           {task.notes && (
-                            <span className="text-[#998E80] truncate max-w-[200px]">
+                            <span className="text-[var(--text-muted)] truncate max-w-[200px]">
                               “{task.notes}”
                             </span>
                           )}
@@ -1537,36 +1537,36 @@ export const TodayView: React.FC<TodayViewProps> = ({
                             activeTaskMenuId === task.id ? null : task.id
                           )
                         }
-                        className="p-1 rounded-lg hover:bg-[#F2ECE1] text-[#8C8377] hover:text-[#2C2825] transition cursor-pointer"
+                        className="p-1 rounded-lg hover:bg-[var(--surface-2)] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition cursor-pointer"
                         title={isNl ? 'Taakopties & Verplaatsen' : 'Task options'}
                       >
                         <MoreVertical className="w-4 h-4" />
                       </button>
 
                       {activeTaskMenuId === task.id && (
-                        <div className="absolute right-0 top-7 z-30 w-48 bg-[#FFFFFF] border border-[#DDD4C5] rounded-2xl shadow-lg p-1.5 space-y-1 text-xs text-[#2C2825]">
+                        <div className="absolute right-0 top-7 z-30 w-48 bg-[var(--surface-2)] border border-[var(--border-subtle)] rounded-2xl shadow-lg p-1.5 space-y-1 text-xs text-[var(--text-primary)]">
                           <button
                             type="button"
                             onClick={() => handleMoveToTomorrow(task.id)}
-                            className="w-full text-left px-3 py-1.5 rounded-xl hover:bg-[#F7F4EE] transition flex items-center gap-2"
+                            className="w-full text-left px-3 py-1.5 rounded-xl hover:bg-[var(--surface-2)] transition flex items-center gap-2"
                           >
-                            <CalendarDays className="w-3.5 h-3.5 text-[#7E694E]" />
+                            <CalendarDays className="w-3.5 h-3.5 text-[var(--accent-secondary)]" />
                             <span>{isNl ? 'Verplaats naar morgen' : 'Move to tomorrow'}</span>
                           </button>
                           <button
                             type="button"
                             onClick={() => handleSnoozeTwoDays(task.id)}
-                            className="w-full text-left px-3 py-1.5 rounded-xl hover:bg-[#F7F4EE] transition flex items-center gap-2"
+                            className="w-full text-left px-3 py-1.5 rounded-xl hover:bg-[var(--surface-2)] transition flex items-center gap-2"
                           >
-                            <Clock className="w-3.5 h-3.5 text-[#7E694E]" />
+                            <Clock className="w-3.5 h-3.5 text-[var(--accent-secondary)]" />
                             <span>{isNl ? 'Sluimeren (+2 dagen)' : 'Snooze (+2 days)'}</span>
                           </button>
                           <button
                             type="button"
                             onClick={() => handleKeepForLater(task.id)}
-                            className="w-full text-left px-3 py-1.5 rounded-xl hover:bg-[#F7F4EE] transition flex items-center gap-2"
+                            className="w-full text-left px-3 py-1.5 rounded-xl hover:bg-[var(--surface-2)] transition flex items-center gap-2"
                           >
-                            <Repeat className="w-3.5 h-3.5 text-[#7E694E]" />
+                            <Repeat className="w-3.5 h-3.5 text-[var(--accent-secondary)]" />
                             <span>{isNl ? 'Bewaar voor later' : 'Keep for later'}</span>
                           </button>
                           <div className="border-t border-[#EAE1D3] my-1" />
@@ -1576,7 +1576,7 @@ export const TodayView: React.FC<TodayViewProps> = ({
                               if (onRemoveTask) onRemoveTask(task.id);
                               setActiveTaskMenuId(null);
                             }}
-                            className="w-full text-left px-3 py-1.5 rounded-xl hover:bg-[#FBEBEB] text-[#9E3E3E] transition"
+                            className="w-full text-left px-3 py-1.5 rounded-xl hover:bg-[var(--surface-2)] text-[#9E3E3E] transition"
                           >
                             {isNl ? 'Verwijder taak' : 'Delete task'}
                           </button>
@@ -1596,14 +1596,14 @@ export const TodayView: React.FC<TodayViewProps> = ({
       {/* ============================================================ */}
       <section className="space-y-2.5">
         <div className="flex items-center justify-between pb-0.5">
-          <h2 className="font-serif text-lg font-medium text-[#2C2825]">
+          <h2 className="font-serif text-lg font-medium text-[var(--text-primary)]">
             {isNl ? 'Volgende & Later' : 'Upcoming & Next'}
           </h2>
           {onSelectTab && (
             <button
               type="button"
               onClick={() => onSelectTab('calendar')}
-              className="text-xs text-[#8C8377] hover:text-[#2C2825] transition cursor-pointer"
+              className="text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] transition cursor-pointer"
             >
               {isNl ? 'Volledige agenda →' : 'Full Calendar →'}
             </button>
@@ -1611,7 +1611,7 @@ export const TodayView: React.FC<TodayViewProps> = ({
         </div>
 
         {upcomingItems.length === 0 ? (
-          <div className="p-3.5 rounded-2xl border border-[#E8E2D6] bg-[#FAF8F4] text-xs text-[#7A7167]">
+          <div className="p-3.5 rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-1)] text-xs text-[var(--text-secondary)]">
             {isNl
               ? 'Geen directe verplichtingen later deze week.'
               : 'No immediate scheduled commitments upcoming later this week.'}
@@ -1621,17 +1621,17 @@ export const TodayView: React.FC<TodayViewProps> = ({
             {upcomingItems.map((item) => (
               <div
                 key={item.id}
-                className="p-3 rounded-2xl border border-[#E6DFD3] bg-[#FFFFFF] shadow-2xs flex items-center justify-between text-xs"
+                className="p-3 rounded-2xl border border-[#E6DFD3] bg-[var(--surface-2)] shadow-2xs flex items-center justify-between text-xs"
               >
                 <div className="space-y-0.5 min-w-0">
-                  <span className="text-[10px] uppercase font-semibold text-[#8C8377] tracking-wider block">
+                  <span className="text-[10px] uppercase font-semibold text-[var(--text-muted)] tracking-wider block">
                     {item.label}
                   </span>
-                  <div className="font-medium text-[#2C2825] truncate">{item.title}</div>
+                  <div className="font-medium text-[var(--text-primary)] truncate">{item.title}</div>
                 </div>
 
-                <div className="text-right shrink-0 text-[11px] text-[#7A7167]">
-                  {item.time && <div className="font-medium text-[#2C2825]">{item.time}</div>}
+                <div className="text-right shrink-0 text-[11px] text-[var(--text-secondary)]">
+                  {item.time && <div className="font-medium text-[var(--text-primary)]">{item.time}</div>}
                   <div>{item.dateLabel}</div>
                 </div>
               </div>
@@ -1643,9 +1643,9 @@ export const TodayView: React.FC<TodayViewProps> = ({
       {/* ============================================================ */}
       {/* 6. ONE SMALL ALCHEMY INSIGHT                                 */}
       {/* ============================================================ */}
-      <section className="rounded-2xl border border-[#DDD3C2] bg-gradient-to-b from-[#FAF7F0] to-[#F4EEE2] p-4.5 sm:p-5 shadow-2xs space-y-2.5">
+      <section className="rounded-2xl border border-[var(--border-subtle)] bg-gradient-to-b from-[var(--surface-2)] to-[var(--surface-2)] p-4.5 sm:p-5 shadow-2xs space-y-2.5">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-[#7E694E]">
+          <div className="flex items-center gap-2 text-[var(--accent-secondary)]">
             <Sparkles className="w-4 h-4" />
             <span className="text-[11px] font-semibold uppercase tracking-wider font-sans">
               {isNl ? 'Alchemy Inzicht' : 'Alchemy Insight'}
@@ -1654,7 +1654,7 @@ export const TodayView: React.FC<TodayViewProps> = ({
         </div>
 
         <div>
-          <h3 className="text-xs sm:text-sm font-semibold text-[#2C2825]">
+          <h3 className="text-xs sm:text-sm font-semibold text-[var(--text-primary)]">
             {smallInsight.title}
           </h3>
           <p className="text-xs text-[#5A5248] font-light leading-relaxed mt-1">
@@ -1681,7 +1681,7 @@ export const TodayView: React.FC<TodayViewProps> = ({
                   onOpenAssistant();
                 }
               }}
-              className="inline-flex items-center gap-1.5 text-xs font-medium text-[#7E694E] hover:text-[#2C2825] transition cursor-pointer select-none"
+              className="inline-flex items-center gap-1.5 text-xs font-medium text-[var(--accent-secondary)] hover:text-[var(--text-primary)] transition cursor-pointer select-none"
             >
               <span>{isNl ? 'Bespreek met Alchemy' : 'Discuss with Alchemy'}</span>
               <ArrowRight className="w-3.5 h-3.5" />
@@ -1694,22 +1694,22 @@ export const TodayView: React.FC<TodayViewProps> = ({
       {/* 7. OPTIONAL CELESTIAL / ASTROLOGICAL NOTE                    */}
       {/* ============================================================ */}
       {celestialNote && (
-        <section className="rounded-2xl border border-[#E3DACB] bg-[#FAF8F3] p-4 text-xs space-y-1.5 text-[#524B43]">
+        <section className="rounded-2xl border border-[#E3DACB] bg-[var(--surface-1)] p-4 text-xs space-y-1.5 text-[var(--text-secondary)]">
           <div className="flex items-center gap-2">
-            <span className="font-serif text-sm font-medium text-[#2C2825]">
+            <span className="font-serif text-sm font-medium text-[var(--text-primary)]">
               {celestialNote.title}
             </span>
-            <span className="text-[9px] uppercase px-2 py-0.5 rounded-full font-semibold tracking-wider bg-[#EAE3D4] text-[#554C42]">
+            <span className="text-[9px] uppercase px-2 py-0.5 rounded-full font-semibold tracking-wider bg-[var(--surface-2)] text-[var(--text-secondary)]">
               {isNl ? 'Astronomisch' : 'Astronomical'}
             </span>
           </div>
 
-          <p className="text-[11px] text-[#6D6356] leading-relaxed">
+          <p className="text-[11px] text-[var(--text-secondary)] leading-relaxed">
             {celestialNote.astronomicalFact}
           </p>
 
           {celestialNote.optionalAstrologicalNote && (
-            <p className="text-[11px] text-[#8C8377] italic pt-1 border-t border-[#ECE3D4]">
+            <p className="text-[11px] text-[var(--text-muted)] italic pt-1 border-t border-[#ECE3D4]">
               {celestialNote.optionalAstrologicalNote}
             </p>
           )}
@@ -1721,6 +1721,7 @@ export const TodayView: React.FC<TodayViewProps> = ({
           isOpen={!!splitModalTask}
           taskId={splitModalTask.id}
           taskTitle={splitModalTask.title}
+          world={splitModalTask.realm === 'mariluna' ? 'mariluna' : 'personal'}
           onClose={() => setSplitModalTask(null)}
           onConfirmSplit={handleConfirmTaskSplit}
           isNl={isNl}

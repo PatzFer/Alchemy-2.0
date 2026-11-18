@@ -34,10 +34,10 @@ export function buildBrainContext(
   const identity: BrainContextLayer1Identity = {
     name: foundation?.patzIdentity?.preferredName || foundation?.aboutYou?.name || 'Patricia',
     preferredLanguage: foundation?.aboutYou?.preferredLanguage || 'nl',
-    roots: foundation?.patzIdentity?.heritage || foundation?.patzIdentity?.bornIn || 'Portugal / België',
+    roots: isMarilunaScope ? '' : (foundation?.patzIdentity?.heritage || foundation?.patzIdentity?.bornIn || 'Portugal / België'),
     communicationStyle: foundation?.communication?.preferredTone || 'Kort, direct, warm, praktisch',
     personalValues: ['Rust', 'Vrijheid', 'Schoonheid'],
-    planningPreference: foundation?.planning?.avoidUnrealisticPlanning ? 'Ruim, ongehaast, met ademruimte' : 'Gestructureerd',
+    planningPreference: isMarilunaScope ? 'Gestructureerd en realistisch' : (foundation?.planning?.avoidUnrealisticPlanning ? 'Ruim, ongehaast, met ademruimte' : 'Gestructureerd'),
   };
 
   // -------------------------------------------------------------
@@ -66,7 +66,8 @@ export function buildBrainContext(
     ].filter(Boolean) as string[],
     diningSetting: isMarilunaScope ? '' : (foodProfile?.kitchenNotes || 'Samen met partner'),
     styleDNA: isMarilunaScope ? '' : (foundation?.personalStyling?.styleDNA?.essence || 'Understated elegance, structured, neutral tones'),
-    workContexts: (foundation?.work?.workContexts || []).map((w) => ({
+    // Employment and routine details are personal context, never Mariluna business context.
+    workContexts: isMarilunaScope ? [] : (foundation?.work?.workContexts || []).map((w) => ({
       name: w.name,
       days: w.workdays,
       hours: `${w.startTime}–${w.endTime}`,
@@ -98,10 +99,12 @@ export function buildBrainContext(
   // Today's Check-In
   const todayCheckIn = (state.dailyCheckIns || []).find((c) => c.date === targetDate);
   let capacityLevel: 'high' | 'normal' | 'reduced' | 'minimal' = 'normal';
-  if (todayCheckIn?.feeling === 'sick') capacityLevel = 'minimal';
-  else if (todayCheckIn?.feeling === 'lower' || todayCheckIn?.feeling === 'mentally_heavy') capacityLevel = 'reduced';
+  // Never let private check-in state influence a Mariluna business context,
+  // even indirectly through an inferred capacity label.
+  if (!isMarilunaScope && todayCheckIn?.feeling === 'sick') capacityLevel = 'minimal';
+  else if (!isMarilunaScope && (todayCheckIn?.feeling === 'lower' || todayCheckIn?.feeling === 'mentally_heavy')) capacityLevel = 'reduced';
   else if (freeMinutes < 90) capacityLevel = 'reduced';
-  else if (freeMinutes >= 240 && todayCheckIn?.feeling === 'good') capacityLevel = 'high';
+  else if (freeMinutes >= 240 && !isMarilunaScope && todayCheckIn?.feeling === 'good') capacityLevel = 'high';
 
   // Tasks
   const openTasks = (state.tasks || [])

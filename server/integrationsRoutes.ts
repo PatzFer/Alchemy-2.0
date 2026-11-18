@@ -1,4 +1,5 @@
 import express, { Request, Response } from "express";
+import { requireAppAuth } from "./security";
 
 const router = express.Router();
 
@@ -104,7 +105,7 @@ const serverState: ServerIntegrationConfig = {
 };
 
 // GET /api/integrations/status
-router.get("/status", (_req: Request, res: Response) => {
+router.get("/status", requireAppAuth, (_req: Request, res: Response) => {
   res.json({
     status: "ok",
     integrations: serverState,
@@ -117,78 +118,42 @@ router.get("/status", (_req: Request, res: Response) => {
 });
 
 // POST /api/integrations/connect/:service
-router.post("/connect/:service", (req: Request, res: Response) => {
+router.post("/connect/:service", requireAppAuth, (req: Request, res: Response) => {
   const { service } = req.params;
   const now = new Date().toISOString();
 
   switch (service) {
     case "calendar":
-    case "google_calendar": {
-      const email = req.body.accountEmail;
-      if (!email && !req.body.verified) {
-        return res.status(400).json({ error: "Geen geverifieerd account of e-mailadres opgegeven." });
-      }
-      serverState.calendar = {
-        status: "connected",
-        accountEmail: email,
-        lastSync: now,
-        readOnly: true,
-        syncedEventsCount: req.body.syncedEventsCount || 0,
-        isPatriciaOnlySchedule: true,
-      };
-      return res.json({ success: true, service: "google_calendar", data: serverState.calendar });
-    }
-
+    case "google_calendar":
     case "gmail":
     case "mariluna_gmail": {
-      const email = req.body.accountEmail;
-      const messages = req.body.messages || [];
-      if (!email && !req.body.verified) {
-        return res.status(400).json({ error: "Geen geverifieerd account of e-mailadres opgegeven." });
-      }
-      serverState.gmail = {
-        status: "connected",
-        accountEmail: email,
-        lastSync: now,
-        readOnly: true,
-        businessOnly: true,
-        syncedThreadsCount: messages.length,
-        messages: messages,
-      };
-      return res.json({ success: true, service: "mariluna_gmail", data: serverState.gmail });
+      // Client-provided email/verified flags are not proof of provider authorization.
+      // Until OAuth code exchange and token validation happen server-side, fail closed.
+      return res.status(501).json({
+        success: false,
+        service,
+        error: "Server-side Google OAuth verification and durable token storage are not implemented yet. No connection has been recorded.",
+      });
     }
 
     case "health_connect": {
-      if (!req.body.verified) {
-        return res.status(400).json({ error: "Health Connect/Google Fit vereist geverifieerde OAuth/API data." });
-      }
-      serverState.healthConnect = {
-        status: "connected",
-        platform: req.body.platform === "android" ? "android" : "web",
-        lastSync: now,
-        stepsToday: typeof req.body.stepsToday === "number" ? req.body.stepsToday : undefined,
-        activeMinutes: req.body.activeMinutes ?? 0,
-        isStepsOnly: true,
-        isPrivateOnly: true,
-      };
-      return res.json({ success: true, service: "health_connect", data: serverState.healthConnect });
+      // The web client currently has no native Android Health Connect bridge.
+      // Never mark a client-reported "verified" flag as a real provider connection.
+      return res.status(501).json({
+        success: false,
+        service: "health_connect",
+        error: "Native Android Health Connect integration is not implemented yet.",
+      });
     }
 
     case "instagram":
     case "mariluna_instagram": {
-      if (!req.body.verified && !req.body.posts) {
-        return res.status(400).json({ error: "Instagram koppeling vereist een geverifieerd Meta Graph API Access Token." });
-      }
-      const username = req.body.accountUsername || "@mariluna.studio";
-      const posts = Array.isArray(req.body.posts) ? req.body.posts : [];
-      serverState.instagram = {
-        status: "connected",
-        accountUsername: username,
-        accountType: "business",
-        lastSync: now,
-        posts: posts,
-      };
-      return res.json({ success: true, service: "mariluna_instagram", data: serverState.instagram });
+      // A client-supplied verified flag or post array must never establish a trusted connection.
+      return res.status(501).json({
+        success: false,
+        service,
+        error: "Server-side Meta OAuth verification and durable token storage are not implemented yet. No connection has been recorded.",
+      });
     }
 
     case "push_notifications": {
@@ -204,7 +169,7 @@ router.post("/connect/:service", (req: Request, res: Response) => {
 });
 
 // POST /api/integrations/disconnect/:service
-router.post("/disconnect/:service", (req: Request, res: Response) => {
+router.post("/disconnect/:service", requireAppAuth, (req: Request, res: Response) => {
   const { service } = req.params;
 
   switch (service) {
@@ -268,7 +233,7 @@ router.post("/disconnect/:service", (req: Request, res: Response) => {
 });
 
 // POST /api/integrations/sync/:service
-router.post("/sync/:service", (req: Request, res: Response) => {
+router.post("/sync/:service", requireAppAuth, (req: Request, res: Response) => {
   const { service } = req.params;
   const now = new Date().toISOString();
 
@@ -294,7 +259,7 @@ router.post("/sync/:service", (req: Request, res: Response) => {
 });
 
 // POST /api/integrations/test-push
-router.post("/test-push", (_req: Request, res: Response) => {
+router.post("/test-push", requireAppAuth, (_req: Request, res: Response) => {
   const now = new Date().toISOString();
   serverState.pushNotifications.lastTested = now;
   res.json({

@@ -468,14 +468,14 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
   };
 
   return (
-    <div className="space-y-7 pb-24 text-[#2C2825]">
+    <div className="space-y-7 pb-24 text-[var(--text-primary)]">
       {/* Editorial Luxury Header for Mariluna */}
-      <header className="rounded-3xl border border-[#D5C6AF] bg-[#23201D] text-[#FAF8F5] p-6 sm:p-8 shadow-md relative overflow-hidden">
-        <div className="absolute -right-16 -top-16 w-64 h-64 rounded-full bg-[#C5A880]/10 blur-2xl pointer-events-none" />
+      <header className="rounded-3xl border border-[#52695A] bg-[#263D35] text-[#F0EBDD] p-6 sm:p-8 shadow-md relative overflow-hidden">
+        <div className="absolute -right-16 -top-16 w-64 h-64 rounded-full bg-[#A9B88A]/10 blur-2xl pointer-events-none" />
 
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div>
-            <div className="flex items-center gap-2 text-[11px] uppercase tracking-widest text-[#C5A880] font-semibold">
+            <div className="flex items-center gap-2 text-[11px] uppercase tracking-widest text-[#D6C69B] font-semibold">
               <span>Studio & Enterprise</span>
               <span>•</span>
               <span>{isNl ? 'Zakelijk Domein' : 'Business Domain'}</span>
@@ -483,7 +483,7 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
             <h1 className="font-serif text-3xl sm:text-4xl font-normal tracking-tight mt-1">
               Mariluna Atelier
             </h1>
-            <p className="text-xs sm:text-sm text-[#D8D0C5] mt-2 max-w-xl font-light leading-relaxed">
+            <p className="text-xs sm:text-sm text-[var(--text-secondary)] mt-2 max-w-xl font-light leading-relaxed">
               {isNl
                 ? 'Strategisch overzicht, contentplanning, projecten en administratie voor Mariluna. Volledig gescheiden van je persoonlijke levenssfeer.'
                 : 'Strategic command center, editorial pipelines, client projects, and bookkeeping for Mariluna.'}
@@ -500,9 +500,9 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
                     : 'Act as my strategic Mariluna business partner. Review my projects, editorial pipeline, and focus with calm clarity.'
                 )
               }
-              className="flex items-center gap-2 px-4 py-2 rounded-full border border-[#C5A880] bg-[#C5A880]/15 text-[#FAF8F5] text-xs font-medium hover:bg-[#C5A880]/25 transition cursor-pointer"
+              className="flex items-center gap-2 px-4 py-2 rounded-full border border-[var(--accent-secondary)] bg-[var(--accent-secondary)]/15 text-[var(--surface-1)] text-xs font-medium hover:bg-[var(--accent-secondary)]/25 transition cursor-pointer"
             >
-              <Sparkles className="w-3.5 h-3.5 text-[#C5A880]" />
+              <Sparkles className="w-3.5 h-3.5 text-[var(--accent-secondary)]" />
               <span>{isNl ? 'Strategische Sparring' : 'Strategic Sparring'}</span>
             </button>
           </div>
@@ -523,11 +523,11 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
                 onClick={() => setActiveSubTab(tab.id)}
                 className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full transition cursor-pointer shrink-0 font-medium ${
                   isActive
-                    ? 'bg-[#FAF8F5] text-[#23201D] shadow-xs'
-                    : 'text-[#B8AEA2] hover:text-[#FAF8F5] hover:bg-[#342F2A]'
+                    ? 'bg-[var(--surface-1)] text-[var(--text-primary)] shadow-xs'
+                    : 'text-[var(--text-secondary)] hover:text-[var(--surface-1)] hover:bg-[#342F2A]'
                 }`}
               >
-                <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-[#8C7654]' : 'text-[#AFA496]'}`} />
+                <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-[var(--accent-secondary)]' : 'text-[var(--text-muted)]'}`} />
                 <span>{tab.label}</span>
               </button>
             );
@@ -544,16 +544,16 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div
               onClick={() => setActiveSubTab('projects')}
-              className="p-3.5 rounded-2xl border border-[#E3D9C9] bg-[#FAF8F3] hover:border-[#8C7654] transition cursor-pointer space-y-1 shadow-xs"
+              className="p-3.5 rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-1)] hover:border-[var(--accent-secondary)] transition cursor-pointer space-y-1 shadow-xs"
             >
-              <div className="flex items-center justify-between text-[10px] text-[#8C7654] font-medium uppercase tracking-wider">
+              <div className="flex items-center justify-between text-[10px] text-[var(--accent-secondary)] font-medium uppercase tracking-wider">
                 <span>{isNl ? 'Projecten' : 'Projects'}</span>
                 <Briefcase className="w-3.5 h-3.5" />
               </div>
-              <div className="font-serif text-lg text-[#2C2825]">
+              <div className="font-serif text-lg text-[var(--text-primary)]">
                 {marilunaProjects.filter((p) => p.status === 'active').length} {isNl ? 'actief' : 'active'}
               </div>
-              <p className="text-[10px] text-[#7A7167]">
+              <p className="text-[10px] text-[var(--text-secondary)]">
                 {marilunaProjects.length === 0
                   ? isNl ? 'Nog geen projecten' : 'No projects'
                   : `${marilunaProjects.length} ${isNl ? 'in totaal' : 'total'}`}
@@ -562,36 +562,36 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
 
             <div
               onClick={() => setActiveSubTab('content')}
-              className="p-3.5 rounded-2xl border border-[#E3D9C9] bg-[#FAF8F3] hover:border-[#8C7654] transition cursor-pointer space-y-1 shadow-xs"
+              className="p-3.5 rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-1)] hover:border-[var(--accent-secondary)] transition cursor-pointer space-y-1 shadow-xs"
             >
-              <div className="flex items-center justify-between text-[10px] text-[#8C7654] font-medium uppercase tracking-wider">
+              <div className="flex items-center justify-between text-[10px] text-[var(--accent-secondary)] font-medium uppercase tracking-wider">
                 <span>{isNl ? 'Content' : 'Content'}</span>
                 <FileText className="w-3.5 h-3.5" />
               </div>
-              <div className="font-serif text-lg text-[#2C2825]">
+              <div className="font-serif text-lg text-[var(--text-primary)]">
                 {contentPlan.posts.length} {isNl ? 'posts' : 'posts'}
               </div>
-              <p className="text-[10px] text-[#7A7167]">
+              <p className="text-[10px] text-[var(--text-secondary)]">
                 {contentPlan.posts.filter((p) => p.status === 'ready').length} {isNl ? 'klaar voor publicatie' : 'ready to publish'}
               </p>
             </div>
 
             <div
               onClick={() => setActiveSubTab('metrics')}
-              className="p-3.5 rounded-2xl border border-[#E3D9C9] bg-[#FAF8F3] hover:border-[#8C7654] transition cursor-pointer space-y-1 shadow-xs"
+              className="p-3.5 rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-1)] hover:border-[var(--accent-secondary)] transition cursor-pointer space-y-1 shadow-xs"
             >
-              <div className="flex items-center justify-between text-[10px] text-[#8C7654] font-medium uppercase tracking-wider">
+              <div className="flex items-center justify-between text-[10px] text-[var(--accent-secondary)] font-medium uppercase tracking-wider">
                 <span>{isNl ? 'Cijfers & KPI’s' : 'Metrics'}</span>
                 <TrendingUp className="w-3.5 h-3.5" />
               </div>
-              <div className="font-serif text-lg text-[#2C2825]">
+              <div className="font-serif text-lg text-[var(--text-primary)]">
                 {recentMetric
                   ? recentMetric.unit === '€'
                     ? `€${Number(recentMetric.value).toLocaleString('nl-NL')}`
                     : `${recentMetric.value} ${recentMetric.unit || ''}`
                   : '—'}
               </div>
-              <p className="text-[10px] text-[#7A7167] truncate">
+              <p className="text-[10px] text-[var(--text-secondary)] truncate">
                 {recentMetric
                   ? `${recentMetric.name}`
                   : isNl ? 'Nog geen cijfers' : 'No metrics yet'}
@@ -601,15 +601,15 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
 
           {/* Business Attention Horizon (Only showing items that actually exist) */}
           {hasAnyStrategicAttention && (
-            <div className="rounded-2xl border border-[#E3D9C9] bg-[#FAF8F3] p-4 sm:p-5 space-y-3 shadow-xs">
-              <div className="flex items-center justify-between pb-2 border-b border-[#ECE3D4]">
+            <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-1)] p-4 sm:p-5 space-y-3 shadow-xs">
+              <div className="flex items-center justify-between pb-2 border-b border-[var(--border-subtle)]">
                 <div className="flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-[#8C7654]" />
-                  <h3 className="font-serif text-base text-[#2C2825] font-medium">
+                  <Sparkles className="w-4 h-4 text-[var(--accent-secondary)]" />
+                  <h3 className="font-serif text-base text-[var(--text-primary)] font-medium">
                     {isNl ? 'Belangrijke Zakelijke Aandachtspunten' : 'Key Business Focus Items'}
                   </h3>
                 </div>
-                <span className="text-[10px] text-[#8C7654] uppercase tracking-wider font-semibold">
+                <span className="text-[10px] text-[var(--accent-secondary)] uppercase tracking-wider font-semibold">
                   {isNl ? 'Horizon' : 'Horizon'}
                 </span>
               </div>
@@ -619,15 +619,15 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
                 {recentMetric && (
                   <div
                     onClick={() => setActiveSubTab('metrics')}
-                    className="p-3 rounded-xl bg-[#FFFFFF] border border-[#E8E1D3] hover:border-[#8C7654] transition cursor-pointer space-y-1"
+                    className="p-3 rounded-xl bg-[var(--surface-2)] border border-[var(--border-subtle)] hover:border-[var(--accent-secondary)] transition cursor-pointer space-y-1"
                   >
                     <div className="flex items-center justify-between">
-                      <span className="text-[9px] uppercase font-semibold tracking-wider text-[#8C7654]">
+                      <span className="text-[9px] uppercase font-semibold tracking-wider text-[var(--accent-secondary)]">
                         {isNl ? 'Recent Cijfer' : 'Recent Metric'}
                       </span>
-                      <span className="text-[10px] text-[#7A7167]">{recentMetric.period}</span>
+                      <span className="text-[10px] text-[var(--text-secondary)]">{recentMetric.period}</span>
                     </div>
-                    <div className="text-xs font-medium text-[#2C2825] truncate">
+                    <div className="text-xs font-medium text-[var(--text-primary)] truncate">
                       {recentMetric.name}:{' '}
                       {recentMetric.unit === '€'
                         ? `€${Number(recentMetric.value).toLocaleString('nl-NL')}`
@@ -640,17 +640,17 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
                 {activeProject && (
                   <div
                     onClick={() => setActiveSubTab('projects')}
-                    className="p-3 rounded-xl bg-[#FFFFFF] border border-[#E8E1D3] hover:border-[#8C7654] transition cursor-pointer space-y-1"
+                    className="p-3 rounded-xl bg-[var(--surface-2)] border border-[var(--border-subtle)] hover:border-[var(--accent-secondary)] transition cursor-pointer space-y-1"
                   >
                     <div className="flex items-center justify-between">
-                      <span className="text-[9px] uppercase font-semibold tracking-wider text-[#8C7654]">
+                      <span className="text-[9px] uppercase font-semibold tracking-wider text-[var(--accent-secondary)]">
                         {isNl ? 'Lopend Project' : 'Active Project'}
                       </span>
                       {activeProject.deadline && (
-                        <span className="text-[10px] font-mono text-[#7A7167]">{activeProject.deadline}</span>
+                        <span className="text-[10px] font-mono text-[var(--text-secondary)]">{activeProject.deadline}</span>
                       )}
                     </div>
-                    <div className="text-xs font-medium text-[#2C2825] truncate">
+                    <div className="text-xs font-medium text-[var(--text-primary)] truncate">
                       {activeProject.title}
                     </div>
                   </div>
@@ -660,15 +660,15 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
                 {currentStrategicGoal && (
                   <div
                     onClick={() => setActiveSubTab('strategy')}
-                    className="p-3 rounded-xl bg-[#FFFFFF] border border-[#E8E1D3] hover:border-[#8C7654] transition cursor-pointer space-y-1"
+                    className="p-3 rounded-xl bg-[var(--surface-2)] border border-[var(--border-subtle)] hover:border-[var(--accent-secondary)] transition cursor-pointer space-y-1"
                   >
                     <div className="flex items-center justify-between">
-                      <span className="text-[9px] uppercase font-semibold tracking-wider text-[#8C7654]">
+                      <span className="text-[9px] uppercase font-semibold tracking-wider text-[var(--accent-secondary)]">
                         {isNl ? 'Strategisch Doel' : 'Strategic Goal'}
                       </span>
-                      <span className="text-[10px] capitalize text-[#7A7167]">{currentStrategicGoal.timeHorizon}</span>
+                      <span className="text-[10px] capitalize text-[var(--text-secondary)]">{currentStrategicGoal.timeHorizon}</span>
                     </div>
-                    <div className="text-xs font-medium text-[#2C2825] truncate">
+                    <div className="text-xs font-medium text-[var(--text-primary)] truncate">
                       {currentStrategicGoal.title}
                     </div>
                   </div>
@@ -678,15 +678,15 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
                 {attentionContent && (
                   <div
                     onClick={() => setActiveSubTab('content')}
-                    className="p-3 rounded-xl bg-[#FFFFFF] border border-[#E8E1D3] hover:border-[#8C7654] transition cursor-pointer space-y-1"
+                    className="p-3 rounded-xl bg-[var(--surface-2)] border border-[var(--border-subtle)] hover:border-[var(--accent-secondary)] transition cursor-pointer space-y-1"
                   >
                     <div className="flex items-center justify-between">
-                      <span className="text-[9px] uppercase font-semibold tracking-wider text-[#8C7654]">
+                      <span className="text-[9px] uppercase font-semibold tracking-wider text-[var(--accent-secondary)]">
                         {isNl ? 'Content Aandacht' : 'Content Focus'}
                       </span>
-                      <span className="text-[10px] text-[#7A7167] capitalize">{attentionContent.status}</span>
+                      <span className="text-[10px] text-[var(--text-secondary)] capitalize">{attentionContent.status}</span>
                     </div>
-                    <div className="text-xs font-medium text-[#2C2825] truncate">
+                    <div className="text-xs font-medium text-[var(--text-primary)] truncate">
                       {attentionContent.title}
                     </div>
                   </div>
@@ -698,11 +698,11 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
           {/* Two Columns: Today's Mariluna Tasks & Upcoming Deadlines */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {/* Today's Relevant Mariluna Tasks */}
-            <div className="rounded-2xl border border-[#E3D9C9] bg-[#FAF8F3] p-4 sm:p-5 space-y-3">
-              <div className="flex items-center justify-between pb-2 border-b border-[#ECE3D4]">
+            <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-1)] p-4 sm:p-5 space-y-3">
+              <div className="flex items-center justify-between pb-2 border-b border-[var(--border-subtle)]">
                 <div className="flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-[#8C7654]" />
-                  <h3 className="font-serif text-base text-[#2C2825] font-medium">
+                  <CheckCircle2 className="w-4 h-4 text-[var(--accent-secondary)]" />
+                  <h3 className="font-serif text-base text-[var(--text-primary)] font-medium">
                     {isNl ? 'Mariluna Taken voor Vandaag' : "Today's Mariluna Tasks"}
                   </h3>
                 </div>
@@ -712,7 +712,7 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
               </div>
 
               {todayMarilunaTasks.length === 0 ? (
-                <div className="py-8 text-center text-xs text-[#8C8377] italic">
+                <div className="py-8 text-center text-xs text-[var(--text-muted)] italic">
                   {isNl ? 'Nog geen Mariluna taken gepland voor vandaag.' : 'No business tasks for today.'}
                 </div>
               ) : (
@@ -720,20 +720,20 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
                   {todayMarilunaTasks.map((task) => (
                     <div
                       key={task.id}
-                      className="p-2.5 rounded-xl bg-[#FFFFFF] border border-[#E8E1D3] flex items-center justify-between gap-3 text-xs"
+                      className="p-2.5 rounded-xl bg-[var(--surface-2)] border border-[var(--border-subtle)] flex items-center justify-between gap-3 text-xs"
                     >
                       <div className="flex items-center gap-2.5 min-w-0">
                         <button
                           type="button"
                           onClick={() => onToggleTask && onToggleTask(task.id)}
-                          className="text-[#B2A796] hover:text-[#2C2825] shrink-0"
+                          className="text-[#B2A796] hover:text-[var(--text-primary)] shrink-0"
                         >
                           <Circle className="w-4 h-4" />
                         </button>
-                        <span className="truncate text-[#2C2825] font-medium">{task.title}</span>
+                        <span className="truncate text-[var(--text-primary)] font-medium">{task.title}</span>
                       </div>
                       {task.priority === 'high' && (
-                        <span className="text-[10px] text-[#A64A38] bg-[#F9ECE9] px-2 py-0.5 rounded-md shrink-0">
+                        <span className="text-[10px] text-[#A64A38] bg-[var(--surface-2)] px-2 py-0.5 rounded-md shrink-0">
                           {isNl ? 'Hoog' : 'High'}
                         </span>
                       )}
@@ -744,18 +744,18 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
             </div>
 
             {/* Upcoming Deadlines & Commitments */}
-            <div className="rounded-2xl border border-[#E3D9C9] bg-[#FAF8F3] p-4 sm:p-5 space-y-3">
-              <div className="flex items-center justify-between pb-2 border-b border-[#ECE3D4]">
+            <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-1)] p-4 sm:p-5 space-y-3">
+              <div className="flex items-center justify-between pb-2 border-b border-[var(--border-subtle)]">
                 <div className="flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-[#8C7654]" />
-                  <h3 className="font-serif text-base text-[#2C2825] font-medium">
+                  <Clock className="w-4 h-4 text-[var(--accent-secondary)]" />
+                  <h3 className="font-serif text-base text-[var(--text-primary)] font-medium">
                     {isNl ? 'Aankomende Projectdeadlines' : 'Upcoming Project Deadlines'}
                   </h3>
                 </div>
               </div>
 
               {marilunaProjects.filter((p) => p.deadline).length === 0 ? (
-                <div className="py-8 text-center text-xs text-[#8C8377] italic">
+                <div className="py-8 text-center text-xs text-[var(--text-muted)] italic">
                   {isNl ? 'Geen aankomende zakelijke projectdeadlines.' : 'No upcoming project deadlines.'}
                 </div>
               ) : (
@@ -765,10 +765,10 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
                     .map((p) => (
                       <div
                         key={p.id}
-                        className="p-2.5 rounded-xl bg-[#FFFFFF] border border-[#E8E1D3] flex items-center justify-between text-xs"
+                        className="p-2.5 rounded-xl bg-[var(--surface-2)] border border-[var(--border-subtle)] flex items-center justify-between text-xs"
                       >
-                        <span className="font-medium text-[#2C2825]">{p.title}</span>
-                        <span className="text-[10px] font-mono text-[#8C7654] bg-[#F4EFE6] px-2 py-0.5 rounded-md">
+                        <span className="font-medium text-[var(--text-primary)]">{p.title}</span>
+                        <span className="text-[10px] font-mono text-[var(--accent-secondary)] bg-[var(--surface-2)] px-2 py-0.5 rounded-md">
                           {p.deadline}
                         </span>
                       </div>
@@ -779,11 +779,11 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
           </div>
 
           {/* Ideas Waiting for Attention */}
-          <div className="rounded-2xl border border-[#E3D9C9] bg-[#FAF8F3] p-4 sm:p-5 space-y-3">
-            <div className="flex items-center justify-between pb-2 border-b border-[#ECE3D4]">
+          <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-1)] p-4 sm:p-5 space-y-3">
+            <div className="flex items-center justify-between pb-2 border-b border-[var(--border-subtle)]">
               <div className="flex items-center gap-2">
-                <Lightbulb className="w-4 h-4 text-[#8C7654]" />
-                <h3 className="font-serif text-base text-[#2C2825] font-medium">
+                <Lightbulb className="w-4 h-4 text-[var(--accent-secondary)]" />
+                <h3 className="font-serif text-base text-[var(--text-primary)] font-medium">
                   {isNl ? 'Ideeën Wachtend op Aandacht' : 'Ideas Awaiting Sparring'}
                 </h3>
               </div>
@@ -794,7 +794,7 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
                 <button
                   type="button"
                   onClick={() => setActiveSubTab('brainstorm')}
-                  className="text-xs text-[#8C7654] hover:text-[#2C2825] font-medium flex items-center gap-0.5 ml-1 transition"
+                  className="text-xs text-[var(--accent-secondary)] hover:text-[var(--text-primary)] font-medium flex items-center gap-0.5 ml-1 transition"
                 >
                   <span>{isNl ? 'Open Sanctuary' : 'Open Sanctuary'}</span>
                   <ArrowRight className="w-3 h-3" />
@@ -803,7 +803,7 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
             </div>
 
             {marilunaIdeas.length === 0 ? (
-              <div className="py-6 text-center text-xs text-[#8C8377] italic">
+              <div className="py-6 text-center text-xs text-[var(--text-muted)] italic">
                 {isNl ? 'Geen openstaande zakelijke ideeën.' : 'No raw business ideas pending.'}
               </div>
             ) : (
@@ -811,30 +811,30 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
                 {marilunaIdeas.slice(0, 4).map((idea) => (
                   <div
                     key={idea.id}
-                    className="p-3.5 rounded-xl bg-[#FFFFFF] border border-[#E8E1D3] space-y-2 text-xs shadow-xs"
+                    className="p-3.5 rounded-xl bg-[var(--surface-2)] border border-[var(--border-subtle)] space-y-2 text-xs shadow-xs"
                   >
                     <div className="flex items-start justify-between gap-2">
-                      <div className="font-medium text-[#2C2825] truncate">{idea.title}</div>
+                      <div className="font-medium text-[var(--text-primary)] truncate">{idea.title}</div>
                       {idea.contentPillar && (
-                        <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-[#FAF4EA] text-[#8C7654] font-medium shrink-0">
+                        <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-[var(--surface-2)] text-[var(--accent-secondary)] font-medium shrink-0">
                           {idea.contentPillar}
                         </span>
                       )}
                     </div>
-                    <p className="text-[11px] text-[#7A7167] line-clamp-2">{idea.content}</p>
+                    <p className="text-[11px] text-[var(--text-secondary)] line-clamp-2">{idea.content}</p>
                     <div className="flex items-center justify-between pt-1">
                       <button
                         type="button"
                         onClick={() => handleSparringOpen(idea)}
-                        className="text-[11px] text-[#8C7654] hover:text-[#2C2825] font-medium flex items-center gap-1 cursor-pointer transition"
+                        className="text-[11px] text-[var(--accent-secondary)] hover:text-[var(--text-primary)] font-medium flex items-center gap-1 cursor-pointer transition"
                       >
-                        <Sparkles className="w-3 h-3 text-[#8C7654]" />
+                        <Sparkles className="w-3 h-3 text-[var(--accent-secondary)]" />
                         <span>{isNl ? 'Bespreek met Alchemy' : 'Spar with Alchemy'}</span>
                       </button>
                       <button
                         type="button"
                         onClick={() => setActiveSubTab('brainstorm')}
-                        className="text-[10px] text-[#A69B8D] hover:text-[#2C2825] transition"
+                        className="text-[10px] text-[#A69B8D] hover:text-[var(--text-primary)] transition"
                       >
                         {isNl ? 'Details →' : 'Details →'}
                       </button>
@@ -945,17 +945,17 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
         <div className="space-y-5">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-              <h2 className="font-serif text-xl font-normal text-[#2C2825]">
+              <h2 className="font-serif text-xl font-normal text-[var(--text-primary)]">
                 {isNl ? 'Producten & Diensten' : 'Offerings & Atelier Services'}
               </h2>
-              <p className="text-xs text-[#7A7167] mt-0.5">
+              <p className="text-xs text-[var(--text-secondary)] mt-0.5">
                 {isNl ? 'Je aanbodcatalogus, pakketten en maatwerkdiensten.' : 'Services, packages, and bespoke offerings.'}
               </p>
             </div>
             <button
               type="button"
               onClick={handleOpenNewOffering}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#2C2825] text-[#FAF8F3] text-xs font-medium hover:bg-[#433D37] transition shadow-xs cursor-pointer self-start sm:self-auto"
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[var(--text-primary)] text-[var(--surface-1)] text-xs font-medium hover:bg-[#433D37] transition shadow-xs cursor-pointer self-start sm:self-auto"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>{isNl ? 'Aanbod Toevoegen' : 'Add Offering'}</span>
@@ -964,7 +964,7 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
 
           {/* Search & Filter Bar */}
           {offerings.length > 0 && (
-            <div className="flex flex-col sm:flex-row gap-2.5 items-stretch sm:items-center justify-between bg-[#FAF8F3] p-2.5 rounded-2xl border border-[#E3D9C9]">
+            <div className="flex flex-col sm:flex-row gap-2.5 items-stretch sm:items-center justify-between bg-[var(--surface-1)] p-2.5 rounded-2xl border border-[var(--border-subtle)]">
               <div className="relative flex-1">
                 <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[#9E9589]" />
                 <input
@@ -972,7 +972,7 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
                   placeholder={isNl ? 'Zoek op titel of beschrijving...' : 'Search by title or description...'}
                   value={offeringSearchQuery}
                   onChange={(e) => setOfferingSearchQuery(e.target.value)}
-                  className="w-full pl-8 pr-3 py-1.5 rounded-xl bg-white border border-[#DDD4C5] text-xs text-[#2C2825] focus:outline-none focus:border-[#C5A880]"
+                  className="w-full pl-8 pr-3 py-1.5 rounded-xl bg-white border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-secondary)]"
                 />
               </div>
               <div className="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0">
@@ -983,7 +983,7 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
                     onClick={() => setOfferingTypeFilter(t)}
                     className={`px-2.5 py-1 rounded-lg text-[11px] font-medium transition cursor-pointer capitalize whitespace-nowrap ${
                       offeringTypeFilter === t
-                        ? 'bg-[#2C2825] text-[#FAF8F3]'
+                        ? 'bg-[var(--text-primary)] text-[var(--surface-1)]'
                         : 'bg-[#EAE2D3]/60 text-[#554C42] hover:bg-[#EAE2D3]'
                     }`}
                   >
@@ -1006,13 +1006,13 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
 
           {offerings.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-[#DCD3C4] p-10 text-center space-y-2">
-              <p className="text-xs text-[#7A7167] italic">
+              <p className="text-xs text-[var(--text-secondary)] italic">
                 {isNl ? 'Nog geen producten of diensten toegevoegd.' : 'No offerings added yet.'}
               </p>
               <button
                 type="button"
                 onClick={handleOpenNewOffering}
-                className="text-xs text-[#8C7654] font-medium hover:underline cursor-pointer"
+                className="text-xs text-[var(--accent-secondary)] font-medium hover:underline cursor-pointer"
               >
                 {isNl ? '+ Voeg je eerste dienst of product toe' : '+ Add your first service or product'}
               </button>
@@ -1030,7 +1030,7 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
 
               if (filteredOfferings.length === 0) {
                 return (
-                  <div className="rounded-2xl border border-[#E3D9C9] bg-[#FAF8F3] p-8 text-center text-xs text-[#7A7167]">
+                  <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-1)] p-8 text-center text-xs text-[var(--text-secondary)]">
                     {isNl ? 'Geen producten of diensten gevonden voor deze filter.' : 'No offerings found for this filter.'}
                   </div>
                 );
@@ -1041,22 +1041,22 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
                   {filteredOfferings.map((off) => (
                     <div
                       key={off.id}
-                      className="group relative rounded-2xl border border-[#E3D9C9] bg-[#FAF8F3] p-4 space-y-2 shadow-xs flex flex-col justify-between hover:border-[#C5A880] transition"
+                      className="group relative rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-1)] p-4 space-y-2 shadow-xs flex flex-col justify-between hover:border-[var(--accent-secondary)] transition"
                     >
                       <div className="space-y-2">
                         <div className="flex items-start justify-between gap-2">
-                          <h4 className="font-serif text-base font-medium text-[#2C2825] line-clamp-1">{off.title}</h4>
+                          <h4 className="font-serif text-base font-medium text-[var(--text-primary)] line-clamp-1">{off.title}</h4>
                           <span className="text-[10px] uppercase font-semibold px-2 py-0.5 rounded-md bg-[#EAE2D3] text-[#554C42] shrink-0">
                             {off.type}
                           </span>
                         </div>
                         {off.description && (
-                          <p className="text-xs text-[#7A7167] leading-relaxed line-clamp-3">{off.description}</p>
+                          <p className="text-xs text-[var(--text-secondary)] leading-relaxed line-clamp-3">{off.description}</p>
                         )}
                       </div>
 
                       <div className="pt-2 border-t border-[#EAE2D3]/60 flex items-center justify-between">
-                        <div className="font-mono text-sm font-semibold text-[#2C2825]">
+                        <div className="font-mono text-sm font-semibold text-[var(--text-primary)]">
                           {off.price !== undefined && off.price !== null && !isNaN(off.price) ? (
                             `€${off.price}`
                           ) : (
@@ -1069,7 +1069,7 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
                           <button
                             type="button"
                             onClick={() => handleOpenEditOffering(off)}
-                            className="p-1.5 rounded-lg text-[#7A7167] hover:text-[#2C2825] hover:bg-[#EAE2D3] transition cursor-pointer"
+                            className="p-1.5 rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[#EAE2D3] transition cursor-pointer"
                             title={isNl ? 'Bewerken' : 'Edit'}
                           >
                             <Edit2 className="w-3.5 h-3.5" />
@@ -1077,7 +1077,7 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
                           <button
                             type="button"
                             onClick={() => handleDeleteOffering(off.id)}
-                            className="p-1.5 rounded-lg text-[#A05252] hover:bg-[#FBE8E8] transition cursor-pointer"
+                            className="p-1.5 rounded-lg text-[#A05252] hover:bg-[var(--surface-2)] transition cursor-pointer"
                             title={isNl ? 'Verwijderen' : 'Delete'}
                           >
                             <Trash2 className="w-3.5 h-3.5" />
@@ -1094,9 +1094,9 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
           {/* Offering Modal */}
           {isOfferingModalOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs">
-              <div className="bg-[#FAF8F3] border border-[#DDD4C5] rounded-3xl max-w-sm w-full p-6 space-y-4 shadow-xl text-[#2C2825]">
+              <div className="bg-[var(--surface-1)] border border-[var(--border-subtle)] rounded-3xl max-w-sm w-full p-6 space-y-4 shadow-xl text-[var(--text-primary)]">
                 <div className="flex items-center justify-between">
-                  <h3 className="font-serif text-lg text-[#2C2825]">
+                  <h3 className="font-serif text-lg text-[var(--text-primary)]">
                     {editingOfferingId
                       ? isNl ? 'Dienst of Product Bewerken' : 'Edit Offering'
                       : isNl ? 'Dienst of Product Toevoegen' : 'Add Offering'}
@@ -1104,14 +1104,14 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
                   <button
                     type="button"
                     onClick={() => setIsOfferingModalOpen(false)}
-                    className="p-1 rounded-full text-[#7A7167] hover:bg-[#EAE2D3] cursor-pointer"
+                    className="p-1 rounded-full text-[var(--text-secondary)] hover:bg-[#EAE2D3] cursor-pointer"
                   >
                     <X className="w-4 h-4" />
                   </button>
                 </div>
                 <form onSubmit={handleSaveOffering} className="space-y-3">
                   <div>
-                    <label className="block text-[11px] font-medium text-[#7A7167] mb-1">
+                    <label className="block text-[11px] font-medium text-[var(--text-secondary)] mb-1">
                       {isNl ? 'Naam product / dienst *' : 'Name of offering *'}
                     </label>
                     <input
@@ -1119,19 +1119,19 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
                       placeholder={isNl ? 'bijv. Lenormand Reading' : 'e.g. Lenormand Reading'}
                       value={offeringTitle}
                       onChange={(e) => setOfferingTitle(e.target.value)}
-                      className="w-full px-3 py-2 rounded-xl bg-[#FFFFFF] border border-[#DDD4C5] text-xs text-[#2C2825] focus:outline-none focus:border-[#C5A880]"
+                      className="w-full px-3 py-2 rounded-xl bg-[var(--surface-2)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-secondary)]"
                       autoFocus
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <label className="block text-[11px] font-medium text-[#7A7167] mb-1">
+                      <label className="block text-[11px] font-medium text-[var(--text-secondary)] mb-1">
                         {isNl ? 'Type' : 'Type'}
                       </label>
                       <select
                         value={offeringType}
                         onChange={(e) => setOfferingType(e.target.value as any)}
-                        className="w-full px-2 py-2 rounded-xl bg-[#FFFFFF] border border-[#DDD4C5] text-xs text-[#2C2825] focus:outline-none focus:border-[#C5A880]"
+                        className="w-full px-2 py-2 rounded-xl bg-[var(--surface-2)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-secondary)]"
                       >
                         <option value="service">{isNl ? 'Dienst' : 'Service'}</option>
                         <option value="package">{isNl ? 'Pakket' : 'Package'}</option>
@@ -1141,7 +1141,7 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
                       </select>
                     </div>
                     <div>
-                      <label className="block text-[11px] font-medium text-[#7A7167] mb-1">
+                      <label className="block text-[11px] font-medium text-[var(--text-secondary)] mb-1">
                         {isNl ? 'Prijs in € (optioneel)' : 'Price in € (optional)'}
                       </label>
                       <input
@@ -1149,12 +1149,12 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
                         placeholder={isNl ? 'bijv. 50' : 'e.g. 50'}
                         value={offeringPrice}
                         onChange={(e) => setOfferingPrice(e.target.value === '' ? '' : Number(e.target.value))}
-                        className="w-full px-3 py-2 rounded-xl bg-[#FFFFFF] border border-[#DDD4C5] text-xs text-[#2C2825] focus:outline-none focus:border-[#C5A880]"
+                        className="w-full px-3 py-2 rounded-xl bg-[var(--surface-2)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-secondary)]"
                       />
                     </div>
                   </div>
                   <div>
-                    <label className="block text-[11px] font-medium text-[#7A7167] mb-1">
+                    <label className="block text-[11px] font-medium text-[var(--text-secondary)] mb-1">
                       {isNl ? 'Beschrijving' : 'Description'}
                     </label>
                     <textarea
@@ -1162,21 +1162,21 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
                       placeholder={isNl ? 'Beschrijving of deliverables...' : 'Description...'}
                       value={offeringDesc}
                       onChange={(e) => setOfferingDesc(e.target.value)}
-                      className="w-full px-3 py-2 rounded-xl bg-[#FFFFFF] border border-[#DDD4C5] text-xs text-[#2C2825] focus:outline-none focus:border-[#C5A880]"
+                      className="w-full px-3 py-2 rounded-xl bg-[var(--surface-2)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-secondary)]"
                     />
                   </div>
                   <div className="flex justify-end gap-2 pt-2">
                     <button
                       type="button"
                       onClick={() => setIsOfferingModalOpen(false)}
-                      className="px-3 py-1.5 rounded-xl text-xs text-[#7A7167] hover:bg-[#EAE2D3]/60 cursor-pointer"
+                      className="px-3 py-1.5 rounded-xl text-xs text-[var(--text-secondary)] hover:bg-[#EAE2D3]/60 cursor-pointer"
                     >
                       {isNl ? 'Annuleren' : 'Cancel'}
                     </button>
                     <button
                       type="submit"
                       disabled={!offeringTitle.trim()}
-                      className="px-4 py-1.5 rounded-xl bg-[#2C2825] text-[#FAF8F3] text-xs font-medium disabled:opacity-40 cursor-pointer"
+                      className="px-4 py-1.5 rounded-xl bg-[var(--text-primary)] text-[var(--surface-1)] text-xs font-medium disabled:opacity-40 cursor-pointer"
                     >
                       {editingOfferingId
                         ? isNl ? 'Wijzigingen opslaan' : 'Save changes'

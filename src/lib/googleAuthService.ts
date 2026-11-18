@@ -1,12 +1,16 @@
 import firebaseConfig from '../../firebase-applet-config.json';
 import { MarilunaGmailMessage, CalendarEvent, InstagramPostItem } from '../types';
 
-let cachedAccessToken: string | null = null;
+type GoogleService = 'calendar' | 'gmail';
+const cachedAccessTokens: Record<GoogleService, string | null> = {
+  calendar: null,
+  gmail: null,
+};
 
-export const getCachedAccessToken = () => cachedAccessToken;
+export const getCachedAccessToken = (service: GoogleService) => cachedAccessTokens[service];
 
-export const setCachedAccessToken = (token: string | null) => {
-  cachedAccessToken = token;
+export const setCachedAccessToken = (service: GoogleService, token: string | null) => {
+  cachedAccessTokens[service] = token;
 };
 
 const CLIENT_ID =
@@ -24,7 +28,8 @@ declare global {
  * directly requesting access token from Google without Firebase Auth domain restrictions.
  */
 export const googleSignInForService = async (
-  scopes: string[] = ['https://www.googleapis.com/auth/gmail.readonly']
+  scopes: string[] = ['https://www.googleapis.com/auth/gmail.readonly'],
+  service: GoogleService = 'gmail'
 ): Promise<{ accessToken: string; email: string; grantedScopes: string[] }> => {
   return new Promise((resolve, reject) => {
     if (typeof window === 'undefined') {
@@ -70,7 +75,7 @@ export const googleSignInForService = async (
               return reject(new Error('Geen OAuth access token ontvangen.'));
             }
 
-            cachedAccessToken = response.access_token;
+            cachedAccessTokens[service] = response.access_token;
             const grantedScopesStr = response.scope || fullScopes.join(' ');
             const grantedScopes = grantedScopesStr.split(' ');
 
@@ -160,24 +165,50 @@ export const fetchRealCalendarEventsFromApi = async (
   startOfToday.setHours(0, 0, 0, 0);
   const timeMinIso = startOfToday.toISOString();
 
-  const eventsRes = await fetch(
-    `https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${encodeURIComponent(
-      timeMinIso
-    )}&maxResults=250&singleEvents=true&orderBy=startTime`,
-    {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    }
-  );
+  // 3. Fetch every page; Google Calendar may return more than 250 events.
+  const rawItems: any[] = [];
+  let pageToken: string | undefined;
 
-  if (!eventsRes.ok) {
-    if (eventsRes.status === 401 || eventsRes.status === 403) {
-      throw new Error('AUTHENTICATION_EXPIRED');
-    }
-    throw new Error(`Google Calendar API Fout bij afspraken: ${eventsRes.statusText}`);
-  }
+  do {
+    const params = new URLSearchParams({
+      timeMin: timeMinIso,
+      maxResults: '250',
+      singleEvents: 'true',
+      orderBy: 'startTime',
+    });
+    if (pageToken) params.set('pageToken', pageToken);
 
-  const eventsData = await eventsRes.json();
-  const rawItems: any[] = eventsData.items || [];
+    const eventsRes = await fetch(
+      `https://www.googleapis.com/calendar/v3/calendars/primary/events?${params.toString()}`,
+      { headers: { Authorization: `Bearer ${accessToken}` } }
+    );
+
+    if (!eventsRes.ok) {
+      if (eventsRes.status === 401 || eventsRes.status === 403) {
+        throw new Error('AUTHENTICATION_EXPIRED');
+      }
+      throw new Error(`Google Calendar API Fout bij afspraken: ${eventsRes.status} ${eventsRes.statusText}`);
+    }
+
+    const eventsData = await eventsRes.json();
+    rawItems.push(...(eventsData.items || []));
+    pageToken = eventsData.nextPageToken || undefined;
+  } while (pageToken);
+
+  const toLocalDate = (value: string): string => {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return value.split('T')[0];
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  const toLocalTime = (value: string, fallback: string): string => {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return fallback;
+    return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+  };
 
   const convertedEvents: CalendarEvent[] = rawItems
     .filter((item) => item.status !== 'cancelled' && item.summary)
@@ -185,21 +216,18 @@ export const fetchRealCalendarEventsFromApi = async (
       const startDateTime = item.start?.dateTime || item.start?.date || '';
       const endDateTime = item.end?.dateTime || item.end?.date || '';
       const isAllDay = !item.start?.dateTime && Boolean(item.start?.date);
+      const dateStr = isAllDay
+        ? startDateTime
+        : startDateTime
+          ? toLocalDate(startDateTime)
+          : toLocalDate(new Date().toISOString());
 
-      const dateStr = startDateTime ? startDateTime.split('T')[0] : new Date().toISOString().split('T')[0];
-
-      let startTimeStr = '09:00';
-      let endTimeStr = '10:00';
-
-      if (isAllDay) {
-        startTimeStr = '00:00';
-        endTimeStr = '23:59';
-      } else if (startDateTime.includes('T')) {
-        startTimeStr = startDateTime.split('T')[1].slice(0, 5);
-        if (endDateTime.includes('T')) {
-          endTimeStr = endDateTime.split('T')[1].slice(0, 5);
-        }
-      }
+      const startTimeStr = isAllDay
+        ? '00:00'
+        : toLocalTime(startDateTime, '09:00');
+      const endTimeStr = isAllDay
+        ? '23:59'
+        : toLocalTime(endDateTime, '10:00');
 
       return {
         id: `gcal-${item.id}`,
@@ -376,73 +404,6 @@ export const fetchRealGmailMessagesFromApi = async (
   }
 
   return { messages: detailedMessages, accountEmail };
-};
-
-/**
- * Fetch real Google Fit step count data
- */
-export const fetchRealGoogleFitStepsFromApi = async (
-  accessToken: string
-): Promise<{ stepsToday: number; accountEmail: string }> => {
-  const userRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-    headers: { Authorization: `Bearer ${accessToken}` },
-  });
-  let accountEmail = 'patricia@mariluna.be';
-  if (userRes.ok) {
-    const userData = await userRes.json();
-    if (userData.email) accountEmail = userData.email;
-  }
-
-  const now = new Date();
-  const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
-
-  const fitRes = await fetch(
-    'https://www.googleapis.com/fitness/v1/users/me/dataset:aggregate',
-    {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        aggregateBy: [{ dataTypeName: 'com.google.step_count.delta' }],
-        bucketByTime: { durationMillis: 86400000 },
-        startTimeMillis: startOfDay.getTime(),
-        endTimeMillis: Date.now(),
-      }),
-    }
-  );
-
-  if (!fitRes.ok) {
-    if (fitRes.status === 401 || fitRes.status === 403) {
-      throw new Error('AUTHENTICATION_EXPIRED');
-    }
-    throw new Error(`Google Fit API Error (${fitRes.status}): ${fitRes.statusText}`);
-  }
-
-  const fitData = await fitRes.json();
-  let totalSteps = 0;
-
-  if (fitData.bucket && fitData.bucket.length > 0) {
-    for (const b of fitData.bucket) {
-      if (b.dataset) {
-        for (const ds of b.dataset) {
-          if (ds.point) {
-            for (const p of ds.point) {
-              if (p.value) {
-                for (const v of p.value) {
-                  if (typeof v.intVal === 'number') totalSteps += v.intVal;
-                  else if (typeof v.fpVal === 'number') totalSteps += Math.round(v.fpVal);
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-
-  return { stepsToday: totalSteps, accountEmail };
 };
 
 /**

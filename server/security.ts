@@ -23,12 +23,14 @@ export interface PasskeyCredential {
 }
 
 export interface ActiveSession {
-  id: string;
+  id: string; // Internal HttpOnly-cookie credential; never expose in API responses.
+  publicId: string; // Non-authenticating identifier safe for device-management UI.
   deviceId: string;
   deviceName: string;
   ip: string;
   userAgent: string;
   createdAt: string;
+  expiresAt: number;
   lastActive: string;
   lastActivityMs: number;
   authenticatedWith: 'passkey' | 'totp' | 'recovery_code' | 'preview_test_mode' | 'unauthenticated';
@@ -74,10 +76,21 @@ class SecurityVault {
   private recoveryCodes: RecoveryCodeItem[] = [];
   // Active sessions
   private sessions: Map<string, ActiveSession> = new Map();
-  // Challenges for WebAuthn in-flight
-  private currentChallenges: Map<string, string> = new Map();
+  private readonly maxSessions = 10000;
+  // WebAuthn challenges are one-time, short-lived nonces. Keep the registry
+  // bounded so abandoned browser ceremonies cannot grow server memory forever.
+  private currentChallenges: Map<string, { challenge: string; expiresAt: number }> = new Map();
+  private readonly challengeTtlMs = 5 * 60 * 1000;
+  private readonly maxPendingChallenges = 5000;
   // Rate limiting / lockouts
-  private failedAttempts: Map<string, { count: number; lockedUntil: number }> = new Map();
+  private failedAttempts: Map<string, { count: number; lockedUntil: number; updatedAt: number }> = new Map();
+  private readonly failedAttemptTtlMs = 30 * 60 * 1000;
+  private readonly maxFailedAttemptKeys = 10000;
+  // Sliding-window quota for AI routes, independent from authentication lockouts.
+  private aiRequestWindows: Map<string, number[]> = new Map();
+  private readonly aiWindowMs = 60 * 1000;
+  private readonly aiMaxRequestsPerWindow = 20;
+  private readonly maxAiRateLimitKeys = 10000;
   // Permissions
   private permissions: SecurityPermissions = {
     calendarRead: true,
@@ -86,8 +99,9 @@ class SecurityVault {
     aiRequiresConfirmationForModifications: true, // Non-negotiable
     aiRequiresConfirmationForDestructive: true, // Non-negotiable
     allowCycleDataToAI: false, // Strict default: Cycle stays strictly within Personal domain
-    allowPersonalDataToAI: true,
-    allowMarilunaDataToAI: true,
+    // Explicit opt-in: no personal or business records are sent to Gemini by default.
+    allowPersonalDataToAI: false,
+    allowMarilunaDataToAI: false,
     allowFinancialDataToAI: false,
     allowWellbeingDataToAI: false, // Default quarantined: user explicitly permits in settings/module
     activeAiProvider: 'gemini-server',
@@ -104,6 +118,10 @@ class SecurityVault {
   public checkRateLimit(key: string): { allowed: boolean; remainingLockoutSeconds?: number } {
     const record = this.failedAttempts.get(key);
     const now = Date.now();
+    if (record && now - record.updatedAt > this.failedAttemptTtlMs) {
+      this.failedAttempts.delete(key);
+      return { allowed: true };
+    }
     if (record && record.lockedUntil > now) {
       return {
         allowed: false,
@@ -114,7 +132,17 @@ class SecurityVault {
   }
 
   public recordFailedAttempt(key: string): void {
-    const record = this.failedAttempts.get(key) || { count: 0, lockedUntil: 0 };
+    const now = Date.now();
+    for (const [attemptKey, attempt] of this.failedAttempts.entries()) {
+      if (now - attempt.updatedAt > this.failedAttemptTtlMs) this.failedAttempts.delete(attemptKey);
+    }
+    while (this.failedAttempts.size >= this.maxFailedAttemptKeys && !this.failedAttempts.has(key)) {
+      const oldestKey = this.failedAttempts.keys().next().value;
+      if (oldestKey === undefined) break;
+      this.failedAttempts.delete(oldestKey);
+    }
+    const record = this.failedAttempts.get(key) || { count: 0, lockedUntil: 0, updatedAt: now };
+    record.updatedAt = now;
     record.count += 1;
     if (record.count >= 5) {
       // 15-minute lock out
@@ -126,6 +154,32 @@ class SecurityVault {
 
   public clearFailedAttempts(key: string): void {
     this.failedAttempts.delete(key);
+  }
+
+  public consumeAiRequest(
+    key: string,
+    now = Date.now(),
+  ): { allowed: boolean; remaining: number; retryAfterSeconds?: number } {
+    // Prune expired windows and bound per-session state.
+    for (const [sessionKey, timestamps] of this.aiRequestWindows.entries()) {
+      const active = timestamps.filter((timestamp) => now - timestamp < this.aiWindowMs);
+      if (active.length === 0) this.aiRequestWindows.delete(sessionKey);
+      else this.aiRequestWindows.set(sessionKey, active);
+    }
+
+    const timestamps = this.aiRequestWindows.get(key) || [];
+    if (timestamps.length >= this.aiMaxRequestsPerWindow) {
+      const retryAfterSeconds = Math.max(1, Math.ceil((timestamps[0] + this.aiWindowMs - now) / 1000));
+      return { allowed: false, remaining: 0, retryAfterSeconds };
+    }
+
+    if (!this.aiRequestWindows.has(key) && this.aiRequestWindows.size >= this.maxAiRateLimitKeys) {
+      const oldestKey = this.aiRequestWindows.keys().next().value;
+      if (oldestKey !== undefined) this.aiRequestWindows.delete(oldestKey);
+    }
+    timestamps.push(now);
+    this.aiRequestWindows.set(key, timestamps);
+    return { allowed: true, remaining: this.aiMaxRequestsPerWindow - timestamps.length };
   }
 
   // ----------------------------------------------------
@@ -151,11 +205,13 @@ class SecurityVault {
     const now = Date.now();
     const session: ActiveSession = {
       id: sessionId,
+      publicId: crypto.randomUUID(),
       deviceId: crypto.createHash('sha256').update(ip + userAgent).digest('hex').substring(0, 12),
       deviceName,
       ip,
       userAgent,
       createdAt: new Date().toISOString(),
+      expiresAt: now + 30 * 24 * 60 * 60 * 1000,
       lastActive: new Date().toISOString(),
       lastActivityMs: now,
       authenticatedWith: authMethod,
@@ -168,6 +224,15 @@ class SecurityVault {
       sensitiveUnlockedUntil: isAppAuthenticated ? now + 60 * 60 * 1000 : 0,
     };
 
+    for (const [existingId, existing] of this.sessions.entries()) {
+      if (existing.expiresAt <= now) this.sessions.delete(existingId);
+    }
+    if (this.sessions.size >= this.maxSessions) {
+      const leastRecentlyActive = Array.from(this.sessions.entries())
+        .sort((a, b) => a[1].lastActivityMs - b[1].lastActivityMs)[0];
+      if (leastRecentlyActive) this.sessions.delete(leastRecentlyActive[0]);
+    }
+
     this.sessions.set(sessionId, session);
     return session;
   }
@@ -176,6 +241,10 @@ class SecurityVault {
     const session = this.sessions.get(sessionId);
     if (session) {
       const now = Date.now();
+      if (session.expiresAt <= now) {
+        this.sessions.delete(sessionId);
+        return undefined;
+      }
       // Check inactivity timeout if app is authenticated
       if (session.isAppAuthenticated) {
         const timeoutMs = (session.inactivityTimeoutMinutes || 15) * 60 * 1000;
@@ -235,15 +304,49 @@ class SecurityVault {
     }
   }
 
-  public getActiveSessions(currentSessionId: string): ActiveSession[] {
+  public getActiveSessions(currentSessionId: string): Array<{
+    id: string;
+    deviceId: string;
+    deviceName: string;
+    ip: string;
+    userAgent: string;
+    createdAt: string;
+    lastActive: string;
+    authenticatedWith: ActiveSession['authenticatedWith'];
+    isAppAuthenticated: boolean;
+    isPreviewMode?: boolean;
+    appAuthenticatedAt?: number;
+    inactivityTimeoutMinutes: number;
+    isCurrent: boolean;
+  }> {
+    const now = Date.now();
+    for (const [sessionId, session] of this.sessions.entries()) {
+      if (session.expiresAt <= now) this.sessions.delete(sessionId);
+    }
     return Array.from(this.sessions.values()).map((s) => ({
-      ...s,
+      id: s.publicId,
+      deviceId: s.deviceId,
+      deviceName: s.deviceName,
+      ip: s.ip,
+      userAgent: s.userAgent,
+      createdAt: s.createdAt,
+      lastActive: s.lastActive,
+      authenticatedWith: s.authenticatedWith,
+      isAppAuthenticated: s.isAppAuthenticated,
+      isPreviewMode: s.isPreviewMode,
+      appAuthenticatedAt: s.appAuthenticatedAt,
+      inactivityTimeoutMinutes: s.inactivityTimeoutMinutes,
       isCurrent: s.id === currentSessionId,
     }));
   }
 
-  public revokeSession(sessionId: string): boolean {
-    return this.sessions.delete(sessionId);
+  // Device-management endpoints accept only the public identifier, never the
+  // HttpOnly cookie credential used internally to authenticate API requests.
+  public revokeSession(publicId: string): boolean {
+    for (const [sessionId, session] of this.sessions.entries()) {
+      if (session.publicId === publicId) return this.sessions.delete(sessionId);
+    }
+    return false;
   }
 
   public revokeOtherSessions(currentSessionId: string): void {
@@ -280,12 +383,41 @@ class SecurityVault {
   // ----------------------------------------------------
   // Passkey / WebAuthn Operations
   // ----------------------------------------------------
-  public setChallenge(key: string, challenge: string): void {
-    this.currentChallenges.set(key, challenge);
+  public setChallenge(key: string, challenge: string, ttlMs: number = this.challengeTtlMs): void {
+    const now = Date.now();
+    for (const [pendingKey, pending] of this.currentChallenges) {
+      if (pending.expiresAt <= now) this.currentChallenges.delete(pendingKey);
+    }
+
+    // Bound memory use even if a client repeatedly requests new ceremonies.
+    while (this.currentChallenges.size >= this.maxPendingChallenges) {
+      const oldestKey = this.currentChallenges.keys().next().value;
+      if (oldestKey === undefined) break;
+      this.currentChallenges.delete(oldestKey);
+    }
+
+    this.currentChallenges.set(key, {
+      challenge,
+      expiresAt: now + Math.max(1, Math.min(ttlMs, this.challengeTtlMs)),
+    });
   }
 
   public getChallenge(key: string): string | undefined {
-    return this.currentChallenges.get(key);
+    const pending = this.currentChallenges.get(key);
+    if (!pending) return undefined;
+    if (pending.expiresAt <= Date.now()) {
+      this.currentChallenges.delete(key);
+      return undefined;
+    }
+    return pending.challenge;
+  }
+
+  // Atomically remove a ceremony nonce before cryptographic verification so
+  // concurrent/replayed submissions cannot both consume the same challenge.
+  public consumeChallenge(key: string): string | undefined {
+    const challenge = this.getChallenge(key);
+    this.currentChallenges.delete(key);
+    return challenge;
   }
 
   public deleteChallenge(key: string): void {
@@ -385,10 +517,6 @@ class SecurityVault {
 
   public verifyAndConsumeRecoveryCode(plainCode: string): boolean {
     const clean = plainCode.trim().toUpperCase();
-    // Allow standard preview/developer emergency code for sandbox testability
-    if (clean === 'PMAL-DEMO-2026') {
-      return true;
-    }
     const hash = crypto.createHash('sha256').update(clean).digest('hex');
     const item = this.recoveryCodes.find((r) => r.codeHash === hash && !r.used);
     if (item) {
@@ -415,10 +543,31 @@ class SecurityVault {
   }
 
   public updatePermissions(updates: Partial<SecurityPermissions>): SecurityPermissions {
-    // Immutable non-negotiables: AI always requires confirmation before destructive actions
+    // Only known, explicitly typed settings may cross this boundary.
+    const allowed: Partial<SecurityPermissions> = {};
+    const booleanKeys: (keyof SecurityPermissions)[] = [
+      'calendarRead',
+      'calendarWrite',
+      'aiMayCreateTasks',
+      'allowCycleDataToAI',
+      'allowPersonalDataToAI',
+      'allowMarilunaDataToAI',
+      'allowFinancialDataToAI',
+      'allowWellbeingDataToAI',
+    ];
+    for (const key of booleanKeys) {
+      if (typeof updates[key] === 'boolean') {
+        (allowed as any)[key] = updates[key];
+      }
+    }
+    if (updates.activeAiProvider === 'gemini-server' || updates.activeAiProvider === 'local-rules') {
+      allowed.activeAiProvider = updates.activeAiProvider;
+    }
+
+    // Immutable non-negotiables: AI always requires confirmation before modifications/destructive actions.
     this.permissions = {
       ...this.permissions,
-      ...updates,
+      ...allowed,
       aiRequiresConfirmationForModifications: true,
       aiRequiresConfirmationForDestructive: true,
     };
@@ -430,8 +579,178 @@ class SecurityVault {
     if (!rawContext || typeof rawContext !== 'object') return rawContext;
     const sanitized = JSON.parse(JSON.stringify(rawContext));
 
+    // Filter every mixed-realm collection using server-owned consent settings.
+    // Missing realm metadata is ambiguous and therefore excluded from AI context.
+    const collectionKeys = ['calendarEvents', 'projects', 'ideas', 'intentions', 'tasks', 'goals', 'memoryItems'];
+    for (const key of collectionKeys) {
+      if (!Array.isArray(sanitized[key])) continue;
+      sanitized[key] = sanitized[key].filter((item: any) => {
+        const realm = item?.realm || item?.world;
+        if (realm === 'personal') {
+          return this.permissions.allowPersonalDataToAI && (world === 'personal' || world === 'all' || world === 'balanced' || !world);
+        }
+        if (realm === 'mariluna') {
+          return this.permissions.allowMarilunaDataToAI && (world === 'mariluna' || world === 'all' || world === 'balanced');
+        }
+        return false;
+      });
+    }
+
+    if (Array.isArray(sanitized.memoryItems)) {
+      sanitized.memoryItems = sanitized.memoryItems
+        .filter((item: any) => {
+          if (!item || !['explicit', 'confirmed'].includes(item.type) || item.status !== 'active') return false;
+          if (item.expiresAt && Number.isFinite(Date.parse(item.expiresAt)) && Date.parse(item.expiresAt) <= Date.now()) return false;
+
+          const category = String(item.category || '').toLowerCase();
+          const content = String(item.content || '').toLowerCase();
+          const cycleSensitive = /cycle|cyclus|menstru|luteal|follicular|ovulat/.test(category + ' ' + content);
+          const wellbeingSensitive = /health|gezondheid|symptom|medisch|medical|weight|gewicht|lichaam|measurement|meting|nutrition|voeding|diet|calorie|food|meal|eten|koken|body|measurements|medication|medicatie/.test(category + ' ' + content);
+          const financialSensitive = /financial|finance|boekhoud|revenue|omzet|price|prijs|cost|kosten|profit|winst|invoice|factuur|expense|uitgave|tax|belasting|btw|rsz|budget/.test(category + ' ' + content);
+
+          if (item.realm === 'personal') {
+            if (!this.permissions.allowPersonalDataToAI || !(world === 'personal' || world === 'all' || world === 'balanced' || !world)) return false;
+            if (cycleSensitive && !this.permissions.allowCycleDataToAI) return false;
+            if (wellbeingSensitive && !this.permissions.allowWellbeingDataToAI) return false;
+          } else if (item.realm === 'mariluna') {
+            if (!this.permissions.allowMarilunaDataToAI || !(world === 'mariluna' || world === 'all' || world === 'balanced')) return false;
+            if (financialSensitive && !this.permissions.allowFinancialDataToAI) return false;
+          } else {
+            return false;
+          }
+          return typeof item.content === 'string' && item.content.trim().length > 0;
+        })
+        .slice(0, 20)
+        .map((item: any) => ({
+          content: String(item.content).trim().slice(0, 600),
+          category: String(item.category || 'General').slice(0, 80),
+          realm: item.realm,
+          type: item.type,
+          confidence: item.confidence,
+        }));
+    }
+
+    const isAllowedRealmItem = (item: any): boolean => {
+      const realm = item?.realm || item?.world;
+      if (realm === 'personal') return this.permissions.allowPersonalDataToAI && (world === 'personal' || world === 'all' || world === 'balanced' || !world);
+      if (realm === 'mariluna') return this.permissions.allowMarilunaDataToAI && (world === 'mariluna' || world === 'all' || world === 'balanced');
+      return false;
+    };
+    if (sanitized.todayIntention && !isAllowedRealmItem(sanitized.todayIntention)) delete sanitized.todayIntention;
+    if (sanitized.activeContextItem && !isAllowedRealmItem(sanitized.activeContextItem)) delete sanitized.activeContextItem;
+
+    // The legacy chat payload sends memory contents as untagged strings.
+    // Without realm metadata they cannot be safely partitioned in either domain.
+    delete sanitized.memoriesSample;
+
     // Domain Separation Principle:
-    // When operating in the Mariluna business realm, NEVER leak intimate personal sanctuary data
+    // Treat each realm as an allowlisted view of mixed client payloads.
+    // Arrays are filtered by their explicit realm; ambiguous personal payloads are dropped.
+    if (world === 'mariluna') {
+      if (Array.isArray(sanitized.calendarEvents)) {
+        sanitized.calendarEvents = sanitized.calendarEvents.filter((item: any) => item?.realm === 'mariluna');
+      }
+      if (Array.isArray(sanitized.projects)) {
+        sanitized.projects = sanitized.projects.filter((item: any) => item?.realm === 'mariluna');
+      }
+      if (Array.isArray(sanitized.ideas)) {
+        sanitized.ideas = sanitized.ideas.filter((item: any) => item?.realm === 'mariluna');
+      }
+      if (Array.isArray(sanitized.intentions)) {
+        sanitized.intentions = sanitized.intentions.filter((item: any) => item?.realm === 'mariluna');
+      }
+      if (sanitized.todayIntention?.realm !== 'mariluna') delete sanitized.todayIntention;
+      if (sanitized.activeContextItem && sanitized.activeContextItem.realm !== 'mariluna') delete sanitized.activeContextItem;
+      // These fields are private/personal by origin or cannot be safely partitioned.
+      delete sanitized.memoriesSample;
+      delete sanitized.workingHours;
+      delete sanitized.preferences;
+      delete sanitized.wellbeing;
+      delete sanitized.dailyCheckIns;
+      delete sanitized.personalRoutines;
+      delete sanitized.lifestyle;
+      delete sanitized.lifeProfile;
+      delete sanitized.health;
+      delete sanitized.nutrition;
+      delete sanitized.foodPreferences;
+      delete sanitized.dietaryNotes;
+      delete sanitized.partnerSharedDinners;
+      delete sanitized.personalStyle;
+      delete sanitized.stylePreferences;
+      delete sanitized.cycleProfile;
+      delete sanitized.cyclePhase;
+      delete sanitized.menstrual;
+      delete sanitized.follicular;
+      delete sanitized.luteal;
+      delete sanitized.ovulatory;
+      delete sanitized.currentPhase;
+      delete sanitized.symptoms;
+      delete sanitized.cycleDay;
+      delete sanitized.progressLogs;
+      delete sanitized.bodyMeasurements;
+      delete sanitized.measurements;
+      delete sanitized.bodyComposition;
+      delete sanitized.weightKg;
+      delete sanitized.movementHistory;
+      delete sanitized.currentWeeklyMovement;
+      delete sanitized.weeklyMenu;
+      delete sanitized.shoppingList;
+      delete sanitized.health;
+      delete sanitized.lifeProfile;
+      delete sanitized.personalRoutines;
+      delete sanitized.lifestyle;
+      delete sanitized.dailyCheckIns;
+      delete sanitized.wellbeing;
+      delete sanitized.progressLogs;
+      delete sanitized.bodyMeasurements;
+      delete sanitized.measurements;
+      delete sanitized.bodyComposition;
+      delete sanitized.weightKg;
+      delete sanitized.movementHistory;
+      delete sanitized.currentWeeklyMovement;
+      delete sanitized.weeklyMenu;
+      delete sanitized.shoppingList;
+      if (Array.isArray(sanitized.tasks)) {
+        sanitized.tasks = sanitized.tasks.filter((item: any) => item?.realm === 'mariluna');
+      }
+      if (Array.isArray(sanitized.goals)) {
+        sanitized.goals = sanitized.goals.filter((item: any) => item?.realm === 'mariluna');
+      }
+    } else if (world === 'personal') {
+      if (Array.isArray(sanitized.calendarEvents)) {
+        sanitized.calendarEvents = sanitized.calendarEvents.filter((item: any) => item?.realm === 'personal');
+      }
+      if (Array.isArray(sanitized.projects)) {
+        sanitized.projects = sanitized.projects.filter((item: any) => item?.realm === 'personal');
+      }
+      if (Array.isArray(sanitized.ideas)) {
+        sanitized.ideas = sanitized.ideas.filter((item: any) => item?.realm === 'personal');
+      }
+      if (Array.isArray(sanitized.intentions)) {
+        sanitized.intentions = sanitized.intentions.filter((item: any) => item?.realm === 'personal');
+      }
+      if (sanitized.todayIntention?.realm !== 'personal') delete sanitized.todayIntention;
+      if (sanitized.activeContextItem && sanitized.activeContextItem.realm !== 'personal') delete sanitized.activeContextItem;
+      if (Array.isArray(sanitized.tasks)) {
+        sanitized.tasks = sanitized.tasks.filter((item: any) => item?.realm === 'personal');
+      }
+      if (Array.isArray(sanitized.goals)) {
+        sanitized.goals = sanitized.goals.filter((item: any) => item?.realm === 'personal');
+      }
+      delete sanitized.offerings;
+      delete sanitized.marilunaOfferings;
+      delete sanitized.contentPlan;
+      delete sanitized.marilunaData;
+      delete sanitized.marilunaAdmin;
+      delete sanitized.marilunaMetrics;
+      delete sanitized.marilunaClients;
+      delete sanitized.clients;
+      delete sanitized.projectsBusiness;
+      delete sanitized.instagram;
+      delete sanitized.gmail;
+      delete sanitized.unreadBusinessInquiriesCount;
+    }
+
     if (world === 'mariluna') {
       delete sanitized.cycleProfile;
       delete sanitized.cyclePhase;
@@ -486,6 +805,12 @@ class SecurityVault {
 
     // Firewall Rule 2: Personal data isolation
     if (!this.permissions.allowPersonalDataToAI) {
+      delete sanitized.workingHours;
+      delete sanitized.preferences;
+      delete sanitized.lifeProfile;
+      delete sanitized.personalStyle;
+      delete sanitized.stylePreferences;
+      delete sanitized.health;
       delete sanitized.personalRoutines;
       delete sanitized.lifestyle;
       delete sanitized.dailyCheckIns;
@@ -499,7 +824,14 @@ class SecurityVault {
 
     // Firewall Rule 3: Mariluna business isolation
     if (!this.permissions.allowMarilunaDataToAI) {
+      delete sanitized.offerings;
+      delete sanitized.contentPlan;
       delete sanitized.marilunaData;
+      delete sanitized.marilunaAdmin;
+      delete sanitized.projectsBusiness;
+      delete sanitized.instagram;
+      delete sanitized.gmail;
+      delete sanitized.unreadBusinessInquiriesCount;
       if (Array.isArray(sanitized.tasks)) {
         sanitized.tasks = sanitized.tasks.filter((t: any) => t.world !== 'mariluna' && t.realm !== 'mariluna');
       }
@@ -508,7 +840,57 @@ class SecurityVault {
       }
     }
 
-    // Firewall Rule 4: Wellbeing & body progress data quarantine (Never sent to AI unless explicit permission granted)
+    // Firewall Rule 4: Financial data requires its own explicit consent,
+    // separate from general Mariluna/business context permission.
+    if (!this.permissions.allowFinancialDataToAI) {
+      const financialKeys = new Set([
+        'financialData', 'financials', 'financialSummary', 'finance', 'finances', 'financeSummary', 'bookkeeping', 'accounting',
+        'expenses', 'invoices', 'invoiceNumber', 'amount', 'vatAmount',
+        'revenue', 'profit', 'cashFlow', 'balanceSheet', 'bankTransactions',
+        'taxRecords', 'socialContributions', 'revenueTargetYear', 'tax', 'vat', 'taxAmount', 'grossRevenue', 'netRevenue', 'profitLoss', 'operatingCosts', 'payments', 'payment',
+        'price', 'unitPrice', 'cost', 'costs', 'margin', 'turnover',
+      ]);
+      const stripFinancialFields = (value: any): any => {
+        if (Array.isArray(value)) return value.map(stripFinancialFields);
+        if (!value || typeof value !== 'object') return value;
+        const result: Record<string, any> = {};
+        for (const [key, nested] of Object.entries(value)) {
+          if (financialKeys.has(key)) continue;
+          result[key] = stripFinancialFields(nested);
+        }
+        return result;
+      };
+
+      const scrubbed = stripFinancialFields(sanitized);
+      for (const key of Object.keys(sanitized)) delete sanitized[key];
+      Object.assign(sanitized, scrubbed);
+      delete sanitized.marilunaAdmin;
+      delete sanitized.marilunaFinance;
+      delete sanitized.financialSummary;
+      delete sanitized.financeSummary;
+
+      const isFinancialMetric = (item: any): boolean => {
+        const category = String(item?.category || '').toLowerCase();
+        const name = String(item?.name || item?.title || '').toLowerCase();
+        return ['revenue', 'expense', 'profit', 'finance', 'financial', 'tax', 'cost'].some((term) =>
+          category.includes(term) || name.includes(term)
+        ) || /omzet|kosten|winst|belasting|btw|uitgave|factuur|inkomsten/.test(name);
+      };
+      if (sanitized.marilunaMetrics && typeof sanitized.marilunaMetrics === 'object') {
+        delete sanitized.marilunaMetrics.revenueTargetYear;
+        if (Array.isArray(sanitized.marilunaMetrics.metrics)) {
+          sanitized.marilunaMetrics.metrics = sanitized.marilunaMetrics.metrics.filter((item: any) => !isFinancialMetric(item));
+        }
+        if (Array.isArray(sanitized.marilunaMetrics.records)) {
+          sanitized.marilunaMetrics.records = sanitized.marilunaMetrics.records.filter((item: any) => !isFinancialMetric(item));
+        }
+      }
+      if (Array.isArray(sanitized.metrics)) {
+        sanitized.metrics = sanitized.metrics.filter((item: any) => !isFinancialMetric(item));
+      }
+    }
+
+    // Firewall Rule 5: Wellbeing & body progress data quarantine (Never sent to AI unless explicit permission granted)
     if (!this.permissions.allowWellbeingDataToAI) {
       delete sanitized.wellbeing;
       delete sanitized.progressLogs;
@@ -520,6 +902,11 @@ class SecurityVault {
       delete sanitized.currentWeeklyMovement;
       delete sanitized.weeklyMenu;
       delete sanitized.shoppingList;
+      // Nutrition and dietary preferences are private health-adjacent data too.
+      delete sanitized.nutrition;
+      delete sanitized.foodPreferences;
+      delete sanitized.dietaryNotes;
+      delete sanitized.partnerSharedDinners;
     }
 
     return sanitized;
@@ -532,8 +919,12 @@ export const securityVault = new SecurityVault();
 // Middleware Helpers
 // ----------------------------------------------------
 export function getOrCreateSession(req: Request, res: Response): ActiveSession {
-  const sessionId = req.cookies?.pm_alchemy_session || req.headers['x-session-id'] as string;
-  if (sessionId) {
+  // The opaque session token is accepted only from the HttpOnly cookie.
+  // A caller-controlled header must never act as an alternate session credential.
+  const sessionId = req.cookies?.pm_alchemy_session;
+  // Session IDs are 256-bit random hex values. Reject malformed or oversized
+  // cookie values before consulting the in-memory session registry.
+  if (typeof sessionId === 'string' && /^[a-f0-9]{64}$/i.test(sessionId)) {
     const existing = securityVault.getSession(sessionId);
     if (existing) {
       return existing;
@@ -548,6 +939,40 @@ export function getOrCreateSession(req: Request, res: Response): ActiveSession {
     maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
   });
   return newSession;
+}
+
+/**
+ * Protect AI and private-data endpoints at the server boundary.
+ * A client-side lock screen is not an authorization mechanism.
+ */
+export function requireAiRateLimit(req: Request, res: Response, next: NextFunction) {
+  const session = getOrCreateSession(req, res);
+  const quota = securityVault.consumeAiRequest(session.id);
+  if (!quota.allowed) {
+    res.setHeader('Retry-After', String(quota.retryAfterSeconds || 60));
+    return res.status(429).json({
+      error: 'Jarvis is receiving requests too quickly. Please try again shortly.',
+      retryAfterSeconds: quota.retryAfterSeconds || 60,
+    });
+  }
+  return next();
+}
+
+export function requireAppAuth(req: Request, res: Response, next: NextFunction) {
+  const session = getOrCreateSession(req, res);
+  if (!session.isAppAuthenticated) {
+    return res.status(401).json({ error: 'Application authentication required.', authenticationRequired: true });
+  }
+
+  const timeoutMs = (session.inactivityTimeoutMinutes || 15) * 60 * 1000;
+  const lastActivity = session.lastActivityMs || 0;
+  if (!lastActivity || Date.now() - lastActivity > timeoutMs) {
+    securityVault.lockApp(session.id);
+    return res.status(401).json({ error: 'Session expired due to inactivity.', authenticationRequired: true });
+  }
+
+  securityVault.touchActivity(session.id);
+  return next();
 }
 
 export function requireStepUpAuth(req: Request, res: Response, next: NextFunction) {

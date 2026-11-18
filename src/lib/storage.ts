@@ -52,7 +52,7 @@ export const DEFAULT_INTEGRATIONS_STATE: IntegrationsState = {
     messages: [],
   },
   healthConnect: {
-    status: typeof window !== 'undefined' && ('HealthConnect' in window || (typeof navigator !== 'undefined' && navigator.userAgent.includes('Android'))) ? 'not_connected' : 'unavailable',
+    status: 'unavailable',
     platform: typeof window !== 'undefined' && typeof navigator !== 'undefined' && navigator.userAgent.includes('Android') ? 'android' : 'web',
     isStepsOnly: true,
     isPrivateOnly: true,
@@ -724,10 +724,13 @@ I've gently kept your active high-priority task list to just two items today so 
 
 export function loadState(): AppState {
   if (typeof window === 'undefined') return INITIAL_STATE;
+  let raw: string | null = null;
+  let sourceKey = STORAGE_KEY;
   try {
-    let raw = localStorage.getItem(STORAGE_KEY);
+    raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) {
       raw = localStorage.getItem(LEGACY_STORAGE_KEY);
+      sourceKey = LEGACY_STORAGE_KEY;
     }
     if (!raw) return INITIAL_STATE;
     const parsed = JSON.parse(raw);
@@ -900,6 +903,11 @@ export function loadState(): AppState {
         healthConnect: {
           ...DEFAULT_INTEGRATIONS_STATE.healthConnect,
           ...(parsed.integrations?.healthConnect || {}),
+          // Historical Google Fit OAuth status is not proof of a native Health Connect link.
+          status: 'unavailable',
+          error: parsed.integrations?.healthConnect?.status === 'connected'
+            ? 'Historische Google Fit-koppeling; native Health Connect is nog niet geïmplementeerd.'
+            : parsed.integrations?.healthConnect?.error,
         },
         instagram: {
           ...DEFAULT_INTEGRATIONS_STATE.instagram,
@@ -925,7 +933,16 @@ export function loadState(): AppState {
       brain: parsed.brain ? { ...DEFAULT_BRAIN_STATE, ...parsed.brain } : DEFAULT_BRAIN_STATE,
     };
   } catch (err) {
-    console.error('Failed to load state from localStorage, falling back to default:', err);
+    // Preserve the original payload before the app's autosave can replace it with defaults.
+    if (raw && typeof window !== 'undefined') {
+      try {
+        const recoveryKey = `${sourceKey}_recovery_${new Date().toISOString().replace(/[:.]/g, '-')}`;
+        if (!localStorage.getItem(recoveryKey)) localStorage.setItem(recoveryKey, raw);
+      } catch (backupError) {
+        console.error('Could not preserve the unreadable Alchemy data payload:', backupError);
+      }
+    }
+    console.error('Failed to load state from localStorage; original payload preserved when possible:', err);
     return INITIAL_STATE;
   }
 }

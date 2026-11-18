@@ -89,34 +89,34 @@ export const WellbeingView: React.FC<WellbeingViewProps> = ({
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 animate-fade-in">
       {/* Top Masthead */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-[#E8E2D6] pb-6">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-[var(--border-subtle)] pb-6">
         <div>
           <div className="flex items-center gap-2 mb-1.5">
-            <span className="text-[11px] uppercase tracking-[0.25em] text-[#8C8377] font-serif">
+            <span className="text-[11px] uppercase tracking-[0.25em] text-[var(--text-muted)] font-serif">
               Personal Sovereign Domain
             </span>
             <span className="w-1 h-1 rounded-full bg-[#C5A880]" />
-            <span className="text-[11px] text-[#7A7167] font-light">Confidential</span>
+            <span className="text-[11px] text-[var(--text-secondary)] font-light">Confidential</span>
           </div>
-          <h1 className="text-3xl sm:text-4xl font-serif text-[#2C2825] tracking-tight">
+          <h1 className="text-3xl sm:text-4xl font-serif text-[var(--text-primary)] tracking-tight">
             WELLBEING
           </h1>
-          <p className="text-sm text-[#7A7167] mt-1 font-light max-w-2xl leading-relaxed">
+          <p className="text-sm text-[var(--text-secondary)] mt-1 font-light max-w-2xl leading-relaxed">
             A calm, intelligent sanctuary for physical flow, unhurried nourishment, and longitudinal progress without guilt or punishment.
           </p>
         </div>
 
         {/* Quick status & AI access badge */}
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#FAF8F3] border border-[#E8E2D6] text-xs text-[#5C5245]">
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[var(--surface-1)] border border-[var(--border-subtle)] text-xs text-[var(--text-secondary)]">
             {wellbeing.preferences.allowWellbeingDataToAI ? (
               <>
-                <ShieldCheck className="w-3.5 h-3.5 text-[#7E694E]" />
+                <ShieldCheck className="w-3.5 h-3.5 text-[var(--accent-secondary)]" />
                 <span>AI Access: Authorized</span>
               </>
             ) : (
               <>
-                <Shield className="w-3.5 h-3.5 text-[#8C8377]" />
+                <Shield className="w-3.5 h-3.5 text-[var(--text-muted)]" />
                 <span>AI Access: Quarantined</span>
               </>
             )}
@@ -124,7 +124,7 @@ export const WellbeingView: React.FC<WellbeingViewProps> = ({
 
           <button
             onClick={() => onOpenAssistantWithPrompt('What movement and nourishment should I prioritize today?')}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#2C2825] text-[#FAF8F3] text-xs font-medium hover:bg-[#1A1816] transition cursor-pointer shadow-xs"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[var(--text-primary)] text-[var(--surface-1)] text-xs font-medium hover:bg-[#1A1816] transition cursor-pointer shadow-xs"
           >
             <Sparkles className="w-3.5 h-3.5 text-[#C5A880]" />
             <span>Ask Alchemy</span>
@@ -133,7 +133,7 @@ export const WellbeingView: React.FC<WellbeingViewProps> = ({
       </div>
 
       {/* Sub-navigation bar */}
-      <div className="flex items-center gap-1 border-b border-[#E8E2D6] overflow-x-auto no-scrollbar pb-px">
+      <div className="flex items-center gap-1 border-b border-[var(--border-subtle)] overflow-x-auto no-scrollbar pb-px">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeSubTab === tab.id;
@@ -144,14 +144,14 @@ export const WellbeingView: React.FC<WellbeingViewProps> = ({
               id={`wellbeing-subtab-${tab.id}`}
               className={`flex items-center gap-2 px-4 py-3 text-xs font-medium transition-all whitespace-nowrap cursor-pointer border-b-2 -mb-px ${
                 isActive
-                  ? 'border-[#2C2825] text-[#2C2825] font-semibold'
-                  : 'border-transparent text-[#7A7167] hover:text-[#2C2825] hover:border-[#DED6C7]'
+                  ? 'border-[var(--text-primary)] text-[var(--text-primary)] font-semibold'
+                  : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--border-subtle)]'
               }`}
             >
-              <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-[#7E694E]' : 'text-[#8C8377]'}`} />
+              <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-[var(--accent-secondary)]' : 'text-[var(--text-muted)]'}`} />
               <span>{tab.label}</span>
               {tab.id === 'shopping' && (
-                <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-[#EAE3D5] text-[#5C5245]">
+                <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-[#EAE3D5] text-[var(--text-secondary)]">
                   {wellbeing.shoppingList.filter((i) => !i.inPantry).length}
                 </span>
               )}

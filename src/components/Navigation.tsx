@@ -92,7 +92,7 @@ export const Navigation: React.FC<NavigationProps> = ({
   ];
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-[#E8E2D6] bg-[#FAF8F3]/90 backdrop-blur-md transition-colors">
+    <header className="sticky top-0 z-40 w-full border-b border-[#343a32] bg-[#20231f]/90 backdrop-blur-md transition-colors">
       {/* Top Header Bar */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         {/* Brand & World Filter */}
@@ -102,25 +102,25 @@ export const Navigation: React.FC<NavigationProps> = ({
             id="brand-logo-btn"
             className="flex items-center gap-3 text-left group cursor-pointer"
           >
-            <div className="w-8 h-8 rounded-full border border-[#D5CCBE] bg-[#F3EDE2] flex items-center justify-center shadow-xs group-hover:border-[#B5A48B] transition shrink-0">
-              <span className="font-serif text-[11px] font-semibold text-[#7E694E] tracking-tighter">
+            <div className="w-8 h-8 rounded-full border border-[#555A50] bg-[#30352f] flex items-center justify-center shadow-xs group-hover:border-[#B5A48B] transition shrink-0">
+              <span className="font-serif text-[11px] font-semibold text-[#D6C69B] tracking-tighter">
                 P&M
               </span>
             </div>
-            <span className="font-serif text-base sm:text-lg tracking-[0.2em] uppercase font-medium text-[#2C2825] group-hover:text-[#7E694E] transition-colors select-none">
+            <span className="font-serif text-base sm:text-lg tracking-[0.2em] uppercase font-medium text-[#F0EBDD] group-hover:text-[#D6C69B] transition-colors select-none">
               ALCHEMY
             </span>
           </button>
 
           {/* World Switcher: Balanced vs Personal vs Mariluna */}
-          <div className="hidden md:flex items-center rounded-full border border-[#E3DCD1] bg-[#F1ECE3] p-0.5 text-xs">
+          <div className="hidden md:flex items-center rounded-full border border-[#3D443B] bg-[#282c27] p-0.5 text-xs">
             <button
               onClick={() => onSelectWorld('all')}
               id="world-filter-all"
               className={`px-3 py-1 rounded-full transition-all cursor-pointer ${
                 activeWorld === 'all'
-                  ? 'bg-[#FFFFFF] text-[#2C2825] shadow-xs font-medium'
-                  : 'text-[#7A7167] hover:text-[#2C2825]'
+                  ? 'bg-[#30352f] text-[#F0EBDD] shadow-xs font-medium'
+                  : 'text-[#B7B7A9] hover:text-[#F0EBDD]'
               }`}
             >
               Balanced
@@ -130,8 +130,8 @@ export const Navigation: React.FC<NavigationProps> = ({
               id="world-filter-personal"
               className={`flex items-center gap-1.5 px-3 py-1 rounded-full transition-all cursor-pointer ${
                 activeWorld === 'personal'
-                  ? 'bg-[#FFFFFF] text-[#4A433A] shadow-xs font-medium border border-[#E2DDD2]'
-                  : 'text-[#7A7167] hover:text-[#2C2825]'
+                  ? 'bg-[#30352f] text-[#F0EBDD] shadow-xs font-medium border border-[#E2DDD2]'
+                  : 'text-[#B7B7A9] hover:text-[#F0EBDD]'
               }`}
             >
               <span className="w-1.5 h-1.5 rounded-full bg-[#8E8478]"></span>
@@ -142,11 +142,11 @@ export const Navigation: React.FC<NavigationProps> = ({
               id="world-filter-mariluna"
               className={`flex items-center gap-1.5 px-3 py-1 rounded-full transition-all cursor-pointer ${
                 activeWorld === 'mariluna'
-                  ? 'bg-[#2C2825] text-[#F9F7F2] shadow-xs font-medium'
-                  : 'text-[#7A7167] hover:text-[#2C2825]'
+                  ? 'bg-[#F0EBDD] text-[#20231f] shadow-xs font-medium'
+                  : 'text-[#B7B7A9] hover:text-[#F0EBDD]'
               }`}
             >
-              <span className="w-1.5 h-1.5 rounded-full bg-[#C5A880]"></span>
+              <span className="w-1.5 h-1.5 rounded-full bg-[#D6C69B]"></span>
               {isNl ? 'Mariluna Studio' : 'Mariluna Studio'}
             </button>
           </div>
@@ -166,25 +166,25 @@ export const Navigation: React.FC<NavigationProps> = ({
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
                   isActive
                     ? isMariluna
-                      ? 'bg-[#2C2825] text-[#F9F7F2] shadow-xs font-semibold'
+                      ? 'bg-[#F0EBDD] text-[#20231f] shadow-xs font-semibold'
                       : isPrive
-                      ? 'bg-[#3D3730] text-[#FAF8F5] shadow-xs font-semibold'
-                      : 'bg-[#EDE7DC] text-[#1F1C19] shadow-xs font-semibold'
+                      ? 'bg-[#39312B] text-[#F0EBDD] shadow-xs font-semibold'
+                      : 'bg-[#30352f] text-[#F0EBDD] shadow-xs font-semibold'
                     : isMariluna
-                    ? 'text-[#4A3E31] bg-[#F3ECE0] hover:bg-[#EAE1D3] hover:text-[#2C2825]'
+                    ? 'text-[#F0EBDD] bg-[#263D35] hover:bg-[#304b40]'
                     : isPrive
-                    ? 'text-[#50473D] bg-[#F1EBE0] hover:bg-[#E8E1D5] hover:text-[#2C2825]'
-                    : 'text-[#6C6358] hover:text-[#2C2825] hover:bg-[#F2ECE1]'
+                    ? 'text-[#F0EBDD] bg-[#282c27] hover:bg-[#39312B] hover:text-[#F0EBDD]'
+                    : 'text-[#B7B7A9] hover:text-[#F0EBDD] hover:bg-[#30352f]'
                 }`}
               >
-                {isMariluna && <span className="w-1.5 h-1.5 rounded-full bg-[#C5A880]" />}
+                {isMariluna && <span className="w-1.5 h-1.5 rounded-full bg-[#D6C69B]" />}
                 {isPrive && <span className="w-1.5 h-1.5 rounded-full bg-[#8E8478]" />}
                 <span>{item.label}</span>
               </button>
             );
           })}
 
-          <div className="h-4 w-px bg-[#E3DCD1] mx-1"></div>
+          <div className="h-4 w-px bg-[#3D443B] mx-1"></div>
 
           {/* Retained direct access modules: Taken, Cyclus, Welzijn, Agenda */}
           <div className="flex items-center gap-0.5">
@@ -197,8 +197,8 @@ export const Navigation: React.FC<NavigationProps> = ({
                   id={`nav-tab-${item.id}`}
                   className={`px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
                     isActive
-                      ? 'bg-[#EAE4D7] text-[#2C2825] font-semibold'
-                      : 'text-[#7A7167] hover:text-[#2C2825] hover:bg-[#F2ECE1]'
+                      ? 'bg-[#30352f] text-[#F0EBDD] font-semibold'
+                      : 'text-[#B7B7A9] hover:text-[#F0EBDD] hover:bg-[#30352f]'
                   }`}
                 >
                   {item.label}
@@ -217,11 +217,11 @@ export const Navigation: React.FC<NavigationProps> = ({
             onClick={onOpenNotifications}
             id="notification-center-btn"
             title="Notification Center & Quiet Hours"
-            className="relative p-2 rounded-full border border-transparent text-[#7A7167] hover:text-[#2C2825] hover:bg-[#F0EAE0] transition cursor-pointer"
+            className="relative p-2 rounded-full border border-transparent text-[#B7B7A9] hover:text-[#F0EBDD] hover:bg-[#30352f] transition cursor-pointer"
           >
             <Bell className="w-4 h-4" />
             {unreadNotificationCount > 0 && (
-              <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-[#C5A880] ring-2 ring-[#FAF8F3]"></span>
+              <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-[#D6C69B] ring-2 ring-[#20231f]"></span>
             )}
           </button>
 
@@ -231,11 +231,11 @@ export const Navigation: React.FC<NavigationProps> = ({
             id="assistant-open-btn"
             className={`flex items-center gap-2 rounded-full px-3.5 py-1.5 text-xs font-medium transition-all cursor-pointer border ${
               isAssistantOpen
-                ? 'bg-[#2C2825] text-[#F9F7F2] border-[#2C2825] shadow-sm ring-2 ring-[#C5A880]/40'
-                : 'bg-[#F2ECE1] text-[#3D3730] border-[#DDD5C7] hover:border-[#BFAF98] hover:bg-[#EAE3D6]'
+                ? 'bg-[#F0EBDD] text-[#20231f] border-[#F0EBDD] shadow-sm ring-2 ring-[#D6C69B]/40'
+                : 'bg-[#30352f] text-[#F0EBDD] border-[#555A50] hover:border-[#B49A7A] hover:bg-[#39312B]'
             }`}
           >
-            <Sparkles className="w-3.5 h-3.5 text-[#C5A880]" />
+            <Sparkles className="w-3.5 h-3.5 text-[#D6C69B]" />
             <span className="hidden sm:inline">JARVIS AI</span>
             <span className="sm:hidden">AI</span>
           </button>
@@ -244,21 +244,21 @@ export const Navigation: React.FC<NavigationProps> = ({
           <button
             onClick={() => onSelectTab('security')}
             id="security-center-btn"
-            title="Security & Privacy Center (Passkeys, Levels, Data Firewall)"
+            title={isNl ? "Beveiliging & privacy" : "Security & Privacy Center"}
             className={`relative p-2 rounded-full border border-transparent transition cursor-pointer ${
               currentTab === 'security'
-                ? 'bg-[#EDE7DC] text-[#2C2825]'
-                : 'text-[#7A7167] hover:text-[#2C2825] hover:bg-[#F0EAE0]'
+                ? 'bg-[#30352f] text-[#F0EBDD]'
+                : 'text-[#B7B7A9] hover:text-[#F0EBDD] hover:bg-[#30352f]'
             }`}
           >
             <Shield className="w-4 h-4" />
             <span
-              className={`absolute top-1 right-1 w-2 h-2 rounded-full ring-2 ring-[#FAF8F3] ${
+              className={`absolute top-1 right-1 w-2 h-2 rounded-full ring-2 ring-[#20231f] ${
                 securityLevel === 3
                   ? 'bg-[#3A6B35] animate-pulse'
                   : isSensitiveUnlocked
-                  ? 'bg-[#C5A880]'
-                  : 'bg-[#7E694E]'
+                  ? 'bg-[#D6C69B]'
+                  : 'bg-[#D6C69B]'
               }`}
             />
           </button>
@@ -267,11 +267,11 @@ export const Navigation: React.FC<NavigationProps> = ({
           <button
             onClick={() => onSelectTab('settings')}
             id="settings-tab-btn"
-            title="Settings & System Memory"
+            title={isNl ? "Instellingen & systeemgeheugen" : "Settings & System Memory"}
             className={`p-2 rounded-full border border-transparent transition cursor-pointer ${
               currentTab === 'settings'
-                ? 'bg-[#EDE7DC] text-[#2C2825]'
-                : 'text-[#7A7167] hover:text-[#2C2825] hover:bg-[#F0EAE0]'
+                ? 'bg-[#30352f] text-[#F0EBDD]'
+                : 'text-[#B7B7A9] hover:text-[#F0EBDD] hover:bg-[#30352f]'
             }`}
           >
             <Settings className="w-4 h-4" />
@@ -280,14 +280,14 @@ export const Navigation: React.FC<NavigationProps> = ({
       </div>
 
       {/* Sub-bar on mobile for World Switcher */}
-      <div className="md:hidden px-4 py-2 border-t border-[#EDE7DB] flex items-center justify-between bg-[#F8F5EE]">
+      <div className="md:hidden px-4 py-2 border-t border-[#343a32] flex items-center justify-between bg-[#20231f]">
         <div className="flex items-center gap-1 w-full justify-center">
           <button
             onClick={() => onSelectWorld('all')}
             className={`px-3 py-1 rounded-full text-[11px] transition ${
               activeWorld === 'all'
-                ? 'bg-[#FFFFFF] text-[#2C2825] shadow-xs font-medium'
-                : 'text-[#7A7167]'
+                ? 'bg-[#30352f] text-[#F0EBDD] shadow-xs font-medium'
+                : 'text-[#B7B7A9]'
             }`}
           >
             Balanced
@@ -296,8 +296,8 @@ export const Navigation: React.FC<NavigationProps> = ({
             onClick={() => onSelectWorld('personal')}
             className={`flex items-center gap-1 px-3 py-1 rounded-full text-[11px] transition ${
               activeWorld === 'personal'
-                ? 'bg-[#FFFFFF] text-[#3B342C] shadow-xs font-medium border border-[#DDD5C7]'
-                : 'text-[#7A7167]'
+                ? 'bg-[#30352f] text-[#F0EBDD] shadow-xs font-medium border border-[#555A50]'
+                : 'text-[#B7B7A9]'
             }`}
           >
             <span className="w-1.5 h-1.5 rounded-full bg-[#8E8478]"></span>
@@ -307,18 +307,18 @@ export const Navigation: React.FC<NavigationProps> = ({
             onClick={() => onSelectWorld('mariluna')}
             className={`flex items-center gap-1 px-3 py-1 rounded-full text-[11px] transition ${
               activeWorld === 'mariluna'
-                ? 'bg-[#2C2825] text-[#F9F7F2] font-medium'
-                : 'text-[#7A7167]'
+                ? 'bg-[#263D35] text-[#F0EBDD] font-medium'
+                : 'text-[#B7B7A9]'
             }`}
           >
-            <span className="w-1.5 h-1.5 rounded-full bg-[#C5A880]"></span>
+            <span className="w-1.5 h-1.5 rounded-full bg-[#D6C69B]"></span>
             Mariluna
           </button>
         </div>
       </div>
 
       {/* Mobile Bottom Navigation Bar */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#FAF8F3]/95 backdrop-blur-md border-t border-[#E8E2D6] px-2 py-1.5 flex items-center justify-around shadow-lg">
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#20231f]/95 backdrop-blur-md border-t border-[#343a32] px-2 py-1.5 flex items-center justify-around shadow-lg">
         {mobileNavItems.map((item) => {
           const isActive = currentTab === item.id;
           const Icon = item.icon;
@@ -327,10 +327,10 @@ export const Navigation: React.FC<NavigationProps> = ({
               key={item.id}
               onClick={() => onSelectTab(item.id)}
               className={`flex flex-col items-center justify-center py-1 px-2 rounded-lg text-[10px] font-medium transition cursor-pointer ${
-                isActive ? 'text-[#2C2825] font-semibold' : 'text-[#8C8377] hover:text-[#2C2825]'
+                isActive ? 'text-[#F0EBDD] font-semibold' : 'text-[#858A7F] hover:text-[#F0EBDD]'
               }`}
             >
-              <Icon className={`w-4 h-4 mb-0.5 ${isActive ? 'text-[#8C7654]' : 'text-[#8C8377]'}`} />
+              <Icon className={`w-4 h-4 mb-0.5 ${isActive ? 'text-[#8C7654]' : 'text-[#858A7F]'}`} />
               <span>{item.label}</span>
             </button>
           );

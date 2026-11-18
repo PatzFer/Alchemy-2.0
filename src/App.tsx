@@ -3,6 +3,7 @@ import {
   Navigation,
   NavTab,
 } from './components/Navigation';
+import { HomeLauncher } from './components/HomeLauncher';
 import { AIAssistantDrawer } from './components/AIAssistantDrawer';
 import { OfflineIndicator } from './components/OfflineIndicator';
 import { NotificationCenterModal } from './components/NotificationCenterModal';
@@ -55,6 +56,14 @@ import { applyFoundationToAppState } from './lib/foundationDefaults';
 import { Sparkles } from 'lucide-react';
 import { MorningCheckInModal } from './components/MorningCheckInModal';
 import { purgeExpiredDailyCheckIns } from './lib/healthUtils';
+import { createAlchemyBackup, downloadAlchemyBackupFile, verifyAlchemyBackup } from './lib/backup';
+
+const getLocalDateString = (date = new Date()): string => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
 
 export default function App() {
   const [state, setState] = useState<AppState>(() => loadState());
@@ -81,10 +90,12 @@ export default function App() {
         if (data.isSensitiveUnlocked !== undefined) setIsSensitiveUnlocked(data.isSensitiveUnlocked);
         if (data.inactivityTimeoutMinutes) setInactivityTimeoutMins(data.inactivityTimeoutMinutes);
       } else {
-        setIsAppAuthenticated(true);
+        // Fail closed: an unavailable auth endpoint must never unlock private data.
+        setIsAppAuthenticated(false);
       }
     } catch {
-      setIsAppAuthenticated(true);
+      // Fail closed when the auth service cannot be reached.
+      setIsAppAuthenticated(false);
     }
   };
 
@@ -142,7 +153,7 @@ export default function App() {
   // Morning Check-in trigger once per day
   useEffect(() => {
     if (!isAppAuthenticated) return;
-    const todayStr = new Date().toISOString().split('T')[0];
+    const todayStr = getLocalDateString();
     const lastShown = localStorage.getItem('lastMorningCheckInShownDate');
     const todayCheckIn = state.dailyCheckIns?.find((c) => c.date === todayStr);
 
@@ -152,7 +163,7 @@ export default function App() {
   }, [isAppAuthenticated]);
 
   const handleDismissMorningModal = () => {
-    const todayStr = new Date().toISOString().split('T')[0];
+    const todayStr = getLocalDateString();
     localStorage.setItem('lastMorningCheckInShownDate', todayStr);
     setIsMorningModalOpen(false);
   };
@@ -161,6 +172,10 @@ export default function App() {
   const [isQuickTaskModalOpen, setIsQuickTaskModalOpen] = useState(false);
   const [quickTitle, setQuickTitle] = useState('');
   const [quickRealm, setQuickRealm] = useState<'personal' | 'mariluna'>('personal');
+  const [quickKind, setQuickKind] = useState<'task' | 'reminder' | 'idea' | 'note' | 'appointment'>('task');
+  const [quickDetails, setQuickDetails] = useState('');
+  const [quickDate, setQuickDate] = useState(getLocalDateString());
+  const [quickStartTime, setQuickStartTime] = useState('09:00');
 
   // Automatically persist changes to local storage
   useEffect(() => {
@@ -179,7 +194,7 @@ export default function App() {
       goals: state.goals || [],
       cycleProfile: state.cycleProfile,
       todayCheckIn: (state.dailyCheckIns || []).find(
-        (c) => c.date === new Date().toISOString().split('T')[0]
+        (c) => c.date === getLocalDateString()
       ),
     });
     if (generated && generated.length > 0) {
@@ -301,7 +316,7 @@ export default function App() {
     const newEvent: CalendarEvent = {
       id: evt.id || `evt-${Date.now()}`,
       title: evt.title || 'Nieuwe Afspraak',
-      date: evt.date || new Date().toISOString().split('T')[0],
+      date: evt.date || getLocalDateString(),
       startTime: evt.startTime || '09:00',
       endTime: evt.endTime || '10:00',
       realm: evt.realm || 'personal',
@@ -312,7 +327,7 @@ export default function App() {
       source: 'alchemy',
     };
 
-    const token = getCachedAccessToken();
+    const token = getCachedAccessToken('calendar');
     const isConnected = state.integrations?.calendar?.status === 'connected';
     const isReadOnly = state.integrations?.calendar?.readOnly;
 
@@ -399,7 +414,7 @@ export default function App() {
 
   // Intentions handlers
   const handleSaveIntention = (title: string, realm: Realm = 'personal', dateStr?: string) => {
-    const targetDate = dateStr || new Date().toISOString().split('T')[0];
+    const targetDate = dateStr || getLocalDateString();
     const cleanTitle = title.trim();
     if (!cleanTitle) return;
 
@@ -434,7 +449,7 @@ export default function App() {
   };
 
   const handleCompleteIntention = (intentionId: string) => {
-    const todayStr = new Date().toISOString().split('T')[0];
+    const todayStr = getLocalDateString();
     setState((prev) => ({
       ...prev,
       intentions: (prev.intentions || []).map((i) =>
@@ -453,7 +468,7 @@ export default function App() {
 
   const handleSnoozeIntention = (intentionId: string, minutes: number = 120) => {
     const snoozedUntilTime = new Date(Date.now() + minutes * 60 * 1000).toISOString();
-    const todayStr = new Date().toISOString().split('T')[0];
+    const todayStr = getLocalDateString();
     setState((prev) => ({
       ...prev,
       intentions: (prev.intentions || []).map((i) =>
@@ -470,7 +485,7 @@ export default function App() {
   };
 
   const handleDismissIntentionPrompt = (intentionId: string) => {
-    const todayStr = new Date().toISOString().split('T')[0];
+    const todayStr = getLocalDateString();
     setState((prev) => ({
       ...prev,
       intentions: (prev.intentions || []).map((i) =>
@@ -497,7 +512,7 @@ export default function App() {
               ? {
                   ...i,
                   ...ideaPayload,
-                  lastRevisitedAt: ideaPayload.lastRevisitedAt || new Date().toISOString().split('T')[0],
+                  lastRevisitedAt: ideaPayload.lastRevisitedAt || getLocalDateString(),
                 }
               : i
           ),
@@ -511,8 +526,8 @@ export default function App() {
         realm: ideaPayload.realm || 'mariluna',
         category: ideaPayload.category,
         status: ideaPayload.status || 'raw',
-        createdAt: ideaPayload.createdAt || new Date().toISOString().split('T')[0],
-        lastRevisitedAt: ideaPayload.lastRevisitedAt || new Date().toISOString().split('T')[0],
+        createdAt: ideaPayload.createdAt || getLocalDateString(),
+        lastRevisitedAt: ideaPayload.lastRevisitedAt || getLocalDateString(),
         ...ideaPayload,
       };
 
@@ -728,12 +743,12 @@ export default function App() {
         realm: payload.realm || 'mariluna',
         category: payload.category || 'strategy',
         priority: 'high',
-        dueDate: new Date().toISOString().split('T')[0],
+        dueDate: getLocalDateString(),
         estimatedDuration: payload.duration || 30,
         recurring: 'none',
         status: 'todo',
         subtasks: [],
-        createdAt: new Date().toISOString().split('T')[0],
+        createdAt: getLocalDateString(),
       });
       setIsAssistantOpen(false);
       setCurrentTab('tasks');
@@ -764,35 +779,76 @@ export default function App() {
     }
   };
 
-  const handleExportData = () => {
-    const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(state, null, 2));
-    const downloadAnchor = document.createElement('a');
-    downloadAnchor.setAttribute('href', dataStr);
-    downloadAnchor.setAttribute('download', `pm-alchemy-backup-${new Date().toISOString().split('T')[0]}.json`);
-    document.body.appendChild(downloadAnchor);
-    downloadAnchor.click();
-    downloadAnchor.remove();
-  };
-
-  const handleImportData = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const fileReader = new FileReader();
-    if (e.target.files && e.target.files[0]) {
-      fileReader.readAsText(e.target.files[0], 'UTF-8');
-      fileReader.onload = (event) => {
-        try {
-          const parsed = JSON.parse(event.target?.result as string);
-          setState(parsed);
-          alert('Backup restored successfully.');
-        } catch (err) {
-          alert('Failed to parse backup JSON.');
-        }
-      };
+  const handleExportData = async () => {
+    try {
+      const backup = await createAlchemyBackup(state);
+      downloadAlchemyBackupFile(backup);
+    } catch (error) {
+      console.error('Alchemy backup export failed:', error);
+      alert('De back-up kon niet veilig worden aangemaakt. Probeer een recente browser.');
     }
   };
 
-  const handleResetData = () => {
-    if (window.confirm('Reset all data to default initial state?')) {
+  const handleImportData = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const input = e.target;
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      try {
+        const parsed = JSON.parse(event.target?.result as string);
+        let restored: AppState;
+        if (parsed?.format === 'p-m-alchemy-backup') {
+          const verified = await verifyAlchemyBackup(parsed);
+          restored = verified.payload;
+        } else {
+          // Backward compatibility for legacy raw-JSON exports. They have no checksum,
+          // so require explicit confirmation and basic structural validation.
+          const legacy = parsed as Partial<AppState>;
+          const requiredArrays: (keyof AppState)[] = [
+            'tasks', 'goals', 'ideas', 'projects', 'calendarEvents', 'memories',
+            'dailyCheckIns', 'notifications', 'proactiveSuggestions',
+          ];
+          const valid = !!legacy && typeof legacy === 'object' &&
+            requiredArrays.every((key) => Array.isArray(legacy[key])) &&
+            !!legacy.foundation && typeof legacy.foundation === 'object' &&
+            !!legacy.integrations && typeof legacy.integrations === 'object';
+          if (!valid) throw new Error('Ongeldig of onvolledig back-upbestand.');
+          const confirmed = window.confirm(
+            'Dit is een oudere Alchemy-back-up zonder integriteitscontrole. Herstel kan de huidige gegevens vervangen. Maak eerst een actuele back-up. Wil je doorgaan?'
+          );
+          if (!confirmed) return;
+          restored = legacy as AppState;
+        }
+        if (!window.confirm('Deze actie vervangt de huidige Alchemy-gegevens. Alchemy downloadt eerst automatisch een herstelkopie van je huidige gegevens. Wil je doorgaan?')) return;
+        const rollbackBackup = await createAlchemyBackup(state);
+        downloadAlchemyBackupFile(rollbackBackup);
+        setState(restored);
+        alert('Alchemy-back-up gecontroleerd en hersteld. Er is eerst een herstelkopie van de vorige gegevens gedownload.');
+      } catch (error) {
+        console.error('Alchemy backup import failed:', error);
+        alert(error instanceof Error ? error.message : 'De back-up kon niet worden gecontroleerd.');
+      } finally {
+        input.value = '';
+      }
+    };
+    reader.onerror = () => {
+      alert('Het back-upbestand kon niet worden gelezen.');
+      input.value = '';
+    };
+    reader.readAsText(file, 'UTF-8');
+  };
+
+  const handleResetData = async () => {
+    if (!window.confirm('Alle Alchemy-gegevens worden teruggezet naar de standaardinstellingen. Eerst wordt automatisch een herstelkopie gedownload. Wil je doorgaan?')) return;
+    try {
+      const rollbackBackup = await createAlchemyBackup(state);
+      downloadAlchemyBackupFile(rollbackBackup);
       setState(resetState());
+      alert('Alchemy is gereset. Je vorige gegevens zijn als herstelkopie gedownload.');
+    } catch (error) {
+      console.error('Alchemy reset backup failed:', error);
+      alert('Reset geannuleerd: er kon geen veilige herstelkopie worden gemaakt.');
     }
   };
 
@@ -861,11 +917,11 @@ export default function App() {
   // Perimeter Authentication Guard
   if (isAppAuthenticated === null) {
     return (
-      <div className="min-h-screen bg-[#FAF8F3] flex flex-col items-center justify-center p-6">
-        <div className="w-10 h-10 rounded-full border border-[#D5CCBE] bg-[#F3EDE2] flex items-center justify-center mb-3 animate-pulse">
-          <span className="font-serif text-xs font-semibold text-[#7E694E]">P&M</span>
+      <div className="min-h-screen bg-[var(--app-bg)] flex flex-col items-center justify-center p-6">
+        <div className="w-10 h-10 rounded-full border border-[var(--border-subtle)] bg-[var(--surface-1)] flex items-center justify-center mb-3 animate-pulse">
+          <span className="font-serif text-xs font-semibold text-[var(--accent-secondary)]">P&M</span>
         </div>
-        <span className="font-serif text-xs tracking-[0.2em] uppercase text-[#2C2825]">ALCHEMY</span>
+        <span className="font-serif text-xs tracking-[0.2em] uppercase text-[var(--text-primary)]">ALCHEMY</span>
       </div>
     );
   }
@@ -886,12 +942,12 @@ export default function App() {
   // Optional First-Time Setup Wizard (launched when requested by user)
   if (isSetupWizardOpen) {
     return (
-      <div className="relative min-h-screen bg-[#FAF8F3]">
+      <div className="relative min-h-screen bg-[var(--app-bg)]">
         <div className="fixed top-4 right-4 z-50">
           <button
             type="button"
             onClick={() => setIsSetupWizardOpen(false)}
-            className="px-4 py-2 rounded-full bg-[#FFFFFF] border border-[#DDD4C5] text-xs font-medium text-[#2C2825] hover:bg-[#F2ECE1] transition shadow-xs cursor-pointer flex items-center gap-1.5"
+            className="px-4 py-2 rounded-full bg-[var(--surface-1)] border border-[var(--border-subtle)] text-xs font-medium text-[var(--text-primary)] hover:bg-[var(--surface-2)] transition shadow-xs cursor-pointer flex items-center gap-1.5"
           >
             <span>✕</span>
             <span>{state.foundation?.aboutYou?.preferredLanguage === 'nl' ? 'Terug naar Dashboard' : 'Back to Dashboard'}</span>
@@ -922,65 +978,45 @@ export default function App() {
   const userLang = state.foundation?.aboutYou?.preferredLanguage || 'nl';
 
   return (
-    <div className="min-h-screen bg-[#FAF8F4] text-[#2C2825] font-sans antialiased selection:bg-[#E2D8C7] selection:text-[#2C2825]">
+    <div className="min-h-screen bg-[var(--app-bg)] text-[var(--text-primary)] font-sans antialiased selection:bg-[#52634A] selection:text-[#F0EBDD]">
       {/* Offline Status Badge */}
       <OfflineIndicator />
 
-      {/* Top Header & Mobile Bar */}
-      <Navigation
-        currentTab={currentTab}
-        onSelectTab={setCurrentTab}
-        activeWorld={activeWorld}
-        onSelectWorld={setActiveWorld}
-        onOpenAssistant={() => setIsAssistantOpen(true)}
-        isAssistantOpen={isAssistantOpen}
-        sampleDataActive={state.isSampleData}
-        unreadNotificationCount={unreadNotificationCount}
-        onOpenNotifications={() => setIsNotificationCenterOpen(true)}
-        securityLevel={securityLevel}
-        isSensitiveUnlocked={isSensitiveUnlocked}
-        onLockApp={handleLockApp}
-        lang={userLang}
-      />
+      {/* Global navigation remains available inside each domain. Home is the neutral launcher. */}
+      {currentTab !== 'today' && (
+        <Navigation
+          currentTab={currentTab}
+          onSelectTab={(tab) => {
+            if (tab === 'mariluna') setActiveWorld('mariluna');
+            else if (tab === 'prive') setActiveWorld('personal');
+            setCurrentTab(tab);
+          }}
+          activeWorld={activeWorld}
+          onSelectWorld={setActiveWorld}
+          onOpenAssistant={() => setIsAssistantOpen(true)}
+          isAssistantOpen={isAssistantOpen}
+          sampleDataActive={state.isSampleData}
+          unreadNotificationCount={unreadNotificationCount}
+          onOpenNotifications={() => setIsNotificationCenterOpen(true)}
+          securityLevel={securityLevel}
+          isSensitiveUnlocked={isSensitiveUnlocked}
+          onLockApp={handleLockApp}
+          lang={userLang}
+        />
+      )}
 
       {/* Main Content Area */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8 pb-24 lg:pb-16">
         {currentTab === 'today' && (
-          <TodayView
-            tasks={state.tasks}
-            onToggleTask={handleToggleTask}
-            onSaveTask={handleSaveTask}
-            calendarEvents={state.calendarEvents}
-            onAddCalendarEvent={handleAddCalendarEvent}
-            goals={state.goals}
-            projects={state.projects}
-            lifeProfile={state.lifeProfile}
-            activeWorld={activeWorld}
-            onOpenAssistant={() => setIsAssistantOpen(true)}
-            onOpenTaskModal={() => setIsQuickTaskModalOpen(true)}
-            onRescheduleTask={handleRescheduleTask}
-            onSimplifyTask={handleSimplifyTask}
-            onRemoveTask={handleDeleteTask}
-            cycleProfile={state.cycleProfile}
-            dailyCheckIns={state.dailyCheckIns}
-            onSaveDailyCheckIn={handleSaveDailyCheckIn}
-            intentions={state.intentions}
-            onSaveIntention={handleSaveIntention}
-            onCompleteIntention={handleCompleteIntention}
-            onSnoozeIntention={handleSnoozeIntention}
-            onDismissIntention={handleDismissIntentionPrompt}
-            proactiveSuggestions={state.proactiveSuggestions}
-            onDismissSuggestion={handleDismissSuggestion}
-            onSelectTab={setCurrentTab}
-            onOpenAssistantWithPrompt={openAssistantWithPrompt}
-            wellbeing={state.wellbeing}
-            foundation={state.foundation}
-            onUpdateFoundation={handleUpdateFoundation}
+          <HomeLauncher
+            onEnterMariluna={() => { setActiveWorld('mariluna'); setCurrentTab('mariluna'); }}
+            onEnterPrivate={() => { setActiveWorld('personal'); setCurrentTab('prive'); }}
+            onQuickCapture={() => { setQuickRealm(activeWorld === 'mariluna' ? 'mariluna' : 'personal'); setIsQuickTaskModalOpen(true); }}
+            onOpenJarvis={() => setIsAssistantOpen(true)}
+            onOpenNotifications={() => setIsNotificationCenterOpen(true)}
+            onOpenSettings={() => setCurrentTab('settings')}
+            unreadNotificationCount={unreadNotificationCount}
             lang={userLang}
-            onOpenSetup={() => setIsSetupWizardOpen(true)}
-            integrations={state.integrations}
-            nutrition={state.nutrition}
-            onAddMemory={handleAddMemory}
           />
         )}
 
@@ -1243,6 +1279,23 @@ export default function App() {
         onOpenAssistantWithPrompt={openAssistantWithPrompt}
       />
 
+      {/* Global Quick Capture: available from every working area */}
+      {currentTab !== 'today' && (
+        <button
+          type="button"
+          onClick={() => {
+            setQuickRealm(currentTab === 'mariluna' ? 'mariluna' : currentTab === 'prive' ? 'personal' : activeWorld === 'mariluna' ? 'mariluna' : 'personal');
+            setQuickKind('task');
+            setIsQuickTaskModalOpen(true);
+          }}
+          className="fixed left-4 bottom-20 lg:bottom-6 z-30 flex items-center gap-2 rounded-full border border-[var(--border-strong)] bg-[var(--surface-raised)] px-4 py-3 text-xs font-medium text-[var(--text-primary)] shadow-xl transition hover:-translate-y-0.5 hover:border-[var(--accent-secondary)]"
+          aria-label="Quick Capture"
+        >
+          <span className="text-base leading-none">＋</span>
+          <span className="hidden sm:inline">Snel vastleggen</span>
+        </button>
+      )}
+
       {/* Floating Action Button for AI Strategic Partner on mobile */}
       <button
         onClick={() => setIsAssistantOpen(true)}
@@ -1279,85 +1332,117 @@ export default function App() {
         activeContextItem={activeContextItem}
       />
 
-      {/* Quick Add Task Modal */}
+      {/* Universal Quick Capture */}
       {isQuickTaskModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#1A1816]/40 backdrop-blur-xs p-4">
-          <div className="w-full max-w-sm rounded-2xl bg-[#FAF8F3] border border-[#E3DCD0] p-5 shadow-2xl">
-            <h3 className="font-serif text-lg font-medium text-[#2C2825] mb-3">
-              Add Today's Focus
-            </h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/65 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md rounded-2xl border border-[var(--border-strong)] bg-[var(--surface-1)] p-5 shadow-2xl">
+            <div className="mb-4">
+              <p className="text-[10px] uppercase tracking-[0.2em] text-[var(--accent-secondary)]">Alchemy · Quick Capture</p>
+              <h3 className="mt-1 font-serif text-2xl text-[var(--text-primary)]">Leg het even vast</h3>
+              <p className="mt-1 text-xs text-[var(--text-secondary)]">Eerst bewaren, later verfijnen.</p>
+            </div>
             <form
               onSubmit={(e) => {
                 e.preventDefault();
-                if (!quickTitle.trim()) return;
-                handleSaveTask({
-                  id: 't-' + Date.now(),
-                  title: quickTitle.trim(),
-                  description: '',
-                  realm: quickRealm,
-                  category: quickRealm === 'mariluna' ? 'business' : 'personal',
-                  priority: 'high',
-                  dueDate: new Date().toISOString().split('T')[0],
-                  estimatedDuration: 30,
-                  recurring: 'none',
-                  status: 'todo',
-                  subtasks: [],
-                  createdAt: new Date().toISOString().split('T')[0],
-                });
+                const title = quickTitle.trim();
+                if (!title) return;
+                const id = Date.now();
+                const today = getLocalDateString();
+                if (quickKind === 'idea' || quickKind === 'note') {
+                  handleSaveIdea({
+                    id: 'i-' + id,
+                    title,
+                    content: quickDetails.trim(),
+                    realm: quickRealm,
+                    category: quickKind === 'note' ? 'note' : 'quick-capture',
+                    status: 'raw',
+                    createdAt: today,
+                    lastRevisitedAt: today,
+                  });
+                } else if (quickKind === 'appointment') {
+                  handleAddCalendarEvent({
+                    id: 'evt-' + id,
+                    title,
+                    date: quickDate,
+                    startTime: quickStartTime,
+                    endTime: (() => {
+                      const [hours, minutes] = quickStartTime.split(':').map(Number);
+                      const total = hours * 60 + minutes + 60;
+                      return String(Math.floor(total / 60) % 24).padStart(2, '0') + ':' + String(total % 60).padStart(2, '0');
+                    })(),
+                    realm: quickRealm,
+                    type: 'appointment',
+                    notes: quickDetails.trim(),
+                  });
+                } else {
+                  handleSaveTask({
+                    id: 't-' + id,
+                    title,
+                    description: quickDetails.trim(),
+                    realm: quickRealm,
+                    category: quickRealm === 'mariluna' ? 'business' : 'personal',
+                    priority: quickKind === 'reminder' ? 'high' : 'medium',
+                    dueDate: quickDate,
+                    estimatedDuration: 30,
+                    recurring: 'none',
+                    status: 'todo',
+                    subtasks: [],
+                    createdAt: today,
+                  });
+                }
                 setQuickTitle('');
+                setQuickDetails('');
+                setQuickKind('task');
+                setQuickDate(today);
                 setIsQuickTaskModalOpen(false);
               }}
-              className="space-y-3"
+              className="space-y-4"
             >
-              <input
-                type="text"
-                required
-                autoFocus
-                value={quickTitle}
-                onChange={(e) => setQuickTitle(e.target.value)}
-                placeholder="e.g. Confirm guest speaker, swim at noon"
-                className="w-full bg-[#FFFFFF] border border-[#D5CCBE] rounded-xl px-3.5 py-2 text-xs text-[#2C2825] focus:outline-hidden focus:border-[#8C7654]"
-              />
-
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setQuickRealm('personal')}
-                  className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition ${
-                    quickRealm === 'personal'
-                      ? 'bg-[#FFFFFF] border border-[#D5CCBE] text-[#2C2825] shadow-xs'
-                      : 'text-[#8C8377]'
-                  }`}
-                >
-                  Personal
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setQuickRealm('mariluna')}
-                  className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition ${
-                    quickRealm === 'mariluna'
-                      ? 'bg-[#2C2825] text-[#F9F7F2]'
-                      : 'text-[#8C8377]'
-                  }`}
-                >
-                  Mariluna Studio
-                </button>
+              <div className="grid grid-cols-3 gap-2">
+                {([
+                  ['task', 'Taak'],
+                  ['reminder', 'Herinnering'],
+                  ['idea', 'Idee'],
+                  ['note', 'Notitie'],
+                  ['appointment', 'Afspraak'],
+                ] as const).map(([kind, label]) => (
+                  <button key={kind} type="button" onClick={() => setQuickKind(kind)}
+                    className={`rounded-lg border px-2 py-2 text-xs transition ${quickKind === kind ? 'border-[var(--accent-secondary)] bg-[var(--surface-raised)] text-[var(--text-primary)]' : 'border-[var(--border-subtle)] text-[var(--text-secondary)]'}`}>
+                    {label}
+                  </button>
+                ))}
               </div>
-
-              <div className="flex items-center justify-end gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setIsQuickTaskModalOpen(false)}
-                  className="px-3 py-1.5 text-xs text-[#7A7167] hover:bg-[#EFE9DE] rounded-lg"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-1.5 bg-[#2C2825] text-[#F9F7F2] text-xs font-medium rounded-lg hover:bg-[#453E38]"
-                >
-                  Save Focus
-                </button>
+              <input type="text" required autoFocus value={quickTitle}
+                onChange={(e) => setQuickTitle(e.target.value)}
+                placeholder={quickKind === 'appointment' ? 'Waarvoor is de afspraak?' : 'Wat wil je vastleggen?'}
+                className="w-full rounded-xl border border-[var(--border-strong)] bg-[var(--surface-2)] px-3.5 py-3 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)]" />
+              <textarea value={quickDetails} onChange={(e) => setQuickDetails(e.target.value)}
+                placeholder={quickKind === 'note' ? 'Je notitie…' : 'Extra context (optioneel)'}
+                rows={3} className="w-full resize-y rounded-xl border border-[var(--border-strong)] bg-[var(--surface-2)] px-3.5 py-2.5 text-xs text-[var(--text-primary)] placeholder:text-[var(--text-muted)]" />
+              {(quickKind === 'task' || quickKind === 'reminder' || quickKind === 'appointment') && (
+                <div className="grid grid-cols-2 gap-3">
+                  <label className="space-y-1 text-[11px] text-[var(--text-secondary)]">
+                    <span>Datum</span>
+                    <input type="date" value={quickDate} onChange={(e) => setQuickDate(e.target.value)}
+                      className="w-full rounded-lg border border-[var(--border-strong)] bg-[var(--surface-2)] px-2 py-2 text-xs text-[var(--text-primary)]" />
+                  </label>
+                  {quickKind === 'appointment' && <label className="space-y-1 text-[11px] text-[var(--text-secondary)]">
+                    <span>Startuur</span>
+                    <input type="time" value={quickStartTime} onChange={(e) => setQuickStartTime(e.target.value)}
+                      className="w-full rounded-lg border border-[var(--border-strong)] bg-[var(--surface-2)] px-2 py-2 text-xs text-[var(--text-primary)]" />
+                  </label>}
+                </div>
+              )}
+              <div className="flex items-center gap-2">
+                <button type="button" onClick={() => setQuickRealm('personal')}
+                  className={`flex-1 rounded-lg border py-2 text-xs ${quickRealm === 'personal' ? 'border-[#B49A7A] bg-[#39312B] text-[#F0EBDD]' : 'border-[var(--border-subtle)] text-[var(--text-secondary)]'}`}>Privé</button>
+                <button type="button" onClick={() => setQuickRealm('mariluna')}
+                  className={`flex-1 rounded-lg border py-2 text-xs ${quickRealm === 'mariluna' ? 'border-[#A9B88A] bg-[#263D35] text-[#F0EBDD]' : 'border-[var(--border-subtle)] text-[var(--text-secondary)]'}`}>Mariluna</button>
+              </div>
+              <div className="flex justify-end gap-2 pt-1">
+                <button type="button" onClick={() => setIsQuickTaskModalOpen(false)}
+                  className="rounded-lg px-3 py-2 text-xs text-[var(--text-secondary)] hover:bg-[var(--surface-2)]">Annuleren</button>
+                <button type="submit" className="rounded-lg bg-[var(--accent-primary)] px-4 py-2 text-xs font-semibold text-[#171916] hover:brightness-110">Bewaren</button>
               </div>
             </form>
           </div>
@@ -1370,8 +1455,8 @@ export default function App() {
           isOpen={isMorningModalOpen}
           onClose={handleDismissMorningModal}
           onSaveCheckIn={handleSaveDailyCheckIn}
-          existingCheckIn={state.dailyCheckIns?.find((c) => c.date === new Date().toISOString().split('T')[0])}
-          todayIntention={(state.intentions || []).find((i) => i.date === new Date().toISOString().split('T')[0])}
+          existingCheckIn={state.dailyCheckIns?.find((c) => c.date === getLocalDateString())}
+          todayIntention={(state.intentions || []).find((i) => i.date === getLocalDateString())}
           lang="nl"
         />
       )}

@@ -138,11 +138,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   return (
     <div className="space-y-8 pb-16">
       {/* Header */}
-      <div className="border-b border-[#E8E2D5] pb-5">
-        <h1 className="font-serif text-3xl font-normal text-[#2C2825]">
+      <div className="border-b border-[var(--border-subtle)] pb-5">
+        <h1 className="font-serif text-3xl font-normal text-[var(--text-primary)]">
           P & M Alchemy Sovereignty & Settings
         </h1>
-        <p className="text-xs text-[#7A7167] mt-1 font-light">
+        <p className="text-xs text-[var(--text-secondary)] mt-1 font-light">
           Inspect and govern what your JARVIS knows, calibrate thoughtful quiet hours, and configure data privacy.
         </p>
 
@@ -153,8 +153,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             id="settings-tab-foundation"
             className={`px-3.5 py-1.5 rounded-full transition cursor-pointer flex items-center gap-1.5 ${
               activeTab === 'foundation'
-                ? 'bg-[#2C2825] text-[#F9F7F2] font-medium shadow-xs'
-                : 'bg-[#FFFFFF] border border-[#E3DCD1] text-[#695F54] hover:bg-[#F2ECE1]'
+                ? 'bg-[var(--text-primary)] text-[var(--text-primary)] font-medium shadow-xs'
+                : 'bg-[var(--surface-2)] border border-[var(--border-subtle)] text-[var(--text-secondary)] hover:bg-[var(--surface-2)]'
             }`}
           >
             <Layers className="w-3.5 h-3.5 text-[#C5A880]" />
@@ -164,8 +164,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             onClick={() => setActiveTab('memory')}
             className={`px-3.5 py-1.5 rounded-full transition cursor-pointer ${
               activeTab === 'memory'
-                ? 'bg-[#2C2825] text-[#F9F7F2] font-medium shadow-xs'
-                : 'bg-[#FFFFFF] border border-[#E3DCD1] text-[#695F54] hover:bg-[#F2ECE1]'
+                ? 'bg-[var(--text-primary)] text-[var(--text-primary)] font-medium shadow-xs'
+                : 'bg-[var(--surface-2)] border border-[var(--border-subtle)] text-[var(--text-secondary)] hover:bg-[var(--surface-2)]'
             }`}
           >
             {isNl ? `AI Geheugen (${memories.length})` : `Transparent AI Memory (${memories.length})`}
@@ -174,8 +174,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             onClick={() => setActiveTab('notifications')}
             className={`px-3.5 py-1.5 rounded-full transition cursor-pointer flex items-center gap-1.5 ${
               activeTab === 'notifications'
-                ? 'bg-[#2C2825] text-[#F9F7F2] font-medium shadow-xs'
-                : 'bg-[#FFFFFF] border border-[#E3DCD1] text-[#695F54] hover:bg-[#F2ECE1]'
+                ? 'bg-[var(--text-primary)] text-[var(--text-primary)] font-medium shadow-xs'
+                : 'bg-[var(--surface-2)] border border-[var(--border-subtle)] text-[var(--text-secondary)] hover:bg-[var(--surface-2)]'
             }`}
           >
             <Bell className="w-3.5 h-3.5" />
@@ -186,8 +186,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             id="settings-tab-integrations"
             className={`px-3.5 py-1.5 rounded-full transition cursor-pointer flex items-center gap-1.5 ${
               activeTab === 'integrations'
-                ? 'bg-[#2C2825] text-[#F9F7F2] font-medium shadow-xs'
-                : 'bg-[#FFFFFF] border border-[#E3DCD1] text-[#695F54] hover:bg-[#F2ECE1]'
+                ? 'bg-[var(--text-primary)] text-[var(--text-primary)] font-medium shadow-xs'
+                : 'bg-[var(--surface-2)] border border-[var(--border-subtle)] text-[var(--text-secondary)] hover:bg-[var(--surface-2)]'
             }`}
           >
             <Link2 className="w-3.5 h-3.5" />
@@ -197,8 +197,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             onClick={() => setActiveTab('security')}
             className={`px-3.5 py-1.5 rounded-full transition cursor-pointer ${
               activeTab === 'security'
-                ? 'bg-[#2C2825] text-[#F9F7F2] font-medium shadow-xs'
-                : 'bg-[#FFFFFF] border border-[#E3DCD1] text-[#695F54] hover:bg-[#F2ECE1]'
+                ? 'bg-[var(--text-primary)] text-[var(--text-primary)] font-medium shadow-xs'
+                : 'bg-[var(--surface-2)] border border-[var(--border-subtle)] text-[var(--text-secondary)] hover:bg-[var(--surface-2)]'
             }`}
           >
             {isNl ? 'Veiligheid & Intelligentie' : 'Assistant Intelligence'}
@@ -207,8 +207,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             onClick={() => setActiveTab('data')}
             className={`px-3.5 py-1.5 rounded-full transition cursor-pointer ${
               activeTab === 'data'
-                ? 'bg-[#2C2825] text-[#F9F7F2] font-medium shadow-xs'
-                : 'bg-[#FFFFFF] border border-[#E3DCD1] text-[#695F54] hover:bg-[#F2ECE1]'
+                ? 'bg-[var(--text-primary)] text-[var(--text-primary)] font-medium shadow-xs'
+                : 'bg-[var(--surface-2)] border border-[var(--border-subtle)] text-[var(--text-secondary)] hover:bg-[var(--surface-2)]'
             }`}
           >
             {isNl ? 'Data Soevereiniteit & Backups' : 'Data Sovereignty & Backups'}
@@ -240,13 +240,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       {activeTab === 'notifications' && notificationSettings && onUpdateNotificationSettings && (
         <div className="space-y-6">
           {/* Main Notification Controls */}
-          <div className="rounded-2xl border border-[#E8E1D4] bg-[#FFFFFF] p-6 shadow-xs space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#F0EBE0]">
+          <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-2)] p-6 shadow-xs space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[var(--surface-2)]">
               <div>
-                <h3 className="font-serif text-lg font-medium text-[#2C2825]">
+                <h3 className="font-serif text-lg font-medium text-[var(--text-primary)]">
                   Sparse, High-Signal Notifications
                 </h3>
-                <p className="text-xs text-[#7A7167] mt-1 font-light">
+                <p className="text-xs text-[var(--text-secondary)] mt-1 font-light">
                   A sophisticated assistant speaks rarely, with great relevance. Never spammy or frantic.
                 </p>
               </div>
@@ -262,8 +262,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   }
                   className={`px-4 py-1.5 rounded-full text-xs font-medium transition cursor-pointer ${
                     notificationSettings.enabled
-                      ? 'bg-[#2C2825] text-[#F9F7F2]'
-                      : 'bg-[#EDE7DC] text-[#7A7167]'
+                      ? 'bg-[var(--text-primary)] text-[var(--text-primary)]'
+                      : 'bg-[var(--surface-2)] text-[var(--text-secondary)]'
                   }`}
                 >
                   {notificationSettings.enabled ? 'Notifications Enabled' : 'Notifications Paused'}
@@ -272,24 +272,24 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             </div>
 
             {/* Quiet Hours Configuration */}
-            <div className="p-4 rounded-xl bg-[#FAF7F0] border border-[#E5DEC7] space-y-4">
+            <div className="p-4 rounded-xl bg-[var(--surface-1)] border border-[var(--surface-raised)] space-y-4">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-[#7E694E]">
+                <div className="flex items-center gap-2 text-[var(--accent-secondary)]">
                   <Clock className="w-4 h-4" />
                   <span className="text-xs font-semibold uppercase tracking-wider">
                     Sacred Quiet Hours (Do Not Disturb)
                   </span>
                 </div>
-                <span className="text-[11px] text-[#7A7167]">No non-critical alerts</span>
+                <span className="text-[11px] text-[var(--text-secondary)]">No non-critical alerts</span>
               </div>
 
-              <p className="text-xs text-[#5C5348] font-light">
+              <p className="text-xs text-[var(--text-secondary)] font-light">
                 During these hours, your assistant holds all proactive ideas, non-urgent reminders, and digest pings silently until your morning start window.
               </p>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
                 <div>
-                  <label className="text-xs font-medium text-[#3D372F] block mb-1">
+                  <label className="text-xs font-medium text-[var(--text-primary)] block mb-1">
                     Evening Wind-down (Starts)
                   </label>
                   <input
@@ -301,11 +301,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                         quietHoursStart: e.target.value,
                       })
                     }
-                    className="w-full bg-[#FFFFFF] border border-[#D5CCBE] rounded-lg p-2 text-xs text-[#2C2825]"
+                    className="w-full bg-[var(--surface-2)] border border-[var(--border-subtle)] rounded-lg p-2 text-xs text-[var(--text-primary)]"
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-medium text-[#3D372F] block mb-1">
+                  <label className="text-xs font-medium text-[var(--text-primary)] block mb-1">
                     Morning Emergence (Ends)
                   </label>
                   <input
@@ -317,7 +317,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                         quietHoursEnd: e.target.value,
                       })
                     }
-                    className="w-full bg-[#FFFFFF] border border-[#D5CCBE] rounded-lg p-2 text-xs text-[#2C2825]"
+                    className="w-full bg-[var(--surface-2)] border border-[var(--border-subtle)] rounded-lg p-2 text-xs text-[var(--text-primary)]"
                   />
                 </div>
               </div>
@@ -325,14 +325,14 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
             {/* Frequency & Channels */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="p-4 rounded-xl border border-[#E5DEC7] bg-[#FAF8F4] space-y-3">
-                <span className="text-xs font-semibold text-[#2C2825] block">
+              <div className="p-4 rounded-xl border border-[var(--surface-raised)] bg-[var(--surface-1)] space-y-3">
+                <span className="text-xs font-semibold text-[var(--text-primary)] block">
                   Delivery Channels
                 </span>
 
                 <div className="space-y-2.5">
                   <label className="flex items-center justify-between cursor-pointer">
-                    <span className="text-xs text-[#4E463E]">In-App Notification Center</span>
+                    <span className="text-xs text-[var(--text-secondary)]">In-App Notification Center</span>
                     <input
                       type="checkbox"
                       checked={notificationSettings.inAppNotificationsEnabled}
@@ -342,14 +342,14 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                           inAppNotificationsEnabled: e.target.checked,
                         })
                       }
-                      className="accent-[#7E694E] w-4 h-4"
+                      className="accent-[var(--accent-secondary)] w-4 h-4"
                     />
                   </label>
 
                   <label className="flex items-center justify-between cursor-pointer">
                     <div>
-                      <span className="text-xs text-[#4E463E] block">Browser Push Notifications</span>
-                      <span className="text-[10px] text-[#8C8377]">
+                      <span className="text-xs text-[var(--text-secondary)] block">Browser Push Notifications</span>
+                      <span className="text-[10px] text-[var(--text-muted)]">
                         Status: {pushStatus}
                       </span>
                     </div>
@@ -358,7 +358,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                         <button
                           type="button"
                           onClick={handleRequestPush}
-                          className="text-[10px] font-medium text-[#7E694E] underline cursor-pointer"
+                          className="text-[10px] font-medium text-[var(--accent-secondary)] underline cursor-pointer"
                         >
                           Enable
                         </button>
@@ -373,13 +373,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                             browserPushEnabled: e.target.checked,
                           })
                         }
-                        className="accent-[#7E694E] w-4 h-4"
+                        className="accent-[var(--accent-secondary)] w-4 h-4"
                       />
                     </div>
                   </label>
 
                   <label className="flex items-center justify-between cursor-pointer">
-                    <span className="text-xs text-[#4E463E]">Subtle Audio Chime</span>
+                    <span className="text-xs text-[var(--text-secondary)]">Subtle Audio Chime</span>
                     <input
                       type="checkbox"
                       checked={notificationSettings.soundEnabled}
@@ -389,25 +389,25 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                           soundEnabled: e.target.checked,
                         })
                       }
-                      className="accent-[#7E694E] w-4 h-4"
+                      className="accent-[var(--accent-secondary)] w-4 h-4"
                     />
                   </label>
                 </div>
               </div>
 
               {/* Maximum Daily Rate */}
-              <div className="p-4 rounded-xl border border-[#E5DEC7] bg-[#FAF8F4] space-y-3">
-                <span className="text-xs font-semibold text-[#2C2825] block">
+              <div className="p-4 rounded-xl border border-[var(--surface-raised)] bg-[var(--surface-1)] space-y-3">
+                <span className="text-xs font-semibold text-[var(--text-primary)] block">
                   Daily Attention Budget
                 </span>
-                <p className="text-[11px] text-[#7A7167] leading-relaxed">
+                <p className="text-[11px] text-[var(--text-secondary)] leading-relaxed">
                   Maximum proactive notification digests delivered per day to preserve your focus.
                 </p>
 
                 <div>
                   <div className="flex items-center justify-between mb-1 text-xs">
-                    <span className="text-[#554C42]">Max Daily Alerts:</span>
-                    <strong className="text-[#2C2825]">{notificationSettings.maxDailyFrequency} per day</strong>
+                    <span className="text-[var(--text-secondary)]">Max Daily Alerts:</span>
+                    <strong className="text-[var(--text-primary)]">{notificationSettings.maxDailyFrequency} per day</strong>
                   </div>
                   <input
                     type="range"
@@ -420,9 +420,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                         maxDailyFrequency: parseInt(e.target.value, 10),
                       })
                     }
-                    className="w-full accent-[#7E694E]"
+                    className="w-full accent-[var(--accent-secondary)]"
                   />
-                  <div className="flex justify-between text-[10px] text-[#8C8377] mt-1">
+                  <div className="flex justify-between text-[10px] text-[var(--text-muted)] mt-1">
                     <span>1 (Strict Minimalism)</span>
                     <span>3 (Balanced)</span>
                     <span>5 (More Frequent)</span>
@@ -434,7 +434,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             {/* Notification Topics */}
             <div className="space-y-3 pt-2">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold uppercase tracking-wider text-[#8A8175] block">
+                <span className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] block">
                   {isNl ? 'Toegestane Notificatie Categorieën' : 'Allowed Notification Categories'}
                 </span>
                 <button
@@ -447,7 +447,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                         : 'Test alert: Your notifications are calibrated with discretion and purpose.'
                     );
                   }}
-                  className="text-xs text-[#7E694E] hover:underline font-medium cursor-pointer"
+                  className="text-xs text-[var(--accent-secondary)] hover:underline font-medium cursor-pointer"
                 >
                   {isNl ? 'Test Notificatie Verzenden' : 'Send Test Notification'}
                 </button>
@@ -492,7 +492,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   return (
                     <label
                       key={item.key}
-                      className="flex items-center justify-between p-3 rounded-xl bg-[#FAF8F4] border border-[#E7DEC8] cursor-pointer hover:bg-[#F5EFE3] transition"
+                      className="flex items-center justify-between p-3 rounded-xl bg-[var(--surface-1)] border border-[var(--border-subtle)] cursor-pointer hover:bg-[var(--surface-2)] transition"
                     >
                       <span className="text-xs text-[#3E372E] pr-2">{item.label}</span>
                       <input
@@ -504,7 +504,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                             [item.key]: e.target.checked,
                           })
                         }
-                        className="accent-[#7E694E] w-4 h-4 shrink-0"
+                        className="accent-[var(--accent-secondary)] w-4 h-4 shrink-0"
                       />
                     </label>
                   );
@@ -542,23 +542,23 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       {/* Tab 3: Data Management & Export */}
       {activeTab === 'data' && (
         <div className="space-y-6">
-          <div className="rounded-2xl border border-[#E8E1D4] bg-[#FFFFFF] p-6 shadow-xs space-y-6">
+          <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-2)] p-6 shadow-xs space-y-6">
             <div>
-              <h3 className="font-serif text-lg font-medium text-[#2C2825]">
+              <h3 className="font-serif text-lg font-medium text-[var(--text-primary)]">
                 Data Sovereignty & Local Storage
               </h3>
-              <p className="text-xs text-[#7A7167] mt-1 font-light">
-                Your data is stored securely in your browser's persistent storage. You can export a complete JSON snapshot at any time.
+              <p className="text-xs text-[var(--text-secondary)] mt-1 font-light">
+                Your data is currently stored in this browser. Browser storage is not encrypted yet; export a private backup regularly and keep the file somewhere safe. Cloud storage is not connected.
               </p>
             </div>
 
             {/* Sample Data Toggle */}
-            <div className="flex items-center justify-between p-4 rounded-xl bg-[#FAF8F4] border border-[#E2DBD0]">
+            <div className="flex items-center justify-between p-4 rounded-xl bg-[var(--surface-1)] border border-[#E2DBD0]">
               <div>
-                <span className="text-xs font-semibold text-[#2C2825] block">
+                <span className="text-xs font-semibold text-[var(--text-primary)] block">
                   Sample Data Mode
                 </span>
-                <span className="text-[11px] text-[#7A7167]">
+                <span className="text-[11px] text-[var(--text-secondary)]">
                   {isSampleData
                     ? 'Currently showing curated sample tasks, goals, ideas, and calendar.'
                     : 'Curated sample mode disabled. Using clean custom entries.'}
@@ -566,7 +566,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               </div>
               <button
                 onClick={onToggleSampleData}
-                className="px-3.5 py-1.5 rounded-lg border border-[#D5CCBE] text-xs font-medium text-[#2C2825] hover:bg-[#EFE9DE] transition cursor-pointer"
+                className="px-3.5 py-1.5 rounded-lg border border-[var(--border-subtle)] text-xs font-medium text-[var(--text-primary)] hover:bg-[#EFE9DE] transition cursor-pointer"
               >
                 {isSampleData ? 'Clear Sample Data' : 'Reload Sample Data'}
               </button>
@@ -576,15 +576,15 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <button
                 onClick={onExportData}
-                className="flex items-center justify-center gap-2 p-4 rounded-xl border border-[#D5CCBE] bg-[#FFFFFF] hover:bg-[#FAF8F4] transition text-xs font-medium text-[#2C2825] cursor-pointer shadow-xs"
+                className="flex items-center justify-center gap-2 p-4 rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-2)] hover:bg-[var(--surface-1)] transition text-xs font-medium text-[var(--text-primary)] cursor-pointer shadow-xs"
               >
                 <Download className="w-4 h-4 text-[#8C7654]" />
-                <span>Export Complete Backup (JSON)</span>
+                <span>Export verified backup (JSON)</span>
               </button>
 
-              <label className="flex items-center justify-center gap-2 p-4 rounded-xl border border-[#D5CCBE] bg-[#FFFFFF] hover:bg-[#FAF8F4] transition text-xs font-medium text-[#2C2825] cursor-pointer shadow-xs">
+              <label className="flex items-center justify-center gap-2 p-4 rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-2)] hover:bg-[var(--surface-1)] transition text-xs font-medium text-[var(--text-primary)] cursor-pointer shadow-xs">
                 <Upload className="w-4 h-4 text-[#8C7654]" />
-                <span>Restore Backup (JSON)</span>
+                <span>Verify & restore backup (JSON)</span>
                 <input
                   type="file"
                   accept=".json"
@@ -600,13 +600,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 <span className="text-xs font-medium text-[#733] block">
                   Reset Environment
                 </span>
-                <span className="text-[11px] text-[#8C8377]">
+                <span className="text-[11px] text-[var(--text-muted)]">
                   Clears all local storage and restores default state.
                 </span>
               </div>
               <button
                 onClick={onResetData}
-                className="px-4 py-1.5 rounded-lg border border-[#EAC4C4] bg-[#FFF8F8] text-xs font-medium text-[#842] hover:bg-[#FFEAEA] transition cursor-pointer"
+                className="px-4 py-1.5 rounded-lg border border-[#6B3B37] bg-[#332321] text-xs font-medium text-[#842] hover:bg-[#49302E] transition cursor-pointer"
               >
                 Reset to Default
               </button>

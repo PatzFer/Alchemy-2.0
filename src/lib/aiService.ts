@@ -42,6 +42,7 @@ export async function sendChatMessage(
       role: 'assistant',
       content,
       timestamp: new Date().toISOString(),
+      world: world === 'mariluna' ? 'mariluna' : world === 'all' ? 'all' : 'personal',
       suggestedAction,
     };
   } catch (error: any) {
@@ -65,6 +66,7 @@ export async function sendChatMessage(
       role: 'assistant',
       content: fallbackText,
       timestamp: new Date().toISOString(),
+      world: world === 'mariluna' ? 'mariluna' : world === 'all' ? 'all' : 'personal',
     };
   }
 }
@@ -72,7 +74,8 @@ export async function sendChatMessage(
 export async function requestIntelligentPlan(
   tasks: Task[],
   events: CalendarEvent[],
-  profile: LifeProfile
+  profile: LifeProfile,
+  realm: 'personal' | 'mariluna' = 'personal'
 ): Promise<any> {
   try {
     const res = await fetch('/api/ai/plan-day', {
@@ -80,6 +83,7 @@ export async function requestIntelligentPlan(
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         tasks,
+        realm,
         calendarEvents: events,
         workingHours: {
           start: profile.workingHoursStart,

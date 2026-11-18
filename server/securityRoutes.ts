@@ -1,4 +1,5 @@
 import { Router, Request, Response } from 'express';
+import { resolveWebAuthnRelyingParty } from './webauthnOrigin';
 import crypto from 'crypto';
 import {
   generateRegistrationOptions,
@@ -10,18 +11,28 @@ import {
   securityVault,
   getOrCreateSession,
   requireStepUpAuth,
+  requireAppAuth,
   ActiveSession,
 } from './security';
 
 const router = Router();
 
-// Helper to extract RPID and Origin safely
+// Security status, recovery codes, device inventory and authentication responses
+// must never be stored by browsers or intermediary caches.
+router.use((_req: Request, res: Response, next) => {
+  res.setHeader('Cache-Control', 'no-store, private');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Vary', 'Cookie');
+  next();
+});
+
+// Never infer production WebAuthn trust from the incoming Host or Origin headers.
 function getRPInfo(req: Request) {
-  const host = req.get('host') || 'localhost:3000';
-  const hostname = host.split(':')[0];
-  const protocol = req.protocol === 'https' || req.get('x-forwarded-proto') === 'https' ? 'https' : 'http';
-  const origin = req.get('origin') || `${protocol}://${host}`;
-  return { rpID: hostname, origin, host, protocol };
+  return resolveWebAuthnRelyingParty({
+    host: req.get('host'),
+    origin: req.get('origin'),
+    protocol: req.protocol,
+  });
 }
 
 // ----------------------------------------------------
@@ -56,7 +67,7 @@ router.get('/status', (req: Request, res: Response) => {
     authenticatedWith: session.authenticatedWith || 'unauthenticated',
     inactivityTimeoutMinutes: session.inactivityTimeoutMinutes || 15,
     inactivityRemainingSeconds: remainingInactivity,
-    sessionId: session.id,
+    sessionId: session.publicId,
     deviceId: session.deviceId,
     deviceName: session.deviceName,
     currentSecurityLevel,
@@ -67,9 +78,12 @@ router.get('/status', (req: Request, res: Response) => {
     hasPasskeys: passkeys.length > 0,
     passkeyCount: passkeys.length,
     totpEnabled,
-    recoveryCodesRemaining: recoveryStatus.remaining,
-    recoveryCodesTotal: recoveryStatus.total,
-    permissions,
+    // Do not disclose private security configuration to an unauthenticated session.
+    // The lock screen only needs the available unlock methods; detailed settings and
+    // recovery inventory are returned after the app has been unlocked.
+    recoveryCodesRemaining: session.isAppAuthenticated ? recoveryStatus.remaining : undefined,
+    recoveryCodesTotal: session.isAppAuthenticated ? recoveryStatus.total : undefined,
+    permissions: session.isAppAuthenticated ? permissions : undefined,
   });
 });
 
@@ -94,19 +108,16 @@ router.post('/unlock-app', async (req: Request, res: Response) => {
     verified = securityVault.verifyTotp(String(credential));
   } else if (method === 'recovery_code' && credential) {
     verified = securityVault.verifyAndConsumeRecoveryCode(String(credential));
-  } else if (method === 'passkey') {
-    verified = true; // Verified through /webauthn/auth-verify
   }
 
   if (verified) {
     securityVault.clearFailedAttempts(session.ip);
-    const updatedSession = securityVault.authenticateApp(session.id, method);
+    securityVault.authenticateApp(session.id, method);
     return res.json({
       success: true,
       isAppAuthenticated: true,
       authenticatedWith: method,
       message: 'P & M Alchemy unlocked. Welcome back.',
-      session: updatedSession,
     });
   } else {
     securityVault.recordFailedAttempt(session.ip);
@@ -122,16 +133,19 @@ router.post('/unlock-app', async (req: Request, res: Response) => {
 // Uses sandboxed session without exposing real production credentials.
 // ----------------------------------------------------
 router.post('/preview-unlock', (req: Request, res: Response) => {
+  // Preview bypass is disabled unless explicitly enabled for a trusted sandbox.
+  if (process.env.ENABLE_PREVIEW_AUTH !== 'true' || process.env.NODE_ENV === 'production') {
+    return res.status(404).json({ error: 'Preview authentication is disabled.' });
+  }
   const session = getOrCreateSession(req, res);
   securityVault.clearFailedAttempts(session.ip);
-  const updatedSession = securityVault.authenticateApp(session.id, 'preview_test_mode');
+  securityVault.authenticateApp(session.id, 'preview_test_mode');
   return res.json({
     success: true,
     isAppAuthenticated: true,
     isPreviewMode: true,
     authenticatedWith: 'preview_test_mode',
     message: 'Alchemy unlocked in AI Studio Preview / Test Mode (Sandboxed).',
-    session: updatedSession,
   });
 });
 
@@ -157,7 +171,7 @@ router.post('/activity', (req: Request, res: Response) => {
   return res.json({ success: false, isAppAuthenticated: false });
 });
 
-router.post('/session-timeout', (req: Request, res: Response) => {
+router.post('/session-timeout', requireAppAuth, (req: Request, res: Response) => {
   const session = getOrCreateSession(req, res);
   const { minutes } = req.body;
   const parsed = Number(minutes);
@@ -179,6 +193,9 @@ router.post('/lock-sensitive', (req: Request, res: Response) => {
 
 router.post('/unlock-sensitive', async (req: Request, res: Response) => {
   const session = getOrCreateSession(req, res);
+  if (!session.isAppAuthenticated) {
+    return res.status(403).json({ error: 'Unlock the application before accessing sensitive personal data.' });
+  }
   const { method, credential } = req.body;
 
   // Rate limiting check
@@ -197,8 +214,10 @@ router.post('/unlock-sensitive', async (req: Request, res: Response) => {
   } else if (method === 'recovery_code' && credential) {
     verified = securityVault.verifyAndConsumeRecoveryCode(String(credential));
   } else if (method === 'passkey') {
-    // Verified via /webauthn/auth-verify
-    verified = true;
+    // Never trust a client-supplied method flag; require a live server-verified passkey step-up.
+    verified = session.isAppAuthenticated &&
+      session.authenticatedWith === 'passkey' &&
+      session.stepUpExpiresAt > Date.now();
   }
 
   if (verified) {
@@ -220,7 +239,7 @@ router.post('/unlock-sensitive', async (req: Request, res: Response) => {
 // ----------------------------------------------------
 // 3. Step-Up Authentication (Level 3)
 // ----------------------------------------------------
-router.post('/step-up', async (req: Request, res: Response) => {
+router.post('/step-up', requireAppAuth, async (req: Request, res: Response) => {
   const session = getOrCreateSession(req, res);
   const { method, credential } = req.body;
 
@@ -259,9 +278,13 @@ router.post('/step-up', async (req: Request, res: Response) => {
 // ----------------------------------------------------
 // 4. WebAuthn / Passkey Endpoints
 // ----------------------------------------------------
-router.post('/webauthn/register-options', async (req: Request, res: Response) => {
+router.post('/webauthn/register-options', requireAppAuth, requireStepUpAuth, async (req: Request, res: Response) => {
   try {
     const session = getOrCreateSession(req, res);
+    const rateLimit = securityVault.checkRateLimit(session.ip);
+    if (!rateLimit.allowed) {
+      return res.status(429).json({ error: 'Too many failed authentication attempts.', locked: true });
+    }
     const { rpID } = getRPInfo(req);
     const existingPasskeys = securityVault.getPasskeys();
 
@@ -277,7 +300,7 @@ router.post('/webauthn/register-options', async (req: Request, res: Response) =>
       })),
       authenticatorSelection: {
         authenticatorAttachment: 'platform', // Hardware device biometrics (Touch ID / Face ID / Android / Windows Hello)
-        userVerification: 'preferred',
+        userVerification: 'required',
         residentKey: 'preferred',
       },
     });
@@ -286,16 +309,22 @@ router.post('/webauthn/register-options', async (req: Request, res: Response) =>
     res.json(options);
   } catch (error: any) {
     console.error('WebAuthn register-options error:', error);
-    res.status(500).json({ error: error.message || 'Failed to generate passkey registration options' });
+    res.status(500).json({ error: 'Unable to start passkey registration.' });
   }
 });
 
-router.post('/webauthn/register-verify', async (req: Request, res: Response) => {
+router.post('/webauthn/register-verify', requireAppAuth, requireStepUpAuth, async (req: Request, res: Response) => {
+  let failureKey = req.ip || '127.0.0.1';
   try {
     const session = getOrCreateSession(req, res);
+    failureKey = session.ip;
+    const rateLimit = securityVault.checkRateLimit(session.ip);
+    if (!rateLimit.allowed) {
+      return res.status(429).json({ error: 'Too many failed authentication attempts.', locked: true });
+    }
     const { response, nickname } = req.body;
     const { rpID, origin } = getRPInfo(req);
-    const expectedChallenge = securityVault.getChallenge(`reg_${session.id}`);
+    const expectedChallenge = securityVault.consumeChallenge(`reg_${session.id}`);
 
     if (!expectedChallenge) {
       return res.status(400).json({ error: 'Registration challenge expired or missing.' });
@@ -304,9 +333,11 @@ router.post('/webauthn/register-verify', async (req: Request, res: Response) => 
     const verification = await verifyRegistrationResponse({
       response,
       expectedChallenge,
-      expectedOrigin: [origin, `https://${req.get('host')}`, `http://${req.get('host')}`],
-      expectedRPID: [rpID, 'localhost'],
-      requireUserVerification: false,
+      // Validate only the exact origin and RP ID derived for this request host.
+      // Never accept localhost or alternate schemes as production fallbacks.
+      expectedOrigin: origin,
+      expectedRPID: rpID,
+      requireUserVerification: true,
     });
 
     if (verification.verified && verification.registrationInfo) {
@@ -326,6 +357,7 @@ router.post('/webauthn/register-verify', async (req: Request, res: Response) => 
       });
 
       securityVault.deleteChallenge(`reg_${session.id}`);
+      securityVault.clearFailedAttempts(session.ip);
       securityVault.grantStepUp(session.id, 15);
 
       res.json({
@@ -334,17 +366,27 @@ router.post('/webauthn/register-verify', async (req: Request, res: Response) => 
         message: 'Passkey securely enrolled with hardware platform protection.',
       });
     } else {
+      securityVault.recordFailedAttempt(session.ip);
       res.status(400).json({ error: 'Passkey registration verification failed.' });
     }
   } catch (error: any) {
     console.error('WebAuthn register-verify error:', error);
-    res.status(400).json({ error: error.message || 'Verification error' });
+    securityVault.recordFailedAttempt(failureKey);
+    res.status(400).json({ error: 'Passkey registration verification failed.' });
   }
 });
 
 router.post('/webauthn/auth-options', async (req: Request, res: Response) => {
   try {
     const session = getOrCreateSession(req, res);
+    const rateLimit = securityVault.checkRateLimit(session.ip);
+    if (!rateLimit.allowed) {
+      return res.status(429).json({
+        error: 'Too many failed authentication attempts.',
+        locked: true,
+        remainingLockoutSeconds: rateLimit.remainingLockoutSeconds,
+      });
+    }
     const { rpID } = getRPInfo(req);
     const passkeys = securityVault.getPasskeys();
 
@@ -361,23 +403,40 @@ router.post('/webauthn/auth-options', async (req: Request, res: Response) => {
     res.json(options);
   } catch (error: any) {
     console.error('WebAuthn auth-options error:', error);
-    res.status(500).json({ error: error.message || 'Failed to generate auth options' });
+    res.status(500).json({ error: 'Unable to start passkey authentication.' });
   }
 });
 
 router.post('/webauthn/auth-verify', async (req: Request, res: Response) => {
+  let failureKey = req.ip || '127.0.0.1';
   try {
     const session = getOrCreateSession(req, res);
+    failureKey = session.ip;
+    const rateLimit = securityVault.checkRateLimit(session.ip);
+    if (!rateLimit.allowed) {
+      return res.status(429).json({
+        error: 'Too many failed authentication attempts.',
+        locked: true,
+        remainingLockoutSeconds: rateLimit.remainingLockoutSeconds,
+      });
+    }
+
     const { response } = req.body;
     const { rpID, origin } = getRPInfo(req);
-    const expectedChallenge = securityVault.getChallenge(`auth_${session.id}`);
+    const expectedChallenge = securityVault.consumeChallenge(`auth_${session.id}`);
 
     if (!expectedChallenge) {
       return res.status(400).json({ error: 'Authentication challenge expired or missing.' });
     }
 
+    if (!response || typeof response.id !== 'string' || response.id.length > 2048) {
+      securityVault.recordFailedAttempt(session.ip);
+      return res.status(400).json({ error: 'Invalid passkey credential response.' });
+    }
+
     const passkey = securityVault.getPasskey(response.id);
     if (!passkey) {
+      securityVault.recordFailedAttempt(session.ip);
       return res.status(400).json({ error: 'Unrecognized passkey credential.' });
     }
 
@@ -386,15 +445,15 @@ router.post('/webauthn/auth-verify', async (req: Request, res: Response) => {
     const verification = await verifyAuthenticationResponse({
       response,
       expectedChallenge,
-      expectedOrigin: [origin, `https://${req.get('host')}`, `http://${req.get('host')}`],
-      expectedRPID: [rpID, 'localhost'],
+      expectedOrigin: origin,
+      expectedRPID: rpID,
       credential: {
         id: passkey.id,
         publicKey: publicKeyBytes,
         counter: passkey.counter,
         transports: passkey.transports as any,
       },
-      requireUserVerification: false,
+      requireUserVerification: true,
     });
 
     if (verification.verified) {
@@ -418,15 +477,15 @@ router.post('/webauthn/auth-verify', async (req: Request, res: Response) => {
     }
   } catch (error: any) {
     console.error('WebAuthn auth-verify error:', error);
-    securityVault.recordFailedAttempt(req.ip || '127.0.0.1');
-    res.status(400).json({ error: error.message || 'Verification failed' });
+    securityVault.recordFailedAttempt(failureKey);
+    res.status(400).json({ error: 'Passkey authentication verification failed.' });
   }
 });
 
 // ----------------------------------------------------
 // 5. TOTP Authenticator App Endpoints
 // ----------------------------------------------------
-router.post('/totp/setup', (req: Request, res: Response) => {
+router.post('/totp/setup', requireAppAuth, requireStepUpAuth, (req: Request, res: Response) => {
   const { secret, uri } = securityVault.generateTotpSetup();
   res.json({
     secret,
@@ -437,23 +496,29 @@ router.post('/totp/setup', (req: Request, res: Response) => {
   });
 });
 
-router.post('/totp/verify-setup', (req: Request, res: Response) => {
+router.post('/totp/verify-setup', requireAppAuth, requireStepUpAuth, (req: Request, res: Response) => {
+  const session = getOrCreateSession(req, res);
+  const rateLimit = securityVault.checkRateLimit(session.ip);
+  if (!rateLimit.allowed) {
+    return res.status(429).json({ error: 'Too many failed authentication attempts.', locked: true });
+  }
   const { code } = req.body;
   if (!code) return res.status(400).json({ error: '6-digit code required' });
 
   const success = securityVault.verifyAndEnableTotp(String(code));
   if (success) {
-    const session = getOrCreateSession(req, res);
+    securityVault.clearFailedAttempts(session.ip);
     securityVault.grantStepUp(session.id, 10);
     return res.json({
       success: true,
       message: 'TOTP Authenticator enabled and verified as secondary authentication.',
     });
   }
+  securityVault.recordFailedAttempt(session.ip);
   res.status(400).json({ error: 'Invalid 6-digit code. Please check time sync on your device.' });
 });
 
-router.post('/totp/disable', requireStepUpAuth, (req: Request, res: Response) => {
+router.post('/totp/disable', requireAppAuth, requireStepUpAuth, (req: Request, res: Response) => {
   securityVault.disableTotp();
   res.json({ success: true, message: 'TOTP Authenticator disabled.' });
 });
@@ -461,7 +526,7 @@ router.post('/totp/disable', requireStepUpAuth, (req: Request, res: Response) =>
 // ----------------------------------------------------
 // 6. One-Time Recovery Codes Endpoints
 // ----------------------------------------------------
-router.post('/recovery/regenerate', requireStepUpAuth, (_req: Request, res: Response) => {
+router.post('/recovery/regenerate', requireAppAuth, requireStepUpAuth, (_req: Request, res: Response) => {
   const newPlainCodes = securityVault.regenerateRecoveryCodesInternal();
   res.json({
     success: true,
@@ -470,7 +535,7 @@ router.post('/recovery/regenerate', requireStepUpAuth, (_req: Request, res: Resp
   });
 });
 
-router.get('/recovery/status', (_req: Request, res: Response) => {
+router.get('/recovery/status', requireAppAuth, (_req: Request, res: Response) => {
   const status = securityVault.getRecoveryCodesStatus();
   res.json(status);
 });
@@ -478,17 +543,17 @@ router.get('/recovery/status', (_req: Request, res: Response) => {
 // ----------------------------------------------------
 // 7. Active Sessions & Device Management
 // ----------------------------------------------------
-router.get('/sessions', (req: Request, res: Response) => {
+router.get('/sessions', requireAppAuth, (req: Request, res: Response) => {
   const currentSession = getOrCreateSession(req, res);
   const sessions = securityVault.getActiveSessions(currentSession.id);
   res.json({ sessions });
 });
 
-router.post('/sessions/revoke', requireStepUpAuth, (req: Request, res: Response) => {
+router.post('/sessions/revoke', requireAppAuth, requireStepUpAuth, (req: Request, res: Response) => {
   const { sessionId } = req.body;
   const currentSession = getOrCreateSession(req, res);
 
-  if (sessionId === currentSession.id) {
+  if (sessionId === currentSession.publicId) {
     return res.status(400).json({ error: 'Cannot revoke your current active session.' });
   }
 
@@ -496,7 +561,7 @@ router.post('/sessions/revoke', requireStepUpAuth, (req: Request, res: Response)
   res.json({ success: revoked, message: revoked ? 'Device session revoked.' : 'Session not found.' });
 });
 
-router.post('/sessions/revoke-all-others', requireStepUpAuth, (req: Request, res: Response) => {
+router.post('/sessions/revoke-all-others', requireAppAuth, requireStepUpAuth, (req: Request, res: Response) => {
   const currentSession = getOrCreateSession(req, res);
   securityVault.revokeOtherSessions(currentSession.id);
   res.json({ success: true, message: 'All other active sessions revoked.' });
@@ -505,7 +570,7 @@ router.post('/sessions/revoke-all-others', requireStepUpAuth, (req: Request, res
 // ----------------------------------------------------
 // 8. Passkey Management
 // ----------------------------------------------------
-router.get('/passkeys', (_req: Request, res: Response) => {
+router.get('/passkeys', requireAppAuth, (_req: Request, res: Response) => {
   const passkeys = securityVault.getPasskeys().map((pk) => ({
     id: pk.id,
     nickname: pk.nickname,
@@ -515,7 +580,7 @@ router.get('/passkeys', (_req: Request, res: Response) => {
   res.json({ passkeys });
 });
 
-router.delete('/passkeys/:id', requireStepUpAuth, (req: Request, res: Response) => {
+router.delete('/passkeys/:id', requireAppAuth, requireStepUpAuth, (req: Request, res: Response) => {
   const { id } = req.params;
   const deleted = securityVault.deletePasskey(id);
   res.json({ success: deleted, message: deleted ? 'Passkey deleted.' : 'Passkey not found.' });
@@ -524,12 +589,12 @@ router.delete('/passkeys/:id', requireStepUpAuth, (req: Request, res: Response) 
 // ----------------------------------------------------
 // 9. Permissions & AI Privacy Firewall
 // ----------------------------------------------------
-router.get('/permissions', (_req: Request, res: Response) => {
+router.get('/permissions', requireAppAuth, (_req: Request, res: Response) => {
   const permissions = securityVault.getPermissions();
   res.json(permissions);
 });
 
-router.put('/permissions', requireStepUpAuth, (req: Request, res: Response) => {
+router.put('/permissions', requireAppAuth, requireStepUpAuth, (req: Request, res: Response) => {
   const updates = req.body;
   const updated = securityVault.updatePermissions(updates);
   res.json({ success: true, permissions: updated });
@@ -538,7 +603,7 @@ router.put('/permissions', requireStepUpAuth, (req: Request, res: Response) => {
 // ----------------------------------------------------
 // 10. Connected Services & Granular Scopes
 // ----------------------------------------------------
-router.get('/connected-services', (_req: Request, res: Response) => {
+router.get('/connected-services', requireAppAuth, (_req: Request, res: Response) => {
   const permissions = securityVault.getPermissions();
   res.json({
     services: [
@@ -586,7 +651,7 @@ router.get('/connected-services', (_req: Request, res: Response) => {
 // ----------------------------------------------------
 // 11. Critical Data Operations (Level 3 Step-Up Enforced)
 // ----------------------------------------------------
-router.post('/export-data', requireStepUpAuth, (_req: Request, res: Response) => {
+router.post('/export-data', requireAppAuth, requireStepUpAuth, (_req: Request, res: Response) => {
   // Generates server-attested export payload
   const timestamp = new Date().toISOString();
   const signature = crypto.createHmac('sha256', 'pm_alchemy_master_secret')
@@ -601,7 +666,7 @@ router.post('/export-data', requireStepUpAuth, (_req: Request, res: Response) =>
   });
 });
 
-router.post('/delete-all-data', requireStepUpAuth, (req: Request, res: Response) => {
+router.post('/delete-all-data', requireAppAuth, requireStepUpAuth, (req: Request, res: Response) => {
   const { confirmationPhrase } = req.body;
   if (confirmationPhrase !== 'DELETE ALL MY DATA PERMANENTLY') {
     return res.status(400).json({

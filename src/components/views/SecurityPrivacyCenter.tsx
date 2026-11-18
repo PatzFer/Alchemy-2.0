@@ -417,7 +417,7 @@ export const SecurityPrivacyCenter: React.FC<SecurityPrivacyCenterProps> = ({
 
   // Update Permissions
   const handleUpdatePermission = (key: string, value: any) => {
-    const isDestructive = key === 'calendarWrite' || key === 'allowCycleDataToAI';
+    const isDestructive = ['calendarWrite', 'allowCycleDataToAI', 'allowWellbeingDataToAI', 'allowPersonalDataToAI', 'allowMarilunaDataToAI', 'allowFinancialDataToAI', 'activeAiProvider'].includes(key);
     const execute = async () => {
       try {
         const res = await fetch('/api/security/permissions', {
@@ -435,7 +435,7 @@ export const SecurityPrivacyCenter: React.FC<SecurityPrivacyCenterProps> = ({
     };
 
     if (isDestructive) {
-      requireStepUp(execute, 'Modify Sensitive Privacy Permission', 'Altering write access or cycle data firewall requires Level 3 Step-Up authorization.');
+      requireStepUp(execute, 'Modify Sensitive Privacy Permission', 'Changing data-sharing permissions or write access requires Level 3 Step-Up authorization.');
     } else {
       execute();
     }
@@ -1107,7 +1107,7 @@ export const SecurityPrivacyCenter: React.FC<SecurityPrivacyCenterProps> = ({
               </span>
               <input
                 type="checkbox"
-                checked={status?.permissions.allowPersonalDataToAI ?? true}
+                checked={status?.permissions.allowPersonalDataToAI ?? false}
                 onChange={(e) => handleUpdatePermission('allowPersonalDataToAI', e.target.checked)}
                 className="accent-[#7E694E] w-4 h-4 cursor-pointer"
               />
@@ -1124,13 +1124,50 @@ export const SecurityPrivacyCenter: React.FC<SecurityPrivacyCenterProps> = ({
               </span>
               <input
                 type="checkbox"
-                checked={status?.permissions.allowMarilunaDataToAI ?? true}
+                checked={status?.permissions.allowMarilunaDataToAI ?? false}
                 onChange={(e) => handleUpdatePermission('allowMarilunaDataToAI', e.target.checked)}
                 className="accent-[#7E694E] w-4 h-4 cursor-pointer"
               />
             </div>
             <p className="text-[11px] text-[#6E655A] font-light leading-relaxed">
-              Allow assistant to strategize on Mariluna studio clients, revenue goals, and content plans.
+              Allow assistant to use non-financial Mariluna studio context, strategy and content plans. Financial data has a separate opt-in.
+            </p>
+          </div>
+
+          {/* AI Provider Mode */}
+          <div className="p-4 rounded-2xl border border-[#E3D9C9] bg-[#FAF8F4] space-y-2">
+            <label htmlFor="alchemy-ai-provider" className="text-xs font-semibold text-[#2C2825]">
+              AI Processing Mode
+            </label>
+            <select
+              id="alchemy-ai-provider"
+              value={status?.permissions.activeAiProvider ?? 'local-rules'}
+              onChange={(e) => handleUpdatePermission('activeAiProvider', e.target.value)}
+              className="w-full rounded-xl border border-[#DDD4C5] bg-white px-3 py-2 text-xs text-[#2C2825] outline-none focus:border-[#8C7654]"
+            >
+              <option value="local-rules">Local privacy mode — no Gemini processing</option>
+              <option value="gemini-server">Gemini AI — only with separate consent</option>
+            </select>
+            <p className="text-[11px] text-[#6E655A] font-light leading-relaxed">
+              Gemini is used only when the relevant workspace and data permissions are also enabled. Local mode keeps Jarvis on deterministic, on-server rules.
+            </p>
+          </div>
+
+          {/* Financial Data Firewall — separate from general Mariluna consent */}
+          <div className="p-4 rounded-2xl border border-[#E3D9C9] bg-[#FAF8F4] space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-[#2C2825]">
+                AI Access: Financial Data
+              </span>
+              <input
+                type="checkbox"
+                checked={status?.permissions.allowFinancialDataToAI ?? false}
+                onChange={(e) => handleUpdatePermission('allowFinancialDataToAI', e.target.checked)}
+                className="accent-[#7E694E] w-4 h-4 cursor-pointer"
+              />
+            </div>
+            <p className="text-[11px] text-[#6E655A] font-light leading-relaxed">
+              Separate opt-in for prices, invoices, expenses, taxes and revenue/profit metrics. Mariluna access alone never grants financial-data access.
             </p>
           </div>
         </div>

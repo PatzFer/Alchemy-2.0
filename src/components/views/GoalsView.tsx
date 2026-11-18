@@ -94,12 +94,12 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
   return (
     <div className="space-y-6 pb-16">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#E8E2D5] pb-5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[var(--border-subtle)] pb-5">
         <div>
-          <h1 className="font-serif text-3xl font-normal text-[#2C2825]">
+          <h1 className="font-serif text-3xl font-normal text-[var(--text-primary)]">
             Aspirational Horizons
           </h1>
-          <p className="text-xs text-[#7A7167] mt-1 font-light">
+          <p className="text-xs text-[var(--text-secondary)] mt-1 font-light">
             Milestone goals broken into unhurried, realistic execution sprints.
           </p>
         </div>
@@ -107,7 +107,7 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
         <button
           onClick={() => setIsModalOpen(true)}
           id="new-goal-btn"
-          className="flex items-center gap-2 px-4 py-2 rounded-full bg-[#2C2825] text-[#F9F7F2] text-xs font-medium hover:bg-[#453E38] transition shadow-xs cursor-pointer w-fit"
+          className="flex items-center gap-2 px-4 py-2 rounded-full bg-[var(--text-primary)] text-[var(--text-primary)] text-xs font-medium hover:bg-[#453E38] transition shadow-xs cursor-pointer w-fit"
         >
           <Plus className="w-4 h-4" />
           <span>Define Goal</span>
@@ -122,8 +122,8 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
             onClick={() => setSelectedHorizon(horizon)}
             className={`px-3 py-1.5 rounded-full capitalize transition cursor-pointer shrink-0 ${
               selectedHorizon === horizon
-                ? 'bg-[#2C2825] text-[#F9F7F2] font-medium shadow-xs'
-                : 'bg-[#FFFFFF] border border-[#E3DCD1] text-[#695F54] hover:bg-[#F2ECE1]'
+                ? 'bg-[var(--text-primary)] text-[var(--text-primary)] font-medium shadow-xs'
+                : 'bg-[var(--surface-2)] border border-[var(--border-subtle)] text-[var(--text-secondary)] hover:bg-[var(--surface-2)]'
             }`}
           >
             {horizon}
@@ -133,9 +133,9 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
 
       {/* Goal Cards */}
       {filteredGoals.length === 0 ? (
-        <div className="p-12 text-center rounded-2xl border border-dashed border-[#DDD5C7] bg-[#FAF8F3] space-y-2">
-          <p className="font-serif text-base text-[#2C2825]">Geen doelen gevonden</p>
-          <p className="text-xs text-[#7A7167] font-light max-w-md mx-auto">
+        <div className="p-12 text-center rounded-2xl border border-dashed border-[var(--border-subtle)] bg-[var(--surface-1)] space-y-2">
+          <p className="font-serif text-base text-[var(--text-primary)]">Geen doelen gevonden</p>
+          <p className="text-xs text-[var(--text-secondary)] font-light max-w-md mx-auto">
             Alchemy ondersteunt een rustige, weloverwogen focus. Voeg doelen toe wanneer je heldere intenties wilt vastleggen.
           </p>
         </div>
@@ -151,7 +151,7 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
           return (
             <div
               key={goal.id}
-              className="rounded-2xl border border-[#E8E1D4] bg-[#FFFFFF] p-6 shadow-xs flex flex-col justify-between"
+              className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-2)] p-6 shadow-xs flex flex-col justify-between"
             >
               <div>
                 <div className="flex items-center justify-between gap-2">
@@ -159,37 +159,37 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
                     <span
                       className={`text-[9px] uppercase font-semibold px-2 py-0.5 rounded-full ${
                         goal.realm === 'mariluna'
-                          ? 'bg-[#2C2825] text-[#F9F7F2]'
+                          ? 'bg-[var(--text-primary)] text-[var(--text-primary)]'
                           : 'bg-[#EAE4D7] text-[#554C42]'
                       }`}
                     >
                       {goal.realm}
                     </span>
-                    <span className="text-[10px] text-[#8C8377] uppercase tracking-wider font-semibold">
+                    <span className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider font-semibold">
                       {goal.timeframe} Horizon
                     </span>
                   </div>
-                  <span className="text-xs text-[#8C8377]">
+                  <span className="text-xs text-[var(--text-muted)]">
                     Target: {goal.targetDate}
                   </span>
                 </div>
 
-                <h3 className="font-serif text-xl font-medium text-[#2C2825] mt-2">
+                <h3 className="font-serif text-xl font-medium text-[var(--text-primary)] mt-2">
                   {goal.title}
                 </h3>
                 {goal.description && (
-                  <p className="text-xs text-[#6C6357] mt-1 font-light leading-relaxed">
+                  <p className="text-xs text-[var(--text-secondary)] mt-1 font-light leading-relaxed">
                     {goal.description}
                   </p>
                 )}
 
                 {/* Progress bar */}
                 <div className="mt-4 pt-3 border-t border-[#F0EBE1]">
-                  <div className="flex items-center justify-between text-xs text-[#7A7167] mb-1.5">
+                  <div className="flex items-center justify-between text-xs text-[var(--text-secondary)] mb-1.5">
                     <span>Momentum</span>
-                    <span className="font-medium text-[#2C2825]">{calculatedProgress}%</span>
+                    <span className="font-medium text-[var(--text-primary)]">{calculatedProgress}%</span>
                   </div>
-                  <div className="h-2 w-full bg-[#EFE9DE] rounded-full overflow-hidden">
+                  <div className="h-2 w-full bg-[var(--surface-2)] rounded-full overflow-hidden">
                     <div
                       style={{ width: `${calculatedProgress}%` }}
                       className="h-full bg-[#C5A880] rounded-full transition-all"
@@ -200,21 +200,21 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
                 {/* Milestones / Micro-tasks */}
                 {goal.milestones.length > 0 && (
                   <div className="mt-5 space-y-2">
-                    <span className="text-[11px] uppercase tracking-wider font-semibold text-[#8C8377] block">
+                    <span className="text-[11px] uppercase tracking-wider font-semibold text-[var(--text-muted)] block">
                       Realistic Micro-Actions ({completedCount}/{goal.milestones.length})
                     </span>
                     {goal.milestones.map((milestone) => (
                       <div
                         key={milestone.id}
-                        className="flex items-start justify-between gap-2 p-2.5 rounded-xl bg-[#FAF8F4] border border-[#ECE5DA] hover:border-[#DDD4C6] transition"
+                        className="flex items-start justify-between gap-2 p-2.5 rounded-xl bg-[var(--surface-1)] border border-[var(--border-subtle)] hover:border-[#DDD4C6] transition"
                       >
                         <div className="flex items-start gap-2.5">
                           <button
                             onClick={() => onToggleMilestone(goal.id, milestone.id)}
-                            className="mt-0.5 text-[#8C7654] hover:text-[#2C2825] transition cursor-pointer"
+                            className="mt-0.5 text-[var(--accent-secondary)] hover:text-[var(--text-primary)] transition cursor-pointer"
                           >
                             {milestone.completed ? (
-                              <CheckCircle2 className="w-4 h-4 text-[#8C7654]" />
+                              <CheckCircle2 className="w-4 h-4 text-[var(--accent-secondary)]" />
                             ) : (
                               <Circle className="w-4 h-4 text-[#B5ABA0]" />
                             )}
@@ -222,8 +222,8 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
                           <span
                             className={`text-xs ${
                               milestone.completed
-                                ? 'line-through text-[#9E958B]'
-                                : 'text-[#3E3832] font-medium'
+                                ? 'line-through text-[var(--text-muted)]'
+                                : 'text-[var(--text-primary)] font-medium'
                             }`}
                           >
                             {milestone.title}
@@ -231,7 +231,7 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
                         </div>
 
                         {milestone.suggestedDay && (
-                          <span className="text-[10px] text-[#8C8377] px-2 py-0.5 rounded-md bg-[#F2ECE1] shrink-0 font-sans">
+                          <span className="text-[10px] text-[var(--text-muted)] px-2 py-0.5 rounded-md bg-[var(--surface-2)] shrink-0 font-sans">
                             {milestone.suggestedDay}
                           </span>
                         )}
@@ -249,8 +249,8 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
       {/* Create Goal Modal with AI Breakdown */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#1A1816]/40 backdrop-blur-xs p-4 overflow-y-auto">
-          <div className="w-full max-w-lg rounded-2xl bg-[#FAF8F3] border border-[#E3DCD0] p-6 shadow-2xl my-8">
-            <h2 className="font-serif text-xl font-medium text-[#2C2825] mb-4">
+          <div className="w-full max-w-lg rounded-2xl bg-[var(--surface-1)] border border-[#E3DCD0] p-6 shadow-2xl my-8">
+            <h2 className="font-serif text-xl font-medium text-[var(--text-primary)] mb-4">
               Set Aspirational Goal
             </h2>
 
@@ -265,7 +265,7 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
                   value={formTitle}
                   onChange={(e) => setFormTitle(e.target.value)}
                   placeholder="e.g. Read two formative books, Host autumn retreat"
-                  className="w-full bg-[#FFFFFF] border border-[#D5CCBE] rounded-xl px-3.5 py-2 text-xs text-[#2C2825]"
+                  className="w-full bg-[var(--surface-2)] border border-[var(--border-subtle)] rounded-xl px-3.5 py-2 text-xs text-[var(--text-primary)]"
                 />
               </div>
 
@@ -278,7 +278,7 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
                   value={formDesc}
                   onChange={(e) => setFormDesc(e.target.value)}
                   placeholder="Why does this matter? How will it feel once accomplished?"
-                  className="w-full bg-[#FFFFFF] border border-[#D5CCBE] rounded-xl px-3.5 py-2 text-xs text-[#2C2825]"
+                  className="w-full bg-[var(--surface-2)] border border-[var(--border-subtle)] rounded-xl px-3.5 py-2 text-xs text-[var(--text-primary)]"
                 />
               </div>
 
@@ -290,7 +290,7 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
                   <select
                     value={formRealm}
                     onChange={(e) => setFormRealm(e.target.value as Realm)}
-                    className="w-full bg-[#FFFFFF] border border-[#D5CCBE] rounded-xl px-3 py-2 text-xs text-[#2C2825]"
+                    className="w-full bg-[var(--surface-2)] border border-[var(--border-subtle)] rounded-xl px-3 py-2 text-xs text-[var(--text-primary)]"
                   >
                     <option value="mariluna">Mariluna Business</option>
                     <option value="personal">Personal</option>
@@ -303,7 +303,7 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
                   <select
                     value={formTimeframe}
                     onChange={(e) => setFormTimeframe(e.target.value as any)}
-                    className="w-full bg-[#FFFFFF] border border-[#D5CCBE] rounded-xl px-3 py-2 text-xs text-[#2C2825]"
+                    className="w-full bg-[var(--surface-2)] border border-[var(--border-subtle)] rounded-xl px-3 py-2 text-xs text-[var(--text-primary)]"
                   >
                     <option value="daily">Daily</option>
                     <option value="weekly">Weekly</option>
@@ -322,14 +322,14 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
                   type="date"
                   value={formTargetDate}
                   onChange={(e) => setFormTargetDate(e.target.value)}
-                  className="w-full bg-[#FFFFFF] border border-[#D5CCBE] rounded-xl px-3 py-2 text-xs text-[#2C2825]"
+                  className="w-full bg-[var(--surface-2)] border border-[var(--border-subtle)] rounded-xl px-3 py-2 text-xs text-[var(--text-primary)]"
                 />
               </div>
 
               {/* AI Goal Breakdown Assistant */}
-              <div className="p-4 rounded-xl border border-[#DFD6C7] bg-[#F7F2E8]">
+              <div className="p-4 rounded-xl border border-[#DFD6C7] bg-[var(--surface-2)]">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-[#8C7654]">
+                  <div className="flex items-center gap-2 text-[var(--accent-secondary)]">
                     <Sparkles className="w-4 h-4" />
                     <span className="text-xs font-semibold">
                       AI Micro-Action Planner
@@ -339,12 +339,12 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
                     type="button"
                     onClick={handleAiBreakdown}
                     disabled={!formTitle.trim() || isAiBreakingDown}
-                    className="px-3 py-1 rounded-lg bg-[#2C2825] text-[#F9F7F2] text-xs font-medium hover:bg-[#433D37] disabled:opacity-40 transition cursor-pointer"
+                    className="px-3 py-1 rounded-lg bg-[var(--text-primary)] text-[var(--text-primary)] text-xs font-medium hover:bg-[#433D37] disabled:opacity-40 transition cursor-pointer"
                   >
                     {isAiBreakingDown ? 'Deconstructing...' : 'Deconstruct Goal'}
                   </button>
                 </div>
-                <p className="text-[11px] text-[#7A7167] mt-1 font-light">
+                <p className="text-[11px] text-[var(--text-secondary)] mt-1 font-light">
                   Let the assistant divide this aspiration into calm, doable micro-sessions.
                 </p>
 
@@ -353,10 +353,10 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
                     {formMilestones.map((m) => (
                       <div
                         key={m.id}
-                        className="text-xs p-2 rounded-lg bg-[#FFFFFF] border border-[#E8E1D4] text-[#3E3832] flex justify-between"
+                        className="text-xs p-2 rounded-lg bg-[var(--surface-2)] border border-[var(--border-subtle)] text-[var(--text-primary)] flex justify-between"
                       >
                         <span>{m.title}</span>
-                        <span className="text-[#8C8377] text-[10px]">{m.suggestedDay}</span>
+                        <span className="text-[var(--text-muted)] text-[10px]">{m.suggestedDay}</span>
                       </div>
                     ))}
                   </div>
@@ -367,13 +367,13 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 rounded-xl text-xs text-[#7A7167] hover:bg-[#EFE9DE]"
+                  className="px-4 py-2 rounded-xl text-xs text-[var(--text-secondary)] hover:bg-[var(--surface-2)]"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl bg-[#2C2825] text-[#F9F7F2] text-xs font-medium hover:bg-[#453E38]"
+                  className="px-5 py-2 rounded-xl bg-[var(--text-primary)] text-[var(--text-primary)] text-xs font-medium hover:bg-[#453E38]"
                 >
                   Save Goal
                 </button>
