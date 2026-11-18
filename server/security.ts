@@ -412,10 +412,31 @@ class SecurityVault {
   }
 
   public updatePermissions(updates: Partial<SecurityPermissions>): SecurityPermissions {
-    // Immutable non-negotiables: AI always requires confirmation before destructive actions
+    // Only known, explicitly typed settings may cross this boundary.
+    const allowed: Partial<SecurityPermissions> = {};
+    const booleanKeys: (keyof SecurityPermissions)[] = [
+      'calendarRead',
+      'calendarWrite',
+      'aiMayCreateTasks',
+      'allowCycleDataToAI',
+      'allowPersonalDataToAI',
+      'allowMarilunaDataToAI',
+      'allowFinancialDataToAI',
+      'allowWellbeingDataToAI',
+    ];
+    for (const key of booleanKeys) {
+      if (typeof updates[key] === 'boolean') {
+        (allowed as any)[key] = updates[key];
+      }
+    }
+    if (updates.activeAiProvider === 'gemini-server' || updates.activeAiProvider === 'local-rules') {
+      allowed.activeAiProvider = updates.activeAiProvider;
+    }
+
+    // Immutable non-negotiables: AI always requires confirmation before modifications/destructive actions.
     this.permissions = {
       ...this.permissions,
-      ...updates,
+      ...allowed,
       aiRequiresConfirmationForModifications: true,
       aiRequiresConfirmationForDestructive: true,
     };
