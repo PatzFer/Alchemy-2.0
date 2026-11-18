@@ -9,6 +9,7 @@ This checklist separates a usable test candidate from a production release. A ch
 - [x] GitHub Actions TypeScript check (`bun run lint`) passes on commit `a625ef7`.
 - [x] Production client and server build (`bun run build`) passes on commit `a625ef7`.
 - [ ] No unreviewed dependency or lockfile drift.
+- [x] Supabase migration naming, unique versions, required tables, RLS and server-only grants pass static CI checks (commit `3482929`).
 - [x] CI result is visible on tested commit `a625ef7`.
 
 ## 2. First-launch and navigation
