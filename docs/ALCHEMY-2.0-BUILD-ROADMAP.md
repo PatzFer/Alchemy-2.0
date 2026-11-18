@@ -208,3 +208,13 @@ Incremental implementation commits on `design/phase-1`:
 - New installs now show Health Connect as unavailable until the native bridge is implemented. Existing persisted Google Fit OAuth status is normalized to unavailable while historical step values are retained; the UI now describes the actual native Health Connect status rather than presenting Google Fit as Health Connect.
 - This is a deliberate safety/accuracy improvement, not completion of Health Connect sync. Native Android permissions, data reading, provider provenance, sync lifecycle and device tests remain outstanding.
 - No build, typecheck, lint, automated tests, browser/device tests or live OAuth/provider tests have run. Phases A/B/C remain in progress.
+
+
+## Progress log — 18 November 2026 (integration status and privacy hardening)
+
+- Removed client calls that copied Gmail message content, Calendar metadata and Instagram post snapshots into the server's process-local integration registry. The provider data remains in the app's local state after successful provider/API reads; it is no longer redundantly sent to a non-durable in-memory server object.
+- Removed the client-side integration registry connect/sync helpers that could imply server persistence or report a successful sync despite no real provider sync being performed.
+- Removed the obsolete Google Fit browser OAuth connect/sync/disconnect handlers from the Health Connect screen. The existing legacy REST helper remains in the service module but is no longer used by the UI; native Android Health Connect remains unavailable until implemented.
+- Removed the Instagram sync handler's fabricated last-sync timestamp. The UI now reports that Meta Graph API refresh is not implemented and retains existing imported data without falsely claiming a fresh sync.
+- Provider connection status is now based on a successful provider OAuth/API read in the client rather than a client-posted `verified` flag to the ephemeral server registry. This still does not provide durable multi-device connection storage; that needs a proper authenticated persistent integration model.
+- No build, TypeScript/lint check, automated tests, browser/mobile tests, or live provider tests have run. Phases A/B/C remain in progress.
