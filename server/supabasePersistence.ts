@@ -24,6 +24,13 @@ export interface SnapshotRecord {
 
 export type FetchLike = typeof fetch;
 
+function stableJson(value: unknown): string {
+  if (value === null || typeof value !== 'object') return JSON.stringify(value);
+  if (Array.isArray(value)) return `[${value.map(stableJson).join(',')}]`;
+  const record = value as Record<string, unknown>;
+  return `{${Object.keys(record).sort().map((key) => `${JSON.stringify(key)}:${stableJson(record[key])}`).join(',')}}`;
+}
+
 export function readSupabaseServerConfig(
   env: Record<string, string | undefined> = process.env,
 ): SupabaseServerConfig | null {
@@ -100,7 +107,7 @@ export class SupabasePersistence {
       },
     );
     const revision = (latest[0]?.revision ?? 0) + 1;
-    const serialized = JSON.stringify(payload);
+    const serialized = stableJson(payload);
     const payloadSha256 = createHash('sha256').update(serialized).digest('hex');
     const rows = await this.request<SnapshotRecord[]>('/rest/v1/app_state_snapshots', {
       method: 'POST',
@@ -133,7 +140,7 @@ export class SupabasePersistence {
     );
     const snapshot = rows[0] ?? null;
     if (!snapshot) return null;
-    const actualHash = createHash('sha256').update(JSON.stringify(snapshot.payload)).digest('hex');
+    const actualHash = createHash('sha256').update(stableJson(snapshot.payload)).digest('hex');
     if (snapshot.payload_sha256 && actualHash !== snapshot.payload_sha256) {
       throw new Error('Stored Alchemy snapshot integrity check failed.');
     }
