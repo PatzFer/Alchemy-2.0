@@ -423,3 +423,9 @@ Incremental implementation commits on `design/phase-1`:
 
 - Migration data detection explicitly ignores the preconfigured Foundation template shipped with Alchemy (including its seeded profile and completed-template flag). Only fields changed from the template, actual user records, configured cycle data, or connected integrations count as local user data. This prevents a brand-new install from being misclassified as an existing local database.
 - Added regression tests for a clean seeded install, profile-only customisation and Mariluna-only finance records. The current CI run is validating these cases together with the stricter snapshot boundary.
+
+## Progress log — 18 November 2026 (application session perimeter)
+
+- The app-lock session identifier is now accepted only from its HttpOnly cookie; the legacy caller-controlled `x-session-id` header is no longer an authentication path.
+- Session cookie values must match the exact 256-bit random hexadecimal format before the in-memory registry is consulted. Malformed values receive a fresh locked session rather than being treated as credentials.
+- Regression tests cover a valid cookie, an unauthenticated request, a forged session header and a malformed cookie. This tightens the current single-process session boundary; it does not yet make sessions durable across server restarts.
