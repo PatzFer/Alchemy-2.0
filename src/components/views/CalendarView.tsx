@@ -236,7 +236,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
           {/* Connection status badge */}
           {integrations?.calendar?.status === 'connected' ? (
             <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#D0E2D4] bg-[#E8EFE9] text-[11px] text-[#2D5A3C]">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#2D5A3C] animate-pulse" />
+              <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-primary)] animate-pulse" />
               <span>Google Agenda Gekoppeld • {integrations?.calendar?.readOnly ? 'Alleen-lezen' : 'Lezen & Schrijven'}</span>
             </div>
           ) : (
