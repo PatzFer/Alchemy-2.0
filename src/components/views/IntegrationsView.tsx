@@ -833,12 +833,7 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
                   <h3 className="font-serif text-lg font-medium text-[var(--text-primary)]">
                     Health Connect (Android)
                   </h3>
-                  {getStatusBadge(
-                    integrations.healthConnect.status,
-                    integrations.healthConnect.status === 'connected'
-                      ? (isNl ? 'Verbonden • Health Connect' : 'Connected • Health Connect')
-                      : undefined
-                  )}
+                  {getStatusBadge('unavailable', isNl ? 'Nog niet gekoppeld' : 'Not connected yet')}
                 </div>
                 <p className="text-xs text-[var(--text-secondary)] mt-0.5">
                   {isNl
@@ -849,39 +844,9 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
             </div>
 
             <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
-              {integrations.healthConnect.status === 'connected' ? (
-                <>
-                  <button
-                    type="button"
-                    onClick={handleSyncHealthConnect}
-                    disabled={syncingService === 'healthConnect'}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[var(--surface-2)] border border-[var(--border-subtle)] text-xs font-medium text-[var(--text-secondary)] hover:bg-[var(--surface-raised)] transition cursor-pointer"
-                  >
-                    <RefreshCw className={`w-3.5 h-3.5 ${syncingService === 'healthConnect' ? 'animate-spin' : ''}`} />
-                    <span>{isNl ? 'Synchroniseren' : 'Sync'}</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleDisconnectHealthConnect}
-                    className="px-3 py-1.5 rounded-xl text-xs font-medium text-[#A64A38] hover:bg-[var(--surface-2)] transition cursor-pointer"
-                  >
-                    {isNl ? 'Verbreken' : 'Disconnect'}
-                  </button>
-                </>
-              ) : integrations.healthConnect.status === 'unavailable' ? (
-                <span className="text-xs text-[var(--text-muted)] italic">
-                  {isNl ? 'Native Android Health Connect-koppeling nog niet beschikbaar' : 'Native Android Health Connect connection not available yet'}
-                </span>
-              ) : (
-                <button
-                  type="button"
-                  onClick={handleConnectHealthConnect}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[var(--text-primary)] text-[var(--surface-1)] text-xs font-medium hover:bg-[var(--surface-raised)] transition cursor-pointer shadow-xs"
-                >
-                  <Smartphone className="w-3.5 h-3.5" />
-                  <span>{isNl ? 'Google Fit (legacy) koppelen' : 'Connect Google Fit (legacy)'}</span>
-                </button>
-              )}
+              <span className="text-xs text-[var(--text-muted)] italic">
+                {isNl ? 'Binnenkort beschikbaar via de Android-app' : 'Coming soon through the Android app'}
+              </span>
             </div>
           </div>
 
