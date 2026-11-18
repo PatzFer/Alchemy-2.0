@@ -317,3 +317,11 @@ Incremental implementation commits on `design/phase-1`:
 - Changed the GitHub Actions concurrency policy to queue branch validations instead of cancelling an in-progress validation whenever a second commit arrives. This makes rapid implementation iterations less likely to leave only cancelled checks.
 - Verified the privacy-firewall fix that keeps nutrition and dietary preferences behind the wellbeing AI opt-in. The latest validation run on commit `4c3fd190fa8a58d7f86502d467fdf981f8f27d5c` completed successfully: frozen Bun install, TypeScript, privacy regression tests and production build.
 - The next architecture step is still a design-and-migration boundary, not a live database cutover. No Supabase project credentials or existing database schema are present in the repository context. Do not point the app at a guessed project or migrate existing local data without a verified project and export/restore path.
+
+## Progress log — 18 November 2026 (verified backup and restore workflow)
+
+- Added `src/lib/backup.ts`: exports a versioned Alchemy backup envelope with a SHA-256 checksum, validates the envelope and required AppState structure, rejects checksum mismatches, and provides an explicit restore helper.
+- Added backup tests for successful round-trip verification, tampered payload rejection, unsupported format rejection and incomplete-state rejection.
+- Wired the Settings > Data Sovereignty & Backups controls to the new export/verification flow. New exports use the checksummed envelope. Import verifies the checksum before replacing app state and requires explicit confirmation. Legacy raw JSON exports remain importable only after structural checks and two confirmation steps because they do not contain an integrity checksum.
+- Latest commit `a625ef7fcea2bd0e693caca199b4e9598274b89d` passed GitHub Actions: dependency install, TypeScript check, privacy + backup regression tests and production build.
+- Backup integrity is not encryption. Current browser storage remains plaintext and the backup JSON contains the full app state; users should keep exported files in a private location. Cloud persistence is not connected and no live migration has run.
