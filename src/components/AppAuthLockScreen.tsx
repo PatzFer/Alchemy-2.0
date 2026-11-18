@@ -117,12 +117,6 @@ export const AppAuthLockScreen: React.FC<AppAuthLockScreenProps> = ({
     }
   };
 
-  const handleDemoUnlock = () => {
-    setRecoveryCode('PMAL-DEMO-2026');
-    setAuthMethod('recovery');
-    setErrorMessage(null);
-  };
-
   return (
     <div className="min-h-screen bg-[#FAF8F3] flex flex-col justify-center items-center p-4 sm:p-6 text-[#2C2825] selection:bg-[#EAE3D5]">
       {/* Container */}
@@ -240,7 +234,7 @@ export const AppAuthLockScreen: React.FC<AppAuthLockScreenProps> = ({
                     </a>
                   </div>
                   <p className="text-[11px] text-[#706659] leading-relaxed font-light">
-                    Direct hardware biometric sensors (Touch ID / Face ID) require top-level window privileges. In this preview frame, you can instantly unlock with a <strong>Recovery Code</strong> or open in a new tab.
+                    Direct hardware biometric sensors (Touch ID / Face ID) require top-level window privileges. In this preview frame, use a registered <strong>Recovery Code</strong> or open in a new tab.
                   </p>
                 </div>
               ) : (
@@ -263,15 +257,6 @@ export const AppAuthLockScreen: React.FC<AppAuthLockScreenProps> = ({
                 <span>Unlock with Biometric Passkey</span>
               </button>
 
-              <div className="text-center">
-                <button
-                  type="button"
-                  onClick={handleDemoUnlock}
-                  className="text-[11px] text-[#7E694E] hover:underline cursor-pointer"
-                >
-                  Quick unlock using sandbox recovery key →
-                </button>
-              </div>
             </div>
           )}
 
@@ -326,16 +311,6 @@ export const AppAuthLockScreen: React.FC<AppAuthLockScreenProps> = ({
                 />
               </div>
 
-              <div className="flex items-center justify-between gap-2">
-                <button
-                  type="button"
-                  onClick={() => setRecoveryCode('PMAL-DEMO-2026')}
-                  className="text-[11px] text-[#7E694E] hover:underline cursor-pointer font-medium"
-                >
-                  Fill Sandbox Demo Code
-                </button>
-                <span className="text-[10px] text-[#8C8377] font-mono">PMAL-DEMO-2026</span>
-              </div>
 
               <button
                 type="submit"
