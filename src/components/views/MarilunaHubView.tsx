@@ -468,14 +468,14 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
   };
 
   return (
-    <div className="space-y-7 pb-24 text-[#2C2825]">
+    <div className="space-y-7 pb-24 text-[var(--text-primary)]">
       {/* Editorial Luxury Header for Mariluna */}
-      <header className="rounded-3xl border border-[#D5C6AF] bg-[#23201D] text-[#FAF8F5] p-6 sm:p-8 shadow-md relative overflow-hidden">
-        <div className="absolute -right-16 -top-16 w-64 h-64 rounded-full bg-[#C5A880]/10 blur-2xl pointer-events-none" />
+      <header className="rounded-3xl border border-[#52695A] bg-[#263D35] text-[#F0EBDD] p-6 sm:p-8 shadow-md relative overflow-hidden">
+        <div className="absolute -right-16 -top-16 w-64 h-64 rounded-full bg-[#A9B88A]/10 blur-2xl pointer-events-none" />
 
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div>
-            <div className="flex items-center gap-2 text-[11px] uppercase tracking-widest text-[#C5A880] font-semibold">
+            <div className="flex items-center gap-2 text-[11px] uppercase tracking-widest text-[#D6C69B] font-semibold">
               <span>Studio & Enterprise</span>
               <span>•</span>
               <span>{isNl ? 'Zakelijk Domein' : 'Business Domain'}</span>
