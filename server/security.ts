@@ -76,6 +76,7 @@ class SecurityVault {
   private recoveryCodes: RecoveryCodeItem[] = [];
   // Active sessions
   private sessions: Map<string, ActiveSession> = new Map();
+  private readonly maxSessions = 10000;
   // WebAuthn challenges are one-time, short-lived nonces. Keep the registry
   // bounded so abandoned browser ceremonies cannot grow server memory forever.
   private currentChallenges: Map<string, { challenge: string; expiresAt: number }> = new Map();
@@ -191,6 +192,15 @@ class SecurityVault {
         : 0,
       sensitiveUnlockedUntil: isAppAuthenticated ? now + 60 * 60 * 1000 : 0,
     };
+
+    for (const [existingId, existing] of this.sessions.entries()) {
+      if (existing.expiresAt <= now) this.sessions.delete(existingId);
+    }
+    if (this.sessions.size >= this.maxSessions) {
+      const leastRecentlyActive = Array.from(this.sessions.entries())
+        .sort((a, b) => a[1].lastActivityMs - b[1].lastActivityMs)[0];
+      if (leastRecentlyActive) this.sessions.delete(leastRecentlyActive[0]);
+    }
 
     this.sessions.set(sessionId, session);
     return session;
