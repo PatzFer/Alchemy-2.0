@@ -1107,7 +1107,7 @@ export const SecurityPrivacyCenter: React.FC<SecurityPrivacyCenterProps> = ({
               </span>
               <input
                 type="checkbox"
-                checked={status?.permissions.allowPersonalDataToAI ?? true}
+                checked={status?.permissions.allowPersonalDataToAI ?? false}
                 onChange={(e) => handleUpdatePermission('allowPersonalDataToAI', e.target.checked)}
                 className="accent-[#7E694E] w-4 h-4 cursor-pointer"
               />
@@ -1124,13 +1124,13 @@ export const SecurityPrivacyCenter: React.FC<SecurityPrivacyCenterProps> = ({
               </span>
               <input
                 type="checkbox"
-                checked={status?.permissions.allowMarilunaDataToAI ?? true}
+                checked={status?.permissions.allowMarilunaDataToAI ?? false}
                 onChange={(e) => handleUpdatePermission('allowMarilunaDataToAI', e.target.checked)}
                 className="accent-[#7E694E] w-4 h-4 cursor-pointer"
               />
             </div>
             <p className="text-[11px] text-[#6E655A] font-light leading-relaxed">
-              Allow assistant to strategize on Mariluna studio clients, revenue goals, and content plans.
+              Allow assistant to use non-financial Mariluna studio context, strategy and content plans. Financial data has a separate opt-in.
             </p>
           </div>
 
