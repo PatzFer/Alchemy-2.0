@@ -139,22 +139,22 @@ export const CycleView: React.FC<CycleViewProps> = ({
   return (
     <div className="max-w-5xl mx-auto space-y-8 pb-16">
       {/* Editorial Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-[#E8E2D6] pb-6">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-[var(--border-subtle)] pb-6">
         <div>
           <div className="flex items-center gap-2 mb-2">
-            <span className="text-[11px] uppercase tracking-widest text-[#8C7654] font-medium">
+            <span className="text-[11px] uppercase tracking-widest text-[var(--accent-secondary)] font-medium">
               Personal Sanctuary
             </span>
             <span className="text-[#C5BAA8]">•</span>
-            <div className="flex items-center gap-1 text-[11px] text-[#7A7167] bg-[#F1ECE1] px-2 py-0.5 rounded-full">
-              <Lock className="w-3 h-3 text-[#8C7654]" />
+            <div className="flex items-center gap-1 text-[11px] text-[var(--text-secondary)] bg-[var(--surface-2)] px-2 py-0.5 rounded-full">
+              <Lock className="w-3 h-3 text-[var(--accent-secondary)]" />
               <span>Private to Personal Realm</span>
             </div>
           </div>
-          <h1 className="font-serif text-3xl sm:text-4xl font-normal tracking-tight text-[#2C2825]">
+          <h1 className="font-serif text-3xl sm:text-4xl font-normal tracking-tight text-[var(--text-primary)]">
             Cycle Intelligence
           </h1>
-          <p className="mt-1 text-sm text-[#6C6358] max-w-xl font-light">
+          <p className="mt-1 text-sm text-[var(--text-secondary)] max-w-xl font-light">
             A calm, grounded rhythm for energy pacing and lifestyle planning. Designed to honor your natural ebb and flow without rigid prescriptions.
           </p>
         </div>
@@ -164,7 +164,7 @@ export const CycleView: React.FC<CycleViewProps> = ({
           <button
             onClick={() => setShowLogPeriodModal(true)}
             id="log-period-btn"
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#2C2825] text-[#F9F7F2] text-xs font-medium hover:bg-[#3D3730] transition shadow-xs cursor-pointer"
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[var(--text-primary)] text-[var(--text-primary)] text-xs font-medium hover:bg-[var(--text-primary)] transition shadow-xs cursor-pointer"
           >
             <Plus className="w-3.5 h-3.5 text-[#C5A880]" />
             <span>Log Period Date</span>
@@ -172,9 +172,9 @@ export const CycleView: React.FC<CycleViewProps> = ({
           <button
             onClick={() => setIsEditingSettings(!isEditingSettings)}
             id="cycle-settings-btn"
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-[#DDD5C7] bg-[#F4EFE6] text-xs text-[#4A433B] hover:bg-[#EBE5D9] transition cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-2)] text-xs text-[var(--text-secondary)] hover:bg-[#EBE5D9] transition cursor-pointer"
           >
-            <Sliders className="w-3.5 h-3.5 text-[#7A7167]" />
+            <Sliders className="w-3.5 h-3.5 text-[var(--text-secondary)]" />
             <span>Settings</span>
           </button>
         </div>
@@ -184,10 +184,10 @@ export const CycleView: React.FC<CycleViewProps> = ({
       {isEditingSettings && (
         <form
           onSubmit={handleSaveSettings}
-          className="rounded-2xl border border-[#DCD3C3] bg-[#FAF7F0] p-5 shadow-sm space-y-4 animate-in fade-in duration-200"
+          className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-1)] p-5 shadow-sm space-y-4 animate-in fade-in duration-200"
         >
           <div className="flex items-center justify-between pb-3 border-b border-[#EBE4D5]">
-            <h3 className="font-serif text-base font-medium text-[#2C2825]">
+            <h3 className="font-serif text-base font-medium text-[var(--text-primary)]">
               Cycle Parameters & Calibration
             </h3>
             <span className="text-[11px] text-[#7E756C]">Values adjust estimates gracefully</span>
@@ -195,7 +195,7 @@ export const CycleView: React.FC<CycleViewProps> = ({
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div>
-              <label className="block text-xs font-medium text-[#554C42] mb-1">
+              <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">
                 Last Period Start Date
               </label>
               <input
@@ -203,11 +203,11 @@ export const CycleView: React.FC<CycleViewProps> = ({
                 value={lastStartInput}
                 onChange={(e) => setLastStartInput(e.target.value)}
                 required
-                className="w-full px-3 py-2 rounded-lg border border-[#D5CCBF] bg-[#FFFFFF] text-xs text-[#2C2825] focus:outline-none focus:ring-1 focus:ring-[#8C7654]"
+                className="w-full px-3 py-2 rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-2)] text-xs text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--accent-secondary)]"
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-[#554C42] mb-1">
+              <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">
                 Average Cycle Length (Days)
               </label>
               <input
@@ -217,11 +217,11 @@ export const CycleView: React.FC<CycleViewProps> = ({
                 value={cycleLengthInput}
                 onChange={(e) => setCycleLengthInput(Number(e.target.value))}
                 required
-                className="w-full px-3 py-2 rounded-lg border border-[#D5CCBF] bg-[#FFFFFF] text-xs text-[#2C2825] focus:outline-none focus:ring-1 focus:ring-[#8C7654]"
+                className="w-full px-3 py-2 rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-2)] text-xs text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--accent-secondary)]"
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-[#554C42] mb-1">
+              <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">
                 Average Period Duration (Days)
               </label>
               <input
@@ -231,17 +231,17 @@ export const CycleView: React.FC<CycleViewProps> = ({
                 value={periodLengthInput}
                 onChange={(e) => setPeriodLengthInput(Number(e.target.value))}
                 required
-                className="w-full px-3 py-2 rounded-lg border border-[#D5CCBF] bg-[#FFFFFF] text-xs text-[#2C2825] focus:outline-none focus:ring-1 focus:ring-[#8C7654]"
+                className="w-full px-3 py-2 rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-2)] text-xs text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--accent-secondary)]"
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-[#554C42] mb-1">
+              <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">
                 Phase Override (Manual)
               </label>
               <select
                 value={overridePhaseInput}
                 onChange={(e) => setOverridePhaseInput(e.target.value as CyclePhase | 'auto')}
-                className="w-full px-3 py-2 rounded-lg border border-[#D5CCBF] bg-[#FFFFFF] text-xs text-[#2C2825] focus:outline-none focus:ring-1 focus:ring-[#8C7654]"
+                className="w-full px-3 py-2 rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-2)] text-xs text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--accent-secondary)]"
               >
                 <option value="auto">Auto Model Estimate ({cycleStatus.estimatedPhase})</option>
                 <option value="menstrual">Force Menstrual</option>
@@ -256,13 +256,13 @@ export const CycleView: React.FC<CycleViewProps> = ({
             <button
               type="button"
               onClick={() => setIsEditingSettings(false)}
-              className="px-3.5 py-1.5 rounded-lg text-xs text-[#6C6358] hover:bg-[#EDE6D8]"
+              className="px-3.5 py-1.5 rounded-lg text-xs text-[var(--text-secondary)] hover:bg-[var(--surface-2)]"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-4 py-1.5 rounded-lg bg-[#2C2825] text-[#F9F7F2] text-xs font-medium hover:bg-[#453E37] transition"
+              className="px-4 py-1.5 rounded-lg bg-[var(--text-primary)] text-[var(--text-primary)] text-xs font-medium hover:bg-[#453E37] transition"
             >
               Update Parameters
             </button>
@@ -271,7 +271,7 @@ export const CycleView: React.FC<CycleViewProps> = ({
       )}
 
       {/* Main Cycle Status Dashboard Hero */}
-      <div className="rounded-3xl border border-[#E4DCCF] bg-radial from-[#FAF7F0] to-[#F2EDE2] p-6 sm:p-8 shadow-xs relative overflow-hidden">
+      <div className="rounded-3xl border border-[#E4DCCF] bg-radial from-[var(--surface-1)] to-[var(--surface-2)] p-6 sm:p-8 shadow-xs relative overflow-hidden">
         {/* Subtle decorative motif */}
         <div className="absolute top-0 right-0 w-80 h-80 rounded-full bg-[#E8DEC8]/25 blur-3xl -mr-20 -mt-20 pointer-events-none"></div>
 
@@ -279,13 +279,13 @@ export const CycleView: React.FC<CycleViewProps> = ({
           {/* Left Column: Phase & Day Counter */}
           <div className="lg:col-span-7 space-y-4">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="px-3 py-1 rounded-full text-[11px] font-medium tracking-wide uppercase bg-[#FFFFFF]/80 border border-[#DDD5C7] text-[#554C42] shadow-2xs">
+              <span className="px-3 py-1 rounded-full text-[11px] font-medium tracking-wide uppercase bg-[var(--surface-2)]/80 border border-[var(--border-subtle)] text-[var(--text-secondary)] shadow-2xs">
                 Day {cycleStatus.cycleDay} of {cycleStatus.totalCycleLength}
               </span>
               <span
                 className={`px-2.5 py-0.5 rounded-full text-[10px] font-medium tracking-wide ${
                   cycleStatus.isOverridden
-                    ? 'bg-[#E3DCCE] text-[#3D3730]'
+                    ? 'bg-[#E3DCCE] text-[var(--text-primary)]'
                     : 'bg-[#EBF1E8] text-[#3E5C38]'
                 }`}
               >
@@ -294,7 +294,7 @@ export const CycleView: React.FC<CycleViewProps> = ({
             </div>
 
             <div>
-              <h2 className="font-serif text-3xl sm:text-4xl text-[#2C2825] font-normal tracking-tight">
+              <h2 className="font-serif text-3xl sm:text-4xl text-[var(--text-primary)] font-normal tracking-tight">
                 {activePhaseDetails.title}
               </h2>
               <p className="mt-1 text-xs sm:text-sm text-[#7A6E5F] font-light">
@@ -308,13 +308,13 @@ export const CycleView: React.FC<CycleViewProps> = ({
 
             {/* Cycle Progress Bar */}
             <div className="space-y-1.5 pt-2">
-              <div className="flex items-center justify-between text-xs text-[#7A7167]">
+              <div className="flex items-center justify-between text-xs text-[var(--text-secondary)]">
                 <span>Cycle Rhythm Progress</span>
                 <span className="font-mono text-[11px] text-[#4E463D]">{cycleStatus.cycleProgressPercent}%</span>
               </div>
               <div className="h-2 w-full rounded-full bg-[#E5DDCF] overflow-hidden p-0.5">
                 <div
-                  className="h-full rounded-full bg-[#8C7654] transition-all duration-500"
+                  className="h-full rounded-full bg-[var(--accent-secondary)] transition-all duration-500"
                   style={{ width: `${cycleStatus.cycleProgressPercent}%` }}
                 ></div>
               </div>
@@ -323,14 +323,14 @@ export const CycleView: React.FC<CycleViewProps> = ({
             {/* Next phase & next period metrics */}
             <div className="pt-2 grid grid-cols-2 gap-4 border-t border-[#E5DDCF]/80">
               <div>
-                <span className="block text-[11px] text-[#8C8377] uppercase tracking-wider">Upcoming Shift</span>
-                <span className="text-xs font-medium text-[#2C2825]">
+                <span className="block text-[11px] text-[var(--text-muted)] uppercase tracking-wider">Upcoming Shift</span>
+                <span className="text-xs font-medium text-[var(--text-primary)]">
                   {cycleStatus.nextPhase.phase.charAt(0).toUpperCase() + cycleStatus.nextPhase.phase.slice(1)} in ~{cycleStatus.nextPhase.daysUntil} day{cycleStatus.nextPhase.daysUntil > 1 ? 's' : ''}
                 </span>
               </div>
               <div>
-                <span className="block text-[11px] text-[#8C8377] uppercase tracking-wider">Next Period Window</span>
-                <span className="text-xs font-medium text-[#2C2825]">
+                <span className="block text-[11px] text-[var(--text-muted)] uppercase tracking-wider">Next Period Window</span>
+                <span className="text-xs font-medium text-[var(--text-primary)]">
                   Estimated {cycleStatus.nextPeriodDate} (~{cycleStatus.daysUntilNextPeriod} days)
                 </span>
               </div>
@@ -338,8 +338,8 @@ export const CycleView: React.FC<CycleViewProps> = ({
           </div>
 
           {/* Right Column: 4 Phases Map */}
-          <div className="lg:col-span-5 bg-[#FFFFFF]/70 rounded-2xl border border-[#DDD5C7] p-5 shadow-xs space-y-3">
-            <span className="text-[11px] uppercase tracking-wider text-[#8C7654] font-medium block">
+          <div className="lg:col-span-5 bg-[var(--surface-2)]/70 rounded-2xl border border-[var(--border-subtle)] p-5 shadow-xs space-y-3">
+            <span className="text-[11px] uppercase tracking-wider text-[var(--accent-secondary)] font-medium block">
               Four Phase Cadence
             </span>
 
@@ -352,21 +352,21 @@ export const CycleView: React.FC<CycleViewProps> = ({
                     key={phaseKey}
                     className={`p-3 rounded-xl transition border text-xs flex items-center justify-between ${
                       isCurrent
-                        ? 'bg-[#F4EFE6] border-[#BFA785] text-[#2C2825] shadow-xs'
-                        : 'bg-[#FAF8F3]/60 border-transparent text-[#7A7167]'
+                        ? 'bg-[var(--surface-2)] border-[#BFA785] text-[var(--text-primary)] shadow-xs'
+                        : 'bg-[var(--surface-1)]/60 border-transparent text-[var(--text-secondary)]'
                     }`}
                   >
                     <div>
                       <div className="flex items-center gap-1.5">
-                        {isCurrent && <span className="w-1.5 h-1.5 rounded-full bg-[#8C7654]"></span>}
-                        <span className={`font-medium ${isCurrent ? 'text-[#2C2825]' : 'text-[#5C5348]'}`}>
+                        {isCurrent && <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-secondary)]"></span>}
+                        <span className={`font-medium ${isCurrent ? 'text-[var(--text-primary)]' : 'text-[var(--text-secondary)]'}`}>
                           {details.title}
                         </span>
                       </div>
-                      <span className="text-[11px] text-[#8C8377] block mt-0.5">{details.contextualTone}</span>
+                      <span className="text-[11px] text-[var(--text-muted)] block mt-0.5">{details.contextualTone}</span>
                     </div>
                     {isCurrent ? (
-                      <span className="text-[10px] font-medium text-[#8C7654] bg-[#FFFFFF] px-2 py-0.5 rounded-full border border-[#D5CCBF]">
+                      <span className="text-[10px] font-medium text-[var(--accent-secondary)] bg-[var(--surface-2)] px-2 py-0.5 rounded-full border border-[var(--border-subtle)]">
                         Current
                       </span>
                     ) : (
@@ -381,16 +381,16 @@ export const CycleView: React.FC<CycleViewProps> = ({
       </div>
 
       {/* Daily User-Reported Energy Check-in */}
-      <div className="rounded-2xl border border-[#E2DDD2] bg-[#FAF8F3] p-6 shadow-xs space-y-5">
+      <div className="rounded-2xl border border-[#E2DDD2] bg-[var(--surface-1)] p-6 shadow-xs space-y-5">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#EAE4D8] pb-4">
           <div>
             <div className="flex items-center gap-2">
-              <Activity className="w-4 h-4 text-[#8C7654]" />
-              <h3 className="font-serif text-lg font-medium text-[#2C2825]">
+              <Activity className="w-4 h-4 text-[var(--accent-secondary)]" />
+              <h3 className="font-serif text-lg font-medium text-[var(--text-primary)]">
                 Today’s Energy Check-In
               </h3>
             </div>
-            <p className="mt-0.5 text-xs text-[#7A7167]">
+            <p className="mt-0.5 text-xs text-[var(--text-secondary)]">
               Your actual experience takes absolute precedence over theoretical cycle predictions in all daily planning.
             </p>
           </div>
@@ -404,7 +404,7 @@ export const CycleView: React.FC<CycleViewProps> = ({
         <div className="space-y-4">
           {/* Energy Rating Scale */}
           <div>
-            <label className="block text-xs font-medium text-[#4A433B] mb-2">
+            <label className="block text-xs font-medium text-[var(--text-secondary)] mb-2">
               How is your energy feeling today?
             </label>
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
@@ -423,12 +423,12 @@ export const CycleView: React.FC<CycleViewProps> = ({
                     onClick={() => setEnergyLevel(item.val as EnergyLevel)}
                     className={`p-3 rounded-xl border text-left transition cursor-pointer ${
                       isSelected
-                        ? 'bg-[#2C2825] text-[#F9F7F2] border-[#2C2825] shadow-xs'
-                        : 'bg-[#FFFFFF] text-[#4A433B] border-[#DDD5C7] hover:border-[#BFAF98]'
+                        ? 'bg-[var(--text-primary)] text-[var(--text-primary)] border-[var(--text-primary)] shadow-xs'
+                        : 'bg-[var(--surface-2)] text-[var(--text-secondary)] border-[var(--border-subtle)] hover:border-[#BFAF98]'
                     }`}
                   >
                     <span className="block text-xs font-semibold">{item.label}</span>
-                    <span className={`block text-[10px] mt-0.5 ${isSelected ? 'text-[#DDD5C7]' : 'text-[#8C8377]'}`}>
+                    <span className={`block text-[10px] mt-0.5 ${isSelected ? 'text-[var(--border-subtle)]' : 'text-[var(--text-muted)]'}`}>
                       {item.desc}
                     </span>
                   </button>
@@ -446,7 +446,7 @@ export const CycleView: React.FC<CycleViewProps> = ({
               <select
                 value={mood || ''}
                 onChange={(e) => setMood((e.target.value as MoodState) || undefined)}
-                className="w-full px-3 py-2 rounded-lg border border-[#D5CCBF] bg-[#FFFFFF] text-xs text-[#2C2825] focus:outline-none"
+                className="w-full px-3 py-2 rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-2)] text-xs text-[var(--text-primary)] focus:outline-none"
               >
                 <option value="">Select mood...</option>
                 <option value="calm">Calm & Centered</option>
@@ -465,7 +465,7 @@ export const CycleView: React.FC<CycleViewProps> = ({
               <select
                 value={hunger || ''}
                 onChange={(e) => setHunger((e.target.value as AppetiteLevel) || undefined)}
-                className="w-full px-3 py-2 rounded-lg border border-[#D5CCBF] bg-[#FFFFFF] text-xs text-[#2C2825] focus:outline-none"
+                className="w-full px-3 py-2 rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-2)] text-xs text-[var(--text-primary)] focus:outline-none"
               >
                 <option value="">Normal appetite...</option>
                 <option value="low">Lower appetite</option>
@@ -481,7 +481,7 @@ export const CycleView: React.FC<CycleViewProps> = ({
               <select
                 value={comfort || ''}
                 onChange={(e) => setComfort((e.target.value as PhysicalComfort) || undefined)}
-                className="w-full px-3 py-2 rounded-lg border border-[#D5CCBF] bg-[#FFFFFF] text-xs text-[#2C2825] focus:outline-none"
+                className="w-full px-3 py-2 rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-2)] text-xs text-[var(--text-primary)] focus:outline-none"
               >
                 <option value="comfortable">Comfortable baseline</option>
                 <option value="mild_cramps">Mild cramps / aches</option>
@@ -502,19 +502,19 @@ export const CycleView: React.FC<CycleViewProps> = ({
               placeholder="e.g., Slept 8 hours, morning clarity, need unhurried evening"
               value={checkInNotes}
               onChange={(e) => setCheckInNotes(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg border border-[#D5CCBF] bg-[#FFFFFF] text-xs text-[#2C2825] focus:outline-none focus:ring-1 focus:ring-[#8C7654]"
+              className="w-full px-3 py-2 rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-2)] text-xs text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--accent-secondary)]"
             />
           </div>
 
           <div className="flex items-center justify-between pt-1">
-            <div className="text-[11px] text-[#7A7167]">
-              Synthesis: <strong className="font-medium text-[#2C2825]">{energyGuidance.headline}</strong>
+            <div className="text-[11px] text-[var(--text-secondary)]">
+              Synthesis: <strong className="font-medium text-[var(--text-primary)]">{energyGuidance.headline}</strong>
             </div>
             <button
               type="button"
               onClick={handleSaveCheckIn}
               id="save-daily-checkin-btn"
-              className="px-4 py-2 rounded-xl bg-[#2C2825] text-[#F9F7F2] text-xs font-medium hover:bg-[#3E3831] transition shadow-xs cursor-pointer"
+              className="px-4 py-2 rounded-xl bg-[var(--text-primary)] text-[var(--text-primary)] text-xs font-medium hover:bg-[#3E3831] transition shadow-xs cursor-pointer"
             >
               Record Today’s Check-In
             </button>
@@ -523,48 +523,48 @@ export const CycleView: React.FC<CycleViewProps> = ({
       </div>
 
       {/* Weekly Cycle Insight Section: "Your Week" */}
-      <div className="rounded-2xl border border-[#E0D9CB] bg-[#F7F4EC] p-6 shadow-xs space-y-4">
+      <div className="rounded-2xl border border-[#E0D9CB] bg-[var(--surface-2)] p-6 shadow-xs space-y-4">
         <div className="flex items-center justify-between border-b border-[#E8E2D4] pb-3">
           <div className="flex items-center gap-2">
-            <Compass className="w-4 h-4 text-[#8C7654]" />
-            <h3 className="font-serif text-lg font-medium text-[#2C2825]">
+            <Compass className="w-4 h-4 text-[var(--accent-secondary)]" />
+            <h3 className="font-serif text-lg font-medium text-[var(--text-primary)]">
               Your Week: Strategic Rhythm
             </h3>
           </div>
-          <span className="text-[11px] text-[#7A7167] bg-[#EDE6D7] px-2.5 py-0.5 rounded-full font-medium">
+          <span className="text-[11px] text-[var(--text-secondary)] bg-[#EDE6D7] px-2.5 py-0.5 rounded-full font-medium">
             {weeklyInsight.phaseLabel}
           </span>
         </div>
 
-        <p className="text-xs text-[#554C42] italic leading-relaxed">
+        <p className="text-xs text-[var(--text-secondary)] italic leading-relaxed">
           {weeklyInsight.headline}
         </p>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-          <div className="p-4 rounded-xl bg-[#FFFFFF] border border-[#E2DDD2] space-y-2">
-            <span className="font-medium text-[#2C2825] block text-xs">What you might notice</span>
+          <div className="p-4 rounded-xl bg-[var(--surface-2)] border border-[#E2DDD2] space-y-2">
+            <span className="font-medium text-[var(--text-primary)] block text-xs">What you might notice</span>
             <p className="text-[#645C52] leading-relaxed">{weeklyInsight.whatYouMightNotice}</p>
-            <span className="font-medium text-[#2C2825] block text-xs pt-2">What could be useful</span>
+            <span className="font-medium text-[var(--text-primary)] block text-xs pt-2">What could be useful</span>
             <p className="text-[#645C52] leading-relaxed">{weeklyInsight.whatCouldBeUseful}</p>
           </div>
 
-          <div className="p-4 rounded-xl bg-[#FFFFFF] border border-[#E2DDD2] space-y-2">
-            <span className="font-medium text-[#2C2825] block text-xs">Recommended Priorities</span>
+          <div className="p-4 rounded-xl bg-[var(--surface-2)] border border-[#E2DDD2] space-y-2">
+            <span className="font-medium text-[var(--text-primary)] block text-xs">Recommended Priorities</span>
             <p className="text-[#645C52] leading-relaxed">{weeklyInsight.whatToPrioritize}</p>
-            <span className="font-medium text-[#2C2825] block text-xs pt-2">What to avoid overloading</span>
+            <span className="font-medium text-[var(--text-primary)] block text-xs pt-2">What to avoid overloading</span>
             <p className="text-[#645C52] leading-relaxed">{weeklyInsight.whatToAvoid}</p>
           </div>
         </div>
 
         {/* 1-2 Practical Suggestions */}
-        <div className="p-3.5 rounded-xl bg-[#EDE7DB] border border-[#DDD5C7] space-y-1.5">
+        <div className="p-3.5 rounded-xl bg-[#EDE7DB] border border-[var(--border-subtle)] space-y-1.5">
           <span className="text-[11px] uppercase tracking-wider font-semibold text-[#6C5E48] block">
             Practical Suggestions for this Week
           </span>
-          <ul className="space-y-1 text-xs text-[#3E3832]">
+          <ul className="space-y-1 text-xs text-[var(--text-primary)]">
             {weeklyInsight.practicalSuggestions.map((sug, idx) => (
               <li key={idx} className="flex items-start gap-2">
-                <span className="text-[#8C7654] font-bold">•</span>
+                <span className="text-[var(--accent-secondary)] font-bold">•</span>
                 <span>{sug}</span>
               </li>
             ))}
@@ -579,7 +579,7 @@ export const CycleView: React.FC<CycleViewProps> = ({
                   `Partner with me to optimize this week's schedule considering my ${cycleStatus.activePhase} cycle phase and today's energy report.`
                 )
               }
-              className="flex items-center gap-1.5 text-xs text-[#7E694E] hover:text-[#2C2825] font-medium transition cursor-pointer"
+              className="flex items-center gap-1.5 text-xs text-[var(--accent-secondary)] hover:text-[var(--text-primary)] font-medium transition cursor-pointer"
             >
               <Sparkles className="w-3.5 h-3.5 text-[#C5A880]" />
               <span>Discuss week alignment with JARVIS</span>
@@ -590,29 +590,29 @@ export const CycleView: React.FC<CycleViewProps> = ({
       </div>
 
       {/* Cycle Education & Context */}
-      <div className="rounded-2xl border border-[#E4DCCE] bg-[#FAF8F3] p-6 shadow-xs space-y-4">
+      <div className="rounded-2xl border border-[#E4DCCE] bg-[var(--surface-1)] p-6 shadow-xs space-y-4">
         <div className="flex items-center gap-2 pb-2 border-b border-[#EAE4D7]">
-          <Info className="w-4 h-4 text-[#8C7654]" />
-          <h3 className="font-serif text-base font-medium text-[#2C2825]">
+          <Info className="w-4 h-4 text-[var(--accent-secondary)]" />
+          <h3 className="font-serif text-base font-medium text-[var(--text-primary)]">
             Phase Context & Experiences
           </h3>
         </div>
 
-        <div className="space-y-3 text-xs text-[#4A433B]">
+        <div className="space-y-3 text-xs text-[var(--text-secondary)]">
           <p className="leading-relaxed">
             In {activePhaseDetails.title}, hormone levels adapt dynamically. Here is what is commonly experienced without obligation:
           </p>
           <ul className="space-y-2">
             {activePhaseDetails.generalExperiences.map((exp, idx) => (
               <li key={idx} className="flex items-start gap-2 pl-1">
-                <span className="text-[#8C7654] mt-0.5">•</span>
+                <span className="text-[var(--accent-secondary)] mt-0.5">•</span>
                 <span className="leading-relaxed">{exp}</span>
               </li>
             ))}
           </ul>
 
-          <div className="mt-3 p-3 rounded-xl bg-[#F2EDE2] border border-[#E0D7C7] text-[#554C42]">
-            <span className="font-semibold block text-[11px] uppercase tracking-wider text-[#7E694E]">
+          <div className="mt-3 p-3 rounded-xl bg-[var(--surface-2)] border border-[#E0D7C7] text-[var(--text-secondary)]">
+            <span className="font-semibold block text-[11px] uppercase tracking-wider text-[var(--accent-secondary)]">
               Nourishment Nuance
             </span>
             <p className="mt-0.5 text-xs">{activePhaseDetails.nourishmentNuance}</p>
@@ -623,14 +623,14 @@ export const CycleView: React.FC<CycleViewProps> = ({
       {/* Cycle History & Privacy Safeguards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Cycle History card */}
-        <div className="rounded-2xl border border-[#E2DDD2] bg-[#FAF8F3] p-5 shadow-xs space-y-3">
+        <div className="rounded-2xl border border-[#E2DDD2] bg-[var(--surface-1)] p-5 shadow-xs space-y-3">
           <div className="flex items-center justify-between">
-            <h4 className="font-serif text-sm font-medium text-[#2C2825]">
+            <h4 className="font-serif text-sm font-medium text-[var(--text-primary)]">
               Recorded Cycle History
             </h4>
             <button
               onClick={() => setShowLogPeriodModal(true)}
-              className="text-xs text-[#8C7654] hover:underline"
+              className="text-xs text-[var(--accent-secondary)] hover:underline"
             >
               + Log
             </button>
@@ -638,20 +638,20 @@ export const CycleView: React.FC<CycleViewProps> = ({
 
           <div className="space-y-2">
             {cycleProfile.history.length === 0 ? (
-              <p className="text-xs text-[#8C8377] py-3 text-center">No past entries recorded yet.</p>
+              <p className="text-xs text-[var(--text-muted)] py-3 text-center">No past entries recorded yet.</p>
             ) : (
               cycleProfile.history.slice(0, 3).map((entry) => (
                 <div
                   key={entry.id}
-                  className="p-2.5 rounded-lg border border-[#E5DFD4] bg-[#FFFFFF] text-xs flex items-center justify-between"
+                  className="p-2.5 rounded-lg border border-[#E5DFD4] bg-[var(--surface-2)] text-xs flex items-center justify-between"
                 >
                   <div>
-                    <span className="font-medium text-[#2C2825]">{entry.startDate}</span>
+                    <span className="font-medium text-[var(--text-primary)]">{entry.startDate}</span>
                     {entry.endDate && (
-                      <span className="text-[#7A7167] text-[11px] ml-1">to {entry.endDate}</span>
+                      <span className="text-[var(--text-secondary)] text-[11px] ml-1">to {entry.endDate}</span>
                     )}
                     {entry.notes && (
-                      <p className="text-[11px] text-[#8C8377] mt-0.5 truncate max-w-xs">{entry.notes}</p>
+                      <p className="text-[11px] text-[var(--text-muted)] mt-0.5 truncate max-w-xs">{entry.notes}</p>
                     )}
                   </div>
                   <span className="text-[10px] text-[#4E6845] bg-[#EEF4ED] px-2 py-0.5 rounded-full font-medium">
@@ -665,14 +665,14 @@ export const CycleView: React.FC<CycleViewProps> = ({
 
         {/* Privacy & Medical Safeguards */}
         <div className="rounded-2xl border border-[#E2DDD2] bg-[#F5EFE4] p-5 shadow-xs space-y-3">
-          <div className="flex items-center gap-2 text-[#3D3730]">
-            <ShieldCheck className="w-4 h-4 text-[#8C7654]" />
+          <div className="flex items-center gap-2 text-[var(--text-primary)]">
+            <ShieldCheck className="w-4 h-4 text-[var(--accent-secondary)]" />
             <h4 className="font-serif text-sm font-medium">Sanctuary Privacy & Safety</h4>
           </div>
-          <p className="text-xs text-[#554C42] leading-relaxed">
+          <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
             <strong>Absolute Realm Containment:</strong> Your cycle dates and physical check-ins are restricted exclusively to your Personal sanctuary. They are never transmitted to Mariluna studio or third parties.
           </p>
-          <p className="text-[11px] text-[#7A7167] leading-relaxed border-t border-[#E5DFD4] pt-2">
+          <p className="text-[11px] text-[var(--text-secondary)] leading-relaxed border-t border-[#E5DFD4] pt-2">
             <strong>Non-Medical Clarification:</strong> P & M Alchemy offers educational context for lifestyle pacing. It does not diagnose medical conditions or predict fertility. Your reported energy always overrides automated algorithms.
           </p>
         </div>
@@ -681,12 +681,12 @@ export const CycleView: React.FC<CycleViewProps> = ({
       {/* Log Period Modal */}
       {showLogPeriodModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#1A1816]/40 backdrop-blur-xs p-4">
-          <div className="w-full max-w-md rounded-2xl bg-[#FAF8F3] border border-[#DDD5C7] p-6 shadow-2xl space-y-4 text-[#2C2825]">
+          <div className="w-full max-w-md rounded-2xl bg-[var(--surface-1)] border border-[var(--border-subtle)] p-6 shadow-2xl space-y-4 text-[var(--text-primary)]">
             <div className="flex items-center justify-between pb-3 border-b border-[#EAE4D8]">
               <h3 className="font-serif text-lg font-medium">Record Period Onset</h3>
               <button
                 onClick={() => setShowLogPeriodModal(false)}
-                className="text-xs text-[#7A7167] hover:text-[#2C2825]"
+                className="text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
               >
                 Close
               </button>
@@ -694,34 +694,34 @@ export const CycleView: React.FC<CycleViewProps> = ({
 
             <form onSubmit={handleLogNewPeriod} className="space-y-4 text-xs">
               <div>
-                <label className="block font-medium text-[#4A433B] mb-1">Period Start Date</label>
+                <label className="block font-medium text-[var(--text-secondary)] mb-1">Period Start Date</label>
                 <input
                   type="date"
                   value={newLogStartDate}
                   onChange={(e) => setNewLogStartDate(e.target.value)}
                   required
-                  className="w-full px-3 py-2 rounded-lg border border-[#D5CCBF] bg-[#FFFFFF] text-xs text-[#2C2825]"
+                  className="w-full px-3 py-2 rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-2)] text-xs text-[var(--text-primary)]"
                 />
               </div>
 
               <div>
-                <label className="block font-medium text-[#4A433B] mb-1">Period End Date (Optional)</label>
+                <label className="block font-medium text-[var(--text-secondary)] mb-1">Period End Date (Optional)</label>
                 <input
                   type="date"
                   value={newLogEndDate}
                   onChange={(e) => setNewLogEndDate(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border border-[#D5CCBF] bg-[#FFFFFF] text-xs text-[#2C2825]"
+                  className="w-full px-3 py-2 rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-2)] text-xs text-[var(--text-primary)]"
                 />
               </div>
 
               <div>
-                <label className="block font-medium text-[#4A433B] mb-1">Notes / Physical Sensations (Optional)</label>
+                <label className="block font-medium text-[var(--text-secondary)] mb-1">Notes / Physical Sensations (Optional)</label>
                 <textarea
                   rows={2}
                   placeholder="e.g., Mild fatigue, gentle warm tea helped, restful sleep"
                   value={newLogNotes}
                   onChange={(e) => setNewLogNotes(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border border-[#D5CCBF] bg-[#FFFFFF] text-xs text-[#2C2825]"
+                  className="w-full px-3 py-2 rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-2)] text-xs text-[var(--text-primary)]"
                 />
               </div>
 
@@ -729,13 +729,13 @@ export const CycleView: React.FC<CycleViewProps> = ({
                 <button
                   type="button"
                   onClick={() => setShowLogPeriodModal(false)}
-                  className="px-3.5 py-1.5 rounded-lg text-xs text-[#6C6358] hover:bg-[#EDE6D8]"
+                  className="px-3.5 py-1.5 rounded-lg text-xs text-[var(--text-secondary)] hover:bg-[var(--surface-2)]"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded-xl bg-[#2C2825] text-[#F9F7F2] font-medium hover:bg-[#433D37] transition"
+                  className="px-4 py-2 rounded-xl bg-[var(--text-primary)] text-[var(--text-primary)] font-medium hover:bg-[#433D37] transition"
                 >
                   Confirm & Update Cycle
                 </button>
