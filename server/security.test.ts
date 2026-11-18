@@ -407,3 +407,45 @@ test('authentication rate limiting locks after five failures and can be cleared'
   securityVault.clearFailedAttempts(key);
   assert.equal(securityVault.checkRateLimit(key).allowed, true);
 });
+
+
+test('Jarvis receives only active confirmed memories allowed by realm and sensitivity consent', () => {
+  securityVault.updatePermissions({
+    allowPersonalDataToAI: true,
+    allowMarilunaDataToAI: true,
+    allowWellbeingDataToAI: false,
+    allowCycleDataToAI: false,
+    allowFinancialDataToAI: false,
+  });
+  const memories = [
+    { content: 'Prefers calm, realistic planning.', category: 'Planning', realm: 'personal', type: 'explicit', status: 'active' },
+    { content: 'Tracks menstrual cycle phases.', category: 'Cyclus', realm: 'personal', type: 'confirmed', status: 'active' },
+    { content: 'Wants to track wellbeing and weight.', category: 'Gezondheid', realm: 'personal', type: 'confirmed', status: 'active' },
+    { content: 'Mariluna uses a warm editorial brand voice.', category: 'Brand strategy', realm: 'mariluna', type: 'confirmed', status: 'active' },
+    { content: 'Monthly revenue and costs.', category: 'Finance', realm: 'mariluna', type: 'confirmed', status: 'active' },
+    { content: 'Unconfirmed inferred preference.', category: 'Planning', realm: 'personal', type: 'learned', status: 'pending_confirmation' },
+    { content: 'Archived memory.', category: 'Planning', realm: 'personal', type: 'explicit', status: 'archived' },
+    { content: 'Unscoped memory.', category: 'Planning', type: 'explicit', status: 'active' },
+  ];
+  const result = securityVault.sanitizeContextForAi({ memoryItems: memories }, 'all');
+  assert.deepEqual(result.memoryItems.map((item: any) => item.content), [
+    'Prefers calm, realistic planning.',
+    'Mariluna uses a warm editorial brand voice.',
+  ]);
+
+  securityVault.updatePermissions({
+    allowWellbeingDataToAI: true,
+    allowCycleDataToAI: true,
+    allowFinancialDataToAI: true,
+  });
+  const fullyAuthorized = securityVault.sanitizeContextForAi({ memoryItems: memories }, 'all');
+  assert.equal(fullyAuthorized.memoryItems.length, 5);
+
+  securityVault.updatePermissions({
+    allowPersonalDataToAI: false,
+    allowMarilunaDataToAI: false,
+    allowWellbeingDataToAI: false,
+    allowCycleDataToAI: false,
+    allowFinancialDataToAI: false,
+  });
+});
