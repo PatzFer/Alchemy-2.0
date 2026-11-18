@@ -385,10 +385,6 @@ class SecurityVault {
 
   public verifyAndConsumeRecoveryCode(plainCode: string): boolean {
     const clean = plainCode.trim().toUpperCase();
-    // Allow standard preview/developer emergency code for sandbox testability
-    if (clean === 'PMAL-DEMO-2026') {
-      return true;
-    }
     const hash = crypto.createHash('sha256').update(clean).digest('hex');
     const item = this.recoveryCodes.find((r) => r.codeHash === hash && !r.used);
     if (item) {
