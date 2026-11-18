@@ -8,6 +8,12 @@ import {
 } from './supabasePersistence';
 
 const ownerId = 'd4f1c1a2-1234-4a5b-9c8d-1234567890ab';
+const validPayload = {
+  tasks: [], goals: [], ideas: [], projects: [], calendarEvents: [], memories: [],
+  dailyCheckIns: [], notifications: [], proactiveSuggestions: [],
+  foundation: {}, integrations: {},
+};
+
 const env = {
   SUPABASE_URL: 'https://example.supabase.co',
   SUPABASE_ANON_KEY: 'public-anon-key',
@@ -65,7 +71,7 @@ test('snapshot writes reject oversized payloads before calling the database RPC'
   };
   const store = new SupabasePersistence(readSupabaseServerConfig(env)!, fetcher);
   await assert.rejects(
-    () => store.saveSnapshot('verified-token', { large: 'x'.repeat(1_500_001) }),
+    () => store.saveSnapshot('verified-token', { ...validPayload, large: 'x'.repeat(1_500_001) }),
     /1.5 MB persistence limit/,
   );
   assert.equal(rpcCalled, false);
@@ -97,8 +103,8 @@ test('snapshot loading rejects a record returned for a different owner', async (
 
 test('snapshot owner comes from verified Supabase identity and stored payload hash is checked', async () => {
   const calls: Array<{ url: string; init?: RequestInit }> = [];
-  const payload = { tasks: [{ id: 'task-1', title: 'Private task' }], realm: 'personal' };
-  const payloadHash = createHash('sha256').update(JSON.stringify({ realm: 'personal', tasks: [{ id: 'task-1', title: 'Private task' }] })).digest('hex');
+  const payload = { ...validPayload, tasks: [{ id: 'task-1', title: 'Private task' }], realm: 'personal' };
+  const payloadHash = createHash('sha256').update(JSON.stringify(Object.fromEntries(Object.entries(payload).sort(([a], [b]) => a.localeCompare(b))))).digest('hex');
   const fetcher: FetchLike = async (input, init) => {
     const url = String(input);
     calls.push({ url, init });
@@ -144,7 +150,7 @@ test('snapshot loading rejects a payload whose stored hash does not match', asyn
       owner_id: ownerId,
       schema_version: 1,
       revision: 1,
-      payload: { tasks: [{ id: 'changed' }] },
+      payload: { ...validPayload, tasks: [{ id: 'changed' }] },
       payload_sha256: 'incorrect-hash',
       source: 'autosave',
       created_at: new Date().toISOString(),
@@ -156,8 +162,8 @@ test('snapshot loading rejects a payload whose stored hash does not match', asyn
 
 
 test('snapshot integrity is stable when PostgreSQL jsonb returns object keys in a different order', async () => {
-  const originalPayload = { tasks: [{ id: 'task-1', title: 'Private task' }], realm: 'personal' };
-  const canonicalPayload = JSON.stringify({ realm: 'personal', tasks: [{ id: 'task-1', title: 'Private task' }] });
+  const originalPayload = { ...validPayload, tasks: [{ id: 'task-1', title: 'Private task' }], realm: 'personal' };
+  const canonicalPayload = JSON.stringify(Object.fromEntries(Object.entries(originalPayload).sort(([a], [b]) => a.localeCompare(b))));
   const expectedHash = createHash('sha256').update(canonicalPayload).digest('hex');
   const fetcher: FetchLike = async (input) => {
     if (String(input).endsWith('/auth/v1/user')) {
