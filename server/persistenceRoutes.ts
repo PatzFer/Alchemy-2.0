@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { createSupabasePersistence } from './supabasePersistence';
+import { createSupabasePersistence, isValidAlchemySnapshotPayload } from './supabasePersistence';
 
 const router = Router();
 
@@ -48,7 +48,7 @@ router.post('/snapshot', async (req: Request, res: Response) => {
     return res.status(401).json({ error: 'A Supabase access token is required.' });
   }
   const { payload, schemaVersion, source } = req.body ?? {};
-  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+  if (!isValidAlchemySnapshotPayload(payload)) {
     return res.status(400).json({ error: 'A valid Alchemy state object is required.' });
   }
   if (schemaVersion !== undefined && (!Number.isInteger(schemaVersion) || schemaVersion < 1)) {
