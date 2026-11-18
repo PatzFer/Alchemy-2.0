@@ -140,7 +140,8 @@ test('snapshot owner comes from verified Supabase identity and stored payload ha
       const body = JSON.parse(String(init?.body));
       assert.equal(body.p_owner_id, ownerId);
       assert.equal(body.p_schema_version, 1);
-      assert.deepEqual(body.p_payload, payload);
+      assert.equal(canonicalJson(body.p_payload), canonicalJson(payload));
+      assert.equal(Object.hasOwn(body.p_payload, 'optionalField'), false);
       assert.equal(body.p_payload_sha256, payloadHash);
       assert.equal(body.p_source, 'autosave');
       return new Response(JSON.stringify([{
