@@ -326,7 +326,7 @@ export default function App() {
       source: 'alchemy',
     };
 
-    const token = getCachedAccessToken();
+    const token = getCachedAccessToken('calendar');
     const isConnected = state.integrations?.calendar?.status === 'connected';
     const isReadOnly = state.integrations?.calendar?.readOnly;
 
