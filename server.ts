@@ -46,7 +46,6 @@ function getAI(): GoogleGenAI | null {
 app.get("/api/health", (_req: Request, res: Response) => {
   res.json({
     status: "ok",
-    hasApiKey: !!process.env.GEMINI_API_KEY,
     timestamp: new Date().toISOString(),
   });
 });
