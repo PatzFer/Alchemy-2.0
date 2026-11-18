@@ -232,7 +232,7 @@ export const Navigation: React.FC<NavigationProps> = ({
             className={`flex items-center gap-2 rounded-full px-3.5 py-1.5 text-xs font-medium transition-all cursor-pointer border ${
               isAssistantOpen
                 ? 'bg-[#F0EBDD] text-[#20231f] border-[#F0EBDD] shadow-sm ring-2 ring-[#D6C69B]/40'
-                : 'bg-[#F2ECE1] text-[#F0EBDD] border-[#555A50] hover:border-[#B49A7A] hover:bg-[#EAE3D6]'
+                : 'bg-[#30352f] text-[#F0EBDD] border-[#555A50] hover:border-[#B49A7A] hover:bg-[#39312B]'
             }`}
           >
             <Sparkles className="w-3.5 h-3.5 text-[#D6C69B]" />
@@ -280,7 +280,7 @@ export const Navigation: React.FC<NavigationProps> = ({
       </div>
 
       {/* Sub-bar on mobile for World Switcher */}
-      <div className="md:hidden px-4 py-2 border-t border-[#343a32] flex items-center justify-between bg-[#F8F5EE]">
+      <div className="md:hidden px-4 py-2 border-t border-[#343a32] flex items-center justify-between bg-[#20231f]">
         <div className="flex items-center gap-1 w-full justify-center">
           <button
             onClick={() => onSelectWorld('all')}
@@ -307,7 +307,7 @@ export const Navigation: React.FC<NavigationProps> = ({
             onClick={() => onSelectWorld('mariluna')}
             className={`flex items-center gap-1 px-3 py-1 rounded-full text-[11px] transition ${
               activeWorld === 'mariluna'
-                ? 'bg-[#F0EBDD] text-[#20231f] font-medium'
+                ? 'bg-[#263D35] text-[#F0EBDD] font-medium'
                 : 'text-[#B7B7A9]'
             }`}
           >
