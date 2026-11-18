@@ -261,3 +261,11 @@ Incremental implementation commits on `design/phase-1`:
 - A follow-up audit found a second client-flag bypass in `POST /api/auth/unlock-sensitive`: sending `method: 'passkey'` was accepted without checking a verified credential. The endpoint now requires the current server-side session to be authenticated, authenticated specifically through a passkey, and still inside its server-issued step-up window.
 - The first hard-coded demo recovery bypass and generic app-unlock passkey shortcut remain removed. The lock screen no longer displays or prefills the demo recovery code.
 - Remaining security limitations are substantial: the security vault/session state is process-memory only, the browser stores app state in plaintext localStorage, and no automated penetration or authentication regression tests have run. This work closes identified bypass paths; it does not establish production-grade security.
+
+
+## Progress log — 18 November 2026 (WebAuthn hardening and test-readiness)
+
+- Tightened both passkey registration and authentication verification to require the exact request origin and RP ID rather than accepting localhost and alternate-scheme fallbacks. Both flows now require user verification.
+- Sensitive-data unlock now also requires the app session to be authenticated before a TOTP, recovery-code or passkey step-up can be considered. Passkey step-up must still be present and unexpired in the server-side session.
+- The CI workflow is configured to run on pushes to `design/phase-1`, pull requests to `main`, and manual dispatch. Recent commits have been made on the watched branch; the GitHub commit-status endpoint currently reports no statuses for the latest commits, so there is still no evidence that CI has run successfully.
+- The app is not yet ready to label as production 1.0: sessions and security vault remain in-memory, app state remains plaintext in localStorage, provider disconnect/revocation is incomplete, native Health Connect is unavailable, and no automated UI/integration tests exist. This work is moving toward a testable candidate, not certifying production safety.
