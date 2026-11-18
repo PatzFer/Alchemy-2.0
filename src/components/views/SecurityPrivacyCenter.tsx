@@ -417,7 +417,7 @@ export const SecurityPrivacyCenter: React.FC<SecurityPrivacyCenterProps> = ({
 
   // Update Permissions
   const handleUpdatePermission = (key: string, value: any) => {
-    const isDestructive = ['calendarWrite', 'allowCycleDataToAI', 'allowWellbeingDataToAI', 'allowPersonalDataToAI', 'allowMarilunaDataToAI', 'allowFinancialDataToAI'].includes(key);
+    const isDestructive = ['calendarWrite', 'allowCycleDataToAI', 'allowWellbeingDataToAI', 'allowPersonalDataToAI', 'allowMarilunaDataToAI', 'allowFinancialDataToAI', 'activeAiProvider'].includes(key);
     const execute = async () => {
       try {
         const res = await fetch('/api/security/permissions', {
@@ -1131,6 +1131,25 @@ export const SecurityPrivacyCenter: React.FC<SecurityPrivacyCenterProps> = ({
             </div>
             <p className="text-[11px] text-[#6E655A] font-light leading-relaxed">
               Allow assistant to use non-financial Mariluna studio context, strategy and content plans. Financial data has a separate opt-in.
+            </p>
+          </div>
+
+          {/* AI Provider Mode */}
+          <div className="p-4 rounded-2xl border border-[#E3D9C9] bg-[#FAF8F4] space-y-2">
+            <label htmlFor="alchemy-ai-provider" className="text-xs font-semibold text-[#2C2825]">
+              AI Processing Mode
+            </label>
+            <select
+              id="alchemy-ai-provider"
+              value={status?.permissions.activeAiProvider ?? 'local-rules'}
+              onChange={(e) => handleUpdatePermission('activeAiProvider', e.target.value)}
+              className="w-full rounded-xl border border-[#DDD4C5] bg-white px-3 py-2 text-xs text-[#2C2825] outline-none focus:border-[#8C7654]"
+            >
+              <option value="local-rules">Local privacy mode — no Gemini processing</option>
+              <option value="gemini-server">Gemini AI — only with separate consent</option>
+            </select>
+            <p className="text-[11px] text-[#6E655A] font-light leading-relaxed">
+              Gemini is used only when the relevant workspace and data permissions are also enabled. Local mode keeps Jarvis on deterministic, on-server rules.
             </p>
           </div>
 
