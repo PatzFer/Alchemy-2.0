@@ -161,7 +161,8 @@ export const TasksView: React.FC<TasksViewProps> = ({
   };
 
   // Filter tasks
-  const filteredTasks = tasks.filter((t) => {
+  const scopedTasks = tasks.filter((t) => activeWorld === 'all' || t.realm === activeWorld);
+  const filteredTasks = scopedTasks.filter((t) => {
     // World filter
     if (activeWorld !== 'all' && t.realm !== activeWorld) return false;
     // Status filter
@@ -204,7 +205,7 @@ export const TasksView: React.FC<TasksViewProps> = ({
                 : 'text-[#7A7167]'
             }`}
           >
-            Active ({tasks.filter((t) => t.status !== 'completed').length})
+            Actief ({scopedTasks.filter((t) => t.status !== 'completed').length})
           </button>
           <button
             onClick={() => setFilterStatus('completed')}
@@ -214,7 +215,7 @@ export const TasksView: React.FC<TasksViewProps> = ({
                 : 'text-[#7A7167]'
             }`}
           >
-            Completed ({tasks.filter((t) => t.status === 'completed').length})
+            Afgerond ({scopedTasks.filter((t) => t.status === 'completed').length})
           </button>
           <button
             onClick={() => setFilterStatus('all')}
