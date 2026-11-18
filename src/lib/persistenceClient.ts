@@ -82,6 +82,9 @@ export async function saveAlchemySnapshot(
   source: SnapshotSource = 'migration',
 ): Promise<AlchemySnapshot> {
   const token = requireAccessToken(accessToken);
+  if (!isCompleteAlchemyPayload(state)) {
+    throw new Error('De lokale Alchemy-gegevens zijn onvolledig en zijn niet verzonden.');
+  }
   const response = await fetcher('/api/persistence/snapshot', {
     method: 'POST',
     headers: {
