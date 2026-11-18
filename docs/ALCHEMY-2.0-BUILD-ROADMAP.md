@@ -462,3 +462,14 @@ Incremental implementation commits on `design/phase-1`:
 - Authentication responses no longer return the internal session object. This closes an unnecessary credential disclosure path that would have undermined the HttpOnly cookie boundary if a script could read API responses.
 - Security/authentication routes now set `Cache-Control: no-store, private`, `Pragma: no-cache` and `Vary: Cookie` so recovery codes, device inventory and authentication status are not retained by browser or intermediary caches.
 - Regression coverage verifies the device inventory identifier is not the cookie credential and can still revoke the intended session.
+
+
+## Progress log — 18 November 2026 (complete Jarvis AI consent perimeter)
+
+- Extended server-side AI provider/consent enforcement to the legacy `/api/ai/*` routes as well as the newer `/api/brain/*` routes. Chat, day planning, goal breakdown and idea analysis now respect the selected workspace's AI consent and provider mode before contacting Gemini.
+- The day-planning prompt now uses the sanitized task, event, working-hours and preference values; it no longer serializes the raw client payload after sanitization.
+- Chat history is tagged and displayed per workspace in the client. Only messages from the active workspace are sent as Gemini conversation history; switching between Privé, Mariluna and combined view does not carry the previous realm's chat into the next request.
+- Balanced workspace AI requires consent for personal, Mariluna and wellbeing data. Every mixed-realm collection (calendar events, projects, ideas, intentions, tasks and goals) is filtered against server-owned realm consent; untagged records are excluded.
+- Financial data now has its own independent consent boundary. Prices, invoices, expenses, tax/admin records and revenue/profit metrics are withheld unless financial AI consent is enabled, even when general Mariluna AI context is allowed.
+- Goal and idea prompts use bounded input values. Chat payloads are capped to the latest 20 messages and 8,000 characters per message.
+- Added regression tests for mixed-workspace filtering and financial-data quarantine. These privacy settings still live in the in-memory security vault until durable owner identity/settings storage is connected.
