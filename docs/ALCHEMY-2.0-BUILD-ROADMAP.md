@@ -388,3 +388,12 @@ Incremental implementation commits on `design/phase-1`:
 - Added route-level regression tests for malformed environment configuration and incomplete payloads; added persistence validation fixtures and tests.
 - The earlier commit `0ba74472a730f8de93f9f0ddc46e17d61fba3671` passed the complete CI workflow, including the new API route tests. Commits after it are still awaiting their own final CI result; no green status is inferred from earlier commits.
 - This hardening remains limited to the server-side snapshot foundation. The browser app still uses localStorage, Supabase is not configured or migrated, and the existing in-memory custom security vault is not yet durable.
+
+## Progress log — 18 November 2026 (strict snapshot contract and checksum semantics)
+
+- Tightened the snapshot payload contract to require all core Alchemy collections, core state objects, chat history, sample-data flag, valid setup status, Foundation identity data and the expected calendar/Gmail integration state. This rejects incomplete JSON before it can become the latest durable snapshot.
+- Snapshot reads and writes both validate the same contract. Saved RPC responses are now checked for owner, revision, schema version, source, payload structure and checksum before being accepted.
+- Corrected canonical SHA-256 serialization to follow JSON transport semantics: undefined object properties are omitted and undefined array values serialize as null. This matters because the browser-to-server JSON request and PostgreSQL JSONB do not retain JavaScript undefined properties.
+- Added tests for the full state contract, incomplete state, tampered write responses, incomplete stored snapshots and JSONB key-order/checksum behavior.
+- CI passed on commit `e5cbde6ef8dc4e55f4df03486012837ab3f0ff4c` (TypeScript, migration checks, privacy tests and production build). Later commits containing additional checksum assertions and this log entry are being validated independently.
+- No Supabase database has been provisioned or migrated; no client cutover has been made. The localStorage state remains the active app source of truth and must be preserved until staging restore tests pass.
