@@ -321,7 +321,7 @@ test('balanced AI context excludes personal records when only Mariluna consent i
     goals: [{ id: 'p', realm: 'personal' }, { id: 'm', realm: 'mariluna' }],
     workingHours: 'Private working hours',
     preferences: { protectEvenings: true },
-  }, 'all');
+  }, 'balanced');
   assert.deepEqual(result.calendarEvents.map((item: any) => item.id), ['m']);
   assert.deepEqual(result.projects.map((item: any) => item.id), ['m']);
   assert.deepEqual(result.tasks.map((item: any) => item.id), ['m']);
