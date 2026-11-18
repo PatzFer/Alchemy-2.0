@@ -263,7 +263,7 @@ export function buildIntentAwareResponse(
   const isDutch = isDutchMessage(userMsg);
   const msgLower = (userMsg || '').toLowerCase();
 
-  const asksAboutMemories = /\\b(wat weet je nog|wat herinner je je|wat heb ik je (laten|gevraagd te) onthouden|what do you remember|what have i asked you to remember)\\b/i.test(userMsg || '');
+  const asksAboutMemories = /\b(wat weet je nog|wat herinner je je|wat heb ik je (laten|gevraagd te) onthouden|what do you remember|what have i asked you to remember)\b/i.test(userMsg || '');
   if (asksAboutMemories) {
     const memories = (ctx.memoryItems || []).slice(0, 10);
     if (memories.length === 0) {
@@ -271,10 +271,10 @@ export function buildIntentAwareResponse(
         ? 'Ik heb in deze werkruimte momenteel geen bevestigde herinneringen die ik volgens je privacy-instellingen mag gebruiken.'
         : 'I do not currently have confirmed memories in this workspace that your privacy settings allow me to use.';
     }
-    const list = memories.map((memory) => `- ${memory.content}`).join('\\n');
+    const list = memories.map((memory) => `- ${memory.content}`).join('\n');
     return isDutch
-      ? `Dit zijn de bevestigde herinneringen die ik in deze werkruimte mag gebruiken:\\n\\n${list}`
-      : `These are the confirmed memories I may use in this workspace:\\n\\n${list}`;
+      ? `Dit zijn de bevestigde herinneringen die ik in deze werkruimte mag gebruiken:\n\n${list}`
+      : `These are the confirmed memories I may use in this workspace:\n\n${list}`;
   }
 
   switch (intentObj.intent) {
