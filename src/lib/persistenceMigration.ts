@@ -1,4 +1,5 @@
 import type { AppState } from './storage';
+import { DEFAULT_FOUNDATION_DATA } from './foundationDefaults';
 import type { AlchemySnapshot } from './persistenceClient';
 
 export type PersistenceMigrationAction =
@@ -33,9 +34,12 @@ function countStateRecords(state: Record<string, unknown>): number {
   const foundation = state.foundation as Record<string, unknown> | undefined;
   const aboutYou = foundation?.aboutYou as Record<string, unknown> | undefined;
   if (aboutYou) {
-    total += Object.values(aboutYou).filter((value) =>
-      typeof value === 'string' ? value.trim().length > 0 : value !== null && value !== undefined
-    ).length;
+    const defaultAboutYou = DEFAULT_FOUNDATION_DATA.aboutYou as Record<string, unknown>;
+    total += Object.entries(aboutYou).filter(([key, value]) => {
+      const defaultValue = defaultAboutYou[key];
+      return value !== defaultValue &&
+        (typeof value === 'string' ? value.trim().length > 0 : value !== null && value !== undefined);
+    }).length;
   }
   if (foundation?.isCompleted === true) total += 1;
 
