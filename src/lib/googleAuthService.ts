@@ -1,12 +1,16 @@
 import firebaseConfig from '../../firebase-applet-config.json';
 import { MarilunaGmailMessage, CalendarEvent, InstagramPostItem } from '../types';
 
-let cachedAccessToken: string | null = null;
+type GoogleService = 'calendar' | 'gmail';
+const cachedAccessTokens: Record<GoogleService, string | null> = {
+  calendar: null,
+  gmail: null,
+};
 
-export const getCachedAccessToken = () => cachedAccessToken;
+export const getCachedAccessToken = (service: GoogleService) => cachedAccessTokens[service];
 
-export const setCachedAccessToken = (token: string | null) => {
-  cachedAccessToken = token;
+export const setCachedAccessToken = (service: GoogleService, token: string | null) => {
+  cachedAccessTokens[service] = token;
 };
 
 const CLIENT_ID =
@@ -24,7 +28,8 @@ declare global {
  * directly requesting access token from Google without Firebase Auth domain restrictions.
  */
 export const googleSignInForService = async (
-  scopes: string[] = ['https://www.googleapis.com/auth/gmail.readonly']
+  scopes: string[] = ['https://www.googleapis.com/auth/gmail.readonly'],
+  service: GoogleService = 'gmail'
 ): Promise<{ accessToken: string; email: string; grantedScopes: string[] }> => {
   return new Promise((resolve, reject) => {
     if (typeof window === 'undefined') {
@@ -70,7 +75,7 @@ export const googleSignInForService = async (
               return reject(new Error('Geen OAuth access token ontvangen.'));
             }
 
-            cachedAccessToken = response.access_token;
+            cachedAccessTokens[service] = response.access_token;
             const grantedScopesStr = response.scope || fullScopes.join(' ');
             const grantedScopes = grantedScopesStr.split(' ');
 
