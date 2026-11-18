@@ -240,3 +240,17 @@ test('default AI privacy firewall removes both private and business records', ()
   assert.equal('cycleProfile' in businessResult, false);
   assert.equal('nutrition' in businessResult, false);
 });
+
+
+test('WebAuthn challenges are one-time and cannot be replayed', () => {
+  securityVault.setChallenge('test-one-time-challenge', 'nonce-value');
+  assert.equal(securityVault.consumeChallenge('test-one-time-challenge'), 'nonce-value');
+  assert.equal(securityVault.consumeChallenge('test-one-time-challenge'), undefined);
+  assert.equal(securityVault.getChallenge('test-one-time-challenge'), undefined);
+});
+
+test('expired WebAuthn challenges are rejected', async () => {
+  securityVault.setChallenge('test-expired-challenge', 'expired-nonce', 1);
+  await new Promise((resolve) => setTimeout(resolve, 5));
+  assert.equal(securityVault.consumeChallenge('test-expired-challenge'), undefined);
+});
