@@ -90,3 +90,17 @@ test('development permits loopback only when no explicit allowlist is set', () =
     /not configured/,
   );
 });
+
+test('rejects a mismatch between the browser origin and request host', () => {
+  assert.throws(
+    () => resolveWebAuthnRelyingParty(
+      { host: 'app.mariluna.be', origin: 'https://attacker.mariluna.be', protocol: 'https' },
+      {
+        NODE_ENV: 'production',
+        WEBAUTHN_RP_ID: 'mariluna.be',
+        WEBAUTHN_ALLOWED_ORIGINS: 'https://attacker.mariluna.be',
+      },
+    ),
+    /does not match the request host/,
+  );
+});
