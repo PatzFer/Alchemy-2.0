@@ -310,3 +310,10 @@ Incremental implementation commits on `design/phase-1`:
 - The current security vault creates recovery codes at process startup but only stores their hashes; the initial plaintext codes are not delivered through a safe first-owner setup flow.
 - Passkey/TOTP enrollment now correctly requires an authenticated session, but a fresh deployment has no persisted credential store or owner bootstrap mechanism. Since sessions and credentials are currently in-memory, a server restart can invalidate the only enrolled authentication methods.
 - Before any real deployment, implement durable identity/session/credential storage and a one-time owner bootstrap flow (or a trusted external identity provider). Do not reopen unauthenticated passkey/TOTP enrollment as a workaround.
+
+## Progress log — 18 November 2026 (CI stability and dependency hygiene)
+
+- Removed the duplicate `vite` entry from `devDependencies`; it remains a production dependency as required by the Vite build.
+- Changed the GitHub Actions concurrency policy to queue branch validations instead of cancelling an in-progress validation whenever a second commit arrives. This makes rapid implementation iterations less likely to leave only cancelled checks.
+- Verified the privacy-firewall fix that keeps nutrition and dietary preferences behind the wellbeing AI opt-in. The latest validation run on commit `4c3fd190fa8a58d7f86502d467fdf981f8f27d5c` completed successfully: frozen Bun install, TypeScript, privacy regression tests and production build.
+- The next architecture step is still a design-and-migration boundary, not a live database cutover. No Supabase project credentials or existing database schema are present in the repository context. Do not point the app at a guessed project or migrate existing local data without a verified project and export/restore path.
