@@ -395,15 +395,15 @@ router.post('/webauthn/auth-verify', async (req: Request, res: Response) => {
     const verification = await verifyAuthenticationResponse({
       response,
       expectedChallenge,
-      expectedOrigin: [origin, `https://${req.get('host')}`, `http://${req.get('host')}`],
-      expectedRPID: [rpID, 'localhost'],
+      expectedOrigin: origin,
+      expectedRPID: rpID,
       credential: {
         id: passkey.id,
         publicKey: publicKeyBytes,
         counter: passkey.counter,
         transports: passkey.transports as any,
       },
-      requireUserVerification: false,
+      requireUserVerification: true,
     });
 
     if (verification.verified) {
