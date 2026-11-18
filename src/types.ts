@@ -460,6 +460,7 @@ export interface AssistantMessage {
   role: 'user' | 'assistant' | 'system';
   content: string;
   timestamp: string;
+  world?: 'all' | 'personal' | 'mariluna';
   suggestedAction?: AssistantAction;
 }
 
