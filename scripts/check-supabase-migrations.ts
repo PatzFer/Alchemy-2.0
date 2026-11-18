@@ -60,6 +60,9 @@ if (!/owner_id\s*=\s*\(select\s+auth\.uid\(\)\)/i.test(sql)) {
 }
 
 
+if (!/alter\s+table\s+public\.app_state_snapshots[\s\S]*?add\s+column\s+source\s+text/i.test(sql)) {
+  throw new Error('Snapshot source attribution column is missing.');
+}
 const snapshotRpc = /create\s+or\s+replace\s+function\s+public\.save_app_state_snapshot\s*\(/i;
 if (!snapshotRpc.test(sql)) {
   throw new Error('Atomic owner-scoped snapshot revision RPC is missing.');
