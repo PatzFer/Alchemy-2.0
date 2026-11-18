@@ -160,3 +160,12 @@ Incremental implementation commits on `design/phase-1`:
 - Reworked the shared Calendar and Tasks view's most prominent headers, filters, buttons, empty states, cards, and borders to use the semantic dark-theme tokens. This is a focused visual consistency pass, not a claim that every nested control in both views has been fully audited.
 - Shared realm remains deliberately unimplemented: Realm is used across tasks, goals, ideas, projects, calendar events, routines, commitments, memory, and other data. Adding 'shared' safely requires a deliberate migration and domain/privacy review rather than changing only the capture buttons.
 - No build, lint/typecheck, automated test, or visual device/browser validation has been run. Phases A/B/C remain in progress.
+
+
+## Progress log — 18 November 2026 (planner visual QA pass)
+
+- Extended the semantic-token pass across the Calendar and Tasks views so nested planner surfaces, event cards, date navigation, form controls, and status labels use the dark Alchemy palette more consistently.
+- Corrected contrast defects found during source review, including Mariluna task labels and task action buttons that previously paired a light foreground and background.
+- Updated key planner copy to Dutch and corrected the calendar working-hours subtitle.
+- Confirmed in source review that the remaining Shared model is cross-cutting: Tasks, Ideas, Calendar Events, Goals, Projects, Routines, Commitments and Memory currently share the Realm type in different privacy contexts. No schema migration has been made yet; adding Shared without explicit scoping would risk exposing records to the wrong domain or assistant context.
+- Source-level review only. No executable build, TypeScript/lint check, unit tests, browser rendering, mobile review, or persistence migration test has run. Phases A/B/C remain in progress and are not signed off.
