@@ -169,6 +169,7 @@ export interface CalendarEvent {
   realm: Realm;
   type: 'work' | 'appointment' | 'commitment' | 'me_time' | 'routine';
   location?: string;
+  notes?: string;
   isExternalSync?: boolean;
   source?: 'google' | 'alchemy' | string;
   googleEventId?: string;

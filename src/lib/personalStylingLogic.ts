@@ -296,6 +296,20 @@ export interface GarmentEvaluationInput {
   userNotes?: string;
 }
 
+export function detectGarmentCategory(
+  textCorpus: string,
+  inputCategory?: string
+): 'jurk' | 'top' | 'broek' | 'rok' | 'jas' | 'schoenen' | 'accessoires' {
+  const combined = `${inputCategory || ''} ${textCorpus}`.toLowerCase();
+  if (/jurk|dress|jumpsuit/i.test(combined)) return 'jurk';
+  if (/broek|pantalon|jeans|denim|trouser/i.test(combined)) return 'broek';
+  if (/rok|skirt/i.test(combined)) return 'rok';
+  if (/jas|blazer|jacket|coat|mantel/i.test(combined)) return 'jas';
+  if (/schoen|laars|boot|loafer|pump|sneaker/i.test(combined)) return 'schoenen';
+  if (/riem|ceintuur|hoed|sieraad|ketting|tas|bag/i.test(combined)) return 'accessoires';
+  return 'top';
+}
+
 export function checkGarmentInputSufficiency(input: GarmentEvaluationInput): {
   isSufficient: boolean;
   reasonNl: string;
@@ -311,15 +325,24 @@ export function checkGarmentInputSufficiency(input: GarmentEvaluationInput): {
   const brand = (input.brand || '').trim();
   const notes = (input.userNotes || '').trim();
 
+  // If user provided a photo or URL, that is 100% sufficient for photo-first evaluation
+  if (hasImage || hasUrl) {
+    return {
+      isSufficient: true,
+      reasonNl: '',
+      reasonEn: '',
+    };
+  }
+
   // Common placeholder or single generic test strings
   const lowerTitle = title.toLowerCase();
   const placeholderPatterns = ['test', 'demo', 'sample', 'item', 'kleding', 'kledingstuk', '123', 'abc', 'shirt', 'broek', 'jurk', 'rok', 'top', 'schoenen'];
   const isPlaceholderOnly = placeholderPatterns.includes(lowerTitle) || title.length < 3;
 
-  const hasSubstantialTitle = !isPlaceholderOnly && title.length >= 4;
+  const hasSubstantialTitle = !isPlaceholderOnly && title.length >= 3;
   const hasExtraAttributes = fabric.length > 2 || brand.length > 2 || notes.length > 2 || Boolean(input.hasSizeChartOrMeasurements);
 
-  if (hasImage || hasUrl || (hasSubstantialTitle && (hasExtraAttributes || title.split(/\s+/).length >= 2))) {
+  if (hasSubstantialTitle || hasExtraAttributes) {
     return {
       isSufficient: true,
       reasonNl: '',
@@ -329,8 +352,8 @@ export function checkGarmentInputSufficiency(input: GarmentEvaluationInput): {
 
   return {
     isSufficient: false,
-    reasonNl: 'Onvoldoende informatie om dit kledingstuk betrouwbaar te beoordelen. Voeg een foto, productlink of meer details (zoals stof of merk) toe.',
-    reasonEn: 'Insufficient information to evaluate this garment reliably. Please add a photo, product link, or more details (such as fabric or brand).',
+    reasonNl: 'Kies een foto om het kledingstuk te laten beoordelen door Alchemy.',
+    reasonEn: 'Please select a photo to evaluate this garment.',
   };
 }
 
@@ -548,14 +571,39 @@ export function evaluateGarment(
     considerations.push('Controleer de maattabel voor de taille/heup ratio vooraleer te bestellen.');
   }
 
-  // Enhancements ("+ would become more Patz with...")
-  enhancements.push('Combineer met suède western laarzen of elegante leren boots voor direct meer karakter.');
-  if (!hasWaistEmphasis) {
-    enhancements.push('Draag er een brede leren tailleriem met ornamentale gesp bij om het smalste punt te markeren.');
+  // Enhancements ("Zo zou ik hem dragen") - STRICT CATEGORY DISCIPLINE
+  const garmentCategory = detectGarmentCategory(textCorpus, input.category);
+
+  if (garmentCategory === 'jurk') {
+    enhancements.push('Combineer met suède westernlaarzen of elegante leren boots voor direct meer karakter.');
+    if (!hasWaistEmphasis) {
+      enhancements.push('Een mooie riem of ceintuur kan de taille nog sterker definiëren.');
+    } else {
+      enhancements.push('Draag gelaagde gouden colliers om het sleutelbeen te accentueren.');
+    }
+    enhancements.push('Drapeer er een zacht suède jack of kort leren jasje overheen voor het gewenste soft + strong contrast.');
+  } else if (garmentCategory === 'top') {
+    enhancements.push('Draag (half) ingestopt in een high-waist pantalon of soepele midi-rok om de taille te markeren.');
+    enhancements.push('Combineer met een getailleerd suède of leren jasje.');
+    enhancements.push('Rol de mouwen licht op voor een nonchalant-elegante uitstraling.');
+  } else if (garmentCategory === 'broek') {
+    enhancements.push('Combineer met een aangesloten top of ingestopte blouse voor optimale tailledefinitie.');
+    enhancements.push('Draag met enkellaarzen met een subtiele hak om de beenlijn bij 1.57m te verlengen.');
+    enhancements.push('Voeg een brede leren riem met gesp toe als stijlvol accent.');
+  } else if (garmentCategory === 'rok') {
+    enhancements.push('Combineer met een aangesloten top of fijne gebreide trui ingestopt bij de taille.');
+    enhancements.push('Draag met suède laarzen die mooi onder de zoom doorlopen.');
+    enhancements.push('Voeg een kort leren of suède jasje toe voor gelaagde structuur.');
+  } else if (garmentCategory === 'jas') {
+    enhancements.push('Draag open over een vrouwelijke jurk of top om lange verticale lijnen te creëren.');
+    enhancements.push('Snoer eventueel in met een ceintuur rond de taille.');
+    enhancements.push('Combineer met suède boots voor een gegronde uitstraling.');
+  } else if (garmentCategory === 'schoenen') {
+    enhancements.push('Perfect te dragen onder een midi- of maxi-jurk met split.');
+    enhancements.push('Mooi onder een high-waist pantalon of cropped denim.');
   } else {
-    enhancements.push('Draag gelaagde gouden colliers of subtiele hoepels om het sleutelbeen te accentueren.');
+    enhancements.push('Draag als karaktervol accent bij een vrouwelijke jurk of high-waist combinatie.');
   }
-  enhancements.push('Drapeer er een zacht suède jack of kort leren jasje overheen voor het gewenste soft + strong contrast.');
 
   // Conclusion & Qualitative Verdicts
   let verdict: 'JA' | 'TWIJFEL' | 'NEE' = 'JA';

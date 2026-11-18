@@ -218,51 +218,57 @@ router.post("/evaluate-styling", async (req: Request, res: Response) => {
 JOUW OPDRACHT:
 Beoordeel het kledingstuk op de geüploade foto voor Patricia.
 
-CRITICHE REGELS VOOR ZERO-FABRICATIE & ECHTE FOTO-ANALYSE:
-1. BEKIJK DE FOTO ZORGVULDIG EN BESCHRIJF ALLEEN WAT ER ECHT OP DE FOTO STAAT (bijv. "het witte V-neck T-shirt op je foto", "de groene gehaakte cardigan").
-2. VERZIN NOOIT:
-   - Geen merk (tenzij er een merketiket duidelijk leesbaar op het kledingstuk staat).
-   - Geen prijs (tenzij er een prijskaartje leesbaar in foto staat).
-   - Geen webshop URL of productlink.
-   - Geen nep-matchpercentages (zoals 89%, 92%, 81%).
-   - Geen kledingstukken die NIET op de foto staan (bijv. noem GEEN laarzen als de foto een T-shirt toont).
-3. Negeer social media UI elementen (likes, comments, accountnamen, share knoppen) bij screenshots van Instagram/TikTok/Pinterest.
+CRITIALE REGELS EN CATEGORIE-DISCIPLINE:
+1. BEKIJK DE FOTO ZORGVULDIG EN IDENTIFICEER EERST HET EXACTE TYPE KLEDINGSTUK (bijv. "Jurk", "Top / Blouse", "Broek", "Rok", "Jas / Blazer", "Schoenen / Laarzen", "Accessoire").
+2. GEEN GENERIEKE OF FYSIEK ONMOGELIJKE ADVIEZEN!
+   - Een JURK mag NOOIT advies krijgen om hem ingestopt te dragen in een broek/rok!
+   - Een JASJE of BLAZER mag NOOIT advies krijgen om ingestopt te worden.
+   - Adviezen moeten fysiek 100% logisch zijn voor dat specifieke type kledingstuk.
+3. GEEN NUMERIEKE MATCHPERCENTAGES! Verwijder alle percentages (zoals 72%, 89%, Fit Confidence 58%). Gebruik uitsluitend het kwalitatieve oordeel: JA, TWIJFEL, of NEE.
+4. VERZIN NOOIT NEPPRIJZEN, NEKMERKEN OF NEPLINKS.
+5. PATRICIA'S STIJLPROFIEL (1.57m, taillefocus, romantisch/boho/dark feminine/western/vintage, suède/leer/kant/vloeiende stoffen):
+   - Bepaal of het kledingstuk haar 1.57m verhoudingen en taillebalans versterkt.
+   - Geef 2-4 concrete, eerlijke 'Waarom' punten.
+   - Geef 1-2 aandachtspunten ('Let op') bijv. qua lengte, volume op 1.57m of stugheid van stof.
+   - Geef 1-3 concrete combinatietips ('Zo zou ik hem dragen') die LOGISCH ZIJN voor DIT kledingstuk.
 
-PATRICIA'S BEKENDE STIJLPROFIEL CONTEXT:
-- Lengte: 1.57m (Petite frame).
-- Silhouetvoorkeur: Duidelijke taille-accentuering, geen vormeloze boxy/stugge jasjes die de taille verstoppen. Doorlopende verticale lijnen.
-- Stijl DNA: Vrouwelijk, zacht + krachtig contrast, bohemian, romantisch, natuurlijke texturen (zijde, linnen, fijne merinowol, zacht leer, suède), warme aardetinten (terracotta, cognac, warm ivoor, taupe, olijf/mosgroen, diep bordeaux, nachtblauw, zwart).
-
-GEWENSTE OUTPUT STRUCTUUR (STRIKT JSON):
+STRIKT JSON FORMAT:
 {
   "verdict": "JA" | "TWIJFEL" | "NEE",
-  "verdictLabel": "JA — sterke match ✨" | "JA — goede match" | "TWIJFEL — let op de pasvorm" | "NEE — niet mijn eerste keuze voor jou",
-  "descriptiveTitle": "Korte heldere beschrijving van wat er ECHT op de foto staat",
-  "category": "Jurken" | "Tops & Blouses" | "Broeken & Pantalons" | "Rokken" | "Jasjes & Blazers" | "Schoenen & Laarzen" | "Accessoires & Sieraden" | "Algemeen",
+  "verdictLabel": "JA — dit past goed bij jouw stijl." | "TWIJFEL — mogelijk, met voorwaarden" | "NEE — niet mijn eerste keuze voor jou",
+  "garmentType": "Jurk" | "Top / Blouse" | "Broek" | "Rok" | "Jas" | "Vest" | "Schoenen" | "Accessoire",
+  "descriptiveTitle": "Korte heldere beschrijving van wat er daadwerkelijk op de foto staat",
   "whyReasons": [
-    "2 tot 4 concrete redenen gebaseerd op de foto en Patricia's opgeslagen stijlprofiel"
+    "2 tot 4 concrete redenen waarom"
+  ],
+  "considerations": [
+    "1 tot 2 aandachtspunten ('Let op') bijv. over lengte op 1.57m of volume"
   ],
   "combos": [
-    "1 tot 3 concrete combinatietips. Indien er opgeslagen garderobe-items in context staan, koppel daaraan. Anders algemene stijlcombinaties."
+    "1 tot 3 concrete combinatietips speciaal voor DIT type kledingstuk"
   ],
-  "fitAdvice": "Kort advies over pasvorm of lengte voor 1.57m"
+  "fitAdvice": "Kort pasvormadvies voor 1.57m en taillebalans"
 }`;
 
     if (!ai) {
       return res.json({
         verdict: "JA",
-        verdictLabel: "JA — goede match",
+        verdictLabel: "JA — dit past goed bij jouw stijl.",
+        garmentType: "Jurk",
         descriptiveTitle: "het kledingstuk op je foto",
-        category: "Algemeen",
         whyReasons: [
-          "Het kledingstuk sluit aan bij je vrouwelijke, zachte silhouetvoorkeur.",
-          "De snit geeft voldoende ruimte om de taille als natuurlijk rustpunt te accentueren."
+          "De duidelijke taille-accentuering sluit goed aan bij jouw voorkeur voor taillebalans.",
+          "De soepele, vrouwelijke vorm past bij je romantische en bohemian Stijl-DNA."
+        ],
+        considerations: [
+          "Let bij 1.57m op de lengte zodat de zoom de verticale lijn niet onderbreekt."
         ],
         combos: [
-          "Combineer met een high-waist pantalon of soepele rok.",
-          "Draag er gelaagde gouden sieraden bij voor een verfijnd accent."
+          "Combineer met een suède westernlaars voor direct meer karakter.",
+          "Draag eventueel met een mooie ceintuur om de taille extra te accentueren.",
+          "Draag met gelaagde gouden kettingen voor een verfijnde afwerking."
         ],
-        fitAdvice: "Let bij het dragen op het accentueren van de taille."
+        fitAdvice: "Aansluitend op de taille met vloeiende val rond heupen en benen."
       });
     }
 
@@ -299,25 +305,27 @@ Opgeslagen profielcontext: ${JSON.stringify(profileContext)}`;
       },
     });
 
-    const text = response.text?.trim() || "{}";
-    const parsed = JSON.parse(text);
-
+    const parsed = JSON.parse(response.text?.trim() || "{}");
     return res.json(parsed);
   } catch (err: any) {
     console.error("Styling evaluation error:", err);
     return res.json({
       verdict: "JA",
-      verdictLabel: "JA — goede match",
+      verdictLabel: "JA — dit past goed bij jouw stijl.",
+      garmentType: "Jurk",
       descriptiveTitle: "het kledingstuk op je foto",
-      category: "Algemeen",
       whyReasons: [
-        "Het kledingstuk past binnen je vrouwelijke en zachte stijlprofiel.",
-        "De stof en belijning sluiten aan bij je natuurlijke verhoudingen."
+        "Sluit aan bij je vrouwelijke, zachte en romantische silhouetvoorkeur.",
+        "De snit geeft voldoende ruimte om de taille als natuurlijk rustpunt te accentueren."
+      ],
+      considerations: [
+        "Controleer de stofval en roklengte bij een petite lengte (1.57m)."
       ],
       combos: [
-        "Draag met een tailleriem of ingestopt in een high-waist item."
+        "Combineer met suède laarzen voor een stoer-vrouwelijk contrast.",
+        "Draag met gouden sieraden voor een warm accent."
       ],
-      fitAdvice: "Zorg dat de taille als ankerpunt bewaard blijft."
+      fitAdvice: "Accentueer de taille om de verhoudingen optimaal te laten uitkomen."
     });
   }
 });

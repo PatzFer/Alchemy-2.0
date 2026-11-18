@@ -24,6 +24,7 @@ import {
   IntegrationsState,
   Language,
   IntegrationConnectionStatus,
+  CalendarEvent,
 } from '../../types';
 import { IntegrationsService } from '../../lib/integrationsService';
 import {
@@ -39,6 +40,7 @@ import {
 interface IntegrationsViewProps {
   integrations: IntegrationsState;
   onUpdateIntegrations: (updater: (prev: IntegrationsState) => IntegrationsState) => void;
+  onSyncCalendarEvents?: (events: CalendarEvent[]) => void;
   lang?: Language;
   onNavigateToNotifications?: () => void;
 }
@@ -46,6 +48,7 @@ interface IntegrationsViewProps {
 export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
   integrations,
   onUpdateIntegrations,
+  onSyncCalendarEvents,
   lang = 'nl',
   onNavigateToNotifications,
 }) => {
@@ -134,8 +137,12 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
         throw new Error('OAuth authenticatie is niet voltooid.');
       }
 
-      const { accountEmail, isWriteAccessGranted, totalEventsCount } =
+      const { accountEmail, isWriteAccessGranted, totalEventsCount, events } =
         await fetchRealCalendarEventsFromApi(authRes.accessToken);
+
+      if (onSyncCalendarEvents && events) {
+        onSyncCalendarEvents(events);
+      }
 
       const now = new Date().toISOString();
       onUpdateIntegrations((prev) => ({
@@ -188,6 +195,9 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
     setSyncingService('calendar');
     await IntegrationsService.disconnectService('google_calendar');
     setCachedAccessToken(null);
+    if (onSyncCalendarEvents) {
+      onSyncCalendarEvents([]);
+    }
     onUpdateIntegrations((prev) => ({
       ...prev,
       calendar: {
@@ -215,8 +225,12 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
         token = authRes.accessToken;
       }
 
-      const { accountEmail, isWriteAccessGranted, totalEventsCount } =
+      const { accountEmail, isWriteAccessGranted, totalEventsCount, events } =
         await fetchRealCalendarEventsFromApi(token);
+
+      if (onSyncCalendarEvents && events) {
+        onSyncCalendarEvents(events);
+      }
 
       const now = new Date().toISOString();
       onUpdateIntegrations((prev) => ({
@@ -795,7 +809,7 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
             <div className="flex flex-wrap items-center gap-4 text-xs text-[#7A7167] pt-2 border-t border-[#EAE3D5]">
               <div>
                 <span className="text-[#8C8377]">{isNl ? 'Account:' : 'Account:'} </span>
-                <span className="font-mono text-[#2C2825]">{integrations.calendar.accountEmail || 'patricia@gmail.com'}</span>
+                <span className="font-mono text-[#2C2825]">{integrations.calendar.accountEmail || (isNl ? 'Gekoppeld account' : 'Connected account')}</span>
               </div>
               {integrations.calendar.lastSync && (
                 <div>

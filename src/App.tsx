@@ -29,6 +29,7 @@ import {
   DEFAULT_INTEGRATIONS_STATE,
 } from './lib/storage';
 import { IntegrationsService } from './lib/integrationsService';
+import { getCachedAccessToken, createRealCalendarEventInApi } from './lib/googleAuthService';
 import {
   ActiveWorldFilter,
   Task,
@@ -284,10 +285,50 @@ export default function App() {
   };
 
   // Calendar handlers
-  const handleAddCalendarEvent = (evt: Partial<CalendarEvent>) => {
+  const handleSyncCalendarEvents = (googleEvents: CalendarEvent[]) => {
+    setState((prev) => {
+      const localEventsOnly = (prev.calendarEvents || []).filter(
+        (e) => !e.isExternalSync && e.source !== 'google'
+      );
+      return {
+        ...prev,
+        calendarEvents: [...localEventsOnly, ...googleEvents],
+      };
+    });
+  };
+
+  const handleAddCalendarEvent = async (evt: Partial<CalendarEvent>) => {
+    const newEvent: CalendarEvent = {
+      id: evt.id || `evt-${Date.now()}`,
+      title: evt.title || 'Nieuwe Afspraak',
+      date: evt.date || new Date().toISOString().split('T')[0],
+      startTime: evt.startTime || '09:00',
+      endTime: evt.endTime || '10:00',
+      realm: evt.realm || 'personal',
+      type: evt.type || 'appointment',
+      location: evt.location,
+      notes: evt.notes,
+      isExternalSync: false,
+      source: 'alchemy',
+    };
+
+    const token = getCachedAccessToken();
+    const isConnected = state.integrations?.calendar?.status === 'connected';
+    const isReadOnly = state.integrations?.calendar?.readOnly;
+
+    if (isConnected && !isReadOnly && token) {
+      try {
+        const { googleEventId } = await createRealCalendarEventInApi(token, newEvent);
+        newEvent.googleEventId = googleEventId;
+        newEvent.isExternalSync = true;
+      } catch (err: any) {
+        console.warn('Could not push event to Google Calendar API:', err);
+      }
+    }
+
     setState((prev) => ({
       ...prev,
-      calendarEvents: [...prev.calendarEvents, evt as CalendarEvent],
+      calendarEvents: [...prev.calendarEvents, newEvent],
     }));
   };
 
@@ -1158,6 +1199,7 @@ export default function App() {
             onUpdateFoundation={handleUpdateFoundation}
             wellbeingState={state.wellbeing}
             integrations={state.integrations}
+            onSyncCalendarEvents={handleSyncCalendarEvents}
             onUpdateIntegrations={(updater) =>
               setState((prev) => {
                 const nextState = {

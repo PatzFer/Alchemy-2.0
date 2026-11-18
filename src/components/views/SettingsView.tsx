@@ -30,6 +30,7 @@ import {
   FoundationData,
   WellbeingState,
   IntegrationsState,
+  CalendarEvent,
 } from '../../types';
 import { AppState } from '../../lib/storage';
 import { requestPushPermission, sendBrowserNotification } from '../../lib/notificationEngine';
@@ -58,6 +59,7 @@ interface SettingsViewProps {
   wellbeingState?: WellbeingState;
   integrations?: IntegrationsState;
   onUpdateIntegrations?: (updater: (prev: IntegrationsState) => IntegrationsState) => void;
+  onSyncCalendarEvents?: (events: CalendarEvent[]) => void;
 }
 
 export const SettingsView: React.FC<SettingsViewProps> = ({
@@ -79,6 +81,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   wellbeingState,
   integrations,
   onUpdateIntegrations,
+  onSyncCalendarEvents,
 }) => {
   const [activeTab, setActiveTab] = useState<'foundation' | 'memory' | 'notifications' | 'integrations' | 'security' | 'data'>(initialTab);
   const [newMemoryContent, setNewMemoryContent] = useState('');
@@ -517,6 +520,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         <IntegrationsView
           integrations={integrations}
           onUpdateIntegrations={onUpdateIntegrations}
+          onSyncCalendarEvents={onSyncCalendarEvents}
           lang={isNl ? 'nl' : 'en'}
           onNavigateToNotifications={() => setActiveTab('notifications')}
         />

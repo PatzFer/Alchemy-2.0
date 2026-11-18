@@ -612,80 +612,27 @@ export const PersonalStylingView: React.FC<PersonalStylingViewProps> = ({
             </div>
           </div>
 
-          {/* Quick Preset Selector */}
-          <div className="rounded-3xl border border-[#E3D9C9] bg-[#FAF8F3] p-6 space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="font-serif text-lg text-[#2C2825]">
-                  {isNl ? 'Snel testen met voorbeeldkledingstukken' : 'Quick test with curated pieces'}
-                </h2>
-                <p className="text-xs text-[#7A7167]">
-                  {isNl
-                    ? 'Kies een kledingstuk om direct te zien hoe het match-algoritme de 7 dimensies en pasvormzekerheid berekent.'
-                    : 'Select a garment to instantly preview how the evaluation engine scores style, proportions, and fit confidence.'}
-                </p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-              {PRESET_GARMENTS.map((preset) => (
-                <button
-                  key={preset.id}
-                  type="button"
-                  onClick={() => handleSelectPreset(preset)}
-                  className={`text-left p-3.5 rounded-2xl border transition-all flex flex-col justify-between ${
-                    evalInput.itemTitle === preset.title
-                      ? 'border-[#8C7654] bg-[#F4EFE6] ring-1 ring-[#8C7654]'
-                      : 'border-[#EAE2D5] bg-[#FFFFFF] hover:border-[#D5C7B3]'
-                  }`}
-                >
-                  <div className="space-y-1">
-                    <div className="flex items-center justify-between text-[10px]">
-                      <span className="text-[#8C7654] font-medium uppercase tracking-wider">
-                        {preset.category}
-                      </span>
-                      <span className="font-semibold text-[#2C2825]">{preset.price}</span>
-                    </div>
-                    <div className="text-xs font-serif font-medium text-[#2C2825] line-clamp-1">
-                      {preset.title}
-                    </div>
-                    <p className="text-[11px] text-[#7A7167] font-light line-clamp-2">
-                      {preset.shortNoteNl}
-                    </p>
-                  </div>
-                  <div className="mt-2 pt-2 border-t border-[#F0EAE1] flex items-center justify-between text-[10px] text-[#8C8377]">
-                    <span>{preset.brand}</span>
-                    <span className="text-[#8C7654] font-medium">Selecteer →</span>
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Upload & Garment Input Form */}
+          {/* Upload & Garment Input Form — PHOTO-FIRST EXPERIENCE */}
           <div className="rounded-3xl border border-[#E3D9C9] bg-[#FAF8F3] p-6 sm:p-8 space-y-6">
-            <div className="flex items-start justify-between gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
                 <span className="text-[10px] uppercase tracking-widest text-[#8C7654] font-medium block mb-1">
-                  {isNl ? 'Kleding Evaluatie Studio' : 'Clothing Evaluation Studio'}
+                  {isNl ? 'Personal Styling Check' : 'Personal Styling Check'}
                 </span>
                 <h2 className="font-serif text-xl sm:text-2xl text-[#2C2825]">
                   “Past dit bij mij?”
                 </h2>
-                <p className="text-xs sm:text-sm text-[#7A7167] mt-1 font-light">
+                <p className="text-xs sm:text-sm text-[#7A7167] mt-1 font-light max-w-xl">
                   {isNl
-                    ? 'Upload een screenshot, productfoto, productlink of voer kledingdetails in om te analyseren of het past bij jouw Proporties, Stijl-DNA en gewenste uitstraling.'
-                    : 'Upload a product screenshot, photo, product link, or details to analyze fit, Style DNA, and presence.'}
+                    ? 'Kies of upload één foto van een kledingstuk. Alchemy beoordeelt direct of het past bij jouw Stijl-DNA, 1.57m verhoudingen en taillebalans.'
+                    : 'Select a photo of a garment. Alchemy will evaluate it against your Style DNA, 1.57m proportions, and waist definition.'}
                 </p>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-              {/* Image Input / Preview with Mobile Photo Picker */}
-              <div className="md:col-span-4 space-y-3">
-                <label className="text-xs font-medium text-[#2C2825] block">
-                  {isNl ? 'Kledingfoto of screenshot' : 'Garment Photo / Screenshot'}
-                </label>
+            <div className="space-y-6">
+              {/* Image Upload Area — Primary Input */}
+              <div className="max-w-md mx-auto space-y-3">
                 <input
                   type="file"
                   ref={fileInputRef}
@@ -697,14 +644,14 @@ export const PersonalStylingView: React.FC<PersonalStylingViewProps> = ({
                   onClick={() => fileInputRef.current?.click()}
                   onDragOver={(e) => e.preventDefault()}
                   onDrop={handleDrop}
-                  className="aspect-3/4 rounded-2xl border-2 border-dashed border-[#DCD3C4] bg-[#FFFFFF] flex flex-col items-center justify-center p-4 text-center relative overflow-hidden group cursor-pointer hover:border-[#8C7654] transition-all"
+                  className="aspect-4/3 sm:aspect-16/10 rounded-2xl border-2 border-dashed border-[#DCD3C4] bg-[#FFFFFF] flex flex-col items-center justify-center p-6 text-center relative overflow-hidden group cursor-pointer hover:border-[#8C7654] transition-all shadow-xs"
                 >
                   {evalInput.imageUrl ? (
-                    <div className="w-full h-full relative">
+                    <div className="w-full h-full relative flex items-center justify-center bg-[#F7F4EE] rounded-xl overflow-hidden">
                       <img
                         src={evalInput.imageUrl}
-                        alt={evalInput.itemTitle || 'Kledingstuk'}
-                        className="w-full h-full object-cover rounded-xl"
+                        alt={evalInput.itemTitle || 'Geüpload kledingstuk'}
+                        className="max-h-full max-w-full object-contain rounded-xl"
                         referrerPolicy="no-referrer"
                       />
                       <button
@@ -712,23 +659,25 @@ export const PersonalStylingView: React.FC<PersonalStylingViewProps> = ({
                         onClick={(e) => {
                           e.stopPropagation();
                           handleEvalInputChange({ imageUrl: '' });
+                          setCurrentEvaluation(null);
                         }}
                         className="absolute top-2 right-2 p-1.5 rounded-full bg-black/60 text-white text-xs hover:bg-black/80 transition-all cursor-pointer"
+                        title="Foto verwijderen"
                       >
                         ✕
                       </button>
                     </div>
                   ) : (
                     <div className="space-y-3 p-2 w-full">
-                      <div className="w-12 h-12 rounded-full bg-[#F4EFE6] mx-auto flex items-center justify-center text-[#8C7654]">
-                        <ImageIcon className="w-6 h-6" />
+                      <div className="w-14 h-14 rounded-full bg-[#F4EFE6] mx-auto flex items-center justify-center text-[#8C7654]">
+                        <Upload className="w-6 h-6" />
                       </div>
                       <div className="space-y-1">
-                        <p className="text-xs text-[#2C2825] font-medium">
-                          {isNl ? 'Kies een foto uit je galerij' : 'Choose photo from gallery'}
+                        <p className="text-sm text-[#2C2825] font-serif font-medium">
+                          {isNl ? 'Upload een foto van een kledingstuk' : 'Upload a photo of a garment'}
                         </p>
-                        <p className="text-[10px] text-[#7A7167]">
-                          {isNl ? 'Of sleep een afbeelding naar deze zone' : 'Or drag and drop an image'}
+                        <p className="text-xs text-[#7A7167]">
+                          {isNl ? 'Kies uit galerij, maak een foto of sleep een bestand' : 'Choose photo from gallery or drag file'}
                         </p>
                       </div>
                       <button
@@ -737,566 +686,336 @@ export const PersonalStylingView: React.FC<PersonalStylingViewProps> = ({
                           e.stopPropagation();
                           fileInputRef.current?.click();
                         }}
-                        className="w-full min-h-[44px] px-4 py-2.5 rounded-xl bg-[#2C2825] hover:bg-[#433D38] text-[#FAF8F3] font-medium text-xs flex items-center justify-center gap-2 transition-all mx-auto shadow-xs cursor-pointer"
+                        className="w-full min-h-[48px] px-6 py-3 rounded-2xl bg-[#2C2825] hover:bg-[#433D38] text-[#FAF8F3] font-medium text-xs flex items-center justify-center gap-2 transition-all mx-auto shadow-sm cursor-pointer"
                       >
                         <Upload className="w-4 h-4 text-[#C5A880]" />
-                        <span>{isNl ? 'Foto kiezen' : 'Choose Photo'}</span>
+                        <span>{isNl ? '📷 Foto kiezen' : '📷 Choose Photo'}</span>
                       </button>
-                      <p className="text-[10px] text-[#8C8377]">
-                        {isNl ? 'Direct te openen op smartphone (camera / fotobibliotheek)' : 'Opens photo picker on iOS & Android'}
-                      </p>
                     </div>
                   )}
                 </div>
 
-                <div>
-                  <input
-                    type="url"
-                    placeholder={isNl ? 'Afbeeldingslink (URL)...' : 'Paste image URL...'}
-                    value={evalInput.imageUrl || ''}
-                    onChange={(e) => handleEvalInputChange({ imageUrl: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl bg-[#FFFFFF] border border-[#DDD4C5] text-xs text-[#2C2825] placeholder-[#A0988B]"
-                  />
-                </div>
-              </div>
-
-              {/* Garment Details Fields */}
-              <div className="md:col-span-8 space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-xs font-medium text-[#2C2825] block mb-1">
-                      {isNl ? 'Titel / Naam van het item' : 'Garment Name / Title'} *
-                    </label>
-                    <input
-                      type="text"
-                      placeholder={isNl ? 'bijv. Bohemian Maxi Wikkeljurk' : 'e.g. Bohemian Maxi Wrap Dress'}
-                      value={evalInput.itemTitle}
-                      onChange={(e) => handleEvalInputChange({ itemTitle: e.target.value })}
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-[#FFFFFF] border border-[#DDD4C5] text-xs text-[#2C2825]"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="text-xs font-medium text-[#2C2825] block mb-1">
-                      {isNl ? 'Productlink / Webshop URL (Optioneel)' : 'Product URL (Optional)'}
-                    </label>
-                    <input
-                      type="url"
-                      placeholder="https://..."
-                      value={evalInput.productUrl || ''}
-                      onChange={(e) => handleEvalInputChange({ productUrl: e.target.value })}
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-[#FFFFFF] border border-[#DDD4C5] text-xs text-[#2C2825]"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
-                  <div>
-                    <label className="text-xs font-medium text-[#2C2825] block mb-1">
-                      {isNl ? 'Categorie' : 'Category'}
-                    </label>
-                    <select
-                      value={evalInput.category}
-                      onChange={(e) => handleEvalInputChange({ category: e.target.value })}
-                      className="w-full px-3 py-2 rounded-xl bg-[#FFFFFF] border border-[#DDD4C5] text-xs text-[#2C2825]"
-                    >
-                      <option value="Jurken">Jurken (Maxi, Midi, Wikkel)</option>
-                      <option value="Tops & Blouses">Tops & Blouses (Kant, Open hals, Linnen)</option>
-                      <option value="Broeken & Pantalons">Broeken & Pantalons (High-waist, Plooi)</option>
-                      <option value="Rokken">Rokken (Midi, Satijn, Wikkel)</option>
-                      <option value="Jasjes & Blazers">Jasjes & Blazers (Getailleerd, Leer, Suède)</option>
-                      <option value="Schoenen & Laarzen">Schoenen & Laarzen (Western boots, Loafers)</option>
-                      <option value="Accessoires & Sieraden">Accessoires (Tailleriemen, Hoeden)</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="text-xs font-medium text-[#2C2825] block mb-1">
-                      {isNl ? 'Merk / Winkel' : 'Brand'}
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="bijv. Sézane"
-                      value={evalInput.brand || ''}
-                      onChange={(e) => handleEvalInputChange({ brand: e.target.value })}
-                      className="w-full px-3 py-2 rounded-xl bg-[#FFFFFF] border border-[#DDD4C5] text-xs text-[#2C2825]"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="text-xs font-medium text-[#2C2825] block mb-1">
-                      {isNl ? 'Prijs (Optioneel)' : 'Price (Optional)'}
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="bijv. €129"
-                      value={evalInput.price || ''}
-                      onChange={(e) => handleEvalInputChange({ price: e.target.value })}
-                      className="w-full px-3 py-2 rounded-xl bg-[#FFFFFF] border border-[#DDD4C5] text-xs text-[#2C2825]"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="text-xs font-medium text-[#2C2825] block mb-1">
-                      {isNl ? 'Gelegenheid' : 'Occasion'}
-                    </label>
-                    <select
-                      value={evalInput.occasion || 'general'}
-                      onChange={(e) => handleEvalInputChange({ occasion: e.target.value })}
-                      className="w-full px-3 py-2 rounded-xl bg-[#FFFFFF] border border-[#DDD4C5] text-xs text-[#2C2825]"
-                    >
-                      {STYLING_OCCASIONS.map((occ) => (
-                        <option key={occ.id} value={occ.id}>
-                          {occ.nameNl}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                {/* Stof, Rekbaarheid & Maattabel */}
-                <div className="rounded-2xl border border-[#EBE3D5] bg-[#F7F4EC] p-4 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-medium text-[#2C2825] flex items-center gap-1.5">
-                      <Tag className="w-3.5 h-3.5 text-[#8C7654]" />
-                      {isNl ? 'Materiaalinformatie & Pasvormgegevens' : 'Fabric & Sizing Data'}
-                    </span>
-                    <span className="text-[11px] text-[#8C8174]">
-                      {isNl ? 'Verhoogt de Pasvormzekerheid' : 'Increases Fit Confidence'}
-                    </span>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                      <input
-                        type="text"
-                        placeholder={isNl ? 'Stof (bijv. 100% linnen, viscose blend, zijde)' : 'Fabric (e.g. linen, silk)'}
-                        value={evalInput.fabricDescription || ''}
-                        onChange={(e) => handleEvalInputChange({ fabricDescription: e.target.value })}
-                        className="w-full px-3 py-2 rounded-xl bg-[#FFFFFF] border border-[#DDD4C5] text-xs text-[#2C2825]"
-                      />
-                    </div>
-
-                    <div className="flex items-center gap-4">
-                      <label className="flex items-center gap-2 cursor-pointer text-xs text-[#4A4237]">
-                        <input
-                          type="checkbox"
-                          checked={evalInput.hasSizeChartOrMeasurements || false}
-                          onChange={(e) =>
-                            handleEvalInputChange({ hasSizeChartOrMeasurements: e.target.checked })
-                          }
-                          className="rounded border-[#C5A880] text-[#2C2825] focus:ring-[#C5A880]"
-                        />
-                        <span>{isNl ? 'Maattabel / maten beschikbaar' : 'Size chart available'}</span>
-                      </label>
-                    </div>
-                  </div>
-                </div>
-
-                {!inputCheck.isSufficient && evalInput.itemTitle.trim().length > 0 && (
-                  <div className="p-3 rounded-xl bg-[#FFF8EE] border border-[#E8D9C5] text-xs text-[#8C6D43] flex items-start gap-2">
-                    <AlertTriangle className="w-4 h-4 shrink-0 text-[#A85A3C] mt-0.5" />
-                    <span>
-                      {isNl
-                        ? 'Onvoldoende informatie om dit kledingstuk betrouwbaar te beoordelen. Voeg een foto, productlink of meer details (zoals stof of merk) toe.'
-                        : 'Insufficient information to evaluate this garment reliably. Please add a photo, product link, or more details (such as fabric or brand).'}
-                    </span>
-                  </div>
-                )}
-
-                <div className="pt-2 flex justify-end">
+                {/* Primary Evaluation Action Button */}
+                <div className="pt-2">
                   <button
                     type="button"
                     onClick={handleRunEvaluation}
-                    disabled={(!evalInput.itemTitle.trim() && !evalInput.imageUrl && !evalInput.productUrl) || isEvaluating}
-                    className="px-6 py-3 rounded-2xl bg-[#2C2825] text-[#FAF8F3] text-xs font-medium hover:bg-[#433D38] transition-all disabled:opacity-50 shadow-sm flex items-center gap-2 cursor-pointer"
+                    disabled={(!evalInput.imageUrl && !evalInput.itemTitle.trim() && !evalInput.productUrl) || isEvaluating}
+                    className="w-full min-h-[50px] px-6 py-3.5 rounded-2xl bg-[#2C2825] text-[#FAF8F3] text-sm font-medium hover:bg-[#433D38] transition-all disabled:opacity-40 shadow-sm flex items-center justify-center gap-2.5 cursor-pointer"
                   >
                     {isEvaluating ? (
                       <>
                         <RefreshCw className="w-4 h-4 animate-spin text-[#C5A880]" />
-                        <span>{isNl ? 'Analyseren tegen Stijl DNA...' : 'Analyzing against Style DNA...'}</span>
+                        <span>{isNl ? 'Alchemy bekijkt je foto...' : 'Analyzing photo against Style DNA...'}</span>
                       </>
                     ) : (
                       <>
-                        <Sparkles className="w-4 h-4 text-[#C5A880]" />
-                        <span>{isNl ? 'Beoordeel dit kledingstuk' : 'Analyze this Garment'}</span>
+                        <Sparkles className="w-4.5 h-4.5 text-[#C5A880]" />
+                        <span>{isNl ? 'Beoordeel dit voor mij' : 'Analyze for Me'}</span>
                       </>
                     )}
                   </button>
+                </div>
+
+                {/* Optional Product Info Expander */}
+                <div className="pt-1 text-center">
+                  <button
+                    type="button"
+                    onClick={() => setShowOptionalDetails(!showOptionalDetails)}
+                    className="text-xs text-[#8C7654] font-medium hover:underline flex items-center gap-1 mx-auto cursor-pointer"
+                  >
+                    <span>{showOptionalDetails ? '▲ Verberg optionele details' : '▼ Optionele details toevoegen (zoals link of notitie)'}</span>
+                  </button>
+
+                  {showOptionalDetails && (
+                    <div className="mt-3 p-4 rounded-2xl bg-[#FFFFFF] border border-[#DDD4C5] text-left space-y-3">
+                      <div>
+                        <label className="text-[11px] font-medium text-[#2C2825] block mb-1">
+                          {isNl ? 'Titel / Naam (Optioneel)' : 'Title / Name (Optional)'}
+                        </label>
+                        <input
+                          type="text"
+                          placeholder={isNl ? 'bijv. Bohemian Maxi Jurk' : 'e.g. Bohemian Maxi Dress'}
+                          value={evalInput.itemTitle}
+                          onChange={(e) => handleEvalInputChange({ itemTitle: e.target.value })}
+                          className="w-full px-3 py-2 rounded-xl bg-[#FAF8F4] border border-[#DDD4C5] text-xs text-[#2C2825]"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[11px] font-medium text-[#2C2825] block mb-1">
+                          {isNl ? 'Productlink (Optioneel)' : 'Product Link (Optional)'}
+                        </label>
+                        <input
+                          type="url"
+                          placeholder="https://..."
+                          value={evalInput.productUrl || ''}
+                          onChange={(e) => handleEvalInputChange({ productUrl: e.target.value })}
+                          className="w-full px-3 py-2 rounded-xl bg-[#FAF8F4] border border-[#DDD4C5] text-xs text-[#2C2825]"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[11px] font-medium text-[#2C2825] block mb-1">
+                          {isNl ? 'Notitie of vraag (Optioneel)' : 'Notes or Question (Optional)'}
+                        </label>
+                        <input
+                          type="text"
+                          placeholder={isNl ? 'bijv. Twijfel over stofstijfheid' : 'e.g. Unsure about fabric stiffness'}
+                          value={evalInput.userNotes || ''}
+                          onChange={(e) => handleEvalInputChange({ userNotes: e.target.value })}
+                          className="w-full px-3 py-2 rounded-xl bg-[#FAF8F4] border border-[#DDD4C5] text-xs text-[#2C2825]"
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Evaluation Result Card */}
+          {/* Quick Preset Selector */}
+          <div className="rounded-3xl border border-[#E3D9C9] bg-[#FAF8F3] p-5 space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-serif text-sm text-[#2C2825] font-medium">
+                  {isNl ? 'Of test direct met een voorbeeldkledingstuk:' : 'Or test with a sample garment:'}
+                </h3>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2.5">
+              {PRESET_GARMENTS.slice(0, 4).map((preset) => (
+                <button
+                  key={preset.id}
+                  type="button"
+                  onClick={() => handleSelectPreset(preset)}
+                  className={`text-left p-3 rounded-xl border transition-all flex flex-col justify-between cursor-pointer ${
+                    evalInput.itemTitle === preset.title
+                      ? 'border-[#8C7654] bg-[#F4EFE6] ring-1 ring-[#8C7654]'
+                      : 'border-[#EAE2D5] bg-[#FFFFFF] hover:border-[#D5C7B3]'
+                  }`}
+                >
+                  <div className="space-y-0.5">
+                    <span className="text-[9px] text-[#8C7654] font-medium uppercase tracking-wider block">
+                      {preset.category}
+                    </span>
+                    <div className="text-xs font-serif font-medium text-[#2C2825] line-clamp-1">
+                      {preset.title}
+                    </div>
+                  </div>
+                  <div className="mt-1.5 pt-1 border-t border-[#F0EAE1] flex items-center justify-between text-[10px] text-[#8C8377]">
+                    <span>{preset.brand}</span>
+                    <span className="text-[#8C7654] font-medium">Test →</span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Evaluation Result Card — NO NUMERICAL PERCENTAGES */}
           {currentEvaluation && (
             currentEvaluation.isInsufficient ? (
               <div className="rounded-3xl border border-[#E5C39E] bg-[#FFFBF5] p-6 sm:p-8 space-y-4 shadow-sm">
                 <div className="flex items-center gap-3 text-[#A85A3C]">
                   <AlertTriangle className="w-5 h-5 shrink-0" />
                   <h3 className="font-serif text-lg text-[#2C2825]">
-                    {isNl ? 'Onvoldoende informatie voor betrouwbare analyse' : 'Insufficient Information for Analysis'}
+                    {isNl ? 'Foto kiezen om te beoordelen' : 'Please select a photo to evaluate'}
                   </h3>
                 </div>
                 <p className="text-xs sm:text-sm text-[#5C5449] leading-relaxed">
-                  {currentEvaluation.verdictNl ||
-                    (isNl
-                      ? 'Onvoldoende informatie om dit kledingstuk betrouwbaar te beoordelen. Voeg een foto, productlink of meer details (zoals stof of merk) toe.'
-                      : 'Insufficient information to evaluate this garment reliably. Please add a photo, product link, or more details (such as fabric or brand).')}
+                  {currentEvaluation.verdictNl || 'Upload een foto van een kledingstuk om een stijlanalyse te starten.'}
                 </p>
-                <div className="pt-2 flex items-center gap-2 text-xs text-[#8C7654]">
-                  <span>💡 {isNl ? 'Tip: Upload een foto, voeg een merk/stofbeschrijving toe of kies een voorbeeldkledingstuk hierboven.' : 'Tip: Upload a photo, add brand/fabric details, or select a preset above.'}</span>
-                </div>
               </div>
             ) : (
             <div className="rounded-3xl border border-[#D5C7B3] bg-[#FFFFFF] p-6 sm:p-8 space-y-6 shadow-sm">
-              <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 pb-5 border-b border-[#F0E9DF]">
-                <div>
-                  <div className="flex items-center gap-2 text-[10px] text-[#8C7654] uppercase tracking-wider font-medium mb-1">
-                    <span>{currentEvaluation.category}</span>
-                    <span>•</span>
-                    <span>{currentEvaluation.date}</span>
-                    {currentEvaluation.occasion && (
-                      <>
-                        <span>•</span>
-                        <span>{currentEvaluation.occasion}</span>
-                      </>
-                    )}
+              {/* ✦ MIJN OORDEEL Header */}
+              <div className="space-y-3 pb-5 border-b border-[#F0E9DF]">
+                <div className="flex items-center gap-2 text-[10px] text-[#8C7654] uppercase tracking-widest font-medium">
+                  <Sparkles className="w-3.5 h-3.5 text-[#C5A880]" />
+                  <span>✦ MIJN OORDEEL</span>
+                </div>
+
+                {/* Verdict Badge Pill */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div>
+                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl text-sm font-medium shadow-2xs font-serif">
+                      {currentEvaluation.verdict === 'JA' ? (
+                        <span className="px-3 py-1 rounded-xl bg-[#EAF3E8] border border-[#A8D3A0] text-[#2D5A27] font-semibold text-base">
+                          {currentEvaluation.verdictLabel || 'JA — dit past goed bij jouw stijl.'}
+                        </span>
+                      ) : currentEvaluation.verdict === 'TWIJFEL' ? (
+                        <span className="px-3 py-1 rounded-xl bg-[#FEF6E6] border border-[#F2D696] text-[#7A5600] font-semibold text-base">
+                          {currentEvaluation.verdictLabel || 'TWIJFEL — mogelijk, met voorwaarden'}
+                        </span>
+                      ) : (
+                        <span className="px-3 py-1 rounded-xl bg-[#FDF0EE] border border-[#F2B9B3] text-[#80241A] font-semibold text-base">
+                          {currentEvaluation.verdictLabel || 'NEE — niet mijn eerste keuze voor jou'}
+                        </span>
+                      )}
+                    </div>
+                    <h3 className="font-serif text-xl sm:text-2xl text-[#2C2825] mt-2">
+                      {currentEvaluation.itemTitle}
+                    </h3>
                   </div>
-                  <h3 className="font-serif text-2xl text-[#2C2825]">
-                    {currentEvaluation.itemTitle}
-                  </h3>
-                  {(currentEvaluation.brand || currentEvaluation.price) && (
-                    <p className="text-xs text-[#7A7167] font-light mt-0.5">
-                      {[currentEvaluation.brand, currentEvaluation.price].filter(Boolean).join(' — ')}
-                    </p>
+
+                  {currentEvaluation.imageUrl && (
+                    <div className="w-20 h-24 rounded-xl overflow-hidden border border-[#E3D9C9] bg-[#FAF8F3] shrink-0">
+                      <img
+                        src={currentEvaluation.imageUrl}
+                        alt={currentEvaluation.itemTitle}
+                        className="w-full h-full object-cover"
+                        referrerPolicy="no-referrer"
+                      />
+                    </div>
                   )}
                 </div>
-
-                {/* Main Verdict Badge */}
-                <div className="text-right flex sm:flex-col items-end gap-2 sm:gap-0">
-                  <span className="text-[10px] uppercase tracking-widest text-[#8C7654] font-medium">
-                    Overall Match
-                  </span>
-                  <div className="font-serif text-3xl font-normal text-[#2C2825]">
-                    {currentEvaluation.overallMatchPercent}%
-                  </div>
-                </div>
               </div>
 
-              {/* CRITICAL PROMPT 9 REQUIREMENT: STYLE MATCH VS FIT CONFIDENCE */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="rounded-2xl border border-[#E3D9C9] bg-[#FAF8F3] p-4 space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-serif font-medium text-[#2C2825]">
-                      STYLE MATCH
-                    </span>
-                    <span className="font-serif text-xl font-normal text-[#2C2825]">
-                      {currentEvaluation.styleMatchPercent}%
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-[#7A7167] leading-relaxed">
-                    {isNl
-                      ? 'Esthetische harmonie met jouw Stijl DNA (boho, romantisch, donkere accenten, taillefocus en aanwezigheid).'
-                      : 'Aesthetic harmony with your Style DNA and silhouette preferences.'}
-                  </p>
-                </div>
-
-                <div className="rounded-2xl border border-[#E0D7C9] bg-[#F7F4EE] p-4 space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-xs font-serif font-medium text-[#2C2825]">
-                        PASVORMZEKERHEID (FIT CONFIDENCE)
-                      </span>
-                      <Info className="w-3.5 h-3.5 text-[#8C7654]" />
-                    </div>
-                    <span className="font-serif text-xl font-normal text-[#8C7654]">
-                      {currentEvaluation.fitConfidencePercent}%
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-[#7A7167] leading-relaxed">
-                    {currentEvaluation.fitConfidenceReason ||
-                      'Fysieke pasvormzekerheid is een schatting. Een hoge stijlmatch betekent niet automatisch dat een specifiek confectiemaatstuk fysiek vlekkeloos zit.'}
-                  </p>
-                </div>
-              </div>
-
-              {/* 7 Detailed Match Dimension Scores */}
-              <div className="rounded-2xl border border-[#EDE5D8] bg-[#FAF8F4] p-5 space-y-3">
-                <h4 className="text-xs font-medium text-[#2C2825] uppercase tracking-wider">
-                  {isNl ? 'Evaluatie per stijldimensie' : 'Detailed Dimension Match'}
+              {/* WAAROM (Why) */}
+              <div className="space-y-3">
+                <h4 className="text-xs font-semibold text-[#2C2825] uppercase tracking-wider font-sans">
+                  WAAROM
                 </h4>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3 pt-1">
-                  <div className="bg-[#FFFFFF] p-3 rounded-xl border border-[#EAE2D5] text-center">
-                    <span className="text-[10px] text-[#7A7167] block">Silhouet</span>
-                    <span className="font-serif text-lg text-[#2C2825]">
-                      {currentEvaluation.silhouetteMatchPercent}%
-                    </span>
-                  </div>
-                  <div className="bg-[#FFFFFF] p-3 rounded-xl border border-[#EAE2D5] text-center">
-                    <span className="text-[10px] text-[#7A7167] block">Kleur (Palette)</span>
-                    <span className="font-serif text-lg text-[#2C2825]">
-                      {currentEvaluation.colourMatchPercent}%
-                    </span>
-                  </div>
-                  <div className="bg-[#FFFFFF] p-3 rounded-xl border border-[#EAE2D5] text-center">
-                    <span className="text-[10px] text-[#7A7167] block">Details & Stof</span>
-                    <span className="font-serif text-lg text-[#2C2825]">
-                      {currentEvaluation.detailMatchPercent || 85}%
-                    </span>
-                  </div>
-                  <div className="bg-[#FFFFFF] p-3 rounded-xl border border-[#EAE2D5] text-center">
-                    <span className="text-[10px] text-[#7A7167] block">Stemming (Mood)</span>
-                    <span className="font-serif text-lg text-[#2C2825]">
-                      {currentEvaluation.moodMatchPercent || 88}%
-                    </span>
-                  </div>
-                  <div className="bg-[#FFFFFF] p-3 rounded-xl border border-[#EAE2D5] text-center">
-                    <span className="text-[10px] text-[#7A7167] block">Draagbaarheid</span>
-                    <span className="font-serif text-lg text-[#2C2825]">
-                      {currentEvaluation.practicalityPercent || 82}%
-                    </span>
-                  </div>
-                  <div className="bg-[#FFFFFF] p-3 rounded-xl border border-[#EAE2D5] text-center">
-                    <span className="text-[10px] text-[#7A7167] block">Overall</span>
-                    <span className="font-serif text-lg text-[#2C2825] font-semibold">
-                      {currentEvaluation.overallMatchPercent}%
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* WHY Breakdown (✓ Pros, ~ Considerations, + Enhancements) */}
-              <div className="space-y-4">
-                <h4 className="text-xs font-semibold text-[#2C2825] uppercase tracking-wider">
-                  WHY / WAAROM:
-                </h4>
-                <div className="space-y-2.5 text-xs text-[#4A4237]">
-                  {currentEvaluation.pros?.map((pro, i) => (
+                <div className="space-y-2 text-xs sm:text-sm text-[#4A4237]">
+                  {(currentEvaluation.whyReasons && currentEvaluation.whyReasons.length > 0
+                    ? currentEvaluation.whyReasons
+                    : currentEvaluation.pros || []
+                  ).map((reason, i) => (
                     <div key={i} className="flex items-start gap-2.5">
-                      <span className="text-[#35522F] font-bold text-sm shrink-0">✓</span>
-                      <span className="leading-relaxed">{pro}</span>
-                    </div>
-                  ))}
-
-                  {currentEvaluation.considerations?.map((con, i) => (
-                    <div key={i} className="flex items-start gap-2.5">
-                      <span className="text-[#A85A3C] font-bold text-sm shrink-0">~</span>
-                      <span className="leading-relaxed">{con}</span>
-                    </div>
-                  ))}
-
-                  {currentEvaluation.enhancements?.map((enh, i) => (
-                    <div key={i} className="flex items-start gap-2.5">
-                      <span className="text-[#8C7654] font-bold text-sm shrink-0">+</span>
-                      <span className="leading-relaxed font-medium">{enh}</span>
+                      <span className="text-[#35522F] font-bold text-sm shrink-0 mt-0.5">✓</span>
+                      <span className="leading-relaxed">{reason}</span>
                     </div>
                   ))}
                 </div>
               </div>
 
-              {/* CONCLUSION CARD */}
-              <div className="rounded-2xl border border-[#E0D4C2] bg-[#FAF6EE] p-5 space-y-2">
-                <span className="text-[10px] uppercase tracking-widest text-[#8C7654] font-medium">
-                  CONCLUSION / CONCLUSIE
-                </span>
-                <p className="text-sm font-serif italic text-[#2C2825] leading-relaxed">
-                  “{currentEvaluation.conclusion || currentEvaluation.verdictNl}”
-                </p>
-
-                {currentEvaluation.alternatives && currentEvaluation.alternatives.length > 0 && (
-                  <div className="mt-3 pt-3 border-t border-[#EAE0D1] space-y-1">
-                    <span className="text-[10px] uppercase tracking-wider text-[#8C7654] font-medium block">
-                      {isNl ? 'Hoe aan te passen / Alternatieven:' : 'Alternatives & Styling Advice:'}
-                    </span>
-                    <ul className="text-xs text-[#5C5449] space-y-1 list-disc list-inside">
-                      {currentEvaluation.alternatives.map((alt, idx) => (
-                        <li key={idx}>{alt}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </div>
-
-              {/* FEEDBACK & LEARNING: REACTION BUTTONS (Prompt 9 requirement) */}
-              <div className="pt-4 border-t border-[#F0E9DF] space-y-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div>
-                    <span className="text-xs font-medium text-[#2C2825] block">
-                      {isNl ? 'Jouw reactie op dit item (Systeem leert hiervan):' : 'Your reaction (System learns from this):'}
-                    </span>
-                    <p className="text-[11px] text-[#7A7167]">
-                      {isNl
-                        ? 'Herhaalde reacties verfijnen toekomstige adviezen zonder je oorspronkelijke Stijl-DNA te overschrijven.'
-                        : 'Repeated feedback refines recommendations while keeping your core Style DNA intact.'}
-                    </p>
-                  </div>
-
-                  {/* Reaction Emojis */}
-                  <div className="flex items-center gap-1.5">
-                    <button
-                      type="button"
-                      title="Love"
-                      onClick={() => handleSetUserReaction('love')}
-                      className={`p-2 rounded-xl border text-sm transition-all ${
-                        currentEvaluation.userReaction === 'love'
-                          ? 'bg-[#F9EBEA] border-[#D98880] ring-1 ring-[#D98880]'
-                          : 'bg-[#FAF8F4] border-[#E5DAC8] hover:bg-[#F2ECE0]'
-                      }`}
-                    >
-                      ❤️
-                    </button>
-                    <button
-                      type="button"
-                      title="Loveee"
-                      onClick={() => handleSetUserReaction('loveee')}
-                      className={`p-2 rounded-xl border text-sm transition-all ${
-                        currentEvaluation.userReaction === 'loveee'
-                          ? 'bg-[#FCE4EC] border-[#F48FB1] ring-1 ring-[#F48FB1]'
-                          : 'bg-[#FAF8F4] border-[#E5DAC8] hover:bg-[#F2ECE0]'
-                      }`}
-                    >
-                      💕
-                    </button>
-                    <button
-                      type="button"
-                      title="Like"
-                      onClick={() => handleSetUserReaction('like')}
-                      className={`p-2 rounded-xl border text-sm transition-all ${
-                        currentEvaluation.userReaction === 'like'
-                          ? 'bg-[#E8F8F5] border-[#76D7C4] ring-1 ring-[#76D7C4]'
-                          : 'bg-[#FAF8F4] border-[#E5DAC8] hover:bg-[#F2ECE0]'
-                      }`}
-                    >
-                      👍
-                    </button>
-                    <button
-                      type="button"
-                      title="Neutral"
-                      onClick={() => handleSetUserReaction('neutral')}
-                      className={`p-2 rounded-xl border text-sm transition-all ${
-                        currentEvaluation.userReaction === 'neutral'
-                          ? 'bg-[#FEF9E7] border-[#F9E79F] ring-1 ring-[#F9E79F]'
-                          : 'bg-[#FAF8F4] border-[#E5DAC8] hover:bg-[#F2ECE0]'
-                      }`}
-                    >
-                      😐
-                    </button>
-                    <button
-                      type="button"
-                      title="Nah"
-                      onClick={() => handleSetUserReaction('nah')}
-                      className={`p-2 rounded-xl border text-sm transition-all ${
-                        currentEvaluation.userReaction === 'nah'
-                          ? 'bg-[#FBEEE6] border-[#EDBB99] ring-1 ring-[#EDBB99]'
-                          : 'bg-[#FAF8F4] border-[#E5DAC8] hover:bg-[#F2ECE0]'
-                      }`}
-                    >
-                      👎
-                    </button>
-                    <button
-                      type="button"
-                      title="Strong Dislike"
-                      onClick={() => handleSetUserReaction('dislike')}
-                      className={`p-2 rounded-xl border text-sm transition-all ${
-                        currentEvaluation.userReaction === 'dislike'
-                          ? 'bg-[#FADBD8] border-[#E6B0AA] ring-1 ring-[#E6B0AA]'
-                          : 'bg-[#FAF8F4] border-[#E5DAC8] hover:bg-[#F2ECE0]'
-                      }`}
-                    >
-                      ❌
-                    </button>
-                  </div>
-                </div>
-
-                {/* DISTINGUISH TYPES OF REACTION (Prompt 9 Requirement) */}
-                <div className="rounded-xl border border-[#EDE5D8] bg-[#FAF8F3] p-3 space-y-2">
-                  <span className="text-[10px] uppercase tracking-wider text-[#8C7654] font-medium block">
-                    {isNl ? 'Wat voor type reactie is dit?' : 'What type of reaction is this?'}
-                  </span>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                    {[
-                      { id: 'mooi_bij_anderen', label: 'A. Mooi bij anderen' },
-                      { id: 'zou_dragen', label: 'B. Ik zou dit dragen' },
-                      { id: 'voelt_als_mij', label: 'C. Dit voelt als mij' },
-                      { id: 'gewenste_uitstraling', label: 'D. Gewenste uitstraling' },
-                    ].map((type) => (
-                      <button
-                        key={type.id}
-                        type="button"
-                        onClick={() =>
-                          handleSetUserReaction(
-                            currentEvaluation.userReaction || 'like',
-                            type.id as any
-                          )
-                        }
-                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all text-left truncate ${
-                          currentEvaluation.reactionType === type.id
-                            ? 'bg-[#2C2825] text-[#FAF8F3]'
-                            : 'bg-[#FFFFFF] border border-[#DDD4C5] text-[#5C5449] hover:bg-[#F4EFE6]'
-                        }`}
-                      >
-                        {type.label}
-                      </button>
+              {/* LET OP / AANDACHTSPUNT (Considerations) */}
+              {currentEvaluation.considerations && currentEvaluation.considerations.length > 0 && (
+                <div className="space-y-2.5 pt-2 border-t border-[#F5EFE6]">
+                  <h4 className="text-xs font-semibold text-[#8C6D43] uppercase tracking-wider font-sans">
+                    LET OP
+                  </h4>
+                  <div className="space-y-2 text-xs sm:text-sm text-[#5C5449]">
+                    {currentEvaluation.considerations.map((con, i) => (
+                      <div key={i} className="flex items-start gap-2.5">
+                        <span className="text-[#A85A3C] font-bold text-sm shrink-0 mt-0.5">~</span>
+                        <span className="leading-relaxed">{con}</span>
+                      </div>
                     ))}
                   </div>
                 </div>
+              )}
 
-                {/* Save to Wardrobe / Wishlist Action */}
-                <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
-                  <span className="text-xs text-[#7A7167]">
-                    {isNl ? 'Opslaan in persoonlijke collectie:' : 'Save to personal collection:'}
-                  </span>
-                  <div className="flex items-center gap-2">
+              {/* ZO ZOU IK HEM DRAGEN (Combos / Styling advice) */}
+              <div className="space-y-3 pt-2 border-t border-[#F5EFE6]">
+                <h4 className="text-xs font-semibold text-[#8C7654] uppercase tracking-wider font-sans">
+                  ZO ZOU IK HEM DRAGEN
+                </h4>
+                <div className="space-y-2 text-xs sm:text-sm text-[#2C2825]">
+                  {(currentEvaluation.combos && currentEvaluation.combos.length > 0
+                    ? currentEvaluation.combos
+                    : currentEvaluation.enhancements || []
+                  ).map((tip, i) => (
+                    <div key={i} className="flex items-start gap-2.5">
+                      <span className="text-[#8C7654] font-bold shrink-0 mt-0.5">•</span>
+                      <span className="leading-relaxed font-medium">{tip}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* OPTIONAL REACTION BUTTONS & WARDROBE SAVE */}
+              <div className="pt-4 border-t border-[#F0E9DF] space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="space-y-1">
+                    <span className="text-xs font-medium text-[#2C2825] block">
+                      {isNl ? 'Jouw reactie op dit item:' : 'Your reaction:'}
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleSetUserReaction('love')}
+                        className={`px-3 py-1.5 rounded-xl border text-xs font-medium transition-all cursor-pointer ${
+                          currentEvaluation.userReaction === 'love'
+                            ? 'bg-[#F9EBEA] border-[#D98880] text-[#78281F]'
+                            : 'bg-[#FAF8F4] border-[#E5DAC8] text-[#5C5449] hover:bg-[#F2ECE0]'
+                        }`}
+                      >
+                        ❤️ Love it
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleSetUserReaction('like')}
+                        className={`px-3 py-1.5 rounded-xl border text-xs font-medium transition-all cursor-pointer ${
+                          currentEvaluation.userReaction === 'like'
+                            ? 'bg-[#E8F8F5] border-[#76D7C4] text-[#117A65]'
+                            : 'bg-[#FAF8F4] border-[#E5DAC8] text-[#5C5449] hover:bg-[#F2ECE0]'
+                        }`}
+                      >
+                        👍 Zou ik dragen
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleSetUserReaction('neutral')}
+                        className={`px-3 py-1.5 rounded-xl border text-xs font-medium transition-all cursor-pointer ${
+                          currentEvaluation.userReaction === 'neutral'
+                            ? 'bg-[#FEF9E7] border-[#F9E79F] text-[#7D6608]'
+                            : 'bg-[#FAF8F4] border-[#E5DAC8] text-[#5C5449] hover:bg-[#F2ECE0]'
+                        }`}
+                      >
+                        🙂 Misschien
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleSetUserReaction('nah')}
+                        className={`px-3 py-1.5 rounded-xl border text-xs font-medium transition-all cursor-pointer ${
+                          currentEvaluation.userReaction === 'nah'
+                            ? 'bg-[#FBEEE6] border-[#EDBB99] text-[#6E2C00]'
+                            : 'bg-[#FAF8F4] border-[#E5DAC8] text-[#5C5449] hover:bg-[#F2ECE0]'
+                        }`}
+                      >
+                        👎 Niet mijn ding
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleSetUserReaction('dislike')}
+                        className={`px-3 py-1.5 rounded-xl border text-xs font-medium transition-all cursor-pointer ${
+                          currentEvaluation.userReaction === 'dislike'
+                            ? 'bg-[#FDEDEC] border-[#F5B7B1] text-[#78281F]'
+                            : 'bg-[#FAF8F4] border-[#E5DAC8] text-[#5C5449] hover:bg-[#F2ECE0]'
+                        }`}
+                      >
+                        ❌ Absoluut niet
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="shrink-0 pt-1 sm:pt-0">
                     <button
                       type="button"
-                      onClick={() => handleSetWardrobeStatus('favorite')}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all ${
-                        currentEvaluation.wardrobeStatus === 'favorite'
-                          ? 'bg-[#B85D38] text-white'
-                          : 'bg-[#F2ECE0] text-[#5C5449] hover:bg-[#EBE2D3]'
-                      }`}
+                      onClick={() => handleSaveToWardrobe('owned')}
+                      className="px-4 py-2.5 rounded-xl bg-[#2C2825] text-[#FAF8F3] text-xs font-medium hover:bg-[#433D38] transition-all flex items-center gap-2 shadow-xs cursor-pointer"
                     >
-                      ★ Favoriet
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleSetWardrobeStatus('wishlist')}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all ${
-                        currentEvaluation.wardrobeStatus === 'wishlist'
-                          ? 'bg-[#8C7654] text-white'
-                          : 'bg-[#F2ECE0] text-[#5C5449] hover:bg-[#EBE2D3]'
-                      }`}
-                    >
-                      Wil ik kopen
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleSetWardrobeStatus('owned')}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all ${
-                        currentEvaluation.wardrobeStatus === 'owned'
-                          ? 'bg-[#2C2825] text-white'
-                          : 'bg-[#F2ECE0] text-[#5C5449] hover:bg-[#EBE2D3]'
-                      }`}
-                    >
-                      Heb ik al
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleSetWardrobeStatus('reconsider')}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all ${
-                        currentEvaluation.wardrobeStatus === 'reconsider'
-                          ? 'bg-[#7A7167] text-white'
-                          : 'bg-[#F2ECE0] text-[#5C5449] hover:bg-[#EBE2D3]'
-                      }`}
-                    >
-                      Heroverwegen
+                      <Bookmark className="w-3.5 h-3.5 text-[#C5A880]" />
+                      <span>{isNl ? 'Opslaan bij mijn kleding' : 'Save to Wardrobe'}</span>
                     </button>
                   </div>
                 </div>
+
+                {/* Collapsible Advanced Breakdown */}
+                <details className="mt-4 pt-4 border-t border-[#F0E9DF] group">
+                  <summary className="text-xs text-[#8C7654] font-medium cursor-pointer hover:underline list-none flex items-center justify-between">
+                    <span>🔍 {isNl ? 'Bekijk optionele stijldetails (silhouet, kleur, stof)' : 'View optional detailed breakdown'}</span>
+                    <ChevronDown className="w-4 h-4 transition-transform group-open:rotate-180 text-[#8C7654]" />
+                  </summary>
+                  <div className="mt-3 p-4 rounded-2xl bg-[#FAF8F4] border border-[#EAE2D5] text-xs space-y-2 text-[#5C5449]">
+                    <p><strong>Silhouet & Proporties:</strong> Berekend voor 1.57m lengte en taille-accentuering.</p>
+                    <p><strong>Kleurenpalet:</strong> Afgestemd op warme aarde-, ivoor-, bordeaux- en nachtblauwe tonen.</p>
+                    <p><strong>Pasvormzekerheid:</strong> {currentEvaluation.fitAdvice || 'Gebaseerd op foto- en belijningsanalyse.'}</p>
+                  </div>
+                </details>
               </div>
             </div>
-            )
+          )
           )}
         </div>
       )}

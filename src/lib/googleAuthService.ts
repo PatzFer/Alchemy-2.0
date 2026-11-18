@@ -48,10 +48,18 @@ export const googleSignInForService = async (
         const client = window.google.accounts.oauth2.initTokenClient({
           client_id: CLIENT_ID,
           scope: fullScopes.join(' '),
+          prompt: 'select_account',
           callback: async (response: any) => {
             if (response.error) {
               if (response.error === 'access_denied') {
                 return reject(new Error('Inloggen/toestemming geannuleerd door gebruiker.'));
+              }
+              if (response.error === 'origin_mismatch') {
+                return reject(
+                  new Error(
+                    `Google OAuth Fout (origin_mismatch): De webdomeinnaam "${window.location.origin}" is niet geautoriseerd als geautoriseerde JavaScript-herkomst in de Google Cloud Console voor Client ID ${CLIENT_ID}.`
+                  )
+                );
               }
               return reject(
                 new Error(`Google OAuth Fout: ${response.error_description || response.error}`)
@@ -147,14 +155,15 @@ export const fetchRealCalendarEventsFromApi = async (
   const accessRole = primaryData.accessRole || 'reader';
   const isWriteAccessGranted = accessRole === 'owner' || accessRole === 'writer';
 
-  // 2. Query primary calendar events
-  const now = new Date();
-  const pastWeek = new Date(now.getTime() - 7 * 86400000).toISOString();
+  // 2. Query primary calendar events starting from start of today to ensure today's and upcoming events are loaded
+  const startOfToday = new Date();
+  startOfToday.setHours(0, 0, 0, 0);
+  const timeMinIso = startOfToday.toISOString();
 
   const eventsRes = await fetch(
     `https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${encodeURIComponent(
-      pastWeek
-    )}&maxResults=50&singleEvents=true&orderBy=startTime`,
+      timeMinIso
+    )}&maxResults=250&singleEvents=true&orderBy=startTime`,
     {
       headers: { Authorization: `Bearer ${accessToken}` },
     }
@@ -175,14 +184,22 @@ export const fetchRealCalendarEventsFromApi = async (
     .map((item) => {
       const startDateTime = item.start?.dateTime || item.start?.date || '';
       const endDateTime = item.end?.dateTime || item.end?.date || '';
+      const isAllDay = !item.start?.dateTime && Boolean(item.start?.date);
 
-      const dateStr = startDateTime ? startDateTime.split('T')[0] : now.toISOString().split('T')[0];
-      const startTimeStr = startDateTime.includes('T')
-        ? startDateTime.split('T')[1].slice(0, 5)
-        : '09:00';
-      const endTimeStr = endDateTime.includes('T')
-        ? endDateTime.split('T')[1].slice(0, 5)
-        : '10:00';
+      const dateStr = startDateTime ? startDateTime.split('T')[0] : new Date().toISOString().split('T')[0];
+
+      let startTimeStr = '09:00';
+      let endTimeStr = '10:00';
+
+      if (isAllDay) {
+        startTimeStr = '00:00';
+        endTimeStr = '23:59';
+      } else if (startDateTime.includes('T')) {
+        startTimeStr = startDateTime.split('T')[1].slice(0, 5);
+        if (endDateTime.includes('T')) {
+          endTimeStr = endDateTime.split('T')[1].slice(0, 5);
+        }
+      }
 
       return {
         id: `gcal-${item.id}`,
@@ -194,6 +211,7 @@ export const fetchRealCalendarEventsFromApi = async (
         realm: 'personal',
         type: 'appointment',
         location: item.location || undefined,
+        notes: item.description || undefined,
         isExternalSync: true,
         source: 'google',
       };
@@ -204,6 +222,63 @@ export const fetchRealCalendarEventsFromApi = async (
     accountEmail,
     isWriteAccessGranted,
     totalEventsCount: convertedEvents.length,
+  };
+};
+
+/**
+ * Create a new event directly in Google Calendar via API
+ */
+export const createRealCalendarEventInApi = async (
+  accessToken: string,
+  event: Partial<CalendarEvent>
+): Promise<{ googleEventId: string; htmlLink?: string }> => {
+  const localTz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'Europe/Brussels';
+  const eventDate = event.date || new Date().toISOString().split('T')[0];
+  const startTime = event.startTime || '09:00';
+  const endTime = event.endTime || '10:00';
+
+  const body = {
+    summary: event.title || 'Nieuwe afspraak',
+    location: event.location || undefined,
+    description: event.notes || undefined,
+    start: {
+      dateTime: `${eventDate}T${startTime}:00`,
+      timeZone: localTz,
+    },
+    end: {
+      dateTime: `${eventDate}T${endTime}:00`,
+      timeZone: localTz,
+    },
+  };
+
+  const res = await fetch(
+    'https://www.googleapis.com/calendar/v3/calendars/primary/events',
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    }
+  );
+
+  if (!res.ok) {
+    if (res.status === 401 || res.status === 403) {
+      throw new Error('AUTHENTICATION_EXPIRED');
+    }
+    const errData = await res.json().catch(() => ({}));
+    throw new Error(
+      `Google Calendar kon afspraak niet aanmaken (${res.status}): ${
+        errData.error?.message || res.statusText
+      }`
+    );
+  }
+
+  const createdData = await res.json();
+  return {
+    googleEventId: createdData.id,
+    htmlLink: createdData.htmlLink,
   };
 };
 
