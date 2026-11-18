@@ -185,7 +185,6 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
 
   const handleDisconnectCalendar = async () => {
     setSyncingService('calendar');
-    await IntegrationsService.disconnectService('google_calendar');
     setCachedAccessToken(null);
     if (onSyncCalendarEvents) {
       onSyncCalendarEvents([]);
@@ -324,7 +323,6 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
   const handleDisconnectGmail = async () => {
     setSyncingService('gmail');
     setCachedAccessToken(null);
-    await IntegrationsService.disconnectService('mariluna_gmail');
     onUpdateIntegrations((prev) => ({
       ...prev,
       gmail: {
@@ -453,7 +451,6 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
 
   const handleDisconnectInstagram = async () => {
     setSyncingService('instagram');
-    await IntegrationsService.disconnectService('mariluna_instagram');
     onUpdateIntegrations((prev) => ({
       ...prev,
       instagram: {
@@ -850,24 +847,7 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
             </div>
           </div>
 
-          {integrations.healthConnect.status === 'connected' && (
-            <div className="flex flex-wrap items-center gap-4 text-xs text-[var(--text-secondary)] pt-2 border-t border-[var(--border-subtle)]">
-              <div>
-                <span className="text-[var(--text-muted)]">{isNl ? 'Stappen vandaag:' : 'Steps today:'} </span>
-                <span className="font-mono text-[var(--text-primary)] font-semibold">
-                  {(integrations.healthConnect.stepsToday ?? integrations.healthConnect.todaySteps) !== undefined
-                    ? (integrations.healthConnect.stepsToday ?? integrations.healthConnect.todaySteps ?? 0).toLocaleString(isNl ? 'nl-NL' : 'en-US')
-                    : (isNl ? 'Geen stapgegevens beschikbaar' : 'No step data available')}
-                </span>
-              </div>
-              {integrations.healthConnect.lastSync && (
-                <div>
-                  <span className="text-[var(--text-muted)]">{isNl ? 'Laatst gesynchroniseerd:' : 'Last sync:'} </span>
-                  <span>{new Date(integrations.healthConnect.lastSync).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                </div>
-              )}
-            </div>
-          )}
+
         </div>
 
         {/* ============================================================ */}
