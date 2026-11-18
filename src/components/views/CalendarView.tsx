@@ -240,7 +240,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
               <span>Google Agenda Gekoppeld • {integrations?.calendar?.readOnly ? 'Alleen-lezen' : 'Lezen & Schrijven'}</span>
             </div>
           ) : (
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#DCD3C4] bg-[#F7F3EA] text-[11px] text-[#695B49]">
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#DCD3C4] bg-[var(--surface-2)] text-[11px] text-[#695B49]">
               <ShieldCheck className="w-3.5 h-3.5 text-[var(--accent-secondary)]" />
               <span>Lokale Agenda • Directe opslag</span>
             </div>
@@ -249,7 +249,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
           <button
             onClick={() => handleOpenAddModal()}
             id="add-calendar-event-btn"
-            className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-[var(--surface-raised)] text-[var(--text-primary)] text-xs font-medium hover:bg-[#453E38] transition shadow-xs cursor-pointer"
+            className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-[var(--surface-raised)] text-[var(--text-primary)] text-xs font-medium hover:bg-[var(--surface-raised)] transition shadow-xs cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>Afspraak toevoegen</span>
@@ -264,7 +264,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
             <button
               type="button"
               onClick={() => shiftDate(-1)}
-              className="p-1.5 rounded-lg border border-[#DDD5C7] text-[#6C6358] hover:text-[var(--text-primary)] hover:bg-[#F2ECE1] transition cursor-pointer"
+              className="p-1.5 rounded-lg border border-[var(--border-subtle)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-2)] transition cursor-pointer"
               title="Vorige"
             >
               <ChevronLeft className="w-4 h-4" />
@@ -272,7 +272,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
             <button
               type="button"
               onClick={() => shiftDate(1)}
-              className="p-1.5 rounded-lg border border-[#DDD5C7] text-[#6C6358] hover:text-[var(--text-primary)] hover:bg-[#F2ECE1] transition cursor-pointer"
+              className="p-1.5 rounded-lg border border-[var(--border-subtle)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-2)] transition cursor-pointer"
               title="Volgende"
             >
               <ChevronRight className="w-4 h-4" />
@@ -284,14 +284,14 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1 bg-[#F4EFE6] p-1 rounded-xl border border-[var(--border-subtle)]">
+          <div className="flex items-center gap-1 bg-[var(--surface-2)] p-1 rounded-xl border border-[var(--border-subtle)]">
             <button
               type="button"
               onClick={() => setViewMode('day')}
               className={`px-3 py-1 rounded-lg text-xs font-medium transition cursor-pointer ${
                 viewMode === 'day'
                   ? 'bg-[var(--surface-raised)] text-[var(--text-primary)] shadow-xs'
-                  : 'text-[#6C6358] hover:text-[var(--text-primary)]'
+                  : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
               }`}
             >
               Dag
@@ -302,7 +302,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
               className={`px-3 py-1 rounded-lg text-xs font-medium transition cursor-pointer ${
                 viewMode === 'week'
                   ? 'bg-[var(--surface-raised)] text-[var(--text-primary)] shadow-xs'
-                  : 'text-[#6C6358] hover:text-[var(--text-primary)]'
+                  : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
               }`}
             >
               Week
@@ -313,7 +313,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
               className={`px-3 py-1 rounded-lg text-xs font-medium transition cursor-pointer ${
                 viewMode === 'month'
                   ? 'bg-[var(--surface-raised)] text-[var(--text-primary)] shadow-xs'
-                  : 'text-[#6C6358] hover:text-[var(--text-primary)]'
+                  : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
               }`}
             >
               Maand
@@ -342,7 +342,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
 
           {dayEvents.length === 0 ? (
             <div className="py-16 text-center">
-              <CalendarIcon className="w-8 h-8 text-[#C4BAAA] mx-auto mb-2" />
+              <CalendarIcon className="w-8 h-8 text-[var(--text-muted)] mx-auto mb-2" />
               <p className="text-sm font-medium text-[var(--text-primary)]">
                 Geen afspraken gepland voor {getHeaderLabel()}
               </p>
@@ -357,13 +357,13 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                   key={evt.id}
                   className={`p-4 rounded-xl border transition-all ${
                     evt.realm === 'mariluna'
-                      ? 'bg-[#FCFBF8] border-[#DDD5C7]'
-                      : 'bg-[#FAF8F5] border-[#E8E2D8]'
+                      ? 'bg-[var(--surface-1)] border-[var(--border-subtle)]'
+                      : 'bg-[var(--surface-1)] border-[#E8E2D8]'
                   }`}
                 >
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                     <div className="flex items-start gap-3">
-                      <div className="w-2.5 h-2.5 rounded-full mt-1.5 bg-[#8C7654]" />
+                      <div className="w-2.5 h-2.5 rounded-full mt-1.5 bg-[var(--accent-secondary)]" />
                       <div>
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="text-sm font-semibold text-[var(--text-primary)]">
@@ -373,7 +373,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                             className={`text-[9px] uppercase font-semibold px-2 py-0.5 rounded-full ${
                               evt.realm === 'mariluna'
                                 ? 'bg-[var(--surface-raised)] text-[var(--text-primary)]'
-                                : 'bg-[#EAE4D7] text-[#554C42]'
+                                : 'bg-[var(--border-subtle)] text-[var(--text-secondary)]'
                             }`}
                           >
                             {evt.realm}
@@ -383,7 +383,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                               Google Agenda
                             </span>
                           ) : (
-                            <span className="text-[9px] px-2 py-0.5 rounded-full bg-[#F3EFE6] text-[#7A6D5E] font-medium border border-[var(--border-subtle)]">
+                            <span className="text-[9px] px-2 py-0.5 rounded-full bg-[var(--surface-2)] text-[var(--text-secondary)] font-medium border border-[var(--border-subtle)]">
                               Alchemy Internal
                             </span>
                           )}
@@ -397,7 +397,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2 text-xs font-medium text-[#4A433B] bg-[var(--surface-1)] px-3 py-1.5 rounded-lg border border-[var(--border-subtle)] w-fit">
+                    <div className="flex items-center gap-2 text-xs font-medium text-[var(--text-secondary)] bg-[var(--surface-1)] px-3 py-1.5 rounded-lg border border-[var(--border-subtle)] w-fit">
                       <Clock className="w-3.5 h-3.5 text-[var(--accent-secondary)]" />
                       <span>
                         {evt.startTime} — {evt.endTime}
@@ -422,7 +422,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
               onClick={() => setCurrentDateStr(day.dateStr)}
               className={`rounded-2xl border p-3 flex flex-col justify-between transition-all cursor-pointer ${
                 day.isSelected
-                  ? 'bg-[var(--surface-1)] border-[#2C2825] shadow-md ring-1 ring-[#2C2825]/20'
+                  ? 'bg-[var(--surface-1)] border-[var(--text-primary)] shadow-md ring-1 ring-[var(--text-primary)]/20'
                   : day.isToday
                   ? 'bg-[var(--surface-2)] border-[var(--accent-secondary)]'
                   : 'bg-[var(--surface-1)] border-[var(--border-subtle)] hover:border-[var(--accent-secondary)]/50'
@@ -453,7 +453,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                     day.dayEvents.map((evt) => (
                       <div
                         key={evt.id}
-                        className="p-2 rounded-lg bg-[var(--surface-2)] border border-[#EAE3D5] text-xs space-y-0.5"
+                        className="p-2 rounded-lg bg-[var(--surface-2)] border border-[var(--border-subtle)] text-xs space-y-0.5"
                       >
                         <div className="font-medium text-[var(--text-primary)] truncate">
                           {evt.title}
@@ -511,7 +511,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                     onClick={() => setCurrentDateStr(cell.dateStr!)}
                     className={`h-16 p-1.5 rounded-xl border text-left flex flex-col justify-between transition cursor-pointer ${
                       cell.isSelected
-                        ? 'bg-[var(--surface-raised)] text-[var(--text-primary)] border-[#2C2825] shadow-xs'
+                        ? 'bg-[var(--surface-raised)] text-[var(--text-primary)] border-[var(--text-primary)] shadow-xs'
                         : cell.isToday
                         ? 'bg-[var(--surface-2)] border-[var(--accent-secondary)] text-[var(--text-primary)]'
                         : 'bg-[var(--surface-1)] border-[var(--border-subtle)] text-[var(--text-primary)] hover:bg-[var(--surface-2)]'
@@ -522,12 +522,12 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                       <div className="flex items-center gap-1">
                         <span
                           className={`w-2 h-2 rounded-full ${
-                            cell.isSelected ? 'bg-[#C5A880]' : 'bg-[#8C7654]'
+                            cell.isSelected ? 'bg-[var(--accent-secondary)]' : 'bg-[var(--accent-secondary)]'
                           }`}
                         />
                         <span
                           className={`text-[10px] font-medium truncate ${
-                            cell.isSelected ? 'text-[#D0C7B7]' : 'text-[var(--text-secondary)]'
+                            cell.isSelected ? 'text-[var(--text-secondary)]' : 'text-[var(--text-secondary)]'
                           }`}
                         >
                           {cell.dayEvents?.length} {cell.dayEvents?.length === 1 ? 'item' : 'items'}
@@ -565,16 +565,16 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                 {dayEvents.map((evt) => (
                   <div
                     key={evt.id}
-                    className="p-3 rounded-xl bg-[var(--surface-2)] border border-[#EAE3D5] flex items-center justify-between text-xs"
+                    className="p-3 rounded-xl bg-[var(--surface-2)] border border-[var(--border-subtle)] flex items-center justify-between text-xs"
                   >
                     <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full bg-[#8C7654]" />
+                      <div className="w-2 h-2 rounded-full bg-[var(--accent-secondary)]" />
                       <span className="font-medium text-[var(--text-primary)]">{evt.title}</span>
-                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#EAE4D7] text-[#554C42] capitalize">
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[var(--border-subtle)] text-[var(--text-secondary)] capitalize">
                         {evt.realm}
                       </span>
                     </div>
-                    <div className="text-[#6C6358] font-medium flex items-center gap-1">
+                    <div className="text-[var(--text-secondary)] font-medium flex items-center gap-1">
                       <Clock className="w-3 h-3 text-[var(--accent-secondary)]" />
                       <span>{evt.startTime} — {evt.endTime}</span>
                     </div>
@@ -590,8 +590,8 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
       {/* ADD EVENT MODAL WITH DATE SELECTOR                           */}
       {/* ============================================================ */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#1A1816]/40 backdrop-blur-xs p-4">
-          <div className="w-full max-w-md rounded-2xl bg-[#FAF8F3] border border-[#E3DCD0] p-6 shadow-2xl space-y-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--app-bg)]/40 backdrop-blur-xs p-4">
+          <div className="w-full max-w-md rounded-2xl bg-[var(--surface-1)] border border-[var(--border-subtle)] p-6 shadow-2xl space-y-4">
             <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-3">
               <h2 className="font-serif text-xl font-medium text-[var(--text-primary)]">
                 Afspraak Inplannen
@@ -603,7 +603,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
 
             <form onSubmit={handleCreateEvent} className="space-y-4">
               <div>
-                <label className="block text-xs font-medium text-[#5A524A] mb-1">
+                <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">
                   Titel
                 </label>
                 <input
@@ -612,14 +612,14 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
                   placeholder="bijv. Client Alignment, Masterclass, Wandeling"
-                  className="w-full bg-[var(--surface-1)] border border-[#D5CCBE] rounded-xl px-3.5 py-2 text-xs text-[var(--text-primary)] focus:outline-hidden focus:border-[#8C7654]"
+                  className="w-full bg-[var(--surface-1)] border border-[var(--border-subtle)] rounded-xl px-3.5 py-2 text-xs text-[var(--text-primary)] focus:outline-hidden focus:border-[var(--accent-secondary)]"
                   autoFocus
                 />
               </div>
 
               {/* DATE FIELD (Required by Bug 4) */}
               <div>
-                <label className="block text-xs font-medium text-[#5A524A] mb-1">
+                <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">
                   Datum
                 </label>
                 <input
@@ -627,13 +627,13 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                   required
                   value={newDate}
                   onChange={(e) => setNewDate(e.target.value)}
-                  className="w-full bg-[var(--surface-1)] border border-[#D5CCBE] rounded-xl px-3.5 py-2 text-xs text-[var(--text-primary)] focus:outline-hidden focus:border-[#8C7654]"
+                  className="w-full bg-[var(--surface-1)] border border-[var(--border-subtle)] rounded-xl px-3.5 py-2 text-xs text-[var(--text-primary)] focus:outline-hidden focus:border-[var(--accent-secondary)]"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-medium text-[#5A524A] mb-1">
+                  <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">
                     Starttijd
                   </label>
                   <input
@@ -641,11 +641,11 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                     required
                     value={newStartTime}
                     onChange={(e) => setNewStartTime(e.target.value)}
-                    className="w-full bg-[var(--surface-1)] border border-[#D5CCBE] rounded-xl px-3 py-2 text-xs text-[var(--text-primary)]"
+                    className="w-full bg-[var(--surface-1)] border border-[var(--border-subtle)] rounded-xl px-3 py-2 text-xs text-[var(--text-primary)]"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-[#5A524A] mb-1">
+                  <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">
                     Eindtijd
                   </label>
                   <input
@@ -653,33 +653,33 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                     required
                     value={newEndTime}
                     onChange={(e) => setNewEndTime(e.target.value)}
-                    className="w-full bg-[var(--surface-1)] border border-[#D5CCBE] rounded-xl px-3 py-2 text-xs text-[var(--text-primary)]"
+                    className="w-full bg-[var(--surface-1)] border border-[var(--border-subtle)] rounded-xl px-3 py-2 text-xs text-[var(--text-primary)]"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-medium text-[#5A524A] mb-1">
+                  <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">
                     Domein / Wereld
                   </label>
                   <select
                     value={newRealm}
                     onChange={(e) => setNewRealm(e.target.value as Realm)}
-                    className="w-full bg-[var(--surface-1)] border border-[#D5CCBE] rounded-xl px-3 py-2 text-xs text-[var(--text-primary)]"
+                    className="w-full bg-[var(--surface-1)] border border-[var(--border-subtle)] rounded-xl px-3 py-2 text-xs text-[var(--text-primary)]"
                   >
                     <option value="personal">Personal (Privé)</option>
                     <option value="mariluna">Mariluna Business</option>
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-[#5A524A] mb-1">
+                  <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">
                     Type
                   </label>
                   <select
                     value={newType}
                     onChange={(e) => setNewType(e.target.value as any)}
-                    className="w-full bg-[var(--surface-1)] border border-[#D5CCBE] rounded-xl px-3 py-2 text-xs text-[var(--text-primary)]"
+                    className="w-full bg-[var(--surface-1)] border border-[var(--border-subtle)] rounded-xl px-3 py-2 text-xs text-[var(--text-primary)]"
                   >
                     <option value="appointment">Afspraak</option>
                     <option value="work">Focus / Deep Work</option>
@@ -690,7 +690,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-[#5A524A] mb-1">
+                <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">
                   Locatie (optioneel)
                 </label>
                 <input
@@ -698,12 +698,12 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                   value={newLocation}
                   onChange={(e) => setNewLocation(e.target.value)}
                   placeholder="bijv. Atelier, Online, Studio"
-                  className="w-full bg-[var(--surface-1)] border border-[#D5CCBE] rounded-xl px-3.5 py-2 text-xs text-[var(--text-primary)]"
+                  className="w-full bg-[var(--surface-1)] border border-[var(--border-subtle)] rounded-xl px-3.5 py-2 text-xs text-[var(--text-primary)]"
                 />
               </div>
 
               {/* Read-Only Google Connection Notice */}
-              <div className="p-3 rounded-xl bg-[#F7F3EA] border border-[var(--border-subtle)] text-[11px] text-[#7A6D5E] flex items-start gap-2">
+              <div className="p-3 rounded-xl bg-[var(--surface-2)] border border-[var(--border-subtle)] text-[11px] text-[var(--text-secondary)] flex items-start gap-2">
                 <Info className="w-4 h-4 text-[var(--accent-secondary)] shrink-0 mt-0.5" />
                 <span>
                   Opmerking: De actieve Google Agenda koppeling is momenteel ingesteld op <strong>Alleen-lezen</strong>.
@@ -715,13 +715,13 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 rounded-xl text-xs text-[var(--text-secondary)] hover:bg-[#EFE9DE] transition cursor-pointer"
+                  className="px-4 py-2 rounded-xl text-xs text-[var(--text-secondary)] hover:bg-[var(--surface-2)] transition cursor-pointer"
                 >
                   Annuleren
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl bg-[var(--surface-raised)] text-[var(--text-primary)] text-xs font-medium hover:bg-[#453E38] transition cursor-pointer shadow-xs"
+                  className="px-5 py-2 rounded-xl bg-[var(--surface-raised)] text-[var(--text-primary)] text-xs font-medium hover:bg-[var(--surface-raised)] transition cursor-pointer shadow-xs"
                 >
                   Opslaan
                 </button>
