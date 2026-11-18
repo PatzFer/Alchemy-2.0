@@ -188,3 +188,13 @@ Incremental implementation commits on `design/phase-1`:
 - Follow-up source scans show the largest old light-palette clusters in these audited modules have been reduced; remaining literals are primarily intentional domain accents or semantic status colors. This is source inspection, not rendered visual QA.
 - Integration screens have not yet been redesigned or behaviorally validated; their provider status colors and connection semantics require a separate careful pass.
 - No build, typecheck, lint, automated tests, browser/mobile rendering, or migration tests have run. Phases A/B/C remain in progress.
+
+
+## Progress log — 18 November 2026 (integrations and least-privilege review)
+
+- Migrated the Integrations hub, provider cards, dialogs, form controls and status surfaces to the semantic dark palette while retaining distinct connection/error/warning status colors.
+- Reduced Google Calendar OAuth requests to the read-only calendar scope and now persist/display the connection as read-only. The current calendar UI does not implement Google event creation, so the additional calendar.events write scope was unnecessary for the implemented workflow.
+- Corrected the health integration label: the existing code uses the Google Fit REST API and OAuth fitness scope, not Android Health Connect. The UI now identifies it as a temporary Google Fit legacy connection and explicitly states that it is not Health Connect.
+- External official Android documentation checked 18 November 2026: Google states Google Fit APIs, including REST, are supported only until the end of 2026; Health Connect is a native Android/on-device SDK integration with Android manifest and runtime permissions, not a browser OAuth connection. The proper long-term path for the Android app is a native Health Connect bridge, not relabeling the existing Google Fit code.
+- Renpho direct sync remains unverified; do not promise a provider API or claim a connection. Evaluate supported Health Connect sharing or explicit export/import during the integration design.
+- No build, typecheck, lint, automated tests, browser/device validation or live provider authorization tests have run. Phases A/B/C remain in progress.
