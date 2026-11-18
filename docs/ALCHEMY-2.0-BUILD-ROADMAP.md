@@ -429,3 +429,9 @@ Incremental implementation commits on `design/phase-1`:
 - The app-lock session identifier is now accepted only from its HttpOnly cookie; the legacy caller-controlled `x-session-id` header is no longer an authentication path.
 - Session cookie values must match the exact 256-bit random hexadecimal format before the in-memory registry is consulted. Malformed values receive a fresh locked session rather than being treated as credentials.
 - Regression tests cover a valid cookie, an unauthenticated request, a forged session header and a malformed cookie. This tightens the current single-process session boundary; it does not yet make sessions durable across server restarts.
+
+## Progress log — 18 November 2026 (WebAuthn ceremony hardening)
+
+- Pending registration and authentication challenges now expire after five minutes and are stored in a bounded in-memory registry; expired entries are pruned and the registry has a hard capacity limit.
+- Registration and authentication verification now atomically consume the challenge before cryptographic verification. A failed attempt therefore cannot reuse the same nonce, and concurrent/replayed submissions cannot both verify against one challenge.
+- Added regression tests for one-time consumption and expiry. These controls remain process-local; durable credential/challenge storage is still part of the future Supabase-backed identity work.
