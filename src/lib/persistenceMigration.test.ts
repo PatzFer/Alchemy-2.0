@@ -43,7 +43,7 @@ test('migration planner counts nested Mariluna finance records', () => {
     ...INITIAL_STATE,
     marilunaAdmin: {
       items: [],
-      expenses: [{ id: 'expense-1' }],
+      expenses: [{ id: 'expense-1', description: 'Studio supplies', amount: 24, date: '2026-11-18', category: 'materials', paid: true }],
       invoices: [],
       deadlines: [],
     },
