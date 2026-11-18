@@ -454,3 +454,11 @@ Incremental implementation commits on `design/phase-1`:
 - Gemini use now also respects the saved AI provider choice and the separate personal/Mariluna AI-consent switches. With consent disabled or the local-rules provider selected, the server uses its deterministic local response path instead of sending the request/context to Gemini.
 - Task splitting follows the same workspace consent and provider checks. Image-based personal styling analysis requires personal AI consent and sanitizes its profile context before sending it to Gemini.
 - These checks run at the server boundary; client UI filtering alone is not treated as authorization. The settings and security vault remain in-memory pending durable identity/settings storage, so consent configuration is not yet persistent across restarts.
+
+
+## Progress log — 18 November 2026 (session credential exposure and response caching)
+
+- The security status response and device inventory no longer expose the raw HttpOnly session credential. Device management now uses a separate random public identifier, and revocation resolves that public identifier server-side.
+- Authentication responses no longer return the internal session object. This closes an unnecessary credential disclosure path that would have undermined the HttpOnly cookie boundary if a script could read API responses.
+- Security/authentication routes now set `Cache-Control: no-store, private`, `Pragma: no-cache` and `Vary: Cookie` so recovery codes, device inventory and authentication status are not retained by browser or intermediary caches.
+- Regression coverage verifies the device inventory identifier is not the cookie credential and can still revoke the intended session.
