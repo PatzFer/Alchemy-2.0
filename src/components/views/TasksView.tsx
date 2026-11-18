@@ -194,7 +194,7 @@ export const TasksView: React.FC<TasksViewProps> = ({
         <button
           onClick={openNewTaskModal}
           id="new-task-btn"
-          className="flex items-center gap-2 px-4 py-2 rounded-full bg-[var(--text-primary)] text-[var(--text-primary)] text-xs font-medium hover:bg-[var(--surface-raised)] transition shadow-xs cursor-pointer w-fit"
+          className="flex items-center gap-2 px-4 py-2 rounded-full bg-[var(--accent-primary)] text-[#171916] text-xs font-medium hover:bg-[var(--surface-raised)] transition shadow-xs cursor-pointer w-fit"
         >
           <Plus className="w-4 h-4" />
           <span>Nieuwe taak</span>
@@ -561,7 +561,7 @@ export const TasksView: React.FC<TasksViewProps> = ({
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl bg-[var(--text-primary)] text-[var(--text-primary)] text-xs font-medium hover:bg-[var(--surface-raised)] transition cursor-pointer"
+                  className="px-5 py-2 rounded-xl bg-[var(--accent-primary)] text-[#171916] text-xs font-medium hover:bg-[var(--surface-raised)] transition cursor-pointer"
                 >
                   Save Task
                 </button>
