@@ -151,3 +151,12 @@ Incremental implementation commits on `design/phase-1`:
 - Task status counters now respect the active domain filter, so the Active and Completed totals match the task list currently shown.
 - Task creation and due-date defaults now use local calendar dates rather than UTC ISO date slicing, avoiding date shifts around local midnight/time zones.
 - These are incremental improvements to phases A/B/C; no phase is complete. No build, TypeScript/lint, automated test, or browser/mobile validation has been run yet.
+
+
+## Progress log — 18 November 2026 (planner and visual consistency)
+
+- Universal Quick Capture, morning check-in dismissal, and quick-capture creation now use the user's local calendar date rather than UTC date slicing. This complements the local-date correction already made in TasksView.
+- Corrected navigation contrast for the Mariluna and Private tabs and hover states so labels remain legible against the dark surfaces.
+- Reworked the shared Calendar and Tasks view's most prominent headers, filters, buttons, empty states, cards, and borders to use the semantic dark-theme tokens. This is a focused visual consistency pass, not a claim that every nested control in both views has been fully audited.
+- Shared realm remains deliberately unimplemented: Realm is used across tasks, goals, ideas, projects, calendar events, routines, commitments, memory, and other data. Adding 'shared' safely requires a deliberate migration and domain/privacy review rather than changing only the capture buttons.
+- No build, lint/typecheck, automated test, or visual device/browser validation has been run. Phases A/B/C remain in progress.
