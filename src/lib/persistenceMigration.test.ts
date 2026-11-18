@@ -23,6 +23,36 @@ test('migration planner reports a clean first start without a confirmation step'
   assert.equal(plan.remoteRevision, null);
 });
 
+
+test('migration planner counts completed identity setup even when collections are empty', () => {
+  const profileOnly = {
+    ...INITIAL_STATE,
+    foundation: {
+      ...INITIAL_STATE.foundation,
+      isCompleted: true,
+      aboutYou: { ...INITIAL_STATE.foundation.aboutYou, name: 'Patricia' },
+    },
+  };
+  const plan = planPersistenceMigration(profileOnly, null);
+  assert.equal(plan.action, 'upload_local_after_confirmation');
+  assert.ok(plan.localRecordCount >= 2);
+});
+
+test('migration planner counts nested Mariluna finance records', () => {
+  const marilunaOnly = {
+    ...INITIAL_STATE,
+    marilunaAdmin: {
+      items: [],
+      expenses: [{ id: 'expense-1' }],
+      invoices: [],
+      deadlines: [],
+    },
+  };
+  const plan = planPersistenceMigration(marilunaOnly, null);
+  assert.equal(plan.action, 'upload_local_after_confirmation');
+  assert.equal(plan.localRecordCount, 1);
+});
+
 test('migration planner asks before uploading local-only data', () => {
   const plan = planPersistenceMigration(SAMPLE_STATE, null);
   assert.equal(plan.action, 'upload_local_after_confirmation');
