@@ -158,12 +158,6 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
         },
       }));
 
-      await IntegrationsService.connectService('google_calendar', {
-        accountEmail: accountEmail || authRes.email,
-        syncedEventsCount: totalEventsCount,
-        readOnly: true,
-        verified: true,
-      });
     } catch (err: any) {
       console.warn('Google Calendar OAuth error:', err);
       const isAuthClosed = err?.message?.includes('geannuleerd') || err?.message?.includes('closed');
@@ -244,7 +238,6 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
         },
       }));
 
-      await IntegrationsService.syncService('google_calendar');
     } catch (err: any) {
       console.warn('Calendar sync error:', err);
       const isAuthExpired = err?.message === 'AUTHENTICATION_EXPIRED';
@@ -302,11 +295,6 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
         },
       }));
 
-      await IntegrationsService.connectService('mariluna_gmail', {
-        accountEmail: accountEmail || authRes.email,
-        messages: messages,
-        verified: true,
-      });
     } catch (err: any) {
       console.warn('Gmail OAuth error:', err);
       const isAuthClosed = err?.message?.includes('geannuleerd') || err?.message?.includes('closed');
@@ -387,7 +375,6 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
         },
       }));
 
-      await IntegrationsService.syncService('mariluna_gmail');
     } catch (err: any) {
       console.warn('Gmail sync error:', err);
       const isAuthExpired = err?.message === 'AUTHENTICATION_EXPIRED';
@@ -440,11 +427,6 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
         },
       }));
 
-      await IntegrationsService.connectService('health_connect', {
-        platform: 'web',
-        stepsToday: stepsToday,
-        verified: true,
-      });
     } catch (err: any) {
       console.warn('Google Fit OAuth error:', err);
       const isAuthClosed = err?.message?.includes('geannuleerd');
@@ -515,7 +497,6 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
         },
       }));
 
-      await IntegrationsService.syncService('health_connect');
     } catch (err: any) {
       console.warn('Health sync error:', err);
       onUpdateIntegrations((prev) => ({
@@ -571,11 +552,6 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
         },
       }));
 
-      await IntegrationsService.connectService('mariluna_instagram', {
-        accountUsername: accountUsername || username,
-        posts: posts,
-        verified: true,
-      });
     } catch (err: any) {
       console.warn('Instagram Graph API error:', err);
       const userFacingErr = err?.message || 'Instagram token verificatie mislukt.';
@@ -615,16 +591,21 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
   };
 
   const handleSyncInstagram = async () => {
-    setSyncingService('instagram');
-    await IntegrationsService.syncService('mariluna_instagram');
+    setAuthError(
+      isNl
+        ? 'Instagram-verversing via de Meta Graph API is nog niet geïmplementeerd. De bestaande gegevens blijven ongewijzigd.'
+        : 'Instagram refresh through the Meta Graph API is not implemented yet. Existing data remains unchanged.'
+    );
     onUpdateIntegrations((prev) => ({
       ...prev,
       instagram: {
         ...prev.instagram,
-        lastSync: new Date().toISOString(),
+        status: 'needs_attention',
+        error: isNl
+          ? 'Handmatige synchronisatie is nog niet beschikbaar.'
+          : 'Manual synchronization is not available yet.',
       },
     }));
-    setSyncingService(null);
   };
 
   const handleToggleNotifications = async () => {
