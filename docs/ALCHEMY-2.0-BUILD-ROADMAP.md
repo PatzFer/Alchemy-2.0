@@ -124,3 +124,22 @@ Integration principles:
 - Deduplicate repeated imports and handle corrections/deletions where the provider supports them.
 - Provide connection status, last successful sync, errors, disconnect and local-data deletion controls.
 - If an app cannot provide a supported integration, clearly state the limitation and offer a user-controlled export/import alternative.
+
+## Implementation progress log
+
+### Current checkpoint — 18 November 2026
+
+Incremental implementation commits on `design/phase-1`:
+
+- Neutral Home launcher and initial domain entry routing are in place.
+- Dark-first semantic design tokens and the shared app shell have been introduced.
+- Mariluna and Privé dashboard headers have been aligned to their respective visual identities.
+- Internal navigation styling has been aligned with the dark Alchemy foundation.
+- Quick Capture now supports task, reminder, idea, note and appointment capture, with date/time fields where relevant.
+- Quick Capture is reachable from the Home launcher and from a persistent in-app shortcut.
+
+**Phase status:** Phases A and B have substantial implementation started, and Phase C has begun. None of these phases is declared complete yet. The quality gates still require a working build, type/lint checks where configured, and mobile/desktop validation. Shared-record semantics are also not complete: the current `Realm` model only supports `personal` and `mariluna`, so the approved optional Shared destination must be designed and migrated carefully rather than simulated with an existing realm.
+
+**Validation status:** GitHub file updates are committed on the feature branch. No production build, TypeScript check, automated test suite, live integration test or device/browser review has been run in this environment. Do not treat the current checkpoint as a release-ready phase boundary.
+
+**Next implementation focus:** complete domain-specific dashboard/module routing and shared planner behavior, then address the Shared capture model and its migration/privacy implications before declaring Phase C complete.
