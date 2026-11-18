@@ -59,6 +59,10 @@ export function resolveWebAuthnRelyingParty(
     throw new Error('Invalid WebAuthn origin.');
   }
 
+  if (originUrl.host.toLowerCase() !== requestUrl.host.toLowerCase()) {
+    throw new Error('WebAuthn origin host does not match the request host.');
+  }
+
   const origin = originUrl.origin;
   const rpID = configuredRpId || requestUrl.hostname.toLowerCase();
 
