@@ -739,10 +739,10 @@ class SecurityVault {
     // separate from general Mariluna/business context permission.
     if (!this.permissions.allowFinancialDataToAI) {
       const financialKeys = new Set([
-        'financialData', 'finance', 'finances', 'bookkeeping', 'accounting',
+        'financialData', 'financials', 'financialSummary', 'finance', 'finances', 'financeSummary', 'bookkeeping', 'accounting',
         'expenses', 'invoices', 'invoiceNumber', 'amount', 'vatAmount',
         'revenue', 'profit', 'cashFlow', 'balanceSheet', 'bankTransactions',
-        'taxRecords', 'socialContributions', 'revenueTargetYear',
+        'taxRecords', 'socialContributions', 'revenueTargetYear', 'tax', 'vat', 'taxAmount', 'grossRevenue', 'netRevenue', 'profitLoss', 'operatingCosts', 'payments', 'payment',
         'price', 'unitPrice', 'cost', 'costs', 'margin', 'turnover',
       ]);
       const stripFinancialFields = (value: any): any => {
@@ -763,6 +763,26 @@ class SecurityVault {
       delete sanitized.marilunaFinance;
       delete sanitized.financialSummary;
       delete sanitized.financeSummary;
+
+      const isFinancialMetric = (item: any): boolean => {
+        const category = String(item?.category || '').toLowerCase();
+        const name = String(item?.name || item?.title || '').toLowerCase();
+        return ['revenue', 'expense', 'profit', 'finance', 'financial', 'tax', 'cost'].some((term) =>
+          category.includes(term) || name.includes(term)
+        ) || /omzet|kosten|winst|belasting|btw|uitgave|factuur|inkomsten/.test(name);
+      };
+      if (sanitized.marilunaMetrics && typeof sanitized.marilunaMetrics === 'object') {
+        delete sanitized.marilunaMetrics.revenueTargetYear;
+        if (Array.isArray(sanitized.marilunaMetrics.metrics)) {
+          sanitized.marilunaMetrics.metrics = sanitized.marilunaMetrics.metrics.filter((item: any) => !isFinancialMetric(item));
+        }
+        if (Array.isArray(sanitized.marilunaMetrics.records)) {
+          sanitized.marilunaMetrics.records = sanitized.marilunaMetrics.records.filter((item: any) => !isFinancialMetric(item));
+        }
+      }
+      if (Array.isArray(sanitized.metrics)) {
+        sanitized.metrics = sanitized.metrics.filter((item: any) => !isFinancialMetric(item));
+      }
     }
 
     // Firewall Rule 5: Wellbeing & body progress data quarantine (Never sent to AI unless explicit permission granted)
