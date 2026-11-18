@@ -10,7 +10,7 @@
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
     "lint": "tsc --noEmit",
-    "test": "tsx --test server/security.test.ts server/supabasePersistence.test.ts src/lib/backup.test.ts",
+    "test": "tsx --test server/security.test.ts server/supabasePersistence.test.ts server/persistenceRoutes.test.ts src/lib/backup.test.ts",
     "check:supabase": "tsx scripts/check-supabase-migrations.ts"
   },
   "dependencies": {
