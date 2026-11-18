@@ -10,8 +10,11 @@ import {
 const ownerId = 'd4f1c1a2-1234-4a5b-9c8d-1234567890ab';
 const validPayload = {
   tasks: [], goals: [], ideas: [], projects: [], calendarEvents: [], memories: [],
-  dailyCheckIns: [], notifications: [], proactiveSuggestions: [],
-  foundation: {}, integrations: {},
+  dailyCheckIns: [], notifications: [], proactiveSuggestions: [], chatHistory: [],
+  lifeProfile: {}, contentPlan: {}, personalStyle: {}, nutrition: {}, cycleProfile: {},
+  wellbeing: {}, notificationSettings: {}, isSampleData: false, setupStatus: 'not_started',
+  foundation: { aboutYou: {} },
+  integrations: { calendar: {}, gmail: {} },
 };
 
 const env = {
