@@ -445,3 +445,12 @@ Incremental implementation commits on `design/phase-1`:
 - Passkey registration and authentication options now request required user verification. Passkey verification attempts are rate-limited with the same session-scoped key used by the other authentication routes.
 - Added dedicated allowlist, RP-ID, host-binding and fail-closed tests; registered them in the CI test command.
 - Deployment configuration must set the actual production RP ID and exact allowed origins before passkeys can be enrolled or used. This is intentionally not guessed or deployed automatically.
+
+
+## Progress log — 18 November 2026 (server-side AI privacy enforcement)
+
+- The Jarvis brief and query endpoints now apply the existing realm/privacy sanitizer on the server before using context in either Gemini prompts or local fallback logic. Client-provided filtering metadata is no longer trusted as the security boundary.
+- The selected workspace controls the context allowlist (`personal` or `mariluna`); unknown workspace values fail to the private/personal path rather than an unrestricted combined context.
+- Gemini use now also respects the saved AI provider choice and the separate personal/Mariluna AI-consent switches. With consent disabled or the local-rules provider selected, the server uses its deterministic local response path instead of sending the request/context to Gemini.
+- Task splitting follows the same workspace consent and provider checks. Image-based personal styling analysis requires personal AI consent and sanitizes its profile context before sending it to Gemini.
+- These checks run at the server boundary; client UI filtering alone is not treated as authorization. The settings and security vault remain in-memory pending durable identity/settings storage, so consent configuration is not yet persistent across restarts.
