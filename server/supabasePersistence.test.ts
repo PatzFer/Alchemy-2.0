@@ -249,7 +249,7 @@ test('snapshot loading rejects a payload whose stored hash does not match', asyn
       schema_version: 1,
       revision: 1,
       payload: { ...validPayload, tasks: [{ id: 'changed' }] },
-      payload_sha256: 'incorrect-hash',
+      payload_sha256: '0'.repeat(64),
       source: 'autosave',
       created_at: new Date().toISOString(),
     }]), { status: 200 });
