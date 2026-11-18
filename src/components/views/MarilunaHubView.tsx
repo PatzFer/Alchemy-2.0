@@ -733,7 +733,7 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
                         <span className="truncate text-[var(--text-primary)] font-medium">{task.title}</span>
                       </div>
                       {task.priority === 'high' && (
-                        <span className="text-[10px] text-[#A64A38] bg-[#F9ECE9] px-2 py-0.5 rounded-md shrink-0">
+                        <span className="text-[10px] text-[#A64A38] bg-[var(--surface-2)] px-2 py-0.5 rounded-md shrink-0">
                           {isNl ? 'Hoog' : 'High'}
                         </span>
                       )}
@@ -768,7 +768,7 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
                         className="p-2.5 rounded-xl bg-[var(--surface-2)] border border-[var(--border-subtle)] flex items-center justify-between text-xs"
                       >
                         <span className="font-medium text-[var(--text-primary)]">{p.title}</span>
-                        <span className="text-[10px] font-mono text-[var(--accent-secondary)] bg-[#F4EFE6] px-2 py-0.5 rounded-md">
+                        <span className="text-[10px] font-mono text-[var(--accent-secondary)] bg-[var(--surface-2)] px-2 py-0.5 rounded-md">
                           {p.deadline}
                         </span>
                       </div>
@@ -816,7 +816,7 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
                     <div className="flex items-start justify-between gap-2">
                       <div className="font-medium text-[var(--text-primary)] truncate">{idea.title}</div>
                       {idea.contentPillar && (
-                        <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-[#FAF4EA] text-[var(--accent-secondary)] font-medium shrink-0">
+                        <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-[var(--surface-2)] text-[var(--accent-secondary)] font-medium shrink-0">
                           {idea.contentPillar}
                         </span>
                       )}
@@ -972,7 +972,7 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
                   placeholder={isNl ? 'Zoek op titel of beschrijving...' : 'Search by title or description...'}
                   value={offeringSearchQuery}
                   onChange={(e) => setOfferingSearchQuery(e.target.value)}
-                  className="w-full pl-8 pr-3 py-1.5 rounded-xl bg-white border border-[#DDD4C5] text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-secondary)]"
+                  className="w-full pl-8 pr-3 py-1.5 rounded-xl bg-white border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-secondary)]"
                 />
               </div>
               <div className="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0">
@@ -1077,7 +1077,7 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
                           <button
                             type="button"
                             onClick={() => handleDeleteOffering(off.id)}
-                            className="p-1.5 rounded-lg text-[#A05252] hover:bg-[#FBE8E8] transition cursor-pointer"
+                            className="p-1.5 rounded-lg text-[#A05252] hover:bg-[var(--surface-2)] transition cursor-pointer"
                             title={isNl ? 'Verwijderen' : 'Delete'}
                           >
                             <Trash2 className="w-3.5 h-3.5" />
@@ -1094,7 +1094,7 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
           {/* Offering Modal */}
           {isOfferingModalOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs">
-              <div className="bg-[var(--surface-1)] border border-[#DDD4C5] rounded-3xl max-w-sm w-full p-6 space-y-4 shadow-xl text-[var(--text-primary)]">
+              <div className="bg-[var(--surface-1)] border border-[var(--border-subtle)] rounded-3xl max-w-sm w-full p-6 space-y-4 shadow-xl text-[var(--text-primary)]">
                 <div className="flex items-center justify-between">
                   <h3 className="font-serif text-lg text-[var(--text-primary)]">
                     {editingOfferingId
@@ -1119,7 +1119,7 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
                       placeholder={isNl ? 'bijv. Lenormand Reading' : 'e.g. Lenormand Reading'}
                       value={offeringTitle}
                       onChange={(e) => setOfferingTitle(e.target.value)}
-                      className="w-full px-3 py-2 rounded-xl bg-[var(--surface-2)] border border-[#DDD4C5] text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-secondary)]"
+                      className="w-full px-3 py-2 rounded-xl bg-[var(--surface-2)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-secondary)]"
                       autoFocus
                     />
                   </div>
@@ -1131,7 +1131,7 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
                       <select
                         value={offeringType}
                         onChange={(e) => setOfferingType(e.target.value as any)}
-                        className="w-full px-2 py-2 rounded-xl bg-[var(--surface-2)] border border-[#DDD4C5] text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-secondary)]"
+                        className="w-full px-2 py-2 rounded-xl bg-[var(--surface-2)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-secondary)]"
                       >
                         <option value="service">{isNl ? 'Dienst' : 'Service'}</option>
                         <option value="package">{isNl ? 'Pakket' : 'Package'}</option>
@@ -1149,7 +1149,7 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
                         placeholder={isNl ? 'bijv. 50' : 'e.g. 50'}
                         value={offeringPrice}
                         onChange={(e) => setOfferingPrice(e.target.value === '' ? '' : Number(e.target.value))}
-                        className="w-full px-3 py-2 rounded-xl bg-[var(--surface-2)] border border-[#DDD4C5] text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-secondary)]"
+                        className="w-full px-3 py-2 rounded-xl bg-[var(--surface-2)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-secondary)]"
                       />
                     </div>
                   </div>
@@ -1162,7 +1162,7 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
                       placeholder={isNl ? 'Beschrijving of deliverables...' : 'Description...'}
                       value={offeringDesc}
                       onChange={(e) => setOfferingDesc(e.target.value)}
-                      className="w-full px-3 py-2 rounded-xl bg-[var(--surface-2)] border border-[#DDD4C5] text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-secondary)]"
+                      className="w-full px-3 py-2 rounded-xl bg-[var(--surface-2)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-secondary)]"
                     />
                   </div>
                   <div className="flex justify-end gap-2 pt-2">
