@@ -30,7 +30,7 @@ test('migration planner counts completed identity setup even when collections ar
     foundation: {
       ...INITIAL_STATE.foundation,
       isCompleted: true,
-      aboutYou: { ...INITIAL_STATE.foundation.aboutYou, name: 'Patricia Updated' },
+      aboutYou: { ...INITIAL_STATE.foundation.aboutYou, name: 'Patricia Updated', dateOfBirth: '1993-10-20' },
     },
   };
   const plan = planPersistenceMigration(profileOnly, null);
