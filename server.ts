@@ -7,7 +7,7 @@ import { createServer as createViteServer } from "vite";
 import securityRouter from "./server/securityRoutes";
 import integrationsRouter from "./server/integrationsRoutes";
 import brainRouter from "./server/brainRoutes";
-import { securityVault } from "./server/security";
+import { securityVault, requireAppAuth } from "./server/security";
 import { classifyIntent, buildIntentAwareResponse, isDutchMessage } from "./server/brainEngine";
 
 dotenv.config();
@@ -293,7 +293,7 @@ function generateIntentAwareJarvisFallback(userMsg: string, ctx: any, world: str
 }
 
 // Central AI Chat Endpoint (Strategic partner, brain dump analysis, planning advisor)
-app.post("/api/ai/chat", async (req: Request, res: Response) => {
+app.post("/api/ai/chat", requireAppAuth, async (req: Request, res: Response) => {
   try {
     const { messages = [], context, world } = req.body;
     const permissions = securityVault.getPermissions();
@@ -397,7 +397,7 @@ REAL SYSTEM CONTEXT PROVIDED:
 });
 
 // Intelligent Planning & Schedule Analysis Endpoint
-app.post("/api/ai/plan-day", async (req: Request, res: Response) => {
+app.post("/api/ai/plan-day", requireAppAuth, async (req: Request, res: Response) => {
   try {
     const { tasks, calendarEvents, workingHours, preferences, realm } = req.body;
     if (realm !== 'personal' && realm !== 'mariluna') {
@@ -476,7 +476,7 @@ Return a concise JSON with:
 });
 
 // Goal Breakdown Endpoint
-app.post("/api/ai/breakdown-goal", async (req: Request, res: Response) => {
+app.post("/api/ai/breakdown-goal", requireAppAuth, async (req: Request, res: Response) => {
   try {
     const { goalTitle, realm, timeframe } = req.body;
     if (realm !== 'personal' && realm !== 'mariluna') {
@@ -528,7 +528,7 @@ Return a JSON array of objects with keys: title, durationMins, suggestedDay.`;
 });
 
 // Idea Exploration & Structuring Endpoint
-app.post("/api/ai/analyze-idea", async (req: Request, res: Response) => {
+app.post("/api/ai/analyze-idea", requireAppAuth, async (req: Request, res: Response) => {
   try {
     const { rawIdea, realm } = req.body;
     if (realm !== 'personal' && realm !== 'mariluna') {
