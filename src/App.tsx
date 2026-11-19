@@ -1422,6 +1422,7 @@ export default function App() {
         onExecuteAction={handleExecuteAssistantAction}
         wellbeing={state.wellbeing}
         dailyCheckIns={state.dailyCheckIns}
+        cycleProfile={state.cycleProfile}
         intentions={state.intentions}
         activeContextItem={activeContextItem}
       />
