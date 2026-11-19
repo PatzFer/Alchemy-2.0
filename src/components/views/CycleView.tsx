@@ -661,6 +661,7 @@ export const CycleView: React.FC<CycleViewProps> = ({
 
       </>}
 
+      {hasCycleAnchor && <>
       {/* Cycle Education & Context */}
       <div className="rounded-2xl border border-[#E4DCCE] bg-[var(--surface-1)] p-6 shadow-xs space-y-4">
         <div className="flex items-center gap-2 pb-2 border-b border-[#EAE4D7]">
@@ -691,6 +692,8 @@ export const CycleView: React.FC<CycleViewProps> = ({
           </div>
         </div>
       </div>
+
+      </>}
 
       {/* Cycle History & Privacy Safeguards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
