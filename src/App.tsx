@@ -822,7 +822,7 @@ export default function App() {
         createdAt: new Date().toISOString(),
       });
       if (payload.ideaId) {
-        handleSaveIdea({ id: payload.ideaId, status: 'converted_to_project', convertedToType: 'content' });
+        handleSaveIdea({ id: payload.ideaId, status: 'converted', convertedToType: 'content' });
       }
       setActiveWorld('mariluna');
       setIsAssistantOpen(false);
