@@ -12,19 +12,19 @@ import {
   TrendingUp,
   Pencil,
 } from 'lucide-react';
-import { Goal, Milestone, Realm, ActiveWorldFilter, GoalStatus } from '../../types';
+import { Goal, Milestone, Realm, ActiveWerkruimteFilter, GoalStatus } from '../../types';
 import { requestGoalBreakdown } from '../../lib/aiService';
 
 interface GoalsViewProps {
   goals: Goal[];
-  activeWorld: ActiveWorldFilter;
+  activeWerkruimte: ActiveWerkruimteFilter;
   onSaveGoal: (goal: Partial<Goal>) => void;
   onToggleMilestone: (goalId: string, milestoneId: string) => void;
 }
 
 export const GoalsView: React.FC<GoalsViewProps> = ({
   goals,
-  activeWorld,
+  activeWerkruimte,
   onSaveGoal,
   onToggleMilestone,
 }) => {
@@ -37,7 +37,7 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
   // Form State
   const [formTitle, setFormTitle] = useState('');
   const [formDesc, setFormDesc] = useState('');
-  const [formRealm, setFormRealm] = useState<Realm>(activeWorld === 'mariluna' ? 'mariluna' : 'personal');
+  const [formRealm, setFormRealm] = useState<Realm>(activeWerkruimte === 'mariluna' ? 'mariluna' : 'personal');
   const [formTimeframe, setFormTimeframe] = useState<Goal['timeframe']>('quarterly');
   const [formTargetDate, setFormTargetDate] = useState(() => { const d = new Date(); d.setMonth(d.getMonth() + 1); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; });
   const [formMilestones, setFormMilestones] = useState<Milestone[]>([]);
@@ -45,7 +45,7 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
   const openNewGoalModal = () => {
     setEditingGoalId(null);
     setFormStatus('active');
-    setFormRealm(activeWorld === 'mariluna' ? 'mariluna' : 'personal');
+    setFormRealm(activeWerkruimte === 'mariluna' ? 'mariluna' : 'personal');
     setFormTitle('');
     setFormDesc('');
     setFormTimeframe('quarterly');
@@ -93,6 +93,7 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
     e.preventDefault();
     if (!formTitle.trim()) return;
 
+    const existingGoal = editingGoalId ? goals.find((goal) => goal.id === editingGoalId) : undefined;
     onSaveGoal({
       id: editingGoalId || 'g-' + Date.now(),
       title: formTitle,
@@ -102,8 +103,14 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
       status: formStatus,
       progress: editingGoalId ? (goals.find((goal) => goal.id === editingGoalId)?.progress ?? 0) : 0,
       targetDate: formTargetDate,
-      connectedTaskIds: [],
-      connectedProjectIds: [],
+      startDate: existingGoal?.startDate,
+      endDate: existingGoal?.endDate,
+      priority: existingGoal?.priority,
+      notes: existingGoal?.notes,
+      measurableTarget: existingGoal?.measurableTarget,
+      connectedTaskIds: existingGoal?.connectedTaskIds || [],
+      connectedProjectIds: existingGoal?.connectedProjectIds || [],
+      connectedContentIds: existingGoal?.connectedContentIds || [],
       milestones: formMilestones,
     });
 
@@ -112,13 +119,13 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
     setFormStatus('active');
     setFormTitle('');
     setFormDesc('');
-    setFormRealm(activeWorld === 'mariluna' ? 'mariluna' : 'personal');
+    setFormRealm(activeWerkruimte === 'mariluna' ? 'mariluna' : 'personal');
     setFormTargetDate(() => { const d = new Date(); d.setMonth(d.getMonth() + 1); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; });
     setFormMilestones([]);
   };
 
   const filteredGoals = goals.filter((g) => {
-    if (activeWorld !== 'all' && g.realm !== activeWorld) return false;
+    if (activeWerkruimte !== 'all' && g.realm !== activeWerkruimte) return false;
     if (selectedHorizon !== 'all' && g.timeframe !== selectedHorizon) return false;
     return true;
   });
@@ -129,10 +136,10 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[var(--border-subtle)] pb-5">
         <div>
           <h1 className="font-serif text-3xl font-normal text-[var(--text-primary)]">
-            Aspirational Horizons
+            Doelen & vooruitgang
           </h1>
           <p className="text-xs text-[var(--text-secondary)] mt-1 font-light">
-            Milestone goals broken into unhurried, realistic execution sprints.
+            Maak je doelen haalbaar met kleine tussenstappen en zichtbare vooruitgang.
           </p>
         </div>
 
@@ -142,7 +149,7 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
           className="flex items-center gap-2 px-4 py-2 rounded-full bg-[var(--text-primary)] text-[var(--text-primary)] text-xs font-medium hover:bg-[#453E38] transition shadow-xs cursor-pointer w-fit"
         >
           <Plus className="w-4 h-4" />
-          <span>Define Goal</span>
+          <span>Nieuw doel</span>
         </button>
       </div>
 
@@ -229,7 +236,7 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
                 {/* Progress bar */}
                 <div className="mt-4 pt-3 border-t border-[#F0EBE1]">
                   <div className="flex items-center justify-between text-xs text-[var(--text-secondary)] mb-1.5">
-                    <span>Momentum</span>
+                    <span>Voortgang</span>
                     <span className="font-medium text-[var(--text-primary)]">{calculatedProgress}%</span>
                   </div>
                   {milestones.length === 0 && (
@@ -262,7 +269,7 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
                 {milestones.length > 0 && (
                   <div className="mt-5 space-y-2">
                     <span className="text-[11px] uppercase tracking-wider font-semibold text-[var(--text-muted)] block">
-                      Realistische tussenstappen ({completedCount}/{milestones.length})
+                      Tussenstappen ({completedCount}/{milestones.length})
                     </span>
                     {milestones.map((milestone) => (
                       <div
@@ -318,27 +325,27 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
             <form onSubmit={handleSaveGoal} className="space-y-4">
               <div>
                 <label className="block text-xs font-medium text-[#5A524A] mb-1">
-                  Goal Title
+                  Naam van je doel
                 </label>
                 <input
                   type="text"
                   required
                   value={formTitle}
                   onChange={(e) => setFormTitle(e.target.value)}
-                  placeholder="e.g. Read two formative books, Host autumn retreat"
+                  placeholder="Bijvoorbeeld: vaker bewegen, een ritme vinden dat bij mij past"
                   className="w-full bg-[var(--surface-2)] border border-[var(--border-subtle)] rounded-xl px-3.5 py-2 text-xs text-[var(--text-primary)]"
                 />
               </div>
 
               <div>
                 <label className="block text-xs font-medium text-[#5A524A] mb-1">
-                  Vision & Context
+                  Waarom is dit belangrijk?
                 </label>
                 <textarea
                   rows={2}
                   value={formDesc}
                   onChange={(e) => setFormDesc(e.target.value)}
-                  placeholder="Why does this matter? How will it feel once accomplished?"
+                  placeholder="Waarom is dit belangrijk voor jou?"
                   className="w-full bg-[var(--surface-2)] border border-[var(--border-subtle)] rounded-xl px-3.5 py-2 text-xs text-[var(--text-primary)]"
                 />
               </div>
@@ -346,20 +353,20 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-medium text-[#5A524A] mb-1">
-                    World
+                    Werkruimte
                   </label>
                   <select
                     value={formRealm}
                     onChange={(e) => setFormRealm(e.target.value as Realm)}
                     className="w-full bg-[var(--surface-2)] border border-[var(--border-subtle)] rounded-xl px-3 py-2 text-xs text-[var(--text-primary)]"
                   >
-                    <option value="mariluna">Mariluna Business</option>
-                    <option value="personal">Personal</option>
+                    <option value="mariluna">Mariluna</option>
+                    <option value="personal">Privé</option>
                   </select>
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-[#5A524A] mb-1">
-                    Timeframe Horizon
+                    Periode
                   </label>
                   <select
                     value={formTimeframe}
@@ -390,7 +397,7 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
 
               <div>
                 <label className="block text-xs font-medium text-[#5A524A] mb-1">
-                  Target Date
+                  Streefdatum
                 </label>
                 <input
                   type="date"
@@ -443,7 +450,7 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
                   onClick={() => setIsModalOpen(false)}
                   className="px-4 py-2 rounded-xl text-xs text-[var(--text-secondary)] hover:bg-[var(--surface-2)]"
                 >
-                  Cancel
+                  Annuleren
                 </button>
                 <button
                   type="submit"
