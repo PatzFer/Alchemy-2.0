@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import { AssistantMessage, Task, Goal, Idea, LifeProfile, MemoryItem, Realm, WellbeingState, Project, CalendarEvent, ContentPlan, MarilunaOffering, DailyCheckIn, DailyIntention, CycleProfile } from '../types';
 import { sendChatMessage } from '../lib/aiService';
-import { calculateCycleStatus } from '../lib/cycleUtils';
+import { calculateCycleStatus, hasValidCycleAnchor } from '../lib/cycleUtils';
 import { getAstronomicalMoonPhase } from '../lib/celestialUtils';
 
 interface AIAssistantDrawerProps {
@@ -105,7 +105,7 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
     const inScope = (item: { realm?: string }) => item.realm === scope;
     const now = new Date();
     const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-    const cycleStatus = isPersonal && cycleProfile?.trackingEnabled && cycleProfile.lastPeriodStartDate
+    const cycleStatus = isPersonal && cycleProfile?.trackingEnabled && hasValidCycleAnchor(cycleProfile, todayStr)
       ? calculateCycleStatus(cycleProfile, todayStr)
       : undefined;
     const lunarStatus = getAstronomicalMoonPhase(now);
