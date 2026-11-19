@@ -765,3 +765,14 @@ A user can reliably open Alchemy without a startup security interstitial; captur
 - Added automated tests for cycle phase confidence semantics.
 - Verified on commit `330da8f`: TypeScript, Supabase migration safety, privacy regression tests and production build passed in GitHub Actions. The goal progress slider follow-up is committed separately as `cd3f38b` and has its own validation run pending.
 - These improvements do not enable live Supabase sync, native Health Connect, Renpho import or production deployment. Those remain gated on real project credentials, platform bridge work and end-to-end testing.
+
+## Progress log — 19 November 2026 (MVP editing and cycle-data correctness)
+
+- Added direct editing for saved ideas: title, original thought, theme/pillar, category and tags can be changed without replacing the idea record or losing its linked Jarvis sparring history.
+- Added one shared cycle-anchor validator. Cycle screens and Jarvis now require a real, non-future calendar date before showing or using phase estimates; impossible dates such as 31 February are rejected.
+- The cycle view no longer displays a fabricated phase/day or phase-specific weekly guidance before a valid period start date is recorded. The daily energy check-in remains available on its own.
+- Saving cycle settings with a valid period start date enables tracking; logging a period also enables tracking automatically.
+- Added regression tests for missing, malformed, impossible and future cycle start dates.
+- Verified on commit `b5ac52c`: TypeScript check, Supabase migration safety checks, privacy regression tests and production build all passed in GitHub Actions (run 44547946020).
+- The idea editor, goal editor/progress, meal history idempotency, pantry deduplication and cycle validation are implemented on the feature branch. No changes have been merged to `main` or deployed to a live app.
+- Live cloud sync remains blocked on provisioning and configuring the actual Supabase project, owner Auth and a verified migration/restore test. Health Connect still needs the native Android bridge; Renpho import remains unverified.
