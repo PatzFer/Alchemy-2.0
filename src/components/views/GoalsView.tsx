@@ -10,8 +10,9 @@ import {
   Layers,
   ArrowRight,
   TrendingUp,
+  Pencil,
 } from 'lucide-react';
-import { Goal, Milestone, Realm, ActiveWorldFilter } from '../../types';
+import { Goal, Milestone, Realm, ActiveWorldFilter, GoalStatus } from '../../types';
 import { requestGoalBreakdown } from '../../lib/aiService';
 
 interface GoalsViewProps {
@@ -30,6 +31,8 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
   const [selectedHorizon, setSelectedHorizon] = useState<string>('all');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isAiBreakingDown, setIsAiBreakingDown] = useState(false);
+  const [editingGoalId, setEditingGoalId] = useState<string | null>(null);
+  const [formStatus, setFormStatus] = useState<GoalStatus>('active');
 
   // Form State
   const [formTitle, setFormTitle] = useState('');
@@ -40,12 +43,26 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
   const [formMilestones, setFormMilestones] = useState<Milestone[]>([]);
 
   const openNewGoalModal = () => {
+    setEditingGoalId(null);
+    setFormStatus('active');
     setFormRealm(activeWorld === 'mariluna' ? 'mariluna' : 'personal');
     setFormTitle('');
     setFormDesc('');
     setFormTimeframe('quarterly');
     setFormTargetDate(() => { const d = new Date(); d.setMonth(d.getMonth() + 1); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; });
     setFormMilestones([]);
+    setIsModalOpen(true);
+  };
+
+  const openEditGoalModal = (goal: Goal) => {
+    setEditingGoalId(goal.id);
+    setFormTitle(goal.title);
+    setFormDesc(goal.description || '');
+    setFormRealm(goal.realm);
+    setFormTimeframe(goal.timeframe);
+    setFormTargetDate(goal.targetDate || '');
+    setFormMilestones(goal.milestones || []);
+    setFormStatus(goal.status || 'active');
     setIsModalOpen(true);
   };
 
@@ -77,12 +94,13 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
     if (!formTitle.trim()) return;
 
     onSaveGoal({
-      id: 'g-' + Date.now(),
+      id: editingGoalId || 'g-' + Date.now(),
       title: formTitle,
       description: formDesc,
       realm: formRealm,
       timeframe: formTimeframe,
-      progress: 0,
+      status: formStatus,
+      progress: editingGoalId ? (goals.find((goal) => goal.id === editingGoalId)?.progress ?? 0) : 0,
       targetDate: formTargetDate,
       connectedTaskIds: [],
       connectedProjectIds: [],
@@ -90,6 +108,8 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
     });
 
     setIsModalOpen(false);
+    setEditingGoalId(null);
+    setFormStatus('active');
     setFormTitle('');
     setFormDesc('');
     setFormRealm(activeWorld === 'mariluna' ? 'mariluna' : 'personal');
@@ -181,9 +201,19 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
                       {goal.timeframe} Horizon
                     </span>
                   </div>
-                  <span className="text-xs text-[var(--text-muted)]">
-                    Target: {goal.targetDate}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-[var(--text-muted)]">
+                      {goal.targetDate ? `Doel: ${goal.targetDate}` : 'Geen einddatum'}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => openEditGoalModal(goal)}
+                      aria-label={`Bewerk doel ${goal.title}`}
+                      className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-1)]"
+                    >
+                      <Pencil className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 </div>
 
                 <h3 className="font-serif text-xl font-medium text-[var(--text-primary)] mt-2">
@@ -263,7 +293,7 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#1A1816]/40 backdrop-blur-xs p-4 overflow-y-auto">
           <div className="w-full max-w-lg rounded-2xl bg-[var(--surface-1)] border border-[#E3DCD0] p-6 shadow-2xl my-8">
             <h2 className="font-serif text-xl font-medium text-[var(--text-primary)] mb-4">
-              Set Aspirational Goal
+              {editingGoalId ? 'Bewerk doel' : 'Nieuw doel'}
             </h2>
 
             <form onSubmit={handleSaveGoal} className="space-y-4">
@@ -327,6 +357,19 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
               </div>
 
               <div>
+                <label className="block text-xs font-medium text-[#5A524A] mb-1">Status</label>
+                <select
+                  value={formStatus}
+                  onChange={(e) => setFormStatus(e.target.value as GoalStatus)}
+                  className="w-full bg-[var(--surface-2)] border border-[var(--border-subtle)] rounded-xl px-3 py-2 text-xs text-[var(--text-primary)]"
+                >
+                  <option value="active">Actief</option>
+                  <option value="paused">Gepauzeerd</option>
+                  <option value="completed">Afgerond</option>
+                </select>
+              </div>
+
+              <div>
                 <label className="block text-xs font-medium text-[#5A524A] mb-1">
                   Target Date
                 </label>
@@ -387,7 +430,7 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
                   type="submit"
                   className="px-5 py-2 rounded-xl bg-[var(--text-primary)] text-[var(--text-primary)] text-xs font-medium hover:bg-[#453E38]"
                 >
-                  Save Goal
+                  {editingGoalId ? 'Wijzigingen bewaren' : 'Doel bewaren'}
                 </button>
               </div>
             </form>
