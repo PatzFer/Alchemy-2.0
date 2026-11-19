@@ -194,11 +194,9 @@ export function calculateCycleStatus(profile: CycleProfile, currentDateStr?: str
     estimatedPhase,
     activePhase,
     isOverridden,
-    phaseConfidence: profile.overridePhase
-      ? 'User-Confirmed'
-      : diffDays <= cycleLen
-      ? 'User-Confirmed'
-      : 'Estimated Model',
+    // A logged period start anchors the estimate; it does not confirm today's phase.
+    // Only an explicit user override is a user-confirmed phase.
+    phaseConfidence: profile.overridePhase ? 'User-Confirmed' : 'Estimated Model',
     nextPeriodDate,
     daysUntilNextPeriod: daysUntilNext,
     phaseProgressPercent: Math.min(100, Math.max(5, phaseProgressPercent)),
