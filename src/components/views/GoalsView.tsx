@@ -34,10 +34,20 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
   // Form State
   const [formTitle, setFormTitle] = useState('');
   const [formDesc, setFormDesc] = useState('');
-  const [formRealm, setFormRealm] = useState<Realm>('personal');
+  const [formRealm, setFormRealm] = useState<Realm>(activeWorld === 'mariluna' ? 'mariluna' : 'personal');
   const [formTimeframe, setFormTimeframe] = useState<Goal['timeframe']>('quarterly');
   const [formTargetDate, setFormTargetDate] = useState(() => { const d = new Date(); d.setMonth(d.getMonth() + 1); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; });
   const [formMilestones, setFormMilestones] = useState<Milestone[]>([]);
+
+  const openNewGoalModal = () => {
+    setFormRealm(activeWorld === 'mariluna' ? 'mariluna' : 'personal');
+    setFormTitle('');
+    setFormDesc('');
+    setFormTimeframe('quarterly');
+    setFormTargetDate(() => { const d = new Date(); d.setMonth(d.getMonth() + 1); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; });
+    setFormMilestones([]);
+    setIsModalOpen(true);
+  };
 
   const handleAiBreakdown = async () => {
     if (!formTitle.trim()) return;
@@ -82,7 +92,7 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
     setIsModalOpen(false);
     setFormTitle('');
     setFormDesc('');
-    setFormRealm('personal');
+    setFormRealm(activeWorld === 'mariluna' ? 'mariluna' : 'personal');
     setFormTargetDate(() => { const d = new Date(); d.setMonth(d.getMonth() + 1); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; });
     setFormMilestones([]);
   };
@@ -107,7 +117,7 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
         </div>
 
         <button
-          onClick={() => setIsModalOpen(true)}
+          onClick={openNewGoalModal}
           id="new-goal-btn"
           className="flex items-center gap-2 px-4 py-2 rounded-full bg-[var(--text-primary)] text-[var(--text-primary)] text-xs font-medium hover:bg-[#453E38] transition shadow-xs cursor-pointer w-fit"
         >
