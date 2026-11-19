@@ -230,19 +230,54 @@ export default function App() {
 
   // Tasks handlers
   const handleToggleTask = (taskId: string) => {
-    setState((prev) => ({
-      ...prev,
-      tasks: prev.tasks.map((t) => {
-        if (t.id !== taskId) return t;
-        const newStatus = t.status === 'completed' ? 'todo' : 'completed';
-        return {
-          ...t,
-          status: newStatus,
+    setState((prev) => {
+      const current = prev.tasks.find((task) => task.id === taskId);
+      if (!current) return prev;
+
+      const completing = current.status !== 'completed';
+      const updatedTasks = prev.tasks.map((task) =>
+        task.id === taskId
+          ? {
+              ...task,
+              status: completing ? 'completed' as const : 'todo' as const,
+              missed: false,
+              completedAt: completing ? new Date().toISOString() : undefined,
+            }
+          : task
+      );
+
+      // A recurring task creates its next occurrence only when completed.
+      // Keep the original occurrence in history and reset subtasks on the new one.
+      if (completing && current.recurring !== 'none' && current.dueDate) {
+        const [year, month, day] = current.dueDate.split('-').map(Number);
+        const nextDate = new Date(year, month - 1, day);
+        if (current.recurring === 'daily') nextDate.setDate(nextDate.getDate() + 1);
+        if (current.recurring === 'weekly') nextDate.setDate(nextDate.getDate() + 7);
+        if (current.recurring === 'monthly') nextDate.setMonth(nextDate.getMonth() + 1);
+        const nextDueDate = [
+          nextDate.getFullYear(),
+          String(nextDate.getMonth() + 1).padStart(2, '0'),
+          String(nextDate.getDate()).padStart(2, '0'),
+        ].join('-');
+        const nextOccurrence: Task = {
+          ...current,
+          id: `${current.id}-${nextDueDate}-${Date.now()}`,
+          dueDate: nextDueDate,
+          status: 'todo',
           missed: false,
-          completedAt: newStatus === 'completed' ? new Date().toISOString() : undefined,
+          completedAt: undefined,
+          subtasks: (current.subtasks || []).map((subtask) => ({
+            ...subtask,
+            id: `${subtask.id}-${nextDueDate}`,
+            completed: false,
+          })),
+          createdAt: nextDueDate,
         };
-      }),
-    }));
+        updatedTasks.unshift(nextOccurrence);
+      }
+
+      return { ...prev, tasks: updatedTasks };
+    });
   };
 
   const handleSaveTask = (taskPayload: Partial<Task>) => {
