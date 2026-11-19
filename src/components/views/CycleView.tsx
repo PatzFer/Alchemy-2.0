@@ -33,6 +33,21 @@ import {
   synthesizeEnergyAndCycleGuidance,
 } from '../../lib/cycleUtils';
 
+const getMoonPhase = (date: Date) => {
+  // Approximate astronomical phase using the known January 2000 new moon.
+  const synodicMonth = 29.530588853;
+  const knownNewMoon = Date.UTC(2000, 0, 6, 18, 14);
+  const daysSince = (date.getTime() - knownNewMoon) / 86400000;
+  const phase = ((daysSince % synodicMonth) + synodicMonth) % synodicMonth / synodicMonth;
+  const illumination = (1 - Math.cos(2 * Math.PI * phase)) / 2;
+  const names = [
+    'Nieuwe maan', 'Wassende sikkel', 'Eerste kwartier', 'Wassende maan',
+    'Volle maan', 'Afnemende maan', 'Laatste kwartier', 'Afnemende sikkel',
+  ];
+  const index = Math.round(phase * 8) % 8;
+  return { name: names[index], illumination: Math.round(illumination * 100), phase };
+};
+
 interface CycleViewProps {
   cycleProfile: CycleProfile;
   onUpdateCycleProfile: (profile: CycleProfile) => void;
@@ -49,6 +64,7 @@ export const CycleView: React.FC<CycleViewProps> = ({
   onOpenAssistantWithPrompt,
 }) => {
   const todayStr = new Date().toISOString().split('T')[0];
+  const moon = getMoonPhase(new Date());
   const cycleStatus = calculateCycleStatus(cycleProfile, todayStr);
   const weeklyInsight = getWeeklyCycleInsight(cycleStatus);
   const activePhaseDetails = PHASE_DETAILS[cycleStatus.activePhase];
@@ -179,6 +195,22 @@ export const CycleView: React.FC<CycleViewProps> = ({
           </button>
         </div>
       </div>
+
+      <section className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-1)] p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center gap-4">
+        <div className="w-12 h-12 rounded-full bg-[var(--surface-2)] flex items-center justify-center text-2xl" aria-hidden="true">
+          {moon.phase < 0.03 || moon.phase > 0.97 ? '🌑' : moon.phase < 0.25 ? '🌒' : moon.phase < 0.28 ? '🌓' : moon.phase < 0.48 ? '🌔' : moon.phase < 0.53 ? '🌕' : moon.phase < 0.75 ? '🌖' : moon.phase < 0.78 ? '🌗' : '🌘'}
+        </div>
+        <div className="flex-1">
+          <div className="text-[10px] uppercase tracking-widest text-[var(--accent-secondary)] font-semibold">Natuurlijk ritme · Maanfase</div>
+          <h3 className="font-serif text-lg text-[var(--text-primary)]">{moon.name}</h3>
+          <p className="text-xs text-[var(--text-secondary)]">{moon.illumination}% verlicht · Een astronomische indicatie als reflectie- en natuurkader, geen medische of bewezen cyclusvoorspelling.</p>
+        </div>
+        <button
+          type="button"
+          onClick={() => onOpenAssistantWithPrompt?.(`Help me op een nuchtere, reflectieve manier mijn huidige cyclusfase (${activePhaseDetails.label}) en de huidige maanstand (${moon.name}) naast elkaar te bekijken. Maak duidelijk onderscheid tussen fysiologische kennis en symbolische reflectie. Geef me enkele haalbare suggesties voor vandaag.`)}
+          className="px-4 py-2 rounded-xl border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] hover:bg-[var(--surface-2)]"
+        >Reflecteer met Jarvis</button>
+      </section>
 
       {/* Edit Profile / Override Accordion */}
       {isEditingSettings && (
