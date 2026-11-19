@@ -88,8 +88,7 @@ export const Navigation: React.FC<NavigationProps> = ({
     { id: 'home', label: isNl ? 'Start' : 'Home', icon: Sparkles },
     { id: 'today', label: isNl ? 'Vandaag' : 'Today', icon: Calendar },
     { id: 'mariluna', label: 'Mariluna', icon: Briefcase },
-    { id: 'prive', label: isNl ? 'Privé' : 'Privé', icon: Heart },
-    { id: 'ideas', label: isNl ? 'Ideeën' : 'Ideas', icon: Lightbulb },
+    { id: 'prive', label: isNl ? 'Privé' : 'Private', icon: Heart },
     { id: 'tasks', label: isNl ? 'Taken' : 'Tasks', icon: CheckSquare },
   ];
 
