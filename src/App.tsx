@@ -253,7 +253,11 @@ export default function App() {
         const nextDate = new Date(year, month - 1, day);
         if (current.recurring === 'daily') nextDate.setDate(nextDate.getDate() + 1);
         if (current.recurring === 'weekly') nextDate.setDate(nextDate.getDate() + 7);
-        if (current.recurring === 'monthly') nextDate.setMonth(nextDate.getMonth() + 1);
+        if (current.recurring === 'monthly') {
+          const targetMonth = new Date(year, month, 1);
+          const lastDayOfTargetMonth = new Date(year, month + 1, 0).getDate();
+          nextDate.setFullYear(targetMonth.getFullYear(), targetMonth.getMonth(), Math.min(day, lastDayOfTargetMonth));
+        }
         const nextDueDate = [
           nextDate.getFullYear(),
           String(nextDate.getMonth() + 1).padStart(2, '0'),
