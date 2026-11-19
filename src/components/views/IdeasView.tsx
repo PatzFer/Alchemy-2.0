@@ -80,7 +80,7 @@ export const IdeasView: React.FC<IdeasViewProps> = ({
     let analysis: { category?: string; summary?: string; suggestedNextAction?: string; followUpQuestions?: string[] } = {};
     try {
       const analysisInput = quickIdeaTheme.trim()
-        ? `Thema: ${quickIdeaTheme.trim()}\\n\\nIdee: ${quickIdeaText.trim()}`
+        ? `Thema: ${quickIdeaTheme.trim()}\n\nIdee: ${quickIdeaText.trim()}`
         : quickIdeaText.trim();
       analysis = await requestIdeaAnalysis(analysisInput, quickRealm);
     } catch (error) {
