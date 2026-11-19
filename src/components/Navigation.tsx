@@ -103,25 +103,25 @@ export const Navigation: React.FC<NavigationProps> = ({
             id="brand-logo-btn"
             className="flex items-center gap-3 text-left group cursor-pointer"
           >
-            <div className="w-8 h-8 rounded-full border border-[#555A50] bg-[#30352f] flex items-center justify-center shadow-xs group-hover:border-[#B5A48B] transition shrink-0">
+            <div className="w-8 h-8 rounded-full border border-[#B49A79]/50 bg-[#29232D] flex items-center justify-center shadow-xs group-hover:border-[#B5A48B] transition shrink-0">
               <span className="font-serif text-[11px] font-semibold text-[#D6C69B] tracking-tighter">
                 P&M
               </span>
             </div>
-            <span className="font-serif text-base sm:text-lg tracking-[0.2em] uppercase font-medium text-[#F0EBDD] group-hover:text-[#D6C69B] transition-colors select-none">
+            <span className="font-serif text-base sm:text-lg tracking-[0.2em] uppercase font-medium text-[#E8DCC7] group-hover:text-[#D6C69B] transition-colors select-none">
               ALCHEMY
             </span>
           </button>
 
           {/* World Switcher: Balanced vs Personal vs Mariluna */}
-          <div className="hidden md:flex items-center rounded-full border border-[#3D443B] bg-[#282c27] p-0.5 text-xs">
+          <div className="hidden md:flex items-center rounded-full border border-[#51424A] bg-[#24262A] p-0.5 text-xs">
             <button
               onClick={() => onSelectWorld('all')}
               id="world-filter-all"
               className={`px-3 py-1 rounded-full transition-all cursor-pointer ${
                 activeWorld === 'all'
-                  ? 'bg-[#30352f] text-[#F0EBDD] shadow-xs font-medium'
-                  : 'text-[#B7B7A9] hover:text-[#F0EBDD]'
+                  ? 'bg-[#51424A] text-[#E8DCC7] shadow-xs font-medium'
+                  : 'text-[#BDB3AA] hover:text-[#E8DCC7]'
               }`}
             >
               Balanced
@@ -131,11 +131,11 @@ export const Navigation: React.FC<NavigationProps> = ({
               id="world-filter-personal"
               className={`flex items-center gap-1.5 px-3 py-1 rounded-full transition-all cursor-pointer ${
                 activeWorld === 'personal'
-                  ? 'bg-[#30352f] text-[#F0EBDD] shadow-xs font-medium border border-[#E2DDD2]'
-                  : 'text-[#B7B7A9] hover:text-[#F0EBDD]'
+                  ? 'bg-[#245047] text-[#E8DCC7] shadow-xs font-medium border border-[#39776D]'
+                  : 'text-[#BDB3AA] hover:text-[#E8DCC7]'
               }`}
             >
-              <span className="w-1.5 h-1.5 rounded-full bg-[#8E8478]"></span>
+              <span className="w-1.5 h-1.5 rounded-full bg-[#A2A36B]"></span>
               {isNl ? 'Persoonlijk Domein' : 'Personal Sanctuary'}
             </button>
             <button
@@ -143,8 +143,8 @@ export const Navigation: React.FC<NavigationProps> = ({
               id="world-filter-mariluna"
               className={`flex items-center gap-1.5 px-3 py-1 rounded-full transition-all cursor-pointer ${
                 activeWorld === 'mariluna'
-                  ? 'bg-[#F0EBDD] text-[#20231f] shadow-xs font-medium'
-                  : 'text-[#B7B7A9] hover:text-[#F0EBDD]'
+                  ? 'bg-[#873F5B] text-[#E8DCC7] shadow-xs font-medium'
+                  : 'text-[#BDB3AA] hover:text-[#E8DCC7]'
               }`}
             >
               <span className="w-1.5 h-1.5 rounded-full bg-[#D6C69B]"></span>
@@ -170,16 +170,16 @@ export const Navigation: React.FC<NavigationProps> = ({
                       ? 'bg-[#D1A9B9] text-[#321F32] shadow-xs font-semibold'
                       : isPrive
                       ? 'bg-[#245047] text-[#E8DCC7] shadow-xs font-semibold'
-                      : 'bg-[#30352f] text-[#F0EBDD] shadow-xs font-semibold'
+                      : 'bg-[#302B33] text-[#E8DCC7] shadow-xs font-semibold'
                     : isMariluna
-                    ? 'text-[#F0EBDD] bg-[#59324F] hover:bg-[#873F5B]'
+                    ? 'text-[#E8DCC7] bg-[#59324F] hover:bg-[#873F5B]'
                     : isPrive
-                    ? 'text-[#F0EBDD] bg-[#172F2B] hover:bg-[#245047] hover:text-[#F0EBDD]'
-                    : 'text-[#B7B7A9] hover:text-[#F0EBDD] hover:bg-[#30352f]'
+                    ? 'text-[#E8DCC7] bg-[#172F2B] hover:bg-[#245047] hover:text-[#E8DCC7]'
+                    : 'text-[#BDB3AA] hover:text-[#E8DCC7] hover:bg-[#302B33]'
                 }`}
               >
                 {isMariluna && <span className="w-1.5 h-1.5 rounded-full bg-[#D6C69B]" />}
-                {isPrive && <span className="w-1.5 h-1.5 rounded-full bg-[#8E8478]" />}
+                {isPrive && <span className="w-1.5 h-1.5 rounded-full bg-[#A2A36B]" />}
                 <span>{item.label}</span>
               </button>
             );
@@ -198,8 +198,8 @@ export const Navigation: React.FC<NavigationProps> = ({
                   id={`nav-tab-${item.id}`}
                   className={`px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
                     isActive
-                      ? 'bg-[#30352f] text-[#F0EBDD] font-semibold'
-                      : 'text-[#B7B7A9] hover:text-[#F0EBDD] hover:bg-[#30352f]'
+                      ? 'bg-[#302B33] text-[#E8DCC7] font-semibold'
+                      : 'text-[#BDB3AA] hover:text-[#E8DCC7] hover:bg-[#302B33]'
                   }`}
                 >
                   {item.label}
@@ -218,7 +218,7 @@ export const Navigation: React.FC<NavigationProps> = ({
             onClick={onOpenNotifications}
             id="notification-center-btn"
             title="Notification Center & Quiet Hours"
-            className="relative p-2 rounded-full border border-transparent text-[#B7B7A9] hover:text-[#F0EBDD] hover:bg-[#30352f] transition cursor-pointer"
+            className="relative p-2 rounded-full border border-transparent text-[#BDB3AA] hover:text-[#E8DCC7] hover:bg-[#302B33] transition cursor-pointer"
           >
             <Bell className="w-4 h-4" />
             {unreadNotificationCount > 0 && (
@@ -232,8 +232,8 @@ export const Navigation: React.FC<NavigationProps> = ({
             id="assistant-open-btn"
             className={`flex items-center gap-2 rounded-full px-3.5 py-1.5 text-xs font-medium transition-all cursor-pointer border ${
               isAssistantOpen
-                ? 'bg-[#F0EBDD] text-[#20231f] border-[#F0EBDD] shadow-sm ring-2 ring-[#D6C69B]/40'
-                : 'bg-[#30352f] text-[#F0EBDD] border-[#555A50] hover:border-[#B49A7A] hover:bg-[#39312B]'
+                ? 'bg-[#D1A9B9] text-[#321F32] border-[#F0EBDD] shadow-sm ring-2 ring-[#D6C69B]/40'
+                : 'bg-[#302B33] text-[#E8DCC7] border-[#51424A] hover:border-[#B49A79] hover:bg-[#302B33]'
             }`}
           >
             <Sparkles className="w-3.5 h-3.5 text-[#D6C69B]" />
@@ -248,8 +248,8 @@ export const Navigation: React.FC<NavigationProps> = ({
             title={isNl ? "Beveiliging & privacy" : "Security & Privacy Center"}
             className={`relative p-2 rounded-full border border-transparent transition cursor-pointer ${
               currentTab === 'security'
-                ? 'bg-[#30352f] text-[#F0EBDD]'
-                : 'text-[#B7B7A9] hover:text-[#F0EBDD] hover:bg-[#30352f]'
+                ? 'bg-[#302B33] text-[#E8DCC7]'
+                : 'text-[#BDB3AA] hover:text-[#E8DCC7] hover:bg-[#302B33]'
             }`}
           >
             <Shield className="w-4 h-4" />
@@ -271,8 +271,8 @@ export const Navigation: React.FC<NavigationProps> = ({
             title={isNl ? "Instellingen & systeemgeheugen" : "Settings & System Memory"}
             className={`p-2 rounded-full border border-transparent transition cursor-pointer ${
               currentTab === 'settings'
-                ? 'bg-[#30352f] text-[#F0EBDD]'
-                : 'text-[#B7B7A9] hover:text-[#F0EBDD] hover:bg-[#30352f]'
+                ? 'bg-[#302B33] text-[#E8DCC7]'
+                : 'text-[#BDB3AA] hover:text-[#E8DCC7] hover:bg-[#302B33]'
             }`}
           >
             <Settings className="w-4 h-4" />
@@ -287,8 +287,8 @@ export const Navigation: React.FC<NavigationProps> = ({
             onClick={() => onSelectWorld('all')}
             className={`px-3 py-1 rounded-full text-[11px] transition ${
               activeWorld === 'all'
-                ? 'bg-[#30352f] text-[#F0EBDD] shadow-xs font-medium'
-                : 'text-[#B7B7A9]'
+                ? 'bg-[#51424A] text-[#E8DCC7] shadow-xs font-medium'
+                : 'text-[#BDB3AA]'
             }`}
           >
             Balanced
@@ -297,11 +297,11 @@ export const Navigation: React.FC<NavigationProps> = ({
             onClick={() => onSelectWorld('personal')}
             className={`flex items-center gap-1 px-3 py-1 rounded-full text-[11px] transition ${
               activeWorld === 'personal'
-                ? 'bg-[#30352f] text-[#F0EBDD] shadow-xs font-medium border border-[#555A50]'
-                : 'text-[#B7B7A9]'
+                ? 'bg-[#302B33] text-[#E8DCC7] shadow-xs font-medium border border-[#555A50]'
+                : 'text-[#BDB3AA]'
             }`}
           >
-            <span className="w-1.5 h-1.5 rounded-full bg-[#8E8478]"></span>
+            <span className="w-1.5 h-1.5 rounded-full bg-[#A2A36B]"></span>
             Personal
           </button>
           <button
@@ -309,7 +309,7 @@ export const Navigation: React.FC<NavigationProps> = ({
             className={`flex items-center gap-1 px-3 py-1 rounded-full text-[11px] transition ${
               activeWorld === 'mariluna'
                 ? 'bg-[#59324F] text-[#E8DCC7] font-medium'
-                : 'text-[#B7B7A9]'
+                : 'text-[#BDB3AA]'
             }`}
           >
             <span className="w-1.5 h-1.5 rounded-full bg-[#D6C69B]"></span>
@@ -328,10 +328,10 @@ export const Navigation: React.FC<NavigationProps> = ({
               key={item.id}
               onClick={() => onSelectTab(item.id)}
               className={`flex flex-col items-center justify-center py-1 px-2 rounded-lg text-[10px] font-medium transition cursor-pointer ${
-                isActive ? 'text-[#F0EBDD] font-semibold' : 'text-[#858A7F] hover:text-[#F0EBDD]'
+                isActive ? 'text-[#E8DCC7] font-semibold' : 'text-[#928A85] hover:text-[#E8DCC7]'
               }`}
             >
-              <Icon className={`w-4 h-4 mb-0.5 ${isActive ? 'text-[#8C7654]' : 'text-[#858A7F]'}`} />
+              <Icon className={`w-4 h-4 mb-0.5 ${isActive ? 'text-[#8C7654]' : 'text-[#928A85]'}`} />
               <span>{item.label}</span>
             </button>
           );
