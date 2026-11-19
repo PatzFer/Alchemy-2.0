@@ -326,7 +326,7 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
                         Suggested Direction
                       </div>
                       <button
-                        onClick={() => onExecuteAction(msg.suggestedAction)}
+                        onClick={() => onExecuteAction({ ...msg.suggestedAction, workspace: assistantWorld })}
                         className="flex items-center justify-between w-full p-2.5 rounded-xl bg-[#F8F5EE] border border-[#DDD5C7] hover:bg-[#EFE9DD] transition text-left cursor-pointer"
                       >
                         <span className="text-xs font-medium text-[#2C2825]">
