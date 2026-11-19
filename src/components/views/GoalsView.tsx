@@ -12,19 +12,19 @@ import {
   TrendingUp,
   Pencil,
 } from 'lucide-react';
-import { Goal, Milestone, Realm, ActiveWerkruimteFilter, GoalStatus } from '../../types';
+import { Goal, Milestone, Realm, ActiveWorldFilter, GoalStatus } from '../../types';
 import { requestGoalBreakdown } from '../../lib/aiService';
 
 interface GoalsViewProps {
   goals: Goal[];
-  activeWerkruimte: ActiveWerkruimteFilter;
+  activeWorld: ActiveWorldFilter;
   onSaveGoal: (goal: Partial<Goal>) => void;
   onToggleMilestone: (goalId: string, milestoneId: string) => void;
 }
 
 export const GoalsView: React.FC<GoalsViewProps> = ({
   goals,
-  activeWerkruimte,
+  activeWorld,
   onSaveGoal,
   onToggleMilestone,
 }) => {
@@ -37,7 +37,7 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
   // Form State
   const [formTitle, setFormTitle] = useState('');
   const [formDesc, setFormDesc] = useState('');
-  const [formRealm, setFormRealm] = useState<Realm>(activeWerkruimte === 'mariluna' ? 'mariluna' : 'personal');
+  const [formRealm, setFormRealm] = useState<Realm>(activeWorld === 'mariluna' ? 'mariluna' : 'personal');
   const [formTimeframe, setFormTimeframe] = useState<Goal['timeframe']>('quarterly');
   const [formTargetDate, setFormTargetDate] = useState(() => { const d = new Date(); d.setMonth(d.getMonth() + 1); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; });
   const [formMilestones, setFormMilestones] = useState<Milestone[]>([]);
@@ -45,7 +45,7 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
   const openNewGoalModal = () => {
     setEditingGoalId(null);
     setFormStatus('active');
-    setFormRealm(activeWerkruimte === 'mariluna' ? 'mariluna' : 'personal');
+    setFormRealm(activeWorld === 'mariluna' ? 'mariluna' : 'personal');
     setFormTitle('');
     setFormDesc('');
     setFormTimeframe('quarterly');
@@ -119,13 +119,13 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
     setFormStatus('active');
     setFormTitle('');
     setFormDesc('');
-    setFormRealm(activeWerkruimte === 'mariluna' ? 'mariluna' : 'personal');
+    setFormRealm(activeWorld === 'mariluna' ? 'mariluna' : 'personal');
     setFormTargetDate(() => { const d = new Date(); d.setMonth(d.getMonth() + 1); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; });
     setFormMilestones([]);
   };
 
   const filteredGoals = goals.filter((g) => {
-    if (activeWerkruimte !== 'all' && g.realm !== activeWerkruimte) return false;
+    if (activeWorld !== 'all' && g.realm !== activeWorld) return false;
     if (selectedHorizon !== 'all' && g.timeframe !== selectedHorizon) return false;
     return true;
   });
