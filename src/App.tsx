@@ -1297,7 +1297,7 @@ export default function App() {
       />
 
       {/* Global Quick Capture: available from every working area */}
-      {currentTab !== 'today' && (
+      {currentTab !== 'home' && (
         <button
           type="button"
           onClick={() => {
