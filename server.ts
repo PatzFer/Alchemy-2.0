@@ -414,6 +414,8 @@ DOMAINS & PRIVACY BOUNDARIES:
 REAL SYSTEM CONTEXT PROVIDED:
 - Active Realm: ${world}
 - Current Date: ${sanitizedContext?.currentDate || new Date().toISOString().split('T')[0]}
+- Menstrual Cycle Context (only present when the user has explicitly authorized cycle data): ${sanitizedContext?.cyclePhase ? `${sanitizedContext.cyclePhase}, day ${sanitizedContext.cycleDay || 'unknown'} (${sanitizedContext.cyclePhaseConfidence || 'estimated'})` : 'Not shared'}
+- Treat cycle phase as an estimate, not a diagnosis or a fixed prediction of mood, energy or ability. Ask the user to check in with their lived experience.
 - Active Context Item: ${JSON.stringify(sanitizedContext?.activeContextItem || null)}
 - Calendar Events: ${JSON.stringify(sanitizedContext?.calendarEvents || [])}
 - Active Tasks: ${JSON.stringify(sanitizedContext?.tasks || [])}
