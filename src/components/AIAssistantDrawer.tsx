@@ -12,8 +12,9 @@ import {
   MessageSquare,
   ShieldCheck,
 } from 'lucide-react';
-import { AssistantMessage, Task, Goal, Idea, LifeProfile, MemoryItem, Realm, WellbeingState, Project, CalendarEvent, ContentPlan, MarilunaOffering, DailyCheckIn, DailyIntention } from '../types';
+import { AssistantMessage, Task, Goal, Idea, LifeProfile, MemoryItem, Realm, WellbeingState, Project, CalendarEvent, ContentPlan, MarilunaOffering, DailyCheckIn, DailyIntention, CycleProfile } from '../types';
 import { sendChatMessage } from '../lib/aiService';
+import { calculateCycleStatus } from '../lib/cycleUtils';
 
 interface AIAssistantDrawerProps {
   isOpen: boolean;
@@ -33,6 +34,7 @@ interface AIAssistantDrawerProps {
   onExecuteAction: (action: any) => void;
   wellbeing?: WellbeingState;
   dailyCheckIns?: DailyCheckIn[];
+  cycleProfile?: CycleProfile;
   intentions?: DailyIntention[];
   activeContextItem?: any;
 }
@@ -55,6 +57,7 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
   onExecuteAction,
   wellbeing,
   dailyCheckIns = [],
+  cycleProfile,
   intentions = [],
   activeContextItem,
 }) => {
@@ -101,6 +104,9 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
     const inScope = (item: { realm?: string }) => item.realm === scope;
     const now = new Date();
     const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    const cycleStatus = isPersonal && cycleProfile?.trackingEnabled && cycleProfile.lastPeriodStartDate
+      ? calculateCycleStatus(cycleProfile, todayStr)
+      : undefined;
     const rawContextItem = customContextItem || activeContextItem;
     const contextRealm = rawContextItem?.realm || rawContextItem?.world || rawContextItem?.details?.realm;
     const safeContextItem = rawContextItem && contextRealm === scope ? rawContextItem : undefined;
@@ -108,6 +114,9 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
     return {
       currentDate: todayStr,
       currentDayOfWeek: now.toLocaleDateString('nl-NL', { weekday: 'long' }),
+      cyclePhase: cycleStatus?.activePhase,
+      cycleDay: cycleStatus?.cycleDay,
+      cyclePhaseConfidence: cycleStatus?.phaseConfidence,
       activeWorld: scope,
       activeContextItem: safeContextItem,
       calendarEvents: (calendarEvents || []).filter(inScope).map((e) => ({
