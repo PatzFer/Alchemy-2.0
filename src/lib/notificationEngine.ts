@@ -9,7 +9,17 @@ import {
   CycleProfile,
   DailyCheckIn,
 } from '../types';
-import { calculateCycleStatus } from './cycleUtils';
+import { calculateCycleStatus, hasValidCycleAnchor } from './cycleUtils';
+
+/** Calendar-day keys must use the device's local timezone, not UTC midnight. */
+export function getNotificationLocalDateKey(date: Date = new Date()): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+}
+
+export function getNotificationTimestampLocalDateKey(timestamp: string): string | null {
+  const parsed = new Date(timestamp);
+  return Number.isNaN(parsed.getTime()) ? null : getNotificationLocalDateKey(parsed);
+}
 
 export const DEFAULT_NOTIFICATION_SETTINGS: NotificationSettings = {
   enabled: true,
@@ -110,12 +120,12 @@ export function evaluateSmartNotifications(params: {
   const maxFrequency = settings.maxDailyFrequency || 3;
   const categories = settings.categories || DEFAULT_NOTIFICATION_SETTINGS.categories;
 
-  const todayStr = new Date().toISOString().split('T')[0];
+  const todayStr = getNotificationLocalDateKey();
   const newItems: SmartNotification[] = [];
 
   // Check how many notifications have been added today
   const notificationsToday = existingNotifications.filter(
-    (n) => n.timestamp && n.timestamp.split('T')[0] === todayStr
+    (n) => getNotificationTimestampLocalDateKey(n.timestamp) === todayStr
   );
 
   if (notificationsToday.length >= maxFrequency) {
@@ -125,7 +135,7 @@ export function evaluateSmartNotifications(params: {
 
   // 1. Daily Thoughtful Morning Synthesis (combines tasks + calendar + cycle)
   const hasDailyDigest = existingNotifications.some(
-    (n) => n.category === 'upcoming_task' && n.timestamp && n.timestamp.split('T')[0] === todayStr
+    (n) => n.category === 'upcoming_task' && getNotificationTimestampLocalDateKey(n.timestamp) === todayStr
   );
 
   if (!hasDailyDigest && categories.upcoming_task) {
@@ -143,7 +153,7 @@ export function evaluateSmartNotifications(params: {
     }
 
     // Add gentle cycle context if available and enabled
-    if (cycleProfile?.trackingEnabled && categories.cycle_insight) {
+    if (cycleProfile?.trackingEnabled && categories.cycle_insight && hasValidCycleAnchor(cycleProfile, todayStr)) {
       const cycleStatus = calculateCycleStatus(cycleProfile, todayStr);
       digestBody += ` (Rhythm: ${cycleStatus.activePhase} phase, Day ${cycleStatus.cycleDay}).`;
     }
@@ -193,7 +203,7 @@ export function evaluateSmartNotifications(params: {
   ) {
     const missedTasks = tasks.filter((t) => t.missed && t.status !== 'completed');
     const hasMissedNotice = existingNotifications.some(
-      (n) => n.category === 'rescheduling_suggestion' && n.timestamp && n.timestamp.split('T')[0] === todayStr
+      (n) => n.category === 'rescheduling_suggestion' && getNotificationTimestampLocalDateKey(n.timestamp) === todayStr
     );
 
     if (!hasMissedNotice && missedTasks.length > 0) {
