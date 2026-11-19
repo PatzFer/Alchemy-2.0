@@ -24,6 +24,18 @@ interface IdeasViewProps {
   onOpenAssistantWithPrompt?: (prompt: string) => void;
 }
 
+const getSharedIdeaKeywords = (left: string, right: string): string[] => {
+  const stopWords = new Set(['de', 'het', 'een', 'en', 'van', 'voor', 'met', 'op', 'in', 'aan', 'is', 'ik', 'mijn', 'dit', 'dat', 'the', 'and', 'for', 'with', 'from', 'into', 'your', 'you']);
+  const words = (value: string) => new Set(
+    value.toLocaleLowerCase('nl-BE')
+      .normalize('NFD')
+      .replace(/[\\u0300-\\u036f]/g, '')
+      .match(/[a-z0-9]{4,}/g)?.filter((word) => !stopWords.has(word)) || []
+  );
+  const leftWords = words(left);
+  return [...words(right)].filter((word) => leftWords.has(word)).slice(0, 4);
+};
+
 export const IdeasView: React.FC<IdeasViewProps> = ({
   ideas,
   activeWorld,
@@ -48,6 +60,7 @@ export const IdeasView: React.FC<IdeasViewProps> = ({
 
   const untouchedIdeas = ideas.filter(
     (i) =>
+      (activeWorld === 'all' || i.realm === activeWorld) &&
       i.status !== 'archived' &&
       i.status !== 'converted_to_project' &&
       new Date(i.createdAt) < threeWeeksAgo
@@ -226,6 +239,12 @@ export const IdeasView: React.FC<IdeasViewProps> = ({
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
         {filteredIdeas.map((idea) => {
           const isArchived = idea.status === 'archived';
+          const relatedIdeas = filteredIdeas
+            .filter((other) => other.id !== idea.id && other.realm === idea.realm && other.status !== 'archived')
+            .map((other) => ({ idea: other, shared: getSharedIdeaKeywords(`${idea.title} ${idea.content}`, `${other.title} ${other.content}`) }))
+            .filter((match) => match.shared.length >= 2)
+            .sort((a, b) => b.shared.length - a.shared.length)
+            .slice(0, 2);
           return (
             <div
               key={idea.id}
@@ -256,6 +275,23 @@ export const IdeasView: React.FC<IdeasViewProps> = ({
                   {idea.content}
                 </p>
 
+                {relatedIdeas.length > 0 && (
+                  <div className="mt-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-1)] p-3">
+                    <span className="text-[10px] font-semibold uppercase tracking-wider text-[var(--accent-secondary)]">
+                      Mogelijk verwant aan
+                    </span>
+                    <div className="mt-2 space-y-2">
+                      {relatedIdeas.map(({ idea: related, shared }) => (
+                        <div key={related.id} className="text-[11px] text-[var(--text-secondary)]">
+                          <span className="font-medium text-[var(--text-primary)]">{related.title}</span>
+                          <span className="block mt-0.5 text-[10px] text-[var(--text-muted)]">
+                            Gedeelde themawoorden: {shared.join(', ')}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 {/* AI Follow-up Questions if present */}
                 {idea.followUpQuestions && idea.followUpQuestions.length > 0 && (
                   <div className="mt-4 pt-3 border-t border-[#F0EBE1] space-y-1.5">
