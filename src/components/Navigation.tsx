@@ -241,29 +241,6 @@ export const Navigation: React.FC<NavigationProps> = ({
             <span className="sm:hidden">AI</span>
           </button>
 
-          {/* Security & Privacy Center Button */}
-          <button
-            onClick={() => onSelectTab('security')}
-            id="security-center-btn"
-            title={isNl ? "Beveiliging & privacy" : "Security & Privacy Center"}
-            className={`relative p-2 rounded-full border border-transparent transition cursor-pointer ${
-              currentTab === 'security'
-                ? 'bg-[#302B33] text-[#E8DCC7]'
-                : 'text-[#BDB3AA] hover:text-[#E8DCC7] hover:bg-[#302B33]'
-            }`}
-          >
-            <Shield className="w-4 h-4" />
-            <span
-              className={`absolute top-1 right-1 w-2 h-2 rounded-full ring-2 ring-[#20231f] ${
-                securityLevel === 3
-                  ? 'bg-[#3A6B35] animate-pulse'
-                  : isSensitiveUnlocked
-                  ? 'bg-[#D6C69B]'
-                  : 'bg-[#D6C69B]'
-              }`}
-            />
-          </button>
-
           {/* Settings Button */}
           <button
             onClick={() => onSelectTab('settings')}
