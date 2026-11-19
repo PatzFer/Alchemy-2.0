@@ -74,6 +74,7 @@ export default function App() {
   const [lastBackupAt, setLastBackupAt] = useState<string | null>(() => {
     try { return localStorage.getItem('alchemy_last_backup_at'); } catch { return null; }
   });
+  const [storageSaveError, setStorageSaveError] = useState<string | null>(null);
   const [currentTab, setCurrentTab] = useState<NavTab>('home');
   const [activeWorld, setActiveWorld] = useState<ActiveWorldFilter>('all');
   const [isAssistantOpen, setIsAssistantOpen] = useState(false);
@@ -158,7 +159,11 @@ export default function App() {
   // Automatically persist changes to local storage
   useEffect(() => {
     // Never report a successful save when the browser rejected the write (e.g. quota exceeded).
-    if (!saveState(state)) return;
+    if (!saveState(state)) {
+      setStorageSaveError('Je laatste wijzigingen konden niet op dit toestel worden opgeslagen. Maak eerst een back-up en controleer de beschikbare browseropslag.');
+      return;
+    }
+    setStorageSaveError(null);
     const savedAt = new Date().toISOString();
     setLastSavedAt(savedAt);
     try { localStorage.setItem('alchemy_last_saved_at', savedAt); } catch { /* Timestamp is informational; state save already succeeded. */ }
@@ -1060,6 +1065,32 @@ export default function App() {
     <div className="min-h-screen bg-[var(--app-bg)] text-[var(--text-primary)] font-sans antialiased selection:bg-[#52634A] selection:text-[#F0EBDD]">
       {/* Offline Status Badge */}
       <OfflineIndicator />
+
+      {storageSaveError && (
+        <div
+          role="alert"
+          aria-live="assertive"
+          className="sticky top-0 z-[90] mx-3 mt-3 rounded-xl border border-[#B45309]/40 bg-[#FFF7ED] px-4 py-3 text-sm text-[#9A3412] shadow-sm"
+        >
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="font-medium">{storageSaveError}</p>
+            <button
+              type="button"
+              onClick={() => {
+                if (saveState(state)) {
+                  setStorageSaveError(null);
+                  const savedAt = new Date().toISOString();
+                  setLastSavedAt(savedAt);
+                  try { localStorage.setItem('alchemy_last_saved_at', savedAt); } catch { /* Informational only. */ }
+                }
+              }}
+              className="shrink-0 rounded-lg border border-[#9A3412]/30 px-3 py-1.5 text-xs font-semibold hover:bg-[#FFEDD5]"
+            >
+              Opnieuw proberen
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Global navigation remains available inside each domain. Home is the neutral launcher. */}
       {currentTab !== 'home' && (
