@@ -90,6 +90,7 @@ export const CycleView: React.FC<CycleViewProps> = ({
   const [newLogStartDate, setNewLogStartDate] = useState(todayStr);
   const [newLogEndDate, setNewLogEndDate] = useState('');
   const [newLogNotes, setNewLogNotes] = useState('');
+  const [periodLogError, setPeriodLogError] = useState<string | null>(null);
 
   // Daily energy check-in state
   const [energyLevel, setEnergyLevel] = useState<EnergyLevel>(todayCheckIn?.energy || 'normal');
@@ -131,6 +132,19 @@ export const CycleView: React.FC<CycleViewProps> = ({
 
   const handleLogNewPeriod = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!newLogStartDate || newLogStartDate > todayStr) {
+      setPeriodLogError('Kies een geldige startdatum die vandaag of eerder valt.');
+      return;
+    }
+    if (newLogEndDate && (newLogEndDate < newLogStartDate || newLogEndDate > todayStr)) {
+      setPeriodLogError('De einddatum moet op of na de startdatum liggen en mag niet in de toekomst vallen.');
+      return;
+    }
+    if (cycleProfile.history.some((entry) => entry.startDate === newLogStartDate)) {
+      setPeriodLogError('Deze startdatum staat al in je cyclusgeschiedenis.');
+      return;
+    }
+    setPeriodLogError(null);
     const newEntry: CycleEntry = {
       id: `ce-${Date.now()}`,
       startDate: newLogStartDate,
@@ -151,6 +165,8 @@ export const CycleView: React.FC<CycleViewProps> = ({
     onUpdateCycleProfile(updated);
     setShowLogPeriodModal(false);
     setNewLogNotes('');
+    setNewLogEndDate('');
+    setPeriodLogError(null);
   };
 
   return (
@@ -179,7 +195,7 @@ export const CycleView: React.FC<CycleViewProps> = ({
         {/* Action buttons: Settings & Log Period */}
         <div className="flex items-center gap-2.5">
           <button
-            onClick={() => setShowLogPeriodModal(true)}
+            onClick={() => { setPeriodLogError(null); setShowLogPeriodModal(true); }}
             id="log-period-btn"
             className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[var(--text-primary)] text-[var(--text-primary)] text-xs font-medium hover:bg-[var(--text-primary)] transition shadow-xs cursor-pointer"
           >
@@ -731,7 +747,8 @@ export const CycleView: React.FC<CycleViewProps> = ({
                 <input
                   type="date"
                   value={newLogStartDate}
-                  onChange={(e) => setNewLogStartDate(e.target.value)}
+                  onChange={(e) => { setNewLogStartDate(e.target.value); setPeriodLogError(null); }}
+                  max={todayStr}
                   required
                   className="w-full px-3 py-2 rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-2)] text-xs text-[var(--text-primary)]"
                 />
@@ -742,7 +759,9 @@ export const CycleView: React.FC<CycleViewProps> = ({
                 <input
                   type="date"
                   value={newLogEndDate}
-                  onChange={(e) => setNewLogEndDate(e.target.value)}
+                  onChange={(e) => { setNewLogEndDate(e.target.value); setPeriodLogError(null); }}
+                  min={newLogStartDate}
+                  max={todayStr}
                   className="w-full px-3 py-2 rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-2)] text-xs text-[var(--text-primary)]"
                 />
               </div>
@@ -757,6 +776,12 @@ export const CycleView: React.FC<CycleViewProps> = ({
                   className="w-full px-3 py-2 rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-2)] text-xs text-[var(--text-primary)]"
                 />
               </div>
+
+              {periodLogError && (
+                <div role="alert" className="rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-800">
+                  {periodLogError}
+                </div>
+              )}
 
               <div className="flex items-center justify-end gap-3 pt-2">
                 <button
