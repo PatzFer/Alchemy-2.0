@@ -107,6 +107,17 @@ export const PHASE_DETAILS: Record<CyclePhase, PhaseEducationalDetails> = {
   },
 };
 
+export function hasValidCycleAnchor(profile: CycleProfile, currentDateStr?: string): boolean {
+  const startDate = profile.lastPeriodStartDate || '';
+  if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(startDate)) return false;
+  if (!Number.isFinite(Date.parse(`${startDate}T00:00:00`))) return false;
+  const target = currentDateStr || (() => {
+    const date = new Date();
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  })();
+  return startDate <= target;
+}
+
 /**
  * Calculates current cycle status with estimated vs user-confirmed status.
  */
