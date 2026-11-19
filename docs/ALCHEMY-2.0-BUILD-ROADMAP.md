@@ -859,3 +859,12 @@ A user can reliably open Alchemy without a startup security interstitial; captur
 - Added regression coverage for permanent, future-expiring, expired, malformed and non-string expiry values.
 - This is a server-side context-filtering hardening change; it does not change stored memory records or automatically delete anything.
 - CI validation is pending for this change.
+
+
+## Progress log — 19 November 2026 (Jarvis local memory context)
+
+- The local six-layer Jarvis context now excludes unconfirmed suggestions, archived memories, expired memories, malformed expiry timestamps and records without a valid realm.
+- Personal and Mariluna memories are restricted to their own workspace; the explicitly balanced context can include both realms.
+- Added regression tests for memory lifecycle filtering and realm isolation, and included the tests in the standard CI test command.
+- This changes only what is assembled for Jarvis context; it does not delete or rewrite stored memories.
+- Full validation is pending on the latest feature-branch commit.
