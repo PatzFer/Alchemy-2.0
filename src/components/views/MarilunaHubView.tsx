@@ -849,7 +849,7 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
                         className="text-[11px] text-[var(--accent-secondary)] hover:text-[var(--text-primary)] font-medium flex items-center gap-1 cursor-pointer transition"
                       >
                         <Sparkles className="w-3 h-3 text-[var(--accent-secondary)]" />
-                        <span>{isNl ? 'Bespreek met Alchemy' : 'Spar with Alchemy'}</span>
+                        <span>{idea.sparringMessages && idea.sparringMessages.length > 1 ? (isNl ? 'Hervat sparring' : 'Resume sparring') : (isNl ? 'Spar met Jarvis' : 'Think with Jarvis')}</span>
                       </button>
                       <button
                         type="button"
