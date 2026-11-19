@@ -415,7 +415,8 @@ REAL SYSTEM CONTEXT PROVIDED:
 - Active Realm: ${world}
 - Current Date: ${sanitizedContext?.currentDate || new Date().toISOString().split('T')[0]}
 - Menstrual Cycle Context (only present when the user has explicitly authorized cycle data): ${sanitizedContext?.cyclePhase ? `${sanitizedContext.cyclePhase}, day ${sanitizedContext.cycleDay || 'unknown'} (${sanitizedContext.cyclePhaseConfidence || 'estimated'})` : 'Not shared'}
-- Treat cycle phase as an estimate, not a diagnosis or a fixed prediction of mood, energy or ability. Ask the user to check in with their lived experience.
+- Astronomical Moon: ${sanitizedContext?.moonPhase || 'Not available'} (${sanitizedContext?.moonIlluminationPct ?? 'unknown'}% illumination). Northern season: ${sanitizedContext?.season || 'Not available'}.
+- Treat cycle phase as an estimate, not a diagnosis or a fixed prediction of mood, energy or ability. Ask the user to check in with their lived experience. Moon phase and season may be used as optional reflective/nature context, never as scientific proof that they cause a person's mood, energy or behaviour.
 - Active Context Item: ${JSON.stringify(sanitizedContext?.activeContextItem || null)}
 - Calendar Events: ${JSON.stringify(sanitizedContext?.calendarEvents || [])}
 - Active Tasks: ${JSON.stringify(sanitizedContext?.tasks || [])}
