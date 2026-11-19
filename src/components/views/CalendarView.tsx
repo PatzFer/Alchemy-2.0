@@ -11,6 +11,7 @@ import {
   Info,
 } from 'lucide-react';
 import { CalendarEvent, ActiveWorldFilter, Realm, LifeProfile, IntegrationsState } from '../../types';
+import { findDuplicateCalendarEvent, validateCalendarTimeRange } from '../../lib/calendarValidation';
 
 interface CalendarViewProps {
   events: CalendarEvent[];
@@ -57,6 +58,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   const [newRealm, setNewRealm] = useState<Realm>('personal');
   const [newType, setNewType] = useState<CalendarEvent['type']>('appointment');
   const [newLocation, setNewLocation] = useState('');
+  const [formError, setFormError] = useState<string | null>(null);
 
   const todayStr = formatLocalDate(new Date());
   const dateObj = parseLocalDate(currentDateStr);
@@ -67,6 +69,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
     setNewRealm(activeWorld === 'mariluna' ? 'mariluna' : 'personal');
     setNewTitle('');
     setNewLocation('');
+    setFormError(null);
     setNewStartTime('10:00');
     setNewEndTime('11:00');
     setIsModalOpen(true);
@@ -75,7 +78,20 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   // Create Event Handler
   const handleCreateEvent = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newTitle.trim()) return;
+    if (!newTitle.trim()) {
+      setFormError('Geef je afspraak een titel.');
+      return;
+    }
+    const timeError = validateCalendarTimeRange(newStartTime, newEndTime);
+    if (timeError) {
+      setFormError(timeError);
+      return;
+    }
+    if (findDuplicateCalendarEvent(events, { title: newTitle, date: newDate, startTime: newStartTime, endTime: newEndTime, realm: newRealm })) {
+      setFormError('Deze afspraak staat al op dit tijdstip in dezelfde agenda.');
+      return;
+    }
+    setFormError(null);
 
     onAddEvent({
       id: 'e-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4),
@@ -92,6 +108,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
 
     setNewTitle('');
     setNewLocation('');
+    setFormError(null);
     setIsModalOpen(false);
   };
 
@@ -601,7 +618,8 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
               </span>
             </div>
 
-            <form onSubmit={handleCreateEvent} className="space-y-4">
+            <form onSubmit={handleCreateEvent} className="space-y-4" noValidate>
+              {formError && <div role="alert" className="rounded-xl border border-[#E4B7AE] bg-[#FDF2F0] px-3 py-2 text-xs text-[#9B382B]">{formError}</div>}
               <div>
                 <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">
                   Titel
@@ -640,7 +658,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                     type="time"
                     required
                     value={newStartTime}
-                    onChange={(e) => setNewStartTime(e.target.value)}
+                    onChange={(e) => { setNewStartTime(e.target.value); setFormError(null); }}
                     className="w-full bg-[var(--surface-1)] border border-[var(--border-subtle)] rounded-xl px-3 py-2 text-xs text-[var(--text-primary)]"
                   />
                 </div>
@@ -652,7 +670,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                     type="time"
                     required
                     value={newEndTime}
-                    onChange={(e) => setNewEndTime(e.target.value)}
+                    onChange={(e) => { setNewEndTime(e.target.value); setFormError(null); }}
                     className="w-full bg-[var(--surface-1)] border border-[var(--border-subtle)] rounded-xl px-3 py-2 text-xs text-[var(--text-primary)]"
                   />
                 </div>
