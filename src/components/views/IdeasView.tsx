@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Lightbulb,
   Plus,
@@ -37,6 +37,10 @@ export const IdeasView: React.FC<IdeasViewProps> = ({
   const [quickRealm, setQuickRealm] = useState<Realm>(activeWorld === 'mariluna' ? 'mariluna' : 'personal');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
+  useEffect(() => {
+    setQuickRealm(activeWorld === 'mariluna' ? 'mariluna' : 'personal');
+  }, [activeWorld]);
+
   // Identify ideas untouched for > 3 weeks (e.g. created before 2026-08-25)
   const today = new Date();
   const threeWeeksAgo = new Date();
@@ -69,8 +73,8 @@ export const IdeasView: React.FC<IdeasViewProps> = ({
       realm: quickRealm,
       category: analysis.category || (quickRealm === 'mariluna' ? 'strategy' : 'lifestyle'),
       status: 'raw',
-      createdAt: new Date().toISOString().split('T')[0],
-      lastRevisitedAt: new Date().toISOString().split('T')[0],
+      createdAt: (() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; })(),
+      lastRevisitedAt: (() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; })(),
       aiSummary: analysis.summary,
       suggestedNextStep: analysis.suggestedNextAction,
       followUpQuestions: analysis.followUpQuestions || [],
