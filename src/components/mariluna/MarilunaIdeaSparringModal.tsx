@@ -40,15 +40,15 @@ interface SparringMessage {
 }
 
 const STRATEGIC_PROMPTS = [
-  'Werk dit idee verder uit.',
-  'Is hier een goede contentreeks van te maken?',
-  'Welke invalshoeken zie je?',
-  'Maak hier 5 mogelijke posts van.',
-  'Wat ontbreekt er nog?',
-  'Challenge mijn idee.',
-  'Maak dit concreter.',
-  'Hoe zou jij dit positioneren?',
-  'Kan dit een groter project worden?',
+  'Help me dit verder te verkennen.',
+  'Wat zit hier volgens jou precies achter?',
+  'Welke verbanden of mogelijkheden zie je?',
+  'Wat is nog onduidelijk of ontbreekt?',
+  'Challenge mijn gedachte eens.',
+  'Welke verschillende vormen zou dit kunnen krijgen?',
+  'Help me de kern hiervan te vinden.',
+  'Wat zou een kleine eerste stap kunnen zijn?',
+  'Laten we dit voorlopig gewoon onderzoeken.',
 ];
 
 export const MarilunaIdeaSparringModal: React.FC<MarilunaIdeaSparringModalProps> = ({
@@ -78,7 +78,7 @@ export const MarilunaIdeaSparringModal: React.FC<MarilunaIdeaSparringModalProps>
 ${idea.content ? `\n> *${idea.content}*\n` : ''}
 ${idea.contentPillar ? `Pijler: **${idea.contentPillar}**` : ''}
 
-Als strategisch klankbord denk ik kritisch mee over de diepgang, positionering en hefboomwerking. Waar wil je de focus op leggen?`;
+Ik ben hier om met je mee te denken, verbanden te zoeken en ook eerlijk tegen te spreken waar dat helpt. We hoeven dit nog nergens naartoe te sturen. Wat houdt je op dit moment het meest bezig?`;
 
       setMessages(
         idea.sparringMessages && idea.sparringMessages.length > 0
@@ -209,10 +209,11 @@ In plaats van eenmalige content kun je dit structureren als:
 - Een diepgaand redactioneel dossier (whitepaper / journal serie)
 Wil je dat we hier een formeel **Project** van maken zodat je er taken en deliverables aan kunt koppelen?`;
     }
-    return `Reflectie op **"${title}"**:
-Als we dit scherper positioneren binnen Mariluna, wil je focussen op de hefboomwerking. Zorg dat je niet alleen beschrijft wát het is, maar waarom het voor de doelgroep van Mariluna een onmisbaar referentiepunt wordt.
+    return `Laten we **"${title}"** eerst rustig onderzoeken.
 
-Kies hieronder een vervolgstap: wil je dit vertalen naar content, een project opzetten, of een concrete taak inplannen?`;
+Wat ik er voorlopig in zie, is een gedachte die nog ruimte mag krijgen. We hoeven er niet meteen een aanbod, project of contentstuk van te maken.
+
+Misschien helpt deze vraag om een laag dieper te gaan: wat maakt dit idee voor jou interessant — het gevoel erachter, de mogelijkheid die je erin ziet, of iets wat je nog niet helemaal kunt benoemen?`;
   };
 
   // Save conversation insights into idea notes
@@ -243,14 +244,14 @@ Kies hieronder een vervolgstap: wil je dit vertalen naar content, een project op
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="font-serif text-base sm:text-lg font-semibold text-[#2C2825]">
-                  Bespreek met Alchemy
+                  Bespreek met Jarvis
                 </h2>
                 <span className="text-[10px] tracking-wider uppercase px-2 py-0.5 rounded-full bg-[#E5DCCF] text-[#60564C] font-medium">
                   Studio Sparring
                 </span>
               </div>
               <p className="text-xs text-[#7A7167]">
-                Strategisch klankbord & kritische verfijning voor je ideeën
+                Creatief klankbord voor gedachten, ideeën en mogelijkheden
               </p>
             </div>
           </div>
