@@ -232,6 +232,24 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
                     <span>Momentum</span>
                     <span className="font-medium text-[var(--text-primary)]">{calculatedProgress}%</span>
                   </div>
+                  {milestones.length === 0 && (
+                    <div className="mb-3 flex items-center gap-3">
+                      <label htmlFor={`goal-progress-${goal.id}`} className="text-[10px] text-[var(--text-muted)] shrink-0">
+                        Voortgang aanpassen
+                      </label>
+                      <input
+                        id={`goal-progress-${goal.id}`}
+                        type="range"
+                        min="0"
+                        max="100"
+                        step="5"
+                        value={Math.max(0, Math.min(100, goal.progress || 0))}
+                        onChange={(e) => onSaveGoal({ id: goal.id, progress: Number(e.target.value) })}
+                        className="w-full accent-[var(--accent-secondary)]"
+                        aria-label={`Voortgang van ${goal.title}`}
+                      />
+                    </div>
+                  )}
                   <div className="h-2 w-full bg-[var(--surface-2)] rounded-full overflow-hidden">
                     <div
                       style={{ width: `${calculatedProgress}%` }}
