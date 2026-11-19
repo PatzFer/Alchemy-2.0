@@ -131,7 +131,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       category: newMemoryCategory,
       content: newMemoryContent.trim(),
       realm: newMemoryRealm,
-      dateAdded: new Date().toISOString().split('T')[0],
+      dateAdded: (() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; })(),
       importance: 'high',
       source: 'user_stated',
     });
