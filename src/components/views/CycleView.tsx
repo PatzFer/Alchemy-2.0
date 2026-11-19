@@ -207,7 +207,7 @@ export const CycleView: React.FC<CycleViewProps> = ({
         </div>
         <button
           type="button"
-          onClick={() => onOpenAssistantWithPrompt?.(`Help me op een nuchtere, reflectieve manier mijn huidige cyclusfase (${activePhaseDetails.label}) en de huidige maanstand (${moon.name}) naast elkaar te bekijken. Maak duidelijk onderscheid tussen fysiologische kennis en symbolische reflectie. Geef me enkele haalbare suggesties voor vandaag.`)}
+          onClick={() => onOpenAssistantWithPrompt?.(`Help me op een nuchtere, reflectieve manier mijn huidige cyclusfase (${activePhaseDetails.title}) en de huidige maanstand (${moon.name}) naast elkaar te bekijken. Maak duidelijk onderscheid tussen fysiologische kennis en symbolische reflectie. Geef me enkele haalbare suggesties voor vandaag.`)}
           className="px-4 py-2 rounded-xl border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] hover:bg-[var(--surface-2)]"
         >Reflecteer met Jarvis</button>
       </section>
