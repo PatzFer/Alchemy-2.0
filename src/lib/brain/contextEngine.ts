@@ -136,7 +136,9 @@ export function buildBrainContext(
   }
 
   // Mariluna business state (only if mariluna or balanced scope)
-  const activeProjectsCount = isPersonalScope ? 0 : (state.projects || []).filter((p) => p.status === 'active').length;
+  const activeProjectsCount = isPersonalScope ? 0 : (state.projects || []).filter((p) =>
+    p.status === 'active' && (!isMarilunaScope || p.realm === 'mariluna')
+  ).length;
   const urgentDeadlinesCount = isPersonalScope
     ? 0
     : (state.marilunaAdmin?.deadlines || []).filter((d) => !d.completed).length;
