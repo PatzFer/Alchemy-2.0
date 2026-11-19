@@ -68,7 +68,9 @@ const getLocalDateString = (date = new Date()): string => {
 
 export default function App() {
   const [state, setState] = useState<AppState>(() => loadState());
-  const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
+  const [lastSavedAt, setLastSavedAt] = useState<string | null>(() => {
+    try { return localStorage.getItem('alchemy_last_saved_at'); } catch { return null; }
+  });
   const [lastBackupAt, setLastBackupAt] = useState<string | null>(() => {
     try { return localStorage.getItem('alchemy_last_backup_at'); } catch { return null; }
   });
@@ -156,7 +158,9 @@ export default function App() {
   // Automatically persist changes to local storage
   useEffect(() => {
     saveState(state);
-    setLastSavedAt(new Date().toISOString());
+    const savedAt = new Date().toISOString();
+    setLastSavedAt(savedAt);
+    try { localStorage.setItem('alchemy_last_saved_at', savedAt); } catch { /* Keep app usable if browser storage is unavailable. */ }
   }, [state]);
 
   // Periodic evaluation of smart notifications
