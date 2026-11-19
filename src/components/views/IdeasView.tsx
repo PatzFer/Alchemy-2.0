@@ -34,7 +34,7 @@ export const IdeasView: React.FC<IdeasViewProps> = ({
   onOpenAssistantWithPrompt,
 }) => {
   const [quickIdeaText, setQuickIdeaText] = useState('');
-  const [quickRealm, setQuickRealm] = useState<Realm>('mariluna');
+  const [quickRealm, setQuickRealm] = useState<Realm>(activeWorld === 'mariluna' ? 'mariluna' : 'personal');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   // Identify ideas untouched for > 3 weeks (e.g. created before 2026-08-25)
@@ -87,7 +87,7 @@ export const IdeasView: React.FC<IdeasViewProps> = ({
           Brain Dump & Sparks
         </h1>
         <p className="text-xs text-[var(--text-secondary)] mt-1 font-light">
-          Capture without cognitive friction. The assistant periodically revisits sparks to turn them into structured projects or peaceful archives.
+          Capture without cognitive friction. When you return here, Alchemy helps you notice ideas that may deserve another look.
         </p>
       </div>
 
@@ -108,7 +108,7 @@ export const IdeasView: React.FC<IdeasViewProps> = ({
                 </span>
               </div>
               <p className="text-xs text-[var(--text-secondary)] mt-1">
-                You captured this thought over a month ago. Should we advance it, park it, or turn it into a dedicated project?
+                This idea has been waiting for at least three weeks. Would you like to revisit it, park it, or turn it into a project?
               </p>
 
               <div className="mt-3 space-y-2">
