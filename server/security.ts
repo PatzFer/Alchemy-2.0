@@ -793,7 +793,7 @@ class SecurityVault {
     }
 
     // Firewall Rule 1: Cycle data isolation (Never sent to AI unless explicit permission granted)
-    if (!this.permissions.allowCycleDataToAI) {
+    if (!this.permissions.allowCycleDataToAI || !this.permissions.allowPersonalDataToAI || world !== 'personal') {
       delete sanitized.cycleProfile;
       delete sanitized.cyclePhase;
       delete sanitized.menstrual;
