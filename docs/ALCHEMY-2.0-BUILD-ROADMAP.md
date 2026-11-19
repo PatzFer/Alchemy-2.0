@@ -522,3 +522,14 @@ Incremental implementation commits on `design/phase-1`:
 - Excess requests receive HTTP 429 with a retry interval; the limiter is isolated per session and prunes expired windows while bounding its own memory use.
 - Added regression tests for the limit, reset behavior and session isolation.
 - This is an in-process abuse-control layer, not a substitute for a shared distributed rate limiter when the app runs across multiple server instances. The broader security vault and session store also remain process-local pending durable identity storage.
+
+
+## Progress log — 19 November 2026 (Phase 2 navigation and daily workflow)
+
+- Separated the Start launcher from the Today destination. Start remains the neutral world selector; Today now has its own daily dashboard.
+- Added a focused daily dashboard that surfaces due and overdue tasks, sorts by priority and due date, shows today's calendar events chronologically, and provides direct routes to Tasks, Calendar and Jarvis.
+- Kept the global Quick Capture available from Today as well as the working areas. Quick Capture continues to create realm-tagged tasks, reminders, ideas, notes and calendar events.
+- Updated Quick Capture realm selection to use the Mariluna berry/plum and Private botanical-green palette tokens.
+- Harmonized navigation shell colors with The Enchanted Atelier palette and kept the five-item mobile navigation: Start, Today, Mariluna, Private and Tasks.
+- CI passed TypeScript, Supabase migration safety, privacy regression tests and production build on the phase-2 branch before the final navigation palette-only follow-up. The follow-up has a new CI run queued/in progress and must pass before this phase is considered verified.
+- This phase remains on `build/phase-2-planner`; it has not been merged to `main` or pulled into AI Studio.
