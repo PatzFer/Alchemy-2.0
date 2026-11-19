@@ -788,3 +788,11 @@ A user can reliably open Alchemy without a startup security interstitial; captur
 - Added regression tests for newer-schema and malformed-checksum rejection.
 - CI TypeScript, migration safety, privacy and production build passed on commit `181b1fa`. A separate duplicate workflow for the same commit was still running at the time of this log.
 - No cloud sync, live deployment, Health Connect bridge or Renpho integration is claimed. The current backup remains a user-triggered local JSON export/import with explicit restore confirmation.
+
+
+## Progress log — 19 November 2026 (cycle date arithmetic)
+
+- Cycle day and predicted next-period calculations now use explicit date-only UTC arithmetic. This keeps calendar-date calculations independent of the device's local timezone and daylight-saving transitions.
+- Added regression coverage for spring and autumn daylight-saving boundary dates.
+- Validation is running on the latest commits; no phase completion is claimed until the full workflow is green.
+- Existing data, privacy boundaries and integration scope remain unchanged.
