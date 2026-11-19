@@ -1,7 +1,7 @@
 # Alchemy 2.0 — Build Roadmap to Version 1.0
 
 Status: Active delivery plan — user-approved direction
-Branch: design/phase-1
+Branch: build/phase-2-planner
 
 ## Delivery decision
 
@@ -776,3 +776,15 @@ A user can reliably open Alchemy without a startup security interstitial; captur
 - Verified on commit `b5ac52c`: TypeScript check, Supabase migration safety checks, privacy regression tests and production build all passed in GitHub Actions (run 44547946020).
 - The idea editor, goal editor/progress, meal history idempotency, pantry deduplication and cycle validation are implemented on the feature branch. No changes have been merged to `main` or deployed to a live app.
 - Live cloud sync remains blocked on provisioning and configuring the actual Supabase project, owner Auth and a verified migration/restore test. Health Connect still needs the native Android bridge; Renpho import remains unverified.
+
+
+## Progress log — 19 November 2026 (goal preservation and backup hardening)
+
+- Goal editing now preserves existing task, project and content links, notes, priority, measurable targets and start/end metadata instead of silently clearing them when the title or other editable fields change.
+- Goal view labels and key form copy were localized for Dutch use.
+- Period history now remains sorted newest-first. Logging an older period no longer moves the active cycle anchor backwards; the latest valid recorded start remains the anchor.
+- Cycle settings now reject invalid cycle lengths, period lengths and future/missing anchor dates before saving.
+- Backup verification now rejects files created with a newer app schema, as well as malformed SHA-256 checksum strings, before restore can proceed.
+- Added regression tests for newer-schema and malformed-checksum rejection.
+- CI TypeScript, migration safety, privacy and production build passed on commit `181b1fa`. A separate duplicate workflow for the same commit was still running at the time of this log.
+- No cloud sync, live deployment, Health Connect bridge or Renpho integration is claimed. The current backup remains a user-triggered local JSON export/import with explicit restore confirmation.
