@@ -706,7 +706,7 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
                     {isNl ? 'Mariluna Taken voor Vandaag' : "Today's Mariluna Tasks"}
                   </h3>
                 </div>
-                <span className="text-[11px] px-2 py-0.5 rounded-full bg-[#EAE2D3] text-[#5A5145] font-medium">
+                <span className="text-[11px] px-2 py-0.5 rounded-full bg-[#D1A9B9] text-[#321F32] font-medium">
                   {todayMarilunaTasks.length}
                 </span>
               </div>
@@ -788,7 +788,7 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
                 </h3>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-[11px] px-2 py-0.5 rounded-full bg-[#EAE2D3] text-[#5A5145] font-medium">
+                <span className="text-[11px] px-2 py-0.5 rounded-full bg-[#D1A9B9] text-[#321F32] font-medium">
                   {marilunaIdeas.length}
                 </span>
                 <button
@@ -984,7 +984,7 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
                     className={`px-2.5 py-1 rounded-lg text-[11px] font-medium transition cursor-pointer capitalize whitespace-nowrap ${
                       offeringTypeFilter === t
                         ? 'bg-[var(--text-primary)] text-[var(--surface-1)]'
-                        : 'bg-[#EAE2D3]/60 text-[#554C42] hover:bg-[#EAE2D3]'
+                        : 'bg-[#D1A9B9]/20 text-[#E8DCC7] hover:bg-[#D1A9B9]/35'
                     }`}
                   >
                     {t === 'all'
@@ -1069,7 +1069,7 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
                           <button
                             type="button"
                             onClick={() => handleOpenEditOffering(off)}
-                            className="p-1.5 rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[#EAE2D3] transition cursor-pointer"
+                            className="p-1.5 rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[#D1A9B9]/20 transition cursor-pointer"
                             title={isNl ? 'Bewerken' : 'Edit'}
                           >
                             <Edit2 className="w-3.5 h-3.5" />
@@ -1104,7 +1104,7 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
                   <button
                     type="button"
                     onClick={() => setIsOfferingModalOpen(false)}
-                    className="p-1 rounded-full text-[var(--text-secondary)] hover:bg-[#EAE2D3] cursor-pointer"
+                    className="p-1 rounded-full text-[var(--text-secondary)] hover:bg-[#D1A9B9]/20 cursor-pointer"
                   >
                     <X className="w-4 h-4" />
                   </button>
@@ -1169,7 +1169,7 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
                     <button
                       type="button"
                       onClick={() => setIsOfferingModalOpen(false)}
-                      className="px-3 py-1.5 rounded-xl text-xs text-[var(--text-secondary)] hover:bg-[#EAE2D3]/60 cursor-pointer"
+                      className="px-3 py-1.5 rounded-xl text-xs text-[var(--text-secondary)] hover:bg-[#D1A9B9]/20/60 cursor-pointer"
                     >
                       {isNl ? 'Annuleren' : 'Cancel'}
                     </button>
