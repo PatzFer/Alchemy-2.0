@@ -28,6 +28,7 @@ import {
 } from '../../types';
 import {
   calculateCycleStatus,
+  hasValidCycleAnchor,
   getWeeklyCycleInsight,
   PHASE_DETAILS,
   synthesizeEnergyAndCycleGuidance,
@@ -66,9 +67,7 @@ export const CycleView: React.FC<CycleViewProps> = ({
   const now = new Date();
   const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
   const moon = getMoonPhase(new Date());
-  const hasCycleAnchor = /^\\d{4}-\\d{2}-\\d{2}$/.test(cycleProfile.lastPeriodStartDate || '') &&
-    Number.isFinite(Date.parse(`${cycleProfile.lastPeriodStartDate}T00:00:00`)) &&
-    cycleProfile.lastPeriodStartDate <= todayStr;
+  const hasCycleAnchor = cycleProfile.trackingEnabled && hasValidCycleAnchor(cycleProfile, todayStr);
   // Keep calculations finite before the owner has logged a first period date.
   const cycleStatus = calculateCycleStatus({
     ...cycleProfile,
