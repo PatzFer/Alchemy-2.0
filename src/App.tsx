@@ -847,6 +847,11 @@ export default function App() {
         if (!window.confirm('Deze actie vervangt de huidige Alchemy-gegevens. Alchemy downloadt eerst automatisch een herstelkopie van je huidige gegevens. Wil je doorgaan?')) return;
         const rollbackBackup = await createAlchemyBackup(state);
         downloadAlchemyBackupFile(rollbackBackup);
+        // Persist the verified restore before changing the in-memory UI state.
+        // A quota/storage failure must never be presented as a successful restore.
+        if (!saveState(restored)) {
+          throw new Error('De back-up is geldig, maar kon niet op dit toestel worden opgeslagen. Je huidige gegevens zijn niet vervangen. Controleer de browseropslag en probeer opnieuw.');
+        }
         setState(restored);
         alert('Alchemy-back-up gecontroleerd en hersteld. Er is eerst een herstelkopie van de vorige gegevens gedownload.');
       } catch (error) {
