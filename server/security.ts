@@ -600,7 +600,12 @@ class SecurityVault {
       sanitized.memoryItems = sanitized.memoryItems
         .filter((item: any) => {
           if (!item || !['explicit', 'confirmed'].includes(item.type) || item.status !== 'active') return false;
-          if (item.expiresAt && Number.isFinite(Date.parse(item.expiresAt)) && Date.parse(item.expiresAt) <= Date.now()) return false;
+          if (item.expiresAt !== undefined && item.expiresAt !== null && item.expiresAt !== '') {
+            // A supplied expiry must be valid; malformed values must not silently
+            // turn a time-limited memory into a permanent one.
+            const expiresAt = typeof item.expiresAt === 'string' ? Date.parse(item.expiresAt) : Number.NaN;
+            if (!Number.isFinite(expiresAt) || expiresAt <= Date.now()) return false;
+          }
 
           const category = String(item.category || '').toLowerCase();
           const content = String(item.content || '').toLowerCase();
