@@ -743,3 +743,12 @@ A user can reliably open Alchemy without a startup security interstitial; captur
 - The idea revisit card now accurately describes its three-week threshold and only claims to surface ideas when the user returns to the ideas view; no background monitoring is implied.
 - Cycle tracking now uses the device's local calendar date rather than UTC, preventing late-evening date shifts in Belgium and other time zones.
 - These are usability and correctness improvements; they do not change the deferred cloud persistence, Health Connect native bridge, or production deployment requirements.
+
+### Additional usability checkpoint — 19 November 2026
+
+- Local date handling is now consistent in the initial state, cycle view, private dashboard and Jarvis context assembler. This avoids UTC-midnight shifts in date-based records and daily context.
+- Existing food-preference capture and recipe request flow was reviewed; it already sends the user's saved dislikes and dietary notes with a recipe request. No duplicate parallel recipe feature was added.
+- The Mariluna offering editor now supports editable deliverables and draft/active/archived status; its list is the default landing section inside Mariluna.
+- New goal and idea capture defaults follow the active workspace more safely.
+- Latest verified workflow at this checkpoint: TypeScript check, Supabase migration safety checks, privacy regression tests and production build all passed on the preceding source snapshot. Changes after that snapshot still require a fresh run.
+- Still intentionally not represented as complete: Supabase project provisioning and live durable sync, production authentication/session persistence, Android Health Connect bridge, verified Renpho import, and full device QA/release.
