@@ -150,9 +150,7 @@ export const PriveDomainView: React.FC<PriveDomainViewProps> = ({
     { id: 'cycle', label: isNl ? 'Cyclus' : 'Cycle', icon: Activity },
     { id: 'wellbeing', label: isNl ? 'Gezondheid' : 'Health & Body', icon: Heart },
     { id: 'nutrition', label: isNl ? 'Maaltijden' : 'Nutrition', icon: Utensils },
-    { id: 'style', label: isNl ? 'Personal Styling' : 'Styling', icon: Shirt },
     { id: 'goals', label: isNl ? 'Doelen' : 'Goals', icon: Target },
-    { id: 'routines', label: isNl ? 'Routines' : 'Routines', icon: Clock },
   ];
 
   const handleAddRoutine = (e: React.FormEvent) => {
