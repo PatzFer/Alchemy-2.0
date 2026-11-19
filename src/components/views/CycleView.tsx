@@ -125,6 +125,9 @@ export const CycleView: React.FC<CycleViewProps> = ({
 
   const handleSaveSettings = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!Number.isInteger(cycleLengthInput) || cycleLengthInput < 21 || cycleLengthInput > 45) return;
+    if (!Number.isInteger(periodLengthInput) || periodLengthInput < 2 || periodLengthInput > 10) return;
+    if (!lastStartInput || lastStartInput > todayStr) return;
     const updated: CycleProfile = {
       ...cycleProfile,
       averageCycleLength: Number(cycleLengthInput),
@@ -161,10 +164,13 @@ export const CycleView: React.FC<CycleViewProps> = ({
       confirmedByUser: true,
     };
 
-    const updatedHistory = [newEntry, ...cycleProfile.history];
+    const updatedHistory = [...cycleProfile.history, newEntry].sort((a, b) => b.startDate.localeCompare(a.startDate));
+    const latestKnownStart = [cycleProfile.lastPeriodStartDate, ...updatedHistory.map((entry) => entry.startDate)]
+      .filter((date) => Boolean(date) && date <= todayStr)
+      .sort((a, b) => b.localeCompare(a))[0] || newLogStartDate;
     const updated: CycleProfile = {
       ...cycleProfile,
-      lastPeriodStartDate: newLogStartDate,
+      lastPeriodStartDate: latestKnownStart,
       trackingEnabled: true,
       history: updatedHistory,
       overridePhase: undefined, // Clear override upon logging actual date
