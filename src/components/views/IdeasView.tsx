@@ -3,7 +3,7 @@ import {
   Lightbulb,
   Plus,
   Sparkles,
-  Archiveren,
+  Archive,
   ArrowRight,
   Clock,
   Trash2,
@@ -365,7 +365,7 @@ export const IdeasView: React.FC<IdeasViewProps> = ({
                     title="Archiveren spark"
                     className="p-1.5 rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-2)] transition cursor-pointer"
                   >
-                    <Archiveren className="w-3.5 h-3.5" />
+                    <Archive className="w-3.5 h-3.5" />
                   </button>
                   <button
                     onClick={() => onDeleteIdea(idea.id)}
