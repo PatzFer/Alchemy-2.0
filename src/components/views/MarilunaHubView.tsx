@@ -126,7 +126,7 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
   integrations,
 }) => {
   const isNl = lang === 'nl';
-  const [activeSubTab, setActiveSubTab] = useState<MarilunaSubTab>('brainstorm');
+  const [activeSubTab, setActiveSubTab] = useState<MarilunaSubTab>('offerings');
 
   const todayStr = new Date().toISOString().split('T')[0];
 
@@ -164,7 +164,7 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
     { id: 'content', label: isNl ? 'Content' : 'Content', icon: FileText },
     { id: 'projects', label: isNl ? 'Projecten' : 'Projects', icon: Briefcase },
     { id: 'brainstorm', label: isNl ? 'Brainstorm & Sparring' : 'Brainstorm & Sparring', icon: Lightbulb },
-    { id: 'offerings', label: isNl ? 'Producten & Diensten' : 'Products & Services', icon: Package },
+    { id: 'offerings', label: isNl ? 'Diensten & Aanbod' : 'Services & Offerings', icon: Package }
   ];
 
   // Content post modal state
@@ -205,6 +205,8 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
   const [offeringType, setOfferingType] = useState<MarilunaOffering['type']>('service');
   const [offeringPrice, setOfferingPrice] = useState<number | ''>('');
   const [offeringDesc, setOfferingDesc] = useState('');
+  const [offeringDeliverables, setOfferingDeliverables] = useState('');
+  const [offeringStatus, setOfferingStatus] = useState<MarilunaOffering['status']>('draft');
 
   const handleOpenNewOffering = () => {
     setEditingOfferingId(null);
@@ -212,6 +214,8 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
     setOfferingType('service');
     setOfferingPrice('');
     setOfferingDesc('');
+    setOfferingDeliverables('');
+    setOfferingStatus('draft');
     setIsOfferingModalOpen(true);
   };
 
@@ -221,6 +225,8 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
     setOfferingType(off.type);
     setOfferingPrice(off.price !== undefined && off.price !== null ? off.price : '');
     setOfferingDesc(off.description || '');
+    setOfferingDeliverables((off.deliverables || []).join('\n'));
+    setOfferingStatus(off.status || 'draft');
     setIsOfferingModalOpen(true);
   };
 
@@ -428,6 +434,8 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
               type: offeringType,
               price: parsedPrice,
               description: offeringDesc.trim(),
+              deliverables: offeringDeliverables.split('\n').map((item) => item.trim()).filter(Boolean),
+              status: offeringStatus,
             }
           : o
       );
@@ -439,7 +447,8 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
         type: offeringType,
         price: parsedPrice,
         description: offeringDesc.trim(),
-        status: 'active',
+        deliverables: offeringDeliverables.split('\n').map((item) => item.trim()).filter(Boolean),
+        status: offeringStatus,
       };
       onUpdateOfferings([...offerings, newOff]);
     }
@@ -448,6 +457,8 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
     setOfferingTitle('');
     setOfferingPrice('');
     setOfferingDesc('');
+    setOfferingDeliverables('');
+    setOfferingStatus('draft');
     setIsOfferingModalOpen(false);
   };
 
@@ -943,10 +954,10 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <h2 className="font-serif text-xl font-normal text-[var(--text-primary)]">
-                {isNl ? 'Producten & Diensten' : 'Offerings & Atelier Services'}
+                {isNl ? 'Jouw diensten & aanbod' : 'Your services & offerings'}
               </h2>
               <p className="text-xs text-[var(--text-secondary)] mt-0.5">
-                {isNl ? 'Je aanbodcatalogus, pakketten en maatwerkdiensten.' : 'Services, packages, and bespoke offerings.'}
+                {isNl ? 'Voeg je aanbod toe, pas het aan en experimenteer met prijzen en inhoud.' : 'Add, edit and experiment with your services, prices and packages.'}
               </p>
             </div>
             <button
@@ -1004,14 +1015,14 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
           {offerings.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-[#DCD3C4] p-10 text-center space-y-2">
               <p className="text-xs text-[var(--text-secondary)] italic">
-                {isNl ? 'Nog geen producten of diensten toegevoegd.' : 'No offerings added yet.'}
+                {isNl ? 'Je aanbod is nog leeg. Voeg je eerste dienst toe wanneer je er klaar voor bent.' : 'Your catalogue is empty. Add your first service whenever you are ready.'}
               </p>
               <button
                 type="button"
                 onClick={handleOpenNewOffering}
                 className="text-xs text-[var(--accent-secondary)] font-medium hover:underline cursor-pointer"
               >
-                {isNl ? '+ Voeg je eerste dienst of product toe' : '+ Add your first service or product'}
+                {isNl ? '+ Eerste dienst toevoegen' : '+ Add your first service'}
               </button>
             </div>
           ) : (
@@ -1046,9 +1057,22 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
                           <span className="text-[10px] uppercase font-semibold px-2 py-0.5 rounded-md bg-[#EAE2D3] text-[#554C42] shrink-0">
                             {off.type}
                           </span>
+                          <span className={`text-[9px] uppercase font-semibold px-2 py-0.5 rounded-md shrink-0 ${off.status === 'active' ? 'bg-emerald-900/30 text-emerald-300' : off.status === 'archived' ? 'bg-[var(--surface-2)] text-[var(--text-muted)]' : 'bg-amber-900/25 text-amber-200'}`}>
+                            {off.status === 'active' ? (isNl ? 'Actief' : 'Active') : off.status === 'archived' ? (isNl ? 'Archief' : 'Archived') : (isNl ? 'Concept' : 'Draft')}
+                          </span>
                         </div>
                         {off.description && (
                           <p className="text-xs text-[var(--text-secondary)] leading-relaxed line-clamp-3">{off.description}</p>
+                        )}
+                        {off.deliverables && off.deliverables.length > 0 && (
+                          <ul className="space-y-1 pt-1">
+                            {off.deliverables.slice(0, 4).map((item, index) => (
+                              <li key={index} className="flex items-start gap-2 text-[11px] text-[var(--text-secondary)]">
+                                <CheckCircle2 className="w-3 h-3 mt-0.5 shrink-0 text-[var(--accent-secondary)]" />
+                                <span>{item}</span>
+                              </li>
+                            ))}
+                          </ul>
                         )}
                       </div>
 
@@ -1109,7 +1133,7 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
                 <form onSubmit={handleSaveOffering} className="space-y-3">
                   <div>
                     <label className="block text-[11px] font-medium text-[var(--text-secondary)] mb-1">
-                      {isNl ? 'Naam product / dienst *' : 'Name of offering *'}
+                      {isNl ? 'Naam van je dienst of aanbod *' : 'Service or offering name *'}
                     </label>
                     <input
                       type="text"
@@ -1156,11 +1180,37 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
                     </label>
                     <textarea
                       rows={3}
-                      placeholder={isNl ? 'Beschrijving of deliverables...' : 'Description...'}
+                      placeholder={isNl ? 'Wat houdt de dienst in? Voor wie is ze bedoeld?' : 'What does this offering include? Who is it for?'}
                       value={offeringDesc}
                       onChange={(e) => setOfferingDesc(e.target.value)}
                       className="w-full px-3 py-2 rounded-xl bg-[var(--surface-2)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-secondary)]"
                     />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-medium text-[var(--text-secondary)] mb-1">
+                      {isNl ? 'Wat is inbegrepen? (één item per regel)' : 'What is included? (one item per line)'}
+                    </label>
+                    <textarea
+                      rows={3}
+                      placeholder={isNl ? 'Bijv. intakegesprek\\nPersoonlijke reading\\nNabespreking' : 'e.g. Intake\\nPersonal reading\\nFollow-up'}
+                      value={offeringDeliverables}
+                      onChange={(e) => setOfferingDeliverables(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl bg-[var(--surface-2)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-secondary)]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-medium text-[var(--text-secondary)] mb-1">
+                      {isNl ? 'Status' : 'Status'}
+                    </label>
+                    <select
+                      value={offeringStatus}
+                      onChange={(e) => setOfferingStatus(e.target.value as MarilunaOffering['status'])}
+                      className="w-full px-3 py-2 rounded-xl bg-[var(--surface-2)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-secondary)]"
+                    >
+                      <option value="draft">{isNl ? 'In ontwikkeling' : 'In development'}</option>
+                      <option value="active">{isNl ? 'Actief' : 'Active'}</option>
+                      <option value="archived">{isNl ? 'Gearchiveerd' : 'Archived'}</option>
+                    </select>
                   </div>
                   <div className="flex justify-end gap-2 pt-2">
                     <button
