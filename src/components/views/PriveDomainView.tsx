@@ -39,7 +39,6 @@ import {
 import { CycleView } from './CycleView';
 import { WellbeingView } from './WellbeingView';
 import { MealsAndMenuPlanningView } from '../meals/MealsAndMenuPlanningView';
-import { PersonalStylingView } from '../styling/PersonalStylingView';
 import { calculateCycleStatus } from '../../lib/cycleUtils';
 import { calculateWaterStats } from '../../lib/healthUtils';
 
@@ -48,9 +47,8 @@ export type PriveSubTab =
   | 'cycle'
   | 'wellbeing'
   | 'nutrition'
-  | 'style'
   | 'goals'
-  | 'routines';
+;
 
 interface PriveDomainViewProps {
   initialSubTab?: PriveSubTab;
