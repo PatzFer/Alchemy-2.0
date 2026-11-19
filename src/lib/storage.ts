@@ -100,7 +100,8 @@ export interface AppState {
   brain?: BrainState;
 }
 
-const todayStr = new Date().toISOString().split('T')[0];
+const localToday = new Date();
+const todayStr = `${localToday.getFullYear()}-${String(localToday.getMonth() + 1).padStart(2, '0')}-${String(localToday.getDate()).padStart(2, '0')}`;
 
 export const INITIAL_STATE: AppState = {
   isSampleData: false,
