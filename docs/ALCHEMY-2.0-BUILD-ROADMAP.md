@@ -717,3 +717,12 @@ Later: Mariluna values/pillars authoring and review, richer integrations, stylin
 
 ### Definition of a useful v1
 A user can reliably open Alchemy without a startup security interstitial; capture and find thoughts; spar with Jarvis; turn selected ideas into linked projects/content/tasks; maintain an editable personal service catalogue; manage basic tasks and appointments; track cycle and goals; request recipes and shopping lists; and retain data safely across sessions/devices to the extent supported by the implemented sync. Core flows must be tested on mobile. Do not call a feature complete unless its behavior is implemented and verified.
+
+## Progress log — 19 November 2026 (Jarvis workspace boundary and persistent Mariluna sparring)
+
+- Jarvis now requires an explicit Privé or Mariluna selection when opened from the neutral Home context. The composer and quick prompts stay unavailable until a workspace is selected; the assistant history and requests are scoped to that selection rather than the neutral `all` context.
+- Corrected assistant-message routing so replies are saved to the same selected workspace as the user message. This prevents replies from being filed under the neutral Home context and disappearing from the selected thread.
+- Mariluna idea sparring now persists the full conversation (user and assistant messages with timestamps) on the originating idea after each exchange and restores it when the idea is reopened. The original brain-dump remains intact.
+- Updated the Mariluna sparring prompts and offline fallback to explore the thought first rather than automatically pushing it toward marketing, content or business strategy. Content remains an option when Patricia chooses it.
+- Verified on commit `4bf59ebeaa780efbecc68530e04f430cea736ce7`: TypeScript check, Supabase migration safety checks, privacy regression tests and production build all passed in GitHub Actions.
+- This does not yet implement semantic idea matching/resurfacing or durable cloud persistence. The new conversation is retained in the current app state/local storage; cross-device persistence remains blocked on Supabase Auth configuration, a confirmed restore/migration choice and a real deployment test.
