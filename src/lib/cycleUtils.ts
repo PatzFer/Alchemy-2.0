@@ -109,7 +109,7 @@ export const PHASE_DETAILS: Record<CyclePhase, PhaseEducationalDetails> = {
 
 export function hasValidCycleAnchor(profile: CycleProfile, currentDateStr?: string): boolean {
   const startDate = profile.lastPeriodStartDate || '';
-  if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(startDate)) return false;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(startDate)) return false;
   const parsedStart = new Date(`${startDate}T00:00:00`);
   if (!Number.isFinite(parsedStart.getTime())) return false;
   const normalizedStart = `${parsedStart.getFullYear()}-${String(parsedStart.getMonth() + 1).padStart(2, '0')}-${String(parsedStart.getDate()).padStart(2, '0')}`;
