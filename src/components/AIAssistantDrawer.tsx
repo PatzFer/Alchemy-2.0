@@ -231,7 +231,7 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
       sendChatMessage(historyPayload, context, assistantWorld)
         .then((response) => {
           setIsThinking(false);
-          onAddMessage({ ...response, world: activeWorld });
+          onAddMessage({ ...response, world: assistantWorld });
         })
         .catch((err) => {
           console.error('Error in assistant auto-response:', err);
@@ -266,7 +266,7 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
     try {
       const response = await sendChatMessage(historyPayload, context, assistantWorld);
       setIsThinking(false);
-      onAddMessage({ ...response, world: activeWorld });
+      onAddMessage({ ...response, world: assistantWorld });
     } catch (err) {
       console.error('Error sending message:', err);
       setIsThinking(false);
