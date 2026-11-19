@@ -36,6 +36,8 @@ interface AIAssistantDrawerProps {
   wellbeing?: WellbeingState;
   dailyCheckIns?: DailyCheckIn[];
   cycleProfile?: CycleProfile;
+  /** Explicit permission for sensitive cycle details to be sent to the AI provider. Defaults to denied. */
+  allowCycleDataToAI?: boolean;
   intentions?: DailyIntention[];
   activeContextItem?: any;
 }
@@ -59,6 +61,7 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
   wellbeing,
   dailyCheckIns = [],
   cycleProfile,
+  allowCycleDataToAI = false,
   intentions = [],
   activeContextItem,
 }) => {
@@ -105,7 +108,9 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
     const inScope = (item: { realm?: string }) => item.realm === scope;
     const now = new Date();
     const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-    const cycleStatus = isPersonal && cycleProfile?.trackingEnabled && hasValidCycleAnchor(cycleProfile, todayStr)
+    // Reproductive-health context is sensitive and denied to the AI provider by default.
+    // A future explicit permission control may pass allowCycleDataToAI=true.
+    const cycleStatus = isPersonal && allowCycleDataToAI && cycleProfile?.trackingEnabled && hasValidCycleAnchor(cycleProfile, todayStr)
       ? calculateCycleStatus(cycleProfile, todayStr)
       : undefined;
     const lunarStatus = getAstronomicalMoonPhase(now);
@@ -187,8 +192,7 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
             allowedToAI: true,
           }
         : undefined,
-      dailyCheckIns: isPersonal &&
-        (wellbeing?.preferences?.allowWellbeingDataToAI || lifeProfile?.preferences?.allowPersonalDataToAI)
+      dailyCheckIns: isPersonal && wellbeing?.preferences?.allowWellbeingDataToAI
         ? (dailyCheckIns || []).slice(0, 10).map((c) => ({
             date: c.date, energy: c.energy, mood: c.mood,
             wakeTime: c.wakeTime, sleepTime: c.sleepTime, notes: c.notes,
