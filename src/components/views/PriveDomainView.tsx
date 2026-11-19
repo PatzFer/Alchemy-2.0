@@ -123,7 +123,8 @@ export const PriveDomainView: React.FC<PriveDomainViewProps> = ({
     }
   }, [initialSubTab]);
 
-  const todayStr = new Date().toISOString().split('T')[0];
+  const localNow = new Date();
+  const todayStr = `${localNow.getFullYear()}-${String(localNow.getMonth() + 1).padStart(2, '0')}-${String(localNow.getDate()).padStart(2, '0')}`;
   const personalTasks = tasks.filter((t) => t.realm === 'personal');
   const todayPersonalTasks = personalTasks.filter((t) => !t.completed && (!t.dueDate || t.dueDate <= todayStr));
   const personalEvents = calendarEvents.filter((e) => e.realm === 'personal');
