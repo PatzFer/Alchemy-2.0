@@ -11,6 +11,13 @@ import {
   MemoryItem,
 } from './types';
 
+const getLocalDateString = (date = new Date()): string => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 /**
  * CONTEXT ENGINE
  * 
@@ -22,7 +29,7 @@ import {
 export function buildBrainContext(
   state: AppState,
   scope: ContextPrivacyScope = 'balanced',
-  targetDate: string = new Date().toISOString().split('T')[0]
+  targetDate: string = getLocalDateString()
 ): AssembledBrainContext {
   const isPersonalScope = scope === 'personal' || scope === 'meals' || scope === 'styling' || scope === 'movement';
   const isMarilunaScope = scope === 'mariluna';
