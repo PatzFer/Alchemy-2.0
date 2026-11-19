@@ -29,7 +29,7 @@ const getSharedIdeaKeywords = (left: string, right: string): string[] => {
   const words = (value: string) => new Set(
     value.toLocaleLowerCase('nl-BE')
       .normalize('NFD')
-      .replace(/[\\u0300-\\u036f]/g, '')
+      .replace(/\p{Diacritic}/gu, '')
       .match(/[a-z0-9]{4,}/g)?.filter((word) => !stopWords.has(word)) || []
   );
   const leftWords = words(left);
