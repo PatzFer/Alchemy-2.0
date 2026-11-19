@@ -52,6 +52,7 @@ import {
 } from '../../lib/mealPlanningData';
 import { RecipeDetailModal } from './RecipeDetailModal';
 import { ThursdayPlanningModal } from './ThursdayPlanningModal';
+import { getMissingPantryStaples, hasCookedMealForDate } from '../../lib/mealPlanningSafety';
 
 interface MealsAndMenuPlanningViewProps {
   nutrition: NutritionState;
@@ -140,7 +141,7 @@ export const MealsAndMenuPlanningView: React.FC<MealsAndMenuPlanningViewProps> =
 
     // If marked as cooked, record in meal history
     let updatedHistory = [...(nutrition.mealHistory || [])];
-    if (status === 'cooked' && targetDay.recipeId) {
+    if (status === 'cooked' && targetDay.recipeId && !hasCookedMealForDate(updatedHistory, targetDay.date, targetDay.recipeId)) {
       const recipe = getRecipeById(targetDay.recipeId);
       if (recipe) {
         updatedHistory.unshift({
@@ -258,11 +259,15 @@ export const MealsAndMenuPlanningView: React.FC<MealsAndMenuPlanningViewProps> =
   };
 
   const handleLoadDefaultPantry = () => {
-    const starterItems: KitchenInventoryItem[] = DEFAULT_PANTRY_STAPLES.map((item, idx) => ({
-      ...item,
-      id: 'inv-def-' + idx + '-' + Date.now(),
-      addedDate: new Date().toISOString(),
-    }));
+    const starterItems: KitchenInventoryItem[] = getMissingPantryStaples(
+      nutrition.inventory || [],
+      DEFAULT_PANTRY_STAPLES.map((item, idx) => ({
+        ...item,
+        id: 'inv-def-' + idx + '-' + Date.now(),
+        addedDate: new Date().toISOString(),
+      })),
+    );
+    if (starterItems.length === 0) return;
 
     onUpdateNutrition({
       ...nutrition,
