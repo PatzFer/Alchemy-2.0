@@ -24,6 +24,11 @@ interface IdeasViewProps {
   onOpenAssistantWithPrompt?: (prompt: string) => void;
 }
 
+const getLocalDateString = (): string => {
+  const date = new Date();
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+};
+
 const getSharedIdeaKeywords = (left: string, right: string): string[] => {
   const stopWords = new Set(['de', 'het', 'een', 'en', 'van', 'voor', 'met', 'op', 'in', 'aan', 'is', 'ik', 'mijn', 'dit', 'dat', 'the', 'and', 'for', 'with', 'from', 'into', 'your', 'you']);
   const words = (value: string) => new Set(
@@ -64,7 +69,7 @@ export const IdeasView: React.FC<IdeasViewProps> = ({
       (activeWorld === 'all' || i.realm === activeWorld) &&
       i.status !== 'archived' &&
       i.status !== 'converted_to_project' &&
-      new Date(i.createdAt) < threeWeeksAgo
+      new Date(i.lastRevisitedAt || i.createdAt) < threeWeeksAgo
   );
 
   const filteredIdeas = ideas.filter((i) => {
@@ -160,7 +165,25 @@ export const IdeasView: React.FC<IdeasViewProps> = ({
                       </p>
                     </div>
 
-                    <div className="flex items-center gap-2 shrink-0">
+                    <div className="flex items-center gap-2 shrink-0 flex-wrap">
+                      {onOpenAssistantWithPrompt && <button
+                        onClick={() => {
+                          onSaveIdea({ id: idea.id, lastRevisitedAt: getLocalDateString() });
+                          onOpenAssistantWithPrompt(
+                            `We pakken dit oudere idee opnieuw op. Help me eerst onderzoeken wat er interessant aan is en welke richting het kan krijgen, zonder meteen een plan op te dringen. Idee: "${idea.title}" — ${idea.content}`,
+                            { type: 'idea', id: idea.id, title: idea.title, realm: idea.realm, details: idea }
+                          );
+                        }}
+                        className="px-3 py-1.5 rounded-lg border border-[var(--border-subtle)] text-xs text-[var(--text-secondary)] hover:bg-[var(--surface-1)]"
+                      >
+                        Spar met Jarvis
+                      </button>}
+                      <button
+                        onClick={() => onSaveIdea({ id: idea.id, lastRevisitedAt: getLocalDateString() })}
+                        className="px-3 py-1.5 rounded-lg border border-[var(--border-subtle)] text-xs text-[var(--text-secondary)] hover:bg-[var(--surface-1)]"
+                      >
+                        Later herinneren
+                      </button>
                       {idea.realm === 'mariluna' && <button
                         onClick={() => onConvertToProject(idea.id)}
                         className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[var(--text-primary)] text-[var(--text-primary)] text-xs font-medium hover:bg-[#433D37] transition cursor-pointer"
