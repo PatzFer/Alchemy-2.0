@@ -948,12 +948,14 @@ export function loadState(): AppState {
   }
 }
 
-export function saveState(state: AppState): void {
-  if (typeof window === 'undefined') return;
+export function saveState(state: AppState): boolean {
+  if (typeof window === 'undefined') return false;
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    return true;
   } catch (err) {
     console.error('Failed to save state to localStorage:', err);
+    return false;
   }
 }
 
