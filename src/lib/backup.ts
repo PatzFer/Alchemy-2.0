@@ -3,6 +3,7 @@ import { saveState } from './storage';
 
 export const ALCHEMY_BACKUP_FORMAT = 'p-m-alchemy-backup';
 export const ALCHEMY_BACKUP_VERSION = 1;
+export const ALCHEMY_APP_SCHEMA_VERSION = 1;
 
 export interface AlchemyBackupEnvelope {
   format: typeof ALCHEMY_BACKUP_FORMAT;
@@ -37,7 +38,7 @@ export async function createAlchemyBackup(payload: AppState): Promise<AlchemyBac
   return {
     format: ALCHEMY_BACKUP_FORMAT,
     backupVersion: ALCHEMY_BACKUP_VERSION,
-    appSchemaVersion: 1,
+    appSchemaVersion: ALCHEMY_APP_SCHEMA_VERSION,
     exportedAt: new Date().toISOString(),
     checksumAlgorithm: 'SHA-256',
     checksum: await sha256(serialized),
@@ -61,6 +62,12 @@ export async function verifyAlchemyBackup(input: unknown): Promise<AlchemyBackup
   }
   if (!Number.isInteger(candidate.appSchemaVersion) || (candidate.appSchemaVersion ?? 0) < 1) {
     throw new Error('De appgegevensversie in deze back-up is ongeldig.');
+  }
+  if ((candidate.appSchemaVersion ?? 0) > ALCHEMY_APP_SCHEMA_VERSION) {
+    throw new Error('Deze back-up is gemaakt met een nieuwere Alchemy-versie. Werk Alchemy bij voordat je deze herstelt.');
+  }
+  if (!/^[a-f0-9]{64}$/i.test(candidate.checksum)) {
+    throw new Error('De integriteitscontrole in deze back-up heeft een ongeldig formaat.');
   }
   if (typeof candidate.exportedAt !== 'string' || Number.isNaN(Date.parse(candidate.exportedAt))) {
     throw new Error('De exportdatum in deze back-up is ongeldig.');
