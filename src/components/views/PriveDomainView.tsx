@@ -201,10 +201,10 @@ export const PriveDomainView: React.FC<PriveDomainViewProps> = ({
   return (
     <div className="space-y-7 pb-24 text-[var(--text-primary)]">
       {/* Editorial Sanctuary Header */}
-      <header className="rounded-3xl border border-[#52695A] bg-[#263D35] text-[#F0EBDD] p-6 sm:p-8 shadow-xs relative overflow-hidden">
+      <header className="rounded-3xl border border-[#39776D] bg-gradient-to-br from-[#245047] via-[#172F2B] to-[#111F1D] text-[#F0EBDD] p-6 sm:p-8 shadow-xs relative overflow-hidden">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div>
-            <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.2em] text-[#A9B88A] font-medium">
+            <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.2em] text-[#A2A36B] font-medium">
               <span>{isNl ? 'Persoonlijk Domein' : 'Personal Domain'}</span>
               <span>•</span>
               <span>Sanctuary</span>
@@ -212,7 +212,7 @@ export const PriveDomainView: React.FC<PriveDomainViewProps> = ({
             <h1 className="font-serif text-3xl sm:text-4xl font-normal text-[#F0EBDD] tracking-tight mt-1">
               {isNl ? 'Privé & Leven' : 'Private Life & Sanctuary'}
             </h1>
-            <p className="text-xs sm:text-sm text-[#D2DDD2] mt-2 max-w-xl font-light leading-relaxed">
+            <p className="text-xs sm:text-sm text-[#D7DED1] mt-2 max-w-xl font-light leading-relaxed">
               {isNl
                 ? 'Je persoonlijke oase voor cyclus, gezondheid, voeding, styling en persoonlijke doelen. Volledig gescheiden van zakelijke context.'
                 : 'Your sanctuary for biological rhythm, health, nutrition, styling, and personal aspirations. Strictly isolated from enterprise context.'}
@@ -229,7 +229,7 @@ export const PriveDomainView: React.FC<PriveDomainViewProps> = ({
                     : 'Help me reflect on my personal rhythm, energy, and wellbeing this week.'
                 )
               }
-              className="flex items-center gap-2 px-4 py-2 rounded-full border border-[#52695A] bg-[#304B40] text-[#F0EBDD] text-xs font-medium hover:border-[var(--accent-secondary)] transition shadow-xs cursor-pointer"
+              className="flex items-center gap-2 px-4 py-2 rounded-full border border-[#39776D] bg-[#245047] text-[#F0EBDD] text-xs font-medium hover:border-[var(--accent-secondary)] transition shadow-xs cursor-pointer"
             >
               <Sparkles className="w-3.5 h-3.5 text-[var(--accent-secondary)]" />
               <span>{isNl ? 'Persoonlijke Reflectie' : 'Personal Reflection'}</span>
@@ -252,11 +252,11 @@ export const PriveDomainView: React.FC<PriveDomainViewProps> = ({
                 onClick={() => setActiveSubTab(tab.id)}
                 className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-medium transition shrink-0 cursor-pointer ${
                   isActive
-                    ? 'bg-[#A9B88A] text-[#17221C] shadow-xs'
+                    ? 'bg-[#A2A36B] text-[#172F2B] shadow-xs'
                     : 'text-[#D2DDD2] bg-[#304B40]/80 hover:bg-[#3B5B4B] hover:text-[#F0EBDD]'
                 }`}
               >
-                <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-[#263D35]' : 'text-[#B49A7A]'}`} />
+                <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-[#172F2B]' : 'text-[#B49A7A]'}`} />
                 <span>{tab.label}</span>
               </button>
             );
