@@ -67,7 +67,7 @@ export const TasksView: React.FC<TasksViewProps> = ({
     setFormCategory(activeWorld === 'mariluna' ? 'content' : 'self-care');
     setFormPriority('medium');
     setFormDuration(30);
-    setFormDueDate(new Date().toISOString().split('T')[0]);
+    setFormDueDate(getLocalDateString());
     setFormRecurring('none');
     setFormSubtasks([]);
     setIsModalOpen(true);
@@ -103,7 +103,7 @@ export const TasksView: React.FC<TasksViewProps> = ({
       recurring: formRecurring,
       subtasks: formSubtasks,
       status: editingTask ? editingTask.status : 'todo',
-      createdAt: editingTask ? editingTask.createdAt : new Date().toISOString().split('T')[0],
+      createdAt: editingTask ? editingTask.createdAt : getLocalDateString(),
     };
 
     onSaveTask(taskPayload);
