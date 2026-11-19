@@ -523,3 +523,20 @@ test('cycle phase context stays out of Jarvis prompts without explicit cycle con
     allowCycleDataToAI: false,
   });
 });
+
+test('cycle consent alone cannot bypass the personal-data AI permission', () => {
+  securityVault.updatePermissions({
+    allowPersonalDataToAI: false,
+    allowCycleDataToAI: true,
+  });
+  const result = securityVault.sanitizeContextForAi({
+    cyclePhase: 'follicular',
+    cycleDay: 8,
+  }, 'personal');
+  assert.equal('cyclePhase' in result, false);
+  assert.equal('cycleDay' in result, false);
+  securityVault.updatePermissions({
+    allowPersonalDataToAI: false,
+    allowCycleDataToAI: false,
+  });
+});
