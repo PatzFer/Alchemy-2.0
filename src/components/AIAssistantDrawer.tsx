@@ -93,117 +93,90 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
   ];
 
   const buildContextPayload = (customContextItem?: any) => {
+    // Jarvis receives only the active workspace. The neutral Home context is
+    // deliberately not a data scope and must never become a mixed-data prompt.
+    const scope = assistantWorld;
+    const isPersonal = scope === 'personal';
+    const isMariluna = scope === 'mariluna';
+    const inScope = (item: { realm?: string }) => item.realm === scope;
+    const now = new Date();
+    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    const rawContextItem = customContextItem || activeContextItem;
+    const safeContextItem = rawContextItem && (!rawContextItem.realm || rawContextItem.realm === scope)
+      ? rawContextItem
+      : undefined;
+
     return {
-      currentDate: new Date().toISOString().split('T')[0],
-      currentDayOfWeek: new Date().toLocaleDateString('nl-NL', { weekday: 'long' }),
-      activeWorld: assistantWorld,
-      activeContextItem: customContextItem || activeContextItem,
-      calendarEvents: (calendarEvents || []).map((e) => ({
-        id: e.id,
-        title: e.title,
-        date: e.date,
-        startTime: e.startTime,
-        endTime: e.endTime,
-        category: e.category,
-        realm: e.realm,
+      currentDate: todayStr,
+      currentDayOfWeek: now.toLocaleDateString('nl-NL', { weekday: 'long' }),
+      activeWorld: scope,
+      activeContextItem: safeContextItem,
+      calendarEvents: (calendarEvents || []).filter(inScope).map((e) => ({
+        id: e.id, title: e.title, date: e.date, startTime: e.startTime,
+        endTime: e.endTime, category: e.category, realm: e.realm,
       })),
-      tasks: (tasks || []).map((t) => ({
-        id: t.id,
-        title: t.title,
-        dueDate: t.dueDate,
-        status: t.status,
-        priority: t.priority,
-        realm: t.realm,
-        goalId: t.goalId,
-        projectId: t.projectId,
-        estimatedDuration: t.estimatedDuration,
+      tasks: (tasks || []).filter(inScope).map((t) => ({
+        id: t.id, title: t.title, dueDate: t.dueDate, status: t.status,
+        priority: t.priority, realm: t.realm, goalId: t.goalId,
+        projectId: t.projectId, estimatedDuration: t.estimatedDuration,
       })),
-      projects: (projects || []).map((p) => ({
-        id: p.id,
-        title: p.title,
-        status: p.status,
-        realm: p.realm,
-        goalId: p.goalId,
-        taskIds: p.taskIds || [],
-        targetDate: p.targetDate,
+      projects: (projects || []).filter(inScope).map((p) => ({
+        id: p.id, title: p.title, status: p.status, realm: p.realm,
+        goalId: p.goalId, taskIds: p.taskIds || [], targetDate: p.targetDate,
         description: p.description,
       })),
-      ideas: (ideas || []).map((i) => ({
-        id: i.id,
-        title: i.title,
-        content: i.content,
-        pillar: i.contentPillar,
-        status: i.status,
-        realm: i.realm,
+      ideas: (ideas || []).filter(inScope).map((i) => ({
+        id: i.id, title: i.title, content: i.content, pillar: i.contentPillar,
+        status: i.status, realm: i.realm,
       })),
-      goals: (goals || []).map((g) => ({
-        id: g.id,
-        title: g.title,
-        description: g.description,
-        progress: g.progress,
-        timeframe: g.timeframe,
-        startDate: g.startDate,
-        endDate: g.endDate,
-        targetDate: g.targetDate,
-        realm: g.realm,
-        status: g.status,
+      goals: (goals || []).filter(inScope).map((g) => ({
+        id: g.id, title: g.title, description: g.description, progress: g.progress,
+        timeframe: g.timeframe, startDate: g.startDate, endDate: g.endDate,
+        targetDate: g.targetDate, realm: g.realm, status: g.status,
         connectedProjectIds: g.connectedProjectIds || [],
         connectedTaskIds: g.connectedTaskIds || [],
       })),
-      intentions: (intentions || [])
-        .filter((i) => i.realm === assistantWorld)
-        .map((i) => ({
-          id: i.id,
-          title: i.title,
-          date: i.date,
-          realm: i.realm,
-          status: i.status,
-          completed: i.completed,
-        })),
-      todayIntention: (() => {
-        const todayStr = new Date().toISOString().split('T')[0];
-        const found = (intentions || []).find(
-          (i) => i.date === todayStr && i.realm === assistantWorld
-        );
-        return found ? { id: found.id, title: found.title, realm: found.realm, status: found.status, completed: found.completed } : undefined;
-      })(),
-      contentPlan: contentPlan ? {
+      intentions: (intentions || []).filter(inScope).map((i) => ({
+        id: i.id, title: i.title, date: i.date, realm: i.realm,
+        status: i.status, completed: i.completed,
+      })),
+      todayIntention: (intentions || []).find((i) => i.date === todayStr && inScope(i))
+        ? (() => {
+            const found = (intentions || []).find((i) => i.date === todayStr && inScope(i));
+            return found ? { id: found.id, title: found.title, realm: found.realm, status: found.status, completed: found.completed } : undefined;
+          })()
+        : undefined,
+      contentPlan: isMariluna && contentPlan ? {
         quarterTheme: contentPlan.quarterTheme,
         monthlyTheme: contentPlan.monthlyTheme,
         pillars: contentPlan.pillars,
         recentPosts: contentPlan.posts?.slice(-5).map((p) => ({ title: p.title, status: p.status, pillar: p.pillar })),
       } : undefined,
-      offerings: (offerings || []).map((o) => ({
-        id: o.id,
-        title: o.title,
-        type: o.type,
-        price: o.price,
-        description: o.description,
-        status: o.status,
+      offerings: isMariluna ? (offerings || []).map((o) => ({
+        id: o.id, title: o.title, type: o.type, price: o.price,
+        description: o.description, status: o.status,
+      })) : [],
+      workingHours: isPersonal ? `${lifeProfile.workingHoursStart} - ${lifeProfile.workingHoursEnd}` : undefined,
+      preferences: isPersonal ? lifeProfile.preferences : undefined,
+      memoryItems: (memories || []).filter(inScope).map((m) => ({
+        content: m.content, category: m.category, realm: m.realm,
+        type: m.type, status: m.status, confidence: m.confidence, expiresAt: m.expiresAt,
       })),
-      workingHours: `${lifeProfile.workingHoursStart} - ${lifeProfile.workingHoursEnd}`,
-      preferences: lifeProfile.preferences,
-      memoryItems: (memories || []).map((m) => ({ content: m.content, category: m.category, realm: m.realm, type: m.type, status: m.status, confidence: m.confidence, expiresAt: m.expiresAt })),
-      wellbeing:
-        wellbeing && wellbeing.preferences?.allowWellbeingDataToAI
-          ? {
-              focusTheme: wellbeing.currentWeeklyMovement?.focusTheme,
-              todaySession: wellbeing.currentWeeklyMovement?.sessions?.[0]?.title,
-              dietaryStyle: wellbeing.preferences?.foodPreferences?.dietaryStyle,
-              allowedToAI: true,
-            }
-          : undefined,
-      dailyCheckIns:
-        assistantWorld === 'personal' && (wellbeing?.preferences?.allowWellbeingDataToAI || lifeProfile?.preferences?.allowPersonalDataToAI)
-          ? (dailyCheckIns || []).slice(0, 10).map((c) => ({
-              date: c.date,
-              energy: c.energy,
-              mood: c.mood,
-              wakeTime: c.wakeTime,
-              sleepTime: c.sleepTime,
-              notes: c.notes,
-            }))
-          : undefined,
+      wellbeing: isPersonal && wellbeing?.preferences?.allowWellbeingDataToAI
+        ? {
+            focusTheme: wellbeing.currentWeeklyMovement?.focusTheme,
+            todaySession: wellbeing.currentWeeklyMovement?.sessions?.[0]?.title,
+            dietaryStyle: wellbeing.preferences?.foodPreferences?.dietaryStyle,
+            allowedToAI: true,
+          }
+        : undefined,
+      dailyCheckIns: isPersonal &&
+        (wellbeing?.preferences?.allowWellbeingDataToAI || lifeProfile?.preferences?.allowPersonalDataToAI)
+        ? (dailyCheckIns || []).slice(0, 10).map((c) => ({
+            date: c.date, energy: c.energy, mood: c.mood,
+            wakeTime: c.wakeTime, sleepTime: c.sleepTime, notes: c.notes,
+          }))
+        : undefined,
     };
   };
 
