@@ -544,7 +544,7 @@ export default function App() {
         id: targetId || 'i-' + Date.now() + '-' + Math.random().toString(36).substring(2, 7),
         title: ideaPayload.title || 'Untitled Idea',
         content: ideaPayload.content || '',
-        realm: ideaPayload.realm || 'mariluna',
+        realm: ideaPayload.realm || (activeWorld === 'mariluna' ? 'mariluna' : 'personal'),
         category: ideaPayload.category,
         status: ideaPayload.status || 'raw',
         createdAt: ideaPayload.createdAt || getLocalDateString(),
