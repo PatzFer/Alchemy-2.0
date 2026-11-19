@@ -19,7 +19,7 @@ interface IdeasViewProps {
   activeWorld: ActiveWorldFilter;
   onSaveIdea: (idea: Partial<Idea>) => void;
   onConvertToProject: (ideaId: string) => void;
-  onArchiverenIdea: (ideaId: string) => void;
+  onArchiveIdea: (ideaId: string) => void;
   onDeleteIdea: (ideaId: string) => void;
   onOpenAssistantWithPrompt?: (prompt: string) => void;
 }
@@ -41,7 +41,7 @@ export const IdeasView: React.FC<IdeasViewProps> = ({
   activeWorld,
   onSaveIdea,
   onConvertToProject,
-  onArchiverenIdea,
+  onArchiveIdea,
   onDeleteIdea,
   onOpenAssistantWithPrompt,
 }) => {
@@ -169,7 +169,7 @@ export const IdeasView: React.FC<IdeasViewProps> = ({
                         <span>Maak project</span>
                       </button>}
                       <button
-                        onClick={() => onArchiverenIdea(idea.id)}
+                        onClick={() => onArchiveIdea(idea.id)}
                         className="px-2.5 py-1.5 rounded-lg border border-[var(--border-subtle)] text-xs text-[var(--text-secondary)] hover:bg-[var(--surface-2)] transition cursor-pointer"
                       >
                         Archiveren
@@ -258,7 +258,7 @@ export const IdeasView: React.FC<IdeasViewProps> = ({
       {/* Ideas Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
         {filteredIdeas.map((idea) => {
-          const isArchiverend = idea.status === 'archived';
+          const isArchived = idea.status === 'archived';
           const relatedIdeas = filteredIdeas
             .filter((other) => other.id !== idea.id && other.realm === idea.realm && other.status !== 'archived')
             .map((other) => ({ idea: other, shared: getSharedIdeaKeywords(`${idea.title} ${idea.content}`, `${other.title} ${other.content}`) }))
@@ -269,7 +269,7 @@ export const IdeasView: React.FC<IdeasViewProps> = ({
             <div
               key={idea.id}
               className={`rounded-2xl border p-5 flex flex-col justify-between transition-all ${
-                isArchiverend
+                isArchived
                   ? 'bg-[var(--surface-2)]/50 border-[var(--border-subtle)] opacity-60'
                   : 'bg-[var(--surface-2)] border-[var(--border-subtle)] hover:border-[#C4B9A7] shadow-xs'
               }`}
@@ -361,8 +361,8 @@ export const IdeasView: React.FC<IdeasViewProps> = ({
                     <FolderPlus className="w-3.5 h-3.5" />
                   </button>}
                   <button
-                    onClick={() => onArchiverenIdea(idea.id)}
-                    title="Archiveren spark"
+                    onClick={() => onArchiveIdea(idea.id)}
+                    title="Idee archiveren"
                     className="p-1.5 rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-2)] transition cursor-pointer"
                   >
                     <Archive className="w-3.5 h-3.5" />
