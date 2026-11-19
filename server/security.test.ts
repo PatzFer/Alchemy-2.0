@@ -253,6 +253,22 @@ test('default AI privacy firewall removes both private and business records', ()
 });
 
 
+test('daily check-in notes are removed server-side without explicit wellbeing consent', () => {
+  securityVault.updatePermissions({
+    allowPersonalDataToAI: true,
+    allowWellbeingDataToAI: false,
+    allowMarilunaDataToAI: false,
+  });
+  const result = securityVault.sanitizeContextForAi({
+    currentDate: '2026-11-19',
+    dailyCheckIns: [{ date: '2026-11-19', notes: 'sensitive private note', mood: 'low' }],
+    wellbeing: { focusTheme: 'movement' },
+  }, 'personal');
+  assert.equal('dailyCheckIns' in result, false);
+  assert.equal('wellbeing' in result, false);
+  securityVault.updatePermissions({ allowPersonalDataToAI: false });
+});
+
 test('WebAuthn challenges are one-time and cannot be replayed', () => {
   securityVault.setChallenge('test-one-time-challenge', 'nonce-value');
   assert.equal(securityVault.consumeChallenge('test-one-time-challenge'), 'nonce-value');
