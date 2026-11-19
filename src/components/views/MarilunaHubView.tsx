@@ -126,7 +126,7 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
   integrations,
 }) => {
   const isNl = lang === 'nl';
-  const [activeSubTab, setActiveSubTab] = useState<MarilunaSubTab>('offerings');
+  const [activeSubTab, setActiveSubTab] = useState<MarilunaSubTab>('brainstorm');
 
   const todayStr = new Date().toISOString().split('T')[0];
 
@@ -159,12 +159,13 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
     !!attentionContent;
 
   // Subsections definition
+  // Keep Mariluna intentionally lightweight: idea work first, with only the
+  // practical destinations needed to develop an idea.
   const subTabs: { id: MarilunaSubTab; label: string; icon: React.FC<{ className?: string }> }[] = [
-    { id: 'overview', label: isNl ? 'Overzicht' : 'Overview', icon: LayoutDashboard },
-    { id: 'content', label: isNl ? 'Content' : 'Content', icon: FileText },
+    { id: 'brainstorm', label: isNl ? 'Braindump & Sparring' : 'Brain dump & Sparring', icon: Lightbulb },
     { id: 'projects', label: isNl ? 'Projecten' : 'Projects', icon: Briefcase },
-    { id: 'brainstorm', label: isNl ? 'Brainstorm & Sparring' : 'Brainstorm & Sparring', icon: Lightbulb },
-    { id: 'offerings', label: isNl ? 'Diensten & Aanbod' : 'Services & Offerings', icon: Package }
+    { id: 'content', label: isNl ? 'Content' : 'Content', icon: FileText },
+    { id: 'offerings', label: isNl ? 'Dienstenlijst' : 'Services list', icon: Package }
   ];
 
   // Content post modal state
@@ -493,8 +494,8 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
             </h1>
             <p className="text-xs sm:text-sm text-[var(--text-secondary)] mt-2 max-w-xl font-light leading-relaxed">
               {isNl
-                ? 'Strategisch overzicht, contentplanning, projecten en administratie voor Mariluna. Volledig gescheiden van je persoonlijke levenssfeer.'
-                : 'Strategic command center, editorial pipelines, client projects, and bookkeeping for Mariluna.'}
+                ? 'Een rustige creatieve ruimte om ideeën te vangen, ermee te sparren en ze stap voor stap vorm te geven.'
+                : 'A calm creative space to capture ideas, explore them and gradually shape them.'}
             </p>
           </div>
 
@@ -504,14 +505,14 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
               onClick={() =>
                 onOpenAssistantWithPrompt(
                   isNl
-                    ? 'Treed op als mijn strategische Mariluna sparringpartner. Bekijk mijn projecten, contentpijplijn en prioriteiten met rustig zakelijk inzicht.'
-                    : 'Act as my strategic Mariluna business partner. Review my projects, editorial pipeline, and focus with calm clarity.'
+                    ? 'Wees mijn creatieve Mariluna-sparringpartner. Help me een ruwe gedachte onderzoeken, verbanden leggen met eerdere ideeën, vragen stellen en er samen structuur in brengen. Forceer geen zakelijke strategie; begin bij wat ik vertel.'
+                    : 'Be my creative Mariluna thinking partner. Help explore a raw thought, connect it to earlier ideas, ask useful questions and organize it together. Do not force business strategy; start with what I share.'
                 )
               }
               className="flex items-center gap-2 px-4 py-2 rounded-full border border-[var(--accent-secondary)] bg-[var(--accent-secondary)]/15 text-[var(--surface-1)] text-xs font-medium hover:bg-[var(--accent-secondary)]/25 transition cursor-pointer"
             >
               <Sparkles className="w-3.5 h-3.5 text-[var(--accent-secondary)]" />
-              <span>{isNl ? 'Strategische Sparring' : 'Strategic Sparring'}</span>
+              <span>{isNl ? 'Sparren met Jarvis' : 'Think with Jarvis'}</span>
             </button>
           </div>
         </div>
