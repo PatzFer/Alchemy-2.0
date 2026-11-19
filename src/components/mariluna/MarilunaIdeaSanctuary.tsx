@@ -59,7 +59,7 @@ function findRelatedIdeas(current: Idea, allIdeas: Idea[]): { idea: Idea; reason
         score,
       };
     })
-    .filter((match) => match.sharedTags?.length > 0 || match.score >= 2)
+    .filter((match) => match.score >= 2)
     .sort((a, b) => b.score - a.score)
     .slice(0, 2);
 }
