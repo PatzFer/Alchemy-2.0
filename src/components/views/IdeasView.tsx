@@ -338,7 +338,7 @@ export const IdeasView: React.FC<IdeasViewProps> = ({
                     onClick={() =>
                       onOpenAssistantWithPrompt(
                         `Wil je dit idee verder uitwerken, er content van maken, er een project van maken of het voorlopig bewaren? Idee: "${idea.title}" - ${idea.content}`,
-                        { type: 'idea', id: idea.id, title: idea.title, details: idea }
+                        { type: 'idea', id: idea.id, title: idea.title, realm: idea.realm, details: idea }
                       )
                     }
                     className="inline-flex items-center gap-1.5 text-xs text-[var(--accent-secondary)] hover:text-[var(--text-primary)] font-medium transition cursor-pointer"
