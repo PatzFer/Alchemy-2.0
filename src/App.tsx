@@ -68,6 +68,10 @@ const getLocalDateString = (date = new Date()): string => {
 
 export default function App() {
   const [state, setState] = useState<AppState>(() => loadState());
+  const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
+  const [lastBackupAt, setLastBackupAt] = useState<string | null>(() => {
+    try { return localStorage.getItem('alchemy_last_backup_at'); } catch { return null; }
+  });
   const [currentTab, setCurrentTab] = useState<NavTab>('home');
   const [activeWorld, setActiveWorld] = useState<ActiveWorldFilter>('all');
   const [isAssistantOpen, setIsAssistantOpen] = useState(false);
@@ -152,6 +156,7 @@ export default function App() {
   // Automatically persist changes to local storage
   useEffect(() => {
     saveState(state);
+    setLastSavedAt(new Date().toISOString());
   }, [state]);
 
   // Periodic evaluation of smart notifications
@@ -794,6 +799,9 @@ export default function App() {
     try {
       const backup = await createAlchemyBackup(state);
       downloadAlchemyBackupFile(backup);
+      const exportedAt = new Date().toISOString();
+      setLastBackupAt(exportedAt);
+      try { localStorage.setItem('alchemy_last_backup_at', exportedAt); } catch { /* Backup still downloaded; status can be re-established next time. */ }
     } catch (error) {
       console.error('Alchemy backup export failed:', error);
       alert('De back-up kon niet veilig worden aangemaakt. Probeer een recente browser.');
@@ -1244,6 +1252,8 @@ export default function App() {
         {(currentTab === 'settings' || currentTab === 'integrations') && (
           <SettingsView
             memories={state.memories}
+            lastSavedAt={lastSavedAt}
+            lastBackupAt={lastBackupAt}
             onAddMemory={handleAddMemory}
             onDeleteMemory={handleDeleteMemory}
             onUpdateMemories={handleUpdateMemories}
