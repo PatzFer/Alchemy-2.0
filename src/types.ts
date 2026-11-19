@@ -128,6 +128,7 @@ export interface Idea {
   tags?: string[];
   notes?: string;
   sparringNotes?: string;
+  sparringMessages?: { id: string; role: 'user' | 'assistant'; content: string; timestamp: string }[];
   convertedToType?: 'content' | 'project' | 'task';
 }
 
