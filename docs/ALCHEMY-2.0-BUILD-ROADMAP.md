@@ -824,3 +824,13 @@ A user can reliably open Alchemy without a startup security interstitial; captur
 - Added regression tests for valid/invalid time ranges and realm-aware duplicate detection.
 - Existing calendar event data is not rewritten, and no external Google Calendar writes are enabled by this change.
 - Latest automated validation is pending.
+
+
+## Progress log — 19 November 2026 (Jarvis sensitive-context default deny)
+
+- Jarvis AI payload construction now omits reproductive/cycle details by default. The drawer accepts an explicit permission prop, but defaults it to false; no UI permission toggle is claimed as complete yet.
+- Daily check-in notes and wellbeing fields are now included only when the dedicated wellbeing-to-AI permission is enabled. A general personal-data permission no longer implicitly grants access to wellbeing check-ins.
+- The central context assembler now counts only Mariluna projects in Mariluna scope, preventing private project activity from influencing business-context summaries.
+- Calendar appointment validation is connected to the create flow, with inline errors for invalid time ranges and exact duplicates scoped to the same realm.
+- Existing calendar entries and stored data are unchanged. Google Calendar writes remain disabled; local appointment creation remains local.
+- Latest validation is running for the Jarvis privacy changes. Do not update AI Studio until this workflow is green and the current feature branch is reviewed.
