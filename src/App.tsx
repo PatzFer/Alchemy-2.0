@@ -419,11 +419,11 @@ export default function App() {
       ...prev,
       goals: prev.goals.map((g) => {
         if (g.id !== goalId) return g;
-        const updatedMilestones = g.milestones.map((m) =>
+        const updatedMilestones = (g.milestones || []).map((m) =>
           m.id === milestoneId ? { ...m, completed: !m.completed } : m
         );
         const completedCount = updatedMilestones.filter((m) => m.completed).length;
-        const progress = Math.round((completedCount / updatedMilestones.length) * 100);
+        const progress = updatedMilestones.length > 0 ? Math.round((completedCount / updatedMilestones.length) * 100) : g.progress;
         return {
           ...g,
           milestones: updatedMilestones,
