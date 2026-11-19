@@ -73,7 +73,8 @@ export const MealsAndMenuPlanningView: React.FC<MealsAndMenuPlanningViewProps> =
   lang = 'nl',
 }) => {
   const isNl = lang === 'nl';
-  const [activeTab, setActiveTab] = useState<MealsSubTab>('menu');
+  const [activeTab, setActiveTab] = useState<MealsSubTab>('recipes');
+  const [dislikeDraft, setDislikeDraft] = useState('');
 
   // Modal States
   const [isThursdayModalOpen, setIsThursdayModalOpen] = useState(false);
@@ -343,11 +344,7 @@ export const MealsAndMenuPlanningView: React.FC<MealsAndMenuPlanningViewProps> =
   }, [nutrition.inventory, inventoryLocationFilter]);
 
   const subNavItems: { id: MealsSubTab; label: string; icon: React.FC<{ className?: string }> }[] = [
-    { id: 'menu', label: isNl ? 'Weekmenu' : 'Weekly Menu', icon: Calendar },
-    { id: 'recipes', label: isNl ? 'Receptenboek' : 'Recipe Book', icon: BookOpen },
-    { id: 'inventory', label: isNl ? 'Voorraad & Koelkast' : 'Inventory', icon: Package },
-    { id: 'shopping', label: isNl ? 'Boodschappenlijst' : 'Shopping List', icon: ShoppingCart },
-    { id: 'learning', label: isNl ? 'Culinair Leren' : 'Learned Taste', icon: Sparkles },
+    { id: 'recipes', label: isNl ? 'Recepten & inspiratie' : 'Recipes & inspiration', icon: BookOpen },
   ];
 
   return (
@@ -746,6 +743,50 @@ export const MealsAndMenuPlanningView: React.FC<MealsAndMenuPlanningViewProps> =
               </button>
             </div>
           </form>
+
+          <section className="rounded-2xl border border-[#E5DDD0] bg-[#FCFAF6] p-4 space-y-3">
+            <div>
+              <h4 className="text-sm font-medium text-[#2C2825]">{isNl ? 'Waar houden we rekening mee?' : 'Your food preferences'}</h4>
+              <p className="text-xs text-[#7A7167]">{isNl ? 'Beheer zelf ingrediënten die je niet lust of liever vermijdt. Jarvis gebruikt deze lijst bij suggesties.' : 'Manage foods you dislike or avoid. Jarvis will use this list when suggesting recipes.'}</p>
+            </div>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                const value = dislikeDraft.trim();
+                if (!value) return;
+                const current = nutrition.dislikes || [];
+                if (!current.some((item) => item.toLocaleLowerCase() === value.toLocaleLowerCase())) {
+                  onUpdateNutrition({ ...nutrition, dislikes: [...current, value] });
+                }
+                setDislikeDraft('');
+              }}
+              className="flex gap-2"
+            >
+              <input
+                value={dislikeDraft}
+                onChange={(e) => setDislikeDraft(e.target.value)}
+                placeholder={isNl ? 'Bijv. komkommer, yoghurt…' : 'E.g. cucumber, yoghurt…'}
+                className="flex-1 min-w-0 px-3 py-2 rounded-xl bg-white border border-[#DDD4C5] text-xs text-[#2C2825]"
+              />
+              <button type="submit" disabled={!dislikeDraft.trim()} className="px-3 py-2 rounded-xl bg-[#2C2825] text-white text-xs disabled:opacity-40">
+                {isNl ? 'Toevoegen' : 'Add'}
+              </button>
+            </form>
+            <div className="flex flex-wrap gap-2">
+              {(nutrition.dislikes || []).map((item) => (
+                <span key={item} className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#F0EBE1] text-[#554C42] text-xs">
+                  {item}
+                  <button
+                    type="button"
+                    aria-label={`Verwijder ${item}`}
+                    onClick={() => onUpdateNutrition({ ...nutrition, dislikes: (nutrition.dislikes || []).filter((entry) => entry !== item) })}
+                    className="font-semibold hover:text-red-700"
+                  >×</button>
+                </span>
+              ))}
+              {(nutrition.dislikes || []).length === 0 && <span className="text-xs text-[#8A8175] italic">{isNl ? 'Nog geen voorkeuren ingevuld.' : 'No preferences added yet.'}</span>}
+            </div>
+          </section>
 
           {/* Header & Search */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
