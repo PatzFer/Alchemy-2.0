@@ -24,8 +24,17 @@ export const TodayDashboardView: React.FC<TodayDashboardViewProps> = ({
   const nl = lang === 'nl';
   const today = localDate();
   const visible = (realm?: string) => activeWorld === 'all' || realm === activeWorld;
-  const todayTasks = tasks.filter(t => t.status !== 'completed' && (!t.dueDate || t.dueDate <= today) && visible(t.realm));
+  const todayTasks = tasks
+    .filter(t => t.status !== 'completed' && (!t.dueDate || t.dueDate <= today) && visible(t.realm))
+    .sort((a, b) => {
+      const priority = { high: 0, medium: 1, low: 2 };
+      return priority[a.priority] - priority[b.priority] || (a.dueDate || '').localeCompare(b.dueDate || '');
+    });
+  const overdueCount = todayTasks.filter(t => !!t.dueDate && t.dueDate < today).length;
   const todayEvents = events.filter(e => e.date === today && visible(e.realm)).sort((a,b) => a.startTime.localeCompare(b.startTime));
+  const priorityLabel = (priority: Task['priority']) => nl
+    ? priority === 'high' ? 'Hoog' : priority === 'medium' ? 'Gemiddeld' : 'Laag'
+    : priority;
   const dateLabel = new Intl.DateTimeFormat(nl ? 'nl-BE' : 'en-GB', { weekday:'long', day:'numeric', month:'long' }).format(new Date());
 
   return <div className="mx-auto max-w-5xl space-y-6 pb-10">
@@ -47,10 +56,17 @@ export const TodayDashboardView: React.FC<TodayDashboardViewProps> = ({
           <span className="rounded-full bg-[var(--surface-2)] px-3 py-1 text-xs">{todayTasks.length}</span>
         </div>
         <div className="mt-4 space-y-3">
-          {todayTasks.length ? todayTasks.slice(0,6).map(task => <button key={task.id} onClick={() => onToggleTask(task.id)} className="flex w-full items-start gap-3 text-left text-sm">
+          {todayTasks.length ? todayTasks.slice(0,6).map(task => <button key={task.id} onClick={() => onToggleTask(task.id)} className="flex w-full items-start gap-3 rounded-xl px-2 py-2 text-left text-sm transition hover:bg-[var(--surface-2)]">
             <Circle size={17} className="mt-0.5 shrink-0 text-[var(--text-muted)]"/>
-            <span>{task.title}</span>
+            <span className="min-w-0 flex-1">
+              <span className="block">{task.title}</span>
+              <span className="mt-1 block text-[11px] text-[var(--text-muted)]">
+                {task.dueDate && task.dueDate < today ? (nl ? 'Achterstallig' : 'Overdue') : task.dueDate === today ? (nl ? 'Vandaag' : 'Today') : (nl ? 'Geen deadline' : 'No due date')}
+                {' · '}{priorityLabel(task.priority)}
+              </span>
+            </span>
           </button>) : <p className="py-3 text-sm text-[var(--text-muted)]">{nl ? 'Geen dringende taken. Ademruimte.' : 'No urgent tasks. Room to breathe.'}</p>}
+          {overdueCount > 0 && <p className="mt-2 text-xs text-[var(--text-muted)]">{overdueCount} {nl ? 'achterstallige taken' : 'overdue tasks'}</p>}
         </div>
         <button onClick={onOpenTasks} className="mt-5 inline-flex items-center gap-2 text-xs font-semibold text-[var(--accent-secondary)]">{nl ? 'Alle taken' : 'All tasks'} <ArrowRight size={14}/></button>
       </section>
