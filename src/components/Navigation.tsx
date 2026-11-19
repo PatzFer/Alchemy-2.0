@@ -20,6 +20,7 @@ import { PWAInstallButton } from './PWAInstallButton';
 import { t } from '../lib/i18n';
 
 export type NavTab =
+  | 'home'
   | 'today'
   | 'mariluna'
   | 'prive'
@@ -82,8 +83,9 @@ export const Navigation: React.FC<NavigationProps> = ({
     { id: 'calendar', label: isNl ? 'Agenda' : 'Calendar', icon: Calendar },
   ];
 
-  // Mobile clean 5-tab bar: Vandaag, Mariluna, Privé, Ideeën, Taken
+  // Mobile clean 5-tab bar: Start, Vandaag, Mariluna, Privé, Taken
   const mobileNavItems: { id: NavTab; label: string; icon: React.FC<{ className?: string }> }[] = [
+    { id: 'home', label: isNl ? 'Start' : 'Home', icon: Sparkles },
     { id: 'today', label: isNl ? 'Vandaag' : 'Today', icon: Calendar },
     { id: 'mariluna', label: 'Mariluna', icon: Briefcase },
     { id: 'prive', label: isNl ? 'Privé' : 'Privé', icon: Heart },
@@ -98,7 +100,7 @@ export const Navigation: React.FC<NavigationProps> = ({
         {/* Brand & World Filter */}
         <div className="flex items-center gap-4 sm:gap-6">
           <button
-            onClick={() => onSelectTab('today')}
+            onClick={() => onSelectTab('home')}
             id="brand-logo-btn"
             className="flex items-center gap-3 text-left group cursor-pointer"
           >
