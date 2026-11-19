@@ -66,7 +66,15 @@ export const CycleView: React.FC<CycleViewProps> = ({
   const now = new Date();
   const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
   const moon = getMoonPhase(new Date());
-  const cycleStatus = calculateCycleStatus(cycleProfile, todayStr);
+  const hasCycleAnchor = /^\\d{4}-\\d{2}-\\d{2}$/.test(cycleProfile.lastPeriodStartDate || '') &&
+    Number.isFinite(Date.parse(`${cycleProfile.lastPeriodStartDate}T00:00:00`)) &&
+    cycleProfile.lastPeriodStartDate <= todayStr;
+  // Keep calculations finite before the owner has logged a first period date.
+  const cycleStatus = calculateCycleStatus({
+    ...cycleProfile,
+    lastPeriodStartDate: hasCycleAnchor ? cycleProfile.lastPeriodStartDate : todayStr,
+    overridePhase: hasCycleAnchor ? cycleProfile.overridePhase : undefined,
+  }, todayStr);
   const weeklyInsight = getWeeklyCycleInsight(cycleStatus);
   const activePhaseDetails = PHASE_DETAILS[cycleStatus.activePhase];
 
@@ -123,6 +131,7 @@ export const CycleView: React.FC<CycleViewProps> = ({
       averageCycleLength: Number(cycleLengthInput),
       averagePeriodLength: Number(periodLengthInput),
       lastPeriodStartDate: lastStartInput,
+      trackingEnabled: Boolean(lastStartInput),
       overridePhase: overridePhaseInput === 'auto' ? undefined : overridePhaseInput,
       lastUpdated: todayStr,
     };
@@ -157,6 +166,7 @@ export const CycleView: React.FC<CycleViewProps> = ({
     const updated: CycleProfile = {
       ...cycleProfile,
       lastPeriodStartDate: newLogStartDate,
+      trackingEnabled: true,
       history: updatedHistory,
       overridePhase: undefined, // Clear override upon logging actual date
       lastUpdated: todayStr,
@@ -319,6 +329,7 @@ export const CycleView: React.FC<CycleViewProps> = ({
         </form>
       )}
 
+      {hasCycleAnchor ? <>
       {/* Main Cycle Status Dashboard Hero */}
       <div className="rounded-3xl border border-[#E4DCCF] bg-radial from-[var(--surface-1)] to-[var(--surface-2)] p-6 sm:p-8 shadow-xs relative overflow-hidden">
         {/* Subtle decorative motif */}
@@ -428,6 +439,15 @@ export const CycleView: React.FC<CycleViewProps> = ({
           </div>
         </div>
       </div>
+
+      </> : (
+        <div className="rounded-3xl border border-[var(--border-subtle)] bg-[var(--surface-1)] p-6 sm:p-8 space-y-3">
+          <div className="text-[10px] uppercase tracking-widest text-[var(--accent-secondary)] font-semibold">Cyclusregistratie</div>
+          <h2 className="font-serif text-2xl text-[var(--text-primary)]">Begin met jouw eigen cyclusgegevens</h2>
+          <p className="text-sm text-[var(--text-secondary)] leading-relaxed max-w-xl">Log een menstruatiestartdatum om een persoonlijke cyclusinschatting te zien. Zonder die datum tonen we geen fase of volgende menstruatie alsof we die kennen.</p>
+          <button type="button" onClick={() => { setPeriodLogError(null); setShowLogPeriodModal(true); }} className="px-4 py-2 rounded-xl bg-[var(--text-primary)] text-[var(--surface-1)] text-xs font-medium">Eerste menstruatiedatum toevoegen</button>
+        </div>
+      )}
 
       {/* Daily User-Reported Energy Check-in */}
       <div className="rounded-2xl border border-[#E2DDD2] bg-[var(--surface-1)] p-6 shadow-xs space-y-5">
@@ -557,7 +577,7 @@ export const CycleView: React.FC<CycleViewProps> = ({
 
           <div className="flex items-center justify-between pt-1">
             <div className="text-[11px] text-[var(--text-secondary)]">
-              Synthesis: <strong className="font-medium text-[var(--text-primary)]">{energyGuidance.headline}</strong>
+              Synthesis: <strong className="font-medium text-[var(--text-primary)]">{hasCycleAnchor ? energyGuidance.headline : 'Je eigen energie-inschatting staat centraal. Voeg een menstruatiestartdatum toe voor cycluscontext.'}</strong>
             </div>
             <button
               type="button"
@@ -571,6 +591,7 @@ export const CycleView: React.FC<CycleViewProps> = ({
         </div>
       </div>
 
+      {hasCycleAnchor && <>
       {/* Weekly Cycle Insight Section: "Your Week" */}
       <div className="rounded-2xl border border-[#E0D9CB] bg-[var(--surface-2)] p-6 shadow-xs space-y-4">
         <div className="flex items-center justify-between border-b border-[#E8E2D4] pb-3">
@@ -637,6 +658,8 @@ export const CycleView: React.FC<CycleViewProps> = ({
           </div>
         )}
       </div>
+
+      </>}
 
       {/* Cycle Education & Context */}
       <div className="rounded-2xl border border-[#E4DCCE] bg-[var(--surface-1)] p-6 shadow-xs space-y-4">
