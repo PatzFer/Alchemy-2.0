@@ -792,6 +792,9 @@ export default function App() {
         realm: workspace,
       });
     } else if (action.type === 'CREATE_PROJECT' && workspace === 'mariluna') {
+      const sourceIdeaId = typeof payload.ideaId === 'string' && state.ideas.some((idea) => idea.id === payload.ideaId)
+        ? payload.ideaId
+        : undefined;
       handleSaveProject({
         id: 'p-' + Date.now(),
         title: payload.title || 'Nieuw project',
@@ -800,16 +803,19 @@ export default function App() {
         status: 'planning',
         progress: 0,
         taskIds: [],
-        ideaIds: payload.ideaId ? [payload.ideaId] : [],
+        ideaIds: sourceIdeaId ? [sourceIdeaId] : [],
         priority: payload.priority === 'high' || payload.priority === 'low' ? payload.priority : 'normal',
       });
-      if (payload.ideaId) {
-        handleSaveIdea({ id: payload.ideaId, status: 'converted_to_project', convertedToType: 'project' });
+      if (sourceIdeaId) {
+        handleSaveIdea({ id: sourceIdeaId, status: 'converted_to_project', convertedToType: 'project' });
       }
       setActiveWorld(workspace);
       setIsAssistantOpen(false);
       setCurrentTab(workspace === 'mariluna' ? 'mariluna' : 'prive');
     } else if (action.type === 'CREATE_CONTENT' && workspace === 'mariluna') {
+      const sourceIdeaId = typeof payload.ideaId === 'string' && state.ideas.some((idea) => idea.id === payload.ideaId)
+        ? payload.ideaId
+        : undefined;
       handleAddContentPost({
         id: 'post-' + Date.now(),
         title: payload.title || 'Nieuw contentidee',
@@ -817,12 +823,12 @@ export default function App() {
         platform: payload.platform || 'Nog te bepalen',
         status: 'idea',
         pillar: payload.pillar || payload.theme || 'Nog te bepalen',
-        relatedIdeaId: payload.ideaId,
+        relatedIdeaId: sourceIdeaId,
         notes: payload.notes || '',
         createdAt: new Date().toISOString(),
       });
-      if (payload.ideaId) {
-        handleSaveIdea({ id: payload.ideaId, status: 'converted', convertedToType: 'content' });
+      if (sourceIdeaId) {
+        handleSaveIdea({ id: sourceIdeaId, status: 'converted', convertedToType: 'content' });
       }
       setActiveWorld('mariluna');
       setIsAssistantOpen(false);
