@@ -702,6 +702,7 @@ class SecurityVault {
       delete sanitized.lifestyle;
       delete sanitized.dailyCheckIns;
       delete sanitized.wellbeing;
+      delete sanitized.dailyCheckIns;
       delete sanitized.progressLogs;
       delete sanitized.bodyMeasurements;
       delete sanitized.measurements;
