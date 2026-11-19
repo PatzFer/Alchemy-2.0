@@ -15,6 +15,7 @@ import {
 import { AssistantMessage, Task, Goal, Idea, LifeProfile, MemoryItem, Realm, WellbeingState, Project, CalendarEvent, ContentPlan, MarilunaOffering, DailyCheckIn, DailyIntention, CycleProfile } from '../types';
 import { sendChatMessage } from '../lib/aiService';
 import { calculateCycleStatus } from '../lib/cycleUtils';
+import { getAstronomicalMoonPhase } from '../lib/celestialUtils';
 
 interface AIAssistantDrawerProps {
   isOpen: boolean;
@@ -107,6 +108,11 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
     const cycleStatus = isPersonal && cycleProfile?.trackingEnabled && cycleProfile.lastPeriodStartDate
       ? calculateCycleStatus(cycleProfile, todayStr)
       : undefined;
+    const lunarStatus = getAstronomicalMoonPhase(now);
+    const month = now.getMonth() + 1;
+    const northernSeason = month >= 3 && month <= 5 ? 'Lente'
+      : month >= 6 && month <= 8 ? 'Zomer'
+      : month >= 9 && month <= 11 ? 'Herfst' : 'Winter';
     const rawContextItem = customContextItem || activeContextItem;
     const contextRealm = rawContextItem?.realm || rawContextItem?.world || rawContextItem?.details?.realm;
     const safeContextItem = rawContextItem && contextRealm === scope ? rawContextItem : undefined;
@@ -117,6 +123,9 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
       cyclePhase: cycleStatus?.activePhase,
       cycleDay: cycleStatus?.cycleDay,
       cyclePhaseConfidence: cycleStatus?.phaseConfidence,
+      moonPhase: lunarStatus.phaseNameNl,
+      moonIlluminationPct: lunarStatus.illuminationPct,
+      season: northernSeason,
       activeWorld: scope,
       activeContextItem: safeContextItem,
       calendarEvents: (calendarEvents || []).filter(inScope).map((e) => ({
