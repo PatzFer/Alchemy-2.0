@@ -814,3 +814,13 @@ A user can reliably open Alchemy without a startup security interstitial; captur
 - Added regression tests for local date keys, timestamp conversion and malformed timestamps.
 - Gmail OAuth handlers were removed from the integrations screen as the integration is outside the agreed Version 1.0 scope; stored legacy integration data remains untouched.
 - Latest changes are on the feature branch; full CI validation is pending.
+
+
+## Progress log — 19 November 2026 (calendar entry safety)
+
+- Added reusable calendar validation for strict 24-hour time values and same-day appointment ranges. End times must be later than start times.
+- Calendar event creation now displays a clear inline validation message instead of silently accepting an invalid time range.
+- Exact duplicate appointments are detected only when title, date, time range and realm all match. Intentional overlaps and same-time events in the other workspace remain allowed.
+- Added regression tests for valid/invalid time ranges and realm-aware duplicate detection.
+- Existing calendar event data is not rewritten, and no external Google Calendar writes are enabled by this change.
+- Latest automated validation is pending.
