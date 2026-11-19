@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createAlchemyBackup, verifyAlchemyBackup } from './backup';
+import { createAlchemyBackup, verifyAlchemyBackup, restoreAlchemyBackup } from './backup';
 
 const minimalState: any = {
   tasks: [], goals: [], ideas: [], projects: [], calendarEvents: [], memories: [],
@@ -45,4 +45,13 @@ test('Alchemy backup verification rejects invalid schema versions and export dat
     ...backup,
     exportedAt: 'not-a-date',
   }), /exportdatum.*ongeldig/);
+});
+
+
+test('backup restore does not report success when local storage is unavailable', async () => {
+  const backup = await createAlchemyBackup(minimalState);
+  await assert.rejects(
+    () => restoreAlchemyBackup(backup),
+    /kon niet lokaal worden opgeslagen/,
+  );
 });
