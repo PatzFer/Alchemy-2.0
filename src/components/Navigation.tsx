@@ -166,14 +166,14 @@ export const Navigation: React.FC<NavigationProps> = ({
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
                   isActive
                     ? isMariluna
-                      ? 'bg-[#F0EBDD] text-[#20231f] shadow-xs font-semibold'
+                      ? 'bg-[#E8DCEB] text-[#2B2030] shadow-xs font-semibold'
                       : isPrive
-                      ? 'bg-[#39312B] text-[#F0EBDD] shadow-xs font-semibold'
+                      ? 'bg-[#263D35] text-[#F0EBDD] shadow-xs font-semibold'
                       : 'bg-[#30352f] text-[#F0EBDD] shadow-xs font-semibold'
                     : isMariluna
-                    ? 'text-[#F0EBDD] bg-[#263D35] hover:bg-[#304b40]'
+                    ? 'text-[#F0EBDD] bg-[#392B40] hover:bg-[#51405A]'
                     : isPrive
-                    ? 'text-[#F0EBDD] bg-[#282c27] hover:bg-[#39312B] hover:text-[#F0EBDD]'
+                    ? 'text-[#F0EBDD] bg-[#263D35] hover:bg-[#304B40] hover:text-[#F0EBDD]'
                     : 'text-[#B7B7A9] hover:text-[#F0EBDD] hover:bg-[#30352f]'
                 }`}
               >
@@ -307,7 +307,7 @@ export const Navigation: React.FC<NavigationProps> = ({
             onClick={() => onSelectWorld('mariluna')}
             className={`flex items-center gap-1 px-3 py-1 rounded-full text-[11px] transition ${
               activeWorld === 'mariluna'
-                ? 'bg-[#263D35] text-[#F0EBDD] font-medium'
+                ? 'bg-[#392B40] text-[#F0EBDD] font-medium'
                 : 'text-[#B7B7A9]'
             }`}
           >
