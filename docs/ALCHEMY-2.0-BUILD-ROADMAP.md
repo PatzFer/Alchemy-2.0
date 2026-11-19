@@ -850,3 +850,12 @@ A user can reliably open Alchemy without a startup security interstitial; captur
 - The first CI run for the daily-check-in server firewall exposed a missed insertion: the test correctly showed that the server-side sanitizer still retained the `dailyCheckIns` key.
 - Fixed the actual Rule 5 sanitizer to delete `dailyCheckIns` when wellbeing-to-AI consent is off. The earlier edit had not landed in the effective firewall block.
 - TypeScript and migration checks had passed on the preceding commit; privacy regression failed as expected and production build was skipped. A fresh full workflow is required after this correction.
+
+
+## Progress log — 19 November 2026 (Jarvis memory expiry hardening)
+
+- Jarvis now rejects memory records that supply an invalid expiry timestamp instead of treating malformed expiry metadata as if the memory never expires.
+- Expired records continue to be excluded; valid future expirations and memories without an expiry remain supported.
+- Added regression coverage for permanent, future-expiring, expired, malformed and non-string expiry values.
+- This is a server-side context-filtering hardening change; it does not change stored memory records or automatically delete anything.
+- CI validation is pending for this change.
