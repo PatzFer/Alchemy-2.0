@@ -212,8 +212,8 @@ export const PriveDomainView: React.FC<PriveDomainViewProps> = ({
             </h1>
             <p className="text-xs sm:text-sm text-[#D7DED1] mt-2 max-w-xl font-light leading-relaxed">
               {isNl
-                ? 'Je persoonlijke oase voor cyclus, gezondheid, voeding, styling en persoonlijke doelen. Volledig gescheiden van zakelijke context.'
-                : 'Your sanctuary for biological rhythm, health, nutrition, styling, and personal aspirations. Strictly isolated from enterprise context.'}
+                ? 'Je persoonlijke plek voor cyclus, gezondheid, voeding en doelen. Volledig gescheiden van Mariluna.'
+                : 'Your personal space for cycle, health, meals and goals. Kept separate from Mariluna.'}
             </p>
           </div>
 
@@ -355,35 +355,6 @@ export const PriveDomainView: React.FC<PriveDomainViewProps> = ({
             </div>
           </div>
 
-          {/* Personal Styling 2.0 Feature Banner */}
-          <div
-            onClick={() => setActiveSubTab('style')}
-            className="rounded-2xl border border-[#D5C7B3] bg-gradient-to-r from-[var(--surface-1)] to-[var(--surface-2)] p-5 hover:border-[var(--accent-secondary)] transition cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs"
-          >
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <span className="px-2.5 py-0.5 rounded-full text-[10px] uppercase tracking-widest font-medium bg-[#EFE8DC] text-[#78664D]">
-                  Personal Styling 2.0
-                </span>
-                <span className="text-[11px] text-[var(--accent-secondary)] font-serif italic">
-                  {foundationStyling?.silhouetteLabel || 'Waist-Defined Silhouette'} • 1.57m
-                </span>
-              </div>
-              <h3 className="font-serif text-base font-normal text-[var(--text-primary)]">
-                {isNl ? '“Past dit bij mij?” & Emotional Dressing Studio' : '“Does this fit me?” & Emotional Dressing'}
-              </h3>
-              <p className="text-xs text-[var(--text-secondary)] font-light max-w-xl">
-                {isNl
-                  ? 'Evalueer kledingstukken via visuele lichaamsarchitectuur, ontdek de 12 stemmingsformules en verfijn je stijlcollectie.'
-                  : 'Evaluate garments against your visual proportions, explore the 12 emotional moods, and curate your wardrobe.'}
-              </p>
-            </div>
-            <div className="flex items-center gap-2 text-xs font-medium text-[var(--text-primary)] shrink-0">
-              <span className="hidden sm:inline">{isNl ? 'Open Styling Studio' : 'Open Styling Studio'}</span>
-              <ArrowRight className="w-4 h-4 text-[var(--accent-secondary)]" />
-            </div>
-          </div>
-
           {/* Two Columns: Personal Tasks & Upcoming Calendar */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {/* Personal Tasks */}
@@ -471,8 +442,8 @@ export const PriveDomainView: React.FC<PriveDomainViewProps> = ({
             </div>
           </div>
 
-          {/* Nutrition & Personal Styling Teaser */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {/* Nutrition shortcut */}
+          <div className="grid grid-cols-1 gap-4">
             <div
               onClick={() => setActiveSubTab('nutrition')}
               className="p-4 rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-2)] hover:border-[var(--accent-secondary)] transition cursor-pointer space-y-1 shadow-xs"
@@ -491,24 +462,6 @@ export const PriveDomainView: React.FC<PriveDomainViewProps> = ({
               </div>
             </div>
 
-            <div
-              onClick={() => setActiveSubTab('style')}
-              className="p-4 rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-2)] hover:border-[var(--accent-secondary)] transition cursor-pointer space-y-1 shadow-xs"
-            >
-              <div className="flex items-center gap-2 text-xs font-medium text-[var(--text-primary)]">
-                <Shirt className="w-4 h-4 text-[var(--accent-secondary)]" />
-                <span>{isNl ? 'Personal Styling & Garderobe' : 'Personal Styling & Wardrobe'}</span>
-              </div>
-              <p className="text-xs text-[var(--text-secondary)]">
-                {personalStyle.colorPalette.length > 0
-                  ? `${personalStyle.colorPalette.length} ${isNl ? 'kleurenpaletten vastgelegd' : 'color palettes saved'}`
-                  : isNl ? 'Nog geen stylingprofiel vastgelegd.' : 'No style preferences saved yet.'}
-              </p>
-              <div className="text-[11px] text-[var(--accent-secondary)] pt-1 flex items-center gap-1 font-medium">
-                <span>{isNl ? 'Bekijk styling' : 'View styling'}</span>
-                <ArrowRight className="w-3 h-3" />
-              </div>
-            </div>
           </div>
         </div>
       )}
