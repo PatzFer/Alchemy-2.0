@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import {
   Calendar,
-  Mail,
   Activity,
   Instagram,
   Bell,
@@ -29,11 +28,8 @@ import {
 import { IntegrationsService } from '../../lib/integrationsService';
 import {
   googleSignInForService,
-  fetchRealGmailMessagesFromApi,
   fetchRealCalendarEventsFromApi,
   fetchRealInstagramPostsFromApi,
-  getCachedAccessToken,
-  setCachedAccessToken,
 } from '../../lib/googleAuthService';
 
 interface IntegrationsViewProps {
@@ -248,142 +244,6 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
           error: err?.message || 'Fout bij synchroniseren.',
         },
       }));
-    } finally {
-      setSyncingService(null);
-    }
-  };
-
-  const handleConnectGmail = async () => {
-    setAuthError(null);
-    setSyncingService('gmail');
-    try {
-      onUpdateIntegrations((prev) => ({
-        ...prev,
-        gmail: { ...prev.gmail, status: 'connecting' },
-      }));
-
-      const authRes = await googleSignInForService([
-        'https://www.googleapis.com/auth/gmail.readonly',
-      ], 'gmail');
-
-      if (!authRes || !authRes.accessToken) {
-        throw new Error('Geen OAuth toegang gekregen.');
-      }
-
-      onUpdateIntegrations((prev) => ({
-        ...prev,
-        gmail: { ...prev.gmail, status: 'syncing' },
-      }));
-
-      const { messages, accountEmail } = await fetchRealGmailMessagesFromApi(authRes.accessToken);
-      const now = new Date().toISOString();
-
-      onUpdateIntegrations((prev) => ({
-        ...prev,
-        gmail: {
-          ...prev.gmail,
-          status: 'connected',
-          accountEmail: accountEmail || authRes.email,
-          lastSync: now,
-          readOnly: true,
-          businessOnly: true,
-          syncedThreadsCount: messages.length,
-          messages: messages,
-          error: undefined,
-        },
-      }));
-
-    } catch (err: any) {
-      console.warn('Gmail OAuth error:', err);
-      const isAuthClosed = err?.message?.includes('geannuleerd') || err?.message?.includes('closed');
-      const isAuthExpired = err?.message === 'AUTHENTICATION_EXPIRED';
-
-      const userFacingErr = isAuthClosed
-        ? 'Inlogvenster geannuleerd.'
-        : isAuthExpired
-        ? 'Authenticatie verlopen.'
-        : err?.message || 'Inloggen bij Google Gmail mislukt.';
-
-      setAuthError(userFacingErr);
-
-      onUpdateIntegrations((prev) => ({
-        ...prev,
-        gmail: {
-          ...prev.gmail,
-          status: isAuthExpired ? 'authentication_expired' : 'not_connected',
-          error: userFacingErr,
-        },
-      }));
-    } finally {
-      setSyncingService(null);
-      setConnectModalService(null);
-    }
-  };
-
-  const handleDisconnectGmail = async () => {
-    setSyncingService('gmail');
-    setCachedAccessToken('gmail', null);
-    onUpdateIntegrations((prev) => ({
-      ...prev,
-      gmail: {
-        status: 'not_connected',
-        accountEmail: undefined,
-        lastSync: undefined,
-        readOnly: true,
-        businessOnly: true,
-        syncedThreadsCount: 0,
-        messages: [],
-        error: undefined,
-      },
-    }));
-    setSyncingService(null);
-  };
-
-  const handleSyncGmail = async () => {
-    setAuthError(null);
-    setSyncingService('gmail');
-    try {
-      onUpdateIntegrations((prev) => ({
-        ...prev,
-        gmail: { ...prev.gmail, status: 'syncing' },
-      }));
-
-      let token = getCachedAccessToken('gmail');
-      if (!token) {
-        const authRes = await googleSignInForService([
-          'https://www.googleapis.com/auth/gmail.readonly',
-        ], 'gmail');
-        token = authRes.accessToken;
-      }
-
-      const { messages, accountEmail } = await fetchRealGmailMessagesFromApi(token);
-      const now = new Date().toISOString();
-
-      onUpdateIntegrations((prev) => ({
-        ...prev,
-        gmail: {
-          ...prev.gmail,
-          status: 'connected',
-          accountEmail: accountEmail || prev.gmail.accountEmail,
-          lastSync: now,
-          syncedThreadsCount: messages.length,
-          messages: messages,
-          error: undefined,
-        },
-      }));
-
-    } catch (err: any) {
-      console.warn('Gmail sync error:', err);
-      const isAuthExpired = err?.message === 'AUTHENTICATION_EXPIRED';
-      onUpdateIntegrations((prev) => ({
-        ...prev,
-        gmail: {
-          ...prev.gmail,
-          status: isAuthExpired ? 'authentication_expired' : 'sync_error',
-          error: err?.message || 'Fout bij synchroniseren.',
-        },
-      }));
-      setAuthError('Synchronisatie mislukt. Log opnieuw in bij Google om de verbinding te herstellen.');
     } finally {
       setSyncingService(null);
     }
