@@ -335,24 +335,6 @@ export const PriveDomainView: React.FC<PriveDomainViewProps> = ({
               </p>
             </div>
 
-            {/* Routines & Evening Protection */}
-            <div
-              onClick={() => setActiveSubTab('routines')}
-              className="p-4 rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-1)] hover:border-[var(--accent-secondary)] transition cursor-pointer space-y-1 shadow-xs"
-            >
-              <div className="flex items-center justify-between text-[11px] text-[var(--accent-secondary)] font-medium uppercase tracking-wider">
-                <span>{isNl ? 'Vaste Routines' : 'Routines'}</span>
-                <Clock className="w-3.5 h-3.5" />
-              </div>
-              <div className="font-serif text-lg text-[var(--text-primary)]">
-                {lifeProfile.routines.length} {isNl ? 'rituelen actief' : 'active rituals'}
-              </div>
-              <p className="text-[11px] text-[var(--text-secondary)]">
-                {lifeProfile.preferences.protectEvenings
-                  ? isNl ? 'Avondrust actief beschermd' : 'Evening rest guarded'
-                  : isNl ? 'Flexibel dagritme' : 'Flexible rhythm'}
-              </p>
-            </div>
           </div>
 
           {/* Two Columns: Personal Tasks & Upcoming Calendar */}
