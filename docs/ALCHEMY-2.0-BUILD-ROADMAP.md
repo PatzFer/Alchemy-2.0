@@ -868,3 +868,12 @@ A user can reliably open Alchemy without a startup security interstitial; captur
 - Added regression tests for memory lifecycle filtering and realm isolation, and included the tests in the standard CI test command.
 - This changes only what is assembled for Jarvis context; it does not delete or rewrite stored memories.
 - Full validation is pending on the latest feature-branch commit.
+
+
+## Progress log — 19 November 2026 (Jarvis memory controls)
+
+- Added archive and restore actions to the Jarvis Memory Manager. Archived records are hidden from the normal active-memory filters and can be reviewed and restored from a dedicated archive tab.
+- Archiving preserves the memory record and its metadata; it does not permanently delete it. Permanent deletion remains a separate explicit action.
+- The local context assembler now excludes archived, pending-confirmation, expired, malformed-expiry and unscoped records before they can influence Jarvis.
+- Added lifecycle and workspace-isolation regression tests to the normal test command.
+- Validation of the latest combined change is still pending. No production or cloud-persistence claim is made.
