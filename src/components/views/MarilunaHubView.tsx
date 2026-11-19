@@ -243,6 +243,17 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
     setIsSparringOpen(true);
   };
 
+  const handleSaveSparringMessages = (ideaId: string, sparringMessages: { id: string; role: 'user' | 'assistant'; content: string; timestamp: string }[]) => {
+    if (!onSaveIdea) return;
+    const target = ideas.find((item) => item.id === ideaId);
+    if (!target) return;
+    onSaveIdea({
+      ...target,
+      sparringMessages,
+      lastRevisitedAt: new Date().toISOString().split('T')[0],
+    });
+  };
+
   const handleSaveIdeaNotes = (ideaId: string, sparringNotes: string) => {
     if (!onSaveIdea) return;
     const target = ideas.find((i) => i.id === ideaId);
@@ -1258,7 +1269,8 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
         idea={sparringIdea}
         contentPlan={contentPlan}
         projects={projects}
-        onSaveNotes={handleSaveIdeaNotes}
+        onSaveIdeaNotes={handleSaveIdeaNotes}
+        onSaveSparringMessages={handleSaveSparringMessages}
         onParkIdea={handleParkIdea}
         onConvertToContent={handleStartConvertToContent}
         onConvertToProject={handleStartConvertToProject}
