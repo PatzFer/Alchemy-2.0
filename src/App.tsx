@@ -4,6 +4,7 @@ import {
   NavTab,
 } from './components/Navigation';
 import { HomeLauncher } from './components/HomeLauncher';
+import { TodayDashboardView } from './components/views/TodayDashboardView';
 import { AIAssistantDrawer } from './components/AIAssistantDrawer';
 import { OfflineIndicator } from './components/OfflineIndicator';
 import { NotificationCenterModal } from './components/NotificationCenterModal';
@@ -67,7 +68,7 @@ const getLocalDateString = (date = new Date()): string => {
 
 export default function App() {
   const [state, setState] = useState<AppState>(() => loadState());
-  const [currentTab, setCurrentTab] = useState<NavTab>('today');
+  const [currentTab, setCurrentTab] = useState<NavTab>('home');
   const [activeWorld, setActiveWorld] = useState<ActiveWorldFilter>('all');
   const [isAssistantOpen, setIsAssistantOpen] = useState(false);
   const [isNotificationCenterOpen, setIsNotificationCenterOpen] = useState(false);
@@ -986,7 +987,7 @@ export default function App() {
       <OfflineIndicator />
 
       {/* Global navigation remains available inside each domain. Home is the neutral launcher. */}
-      {currentTab !== 'today' && (
+      {currentTab !== 'home' && (
         <Navigation
           currentTab={currentTab}
           onSelectTab={(tab) => {
@@ -1010,7 +1011,7 @@ export default function App() {
 
       {/* Main Content Area */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8 pb-24 lg:pb-16">
-        {currentTab === 'today' && (
+        {currentTab === 'home' && (
           <HomeLauncher
             onEnterMariluna={() => { setActiveWorld('mariluna'); setCurrentTab('mariluna'); }}
             onEnterPrivate={() => { setActiveWorld('personal'); setCurrentTab('prive'); }}
@@ -1019,6 +1020,19 @@ export default function App() {
             onOpenNotifications={() => setIsNotificationCenterOpen(true)}
             onOpenSettings={() => setCurrentTab('settings')}
             unreadNotificationCount={unreadNotificationCount}
+            lang={userLang}
+          />
+        )}
+
+        {currentTab === 'today' && (
+          <TodayDashboardView
+            tasks={state.tasks}
+            events={state.calendarEvents}
+            activeWorld={activeWorld}
+            onToggleTask={handleToggleTask}
+            onOpenTasks={() => setCurrentTab('tasks')}
+            onOpenCalendar={() => setCurrentTab('calendar')}
+            onOpenJarvis={() => setIsAssistantOpen(true)}
             lang={userLang}
           />
         )}
