@@ -726,3 +726,11 @@ A user can reliably open Alchemy without a startup security interstitial; captur
 - Updated the Mariluna sparring prompts and offline fallback to explore the thought first rather than automatically pushing it toward marketing, content or business strategy. Content remains an option when Patricia chooses it.
 - Verified on commit `4bf59ebeaa780efbecc68530e04f430cea736ce7`: TypeScript check, Supabase migration safety checks, privacy regression tests and production build all passed in GitHub Actions.
 - This does not yet implement semantic idea matching/resurfacing or durable cloud persistence. The new conversation is retained in the current app state/local storage; cross-device persistence remains blocked on Supabase Auth configuration, a confirmed restore/migration choice and a real deployment test.
+
+## Progress log — 19 November 2026 (local data transparency)
+
+- Added a visible storage-status panel to Settings → Data & Backups.
+- The panel shows the last local save timestamp for the current app session and the last successfully generated JSON backup timestamp, retained locally across reloads.
+- The UI explicitly distinguishes local storage/export from cloud persistence and reminds the owner to keep a backup outside the device.
+- This is observability only: it does not encrypt localStorage, create scheduled backups, or enable cloud sync. Cloud migration remains gated on a real Supabase project, Auth, and a verified restore drill.
+- TypeScript, migration safety, privacy and production-build CI checks are running for this change; do not call it verified until they finish successfully.
