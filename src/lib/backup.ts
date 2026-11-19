@@ -93,7 +93,10 @@ export async function restoreAlchemyBackup(input: unknown): Promise<AppState> {
   const verified = await verifyAlchemyBackup(input);
   // This is an explicit restore operation. Callers must obtain user confirmation
   // before invoking it; no import happens merely by selecting or parsing a file.
-  saveState(verified.payload);
+  const saved = saveState(verified.payload);
+  if (!saved) {
+    throw new Error('De back-up is gecontroleerd, maar kon niet lokaal worden opgeslagen. Maak ruimte vrij of controleer de browseropslag en probeer opnieuw.');
+  }
   return verified.payload;
 }
 
