@@ -72,7 +72,6 @@ export const Navigation: React.FC<NavigationProps> = ({
     { id: 'today', label: isNl ? 'Vandaag' : 'Today', icon: Calendar },
     { id: 'mariluna', label: 'Mariluna', icon: Briefcase },
     { id: 'prive', label: isNl ? 'Privé' : 'Private Life', icon: Heart },
-    { id: 'ideas', label: isNl ? 'Ideeën' : 'Ideas', icon: Lightbulb },
   ];
 
   // Retained Direct Access modules
