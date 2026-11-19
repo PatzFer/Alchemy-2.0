@@ -19,7 +19,7 @@ import { scaleRecipeIngredients } from '../../lib/mealPlanningData';
 interface RecipeDetailModalProps {
   recipe: Recipe | null;
   onClose: () => void;
-  initialPortions?: 1 | 2;
+  initialPortions?: number;
   currentFeedback?: MealFeedbackRating;
   onSaveFeedback?: (recipeId: string, recipeName: string, rating: MealFeedbackRating) => void;
   lang?: Language;
@@ -34,7 +34,7 @@ export const RecipeDetailModal: React.FC<RecipeDetailModalProps> = ({
   lang = 'nl',
 }) => {
   const isNl = lang === 'nl';
-  const [portions, setPortions] = useState<1 | 2>(initialPortions);
+  const [portions, setPortions] = useState<number>(Math.max(1, Math.min(20, initialPortions)));
   const [activeFeedback, setActiveFeedback] = useState<MealFeedbackRating | undefined>(currentFeedback);
 
   if (!recipe) return null;
@@ -140,28 +140,23 @@ export const RecipeDetailModal: React.FC<RecipeDetailModalProps> = ({
             {/* Interactive Portion Switcher */}
             <div className="flex items-center justify-start sm:justify-end gap-2 pt-2 sm:pt-0 border-t sm:border-t-0 border-[#E5DFD3]">
               <span className="text-xs text-[#7A7167] font-medium mr-1">Porties:</span>
-              <button
-                type="button"
-                onClick={() => setPortions(1)}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium border transition cursor-pointer flex items-center gap-1 ${
-                  portions === 1
-                    ? 'bg-[#2C2825] text-[#FAF8F5] border-[#2C2825] shadow-xs'
-                    : 'bg-[#FFFFFF] text-[#6B6154] border-[#DDD5C7] hover:border-[#8C7654]'
-                }`}
-              >
-                <span>👤 1 persoon</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setPortions(2)}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium border transition cursor-pointer flex items-center gap-1 ${
-                  portions === 2
-                    ? 'bg-[#2C2825] text-[#FAF8F5] border-[#2C2825] shadow-xs'
-                    : 'bg-[#FFFFFF] text-[#6B6154] border-[#DDD5C7] hover:border-[#8C7654]'
-                }`}
-              >
-                <span>👥 2 personen (ik + Jeroen)</span>
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  aria-label="Minder personen"
+                  onClick={() => setPortions((value) => Math.max(1, value - 1))}
+                  disabled={portions <= 1}
+                  className="w-8 h-8 rounded-full border border-[#DDD5C7] bg-white text-[#2C2825] disabled:opacity-30"
+                >−</button>
+                <span className="min-w-20 text-center text-xs font-semibold text-[#2C2825]">{portions} {portions === 1 ? 'persoon' : 'personen'}</span>
+                <button
+                  type="button"
+                  aria-label="Meer personen"
+                  onClick={() => setPortions((value) => Math.min(20, value + 1))}
+                  disabled={portions >= 20}
+                  className="w-8 h-8 rounded-full border border-[#DDD5C7] bg-white text-[#2C2825] disabled:opacity-30"
+                >+</button>
+              </div>
             </div>
           </div>
 
