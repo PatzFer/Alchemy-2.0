@@ -25,7 +25,7 @@ export const TodayDashboardView: React.FC<TodayDashboardViewProps> = ({
   const today = localDate();
   const visible = (realm?: string) => activeWorld === 'all' || realm === activeWorld;
   const todayTasks = tasks
-    .filter(t => t.status !== 'completed' && (!t.dueDate || t.dueDate <= today) && visible(t.realm))
+    .filter(t => t.status !== 'completed' && !!t.dueDate && t.dueDate <= today && visible(t.realm))
     .sort((a, b) => {
       const priority = { high: 0, medium: 1, low: 2 };
       return priority[a.priority] - priority[b.priority] || (a.dueDate || '').localeCompare(b.dueDate || '');
