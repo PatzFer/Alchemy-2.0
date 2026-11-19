@@ -804,3 +804,13 @@ A user can reliably open Alchemy without a startup security interstitial; captur
 - Retained the legacy Gmail data shape in stored integration state for backward compatibility; this change does not delete any existing stored data.
 - Calendar OAuth helpers remain in place. Health Connect and Renpho are still not represented as connected until their real platform/data pathways are implemented and verified.
 - Fresh CI validation is pending for the latest commits.
+
+
+## Progress log — 19 November 2026 (notification date correctness)
+
+- Smart notifications now derive their daily grouping key from the device's local calendar date instead of UTC date slicing. This avoids notifications being counted against the wrong day around midnight in Belgium and other timezones.
+- Existing notification timestamps are parsed as instants and converted to the local date before daily caps and duplicate-digest checks.
+- Cycle-phase context is omitted from smart notifications until a valid, non-future cycle anchor exists.
+- Added regression tests for local date keys, timestamp conversion and malformed timestamps.
+- Gmail OAuth handlers were removed from the integrations screen as the integration is outside the agreed Version 1.0 scope; stored legacy integration data remains untouched.
+- Latest changes are on the feature branch; full CI validation is pending.
