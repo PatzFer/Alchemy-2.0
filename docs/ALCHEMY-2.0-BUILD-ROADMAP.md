@@ -887,3 +887,13 @@ A user can reliably open Alchemy without a startup security interstitial; captur
 - No data is automatically deleted, reset, or moved to cloud storage.
 - This improves local-use safety but does not replace cloud persistence or a verified backup strategy.
 - Full CI validation is pending for this change.
+
+
+## Progress log — 19 November 2026 (local persistence regression coverage)
+
+- Added automated tests for successful local saves and explicit failure when browser storage rejects a write.
+- Added a recovery test proving malformed stored JSON is copied to a timestamped recovery key before defaults are returned.
+- Added a backward-compatibility test proving legacy storage remains readable and its original key is not deleted.
+- Registered the tests in the standard CI test command.
+- These tests cover local browser persistence behavior only; they do not represent cloud backup or multi-device synchronization.
+- CI validation is pending for the latest commits.
