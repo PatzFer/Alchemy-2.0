@@ -92,7 +92,7 @@ export const Navigation: React.FC<NavigationProps> = ({
   ];
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-[#343a32] bg-[#20231f]/90 backdrop-blur-md transition-colors">
+    <header className="sticky top-0 z-40 w-full border-b border-[#51424A]/70 bg-[#191D20]/92 backdrop-blur-md transition-colors">
       {/* Top Header Bar */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         {/* Brand & World Filter */}
@@ -166,14 +166,14 @@ export const Navigation: React.FC<NavigationProps> = ({
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
                   isActive
                     ? isMariluna
-                      ? 'bg-[#E8DCEB] text-[#2B2030] shadow-xs font-semibold'
+                      ? 'bg-[#D1A9B9] text-[#321F32] shadow-xs font-semibold'
                       : isPrive
-                      ? 'bg-[#263D35] text-[#F0EBDD] shadow-xs font-semibold'
+                      ? 'bg-[#245047] text-[#E8DCC7] shadow-xs font-semibold'
                       : 'bg-[#30352f] text-[#F0EBDD] shadow-xs font-semibold'
                     : isMariluna
-                    ? 'text-[#F0EBDD] bg-[#392B40] hover:bg-[#51405A]'
+                    ? 'text-[#F0EBDD] bg-[#59324F] hover:bg-[#873F5B]'
                     : isPrive
-                    ? 'text-[#F0EBDD] bg-[#263D35] hover:bg-[#304B40] hover:text-[#F0EBDD]'
+                    ? 'text-[#F0EBDD] bg-[#172F2B] hover:bg-[#245047] hover:text-[#F0EBDD]'
                     : 'text-[#B7B7A9] hover:text-[#F0EBDD] hover:bg-[#30352f]'
                 }`}
               >
@@ -280,7 +280,7 @@ export const Navigation: React.FC<NavigationProps> = ({
       </div>
 
       {/* Sub-bar on mobile for World Switcher */}
-      <div className="md:hidden px-4 py-2 border-t border-[#343a32] flex items-center justify-between bg-[#20231f]">
+      <div className="md:hidden px-4 py-2 border-t border-[#343a32] flex items-center justify-between bg-[#191D20]">
         <div className="flex items-center gap-1 w-full justify-center">
           <button
             onClick={() => onSelectWorld('all')}
@@ -307,7 +307,7 @@ export const Navigation: React.FC<NavigationProps> = ({
             onClick={() => onSelectWorld('mariluna')}
             className={`flex items-center gap-1 px-3 py-1 rounded-full text-[11px] transition ${
               activeWorld === 'mariluna'
-                ? 'bg-[#392B40] text-[#F0EBDD] font-medium'
+                ? 'bg-[#59324F] text-[#E8DCC7] font-medium'
                 : 'text-[#B7B7A9]'
             }`}
           >
