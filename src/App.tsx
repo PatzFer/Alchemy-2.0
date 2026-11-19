@@ -561,7 +561,7 @@ export default function App() {
 
   const handleConvertToProject = (ideaId: string) => {
     const idea = state.ideas.find((i) => i.id === ideaId);
-    if (!idea) return;
+    if (!idea || idea.realm !== 'mariluna') return;
 
     const newProject: Project = {
       id: 'p-' + Date.now(),
@@ -791,7 +791,7 @@ export default function App() {
         category: payload.category || 'Insight',
         realm: workspace,
       });
-    } else if (action.type === 'CREATE_PROJECT') {
+    } else if (action.type === 'CREATE_PROJECT' && workspace === 'mariluna') {
       handleSaveProject({
         id: 'p-' + Date.now(),
         title: payload.title || 'Nieuw project',
