@@ -157,10 +157,11 @@ export default function App() {
 
   // Automatically persist changes to local storage
   useEffect(() => {
-    saveState(state);
+    // Never report a successful save when the browser rejected the write (e.g. quota exceeded).
+    if (!saveState(state)) return;
     const savedAt = new Date().toISOString();
     setLastSavedAt(savedAt);
-    try { localStorage.setItem('alchemy_last_saved_at', savedAt); } catch { /* Keep app usable if browser storage is unavailable. */ }
+    try { localStorage.setItem('alchemy_last_saved_at', savedAt); } catch { /* Timestamp is informational; state save already succeeded. */ }
   }, [state]);
 
   // Periodic evaluation of smart notifications
