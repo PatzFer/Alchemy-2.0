@@ -25,6 +25,7 @@ interface MarilunaIdeaSparringModalProps {
   projects: Project[];
   goals: Goal[];
   onSaveIdeaNotes: (ideaId: string, notes: string) => void;
+  onSaveSparringMessages: (ideaId: string, messages: SparringMessage[]) => void;
   onConvertToContent: (idea: Idea, initialTitle?: string, initialNotes?: string) => void;
   onConvertToProject: (idea: Idea, initialTitle?: string, initialDescription?: string) => void;
   onConvertToTask: (idea: Idea, initialTitle?: string) => void;
@@ -58,6 +59,7 @@ export const MarilunaIdeaSparringModal: React.FC<MarilunaIdeaSparringModalProps>
   projects,
   goals,
   onSaveIdeaNotes,
+  onSaveSparringMessages,
   onConvertToContent,
   onConvertToProject,
   onConvertToTask,
@@ -78,14 +80,17 @@ ${idea.contentPillar ? `Pijler: **${idea.contentPillar}**` : ''}
 
 Als strategisch klankbord denk ik kritisch mee over de diepgang, positionering en hefboomwerking. Waar wil je de focus op leggen?`;
 
-      setMessages([
-        {
-          id: 'sparring-init',
-          role: 'assistant',
-          content: initialGreeting,
-          timestamp: new Date().toISOString(),
-        },
-      ]);
+      setMessages(
+        idea.sparringMessages && idea.sparringMessages.length > 0
+          ? idea.sparringMessages
+          : [{
+              id: 'sparring-init',
+              role: 'assistant',
+              content: initialGreeting,
+              timestamp: new Date().toISOString(),
+            }]
+      );
+      setInputText('');
     } else {
       setMessages([]);
       setInputText('');
@@ -112,6 +117,7 @@ Als strategisch klankbord denk ik kritisch mee over de diepgang, positionering e
 
     const newThread = [...messages, userMsg];
     setMessages(newThread);
+    onSaveSparringMessages(idea.id, newThread);
     setInputText('');
     setIsThinking(true);
 
@@ -153,28 +159,28 @@ Als strategisch klankbord denk ik kritisch mee over de diepgang, positionering e
     try {
       const response = await sendChatMessage(historyPayload, context, 'mariluna');
       setIsThinking(false);
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: response.id || 'ast-' + Date.now(),
-          role: 'assistant',
-          content: response.content,
-          timestamp: response.timestamp || new Date().toISOString(),
-        },
-      ]);
+      const assistantMessage: SparringMessage = {
+        id: response.id || 'ast-' + Date.now(),
+        role: 'assistant',
+        content: response.content,
+        timestamp: response.timestamp || new Date().toISOString(),
+      };
+      const completedThread = [...newThread, assistantMessage];
+      setMessages(completedThread);
+      onSaveSparringMessages(idea.id, completedThread);
     } catch (err) {
       console.error('Sparring error:', err);
       setIsThinking(false);
       // Fallback response with genuine strategic insight
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: 'ast-' + Date.now(),
-          role: 'assistant',
-          content: generateLocalSparringResponse(idea, promptToSend),
-          timestamp: new Date().toISOString(),
-        },
-      ]);
+      const fallbackMessage: SparringMessage = {
+        id: 'ast-' + Date.now(),
+        role: 'assistant',
+        content: generateLocalSparringResponse(idea, promptToSend),
+        timestamp: new Date().toISOString(),
+      };
+      const completedThread = [...newThread, fallbackMessage];
+      setMessages(completedThread);
+      onSaveSparringMessages(idea.id, completedThread);
     }
   };
 
