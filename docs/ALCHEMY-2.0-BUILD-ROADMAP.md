@@ -877,3 +877,13 @@ A user can reliably open Alchemy without a startup security interstitial; captur
 - The local context assembler now excludes archived, pending-confirmation, expired, malformed-expiry and unscoped records before they can influence Jarvis.
 - Added lifecycle and workspace-isolation regression tests to the normal test command.
 - Validation of the latest combined change is still pending. No production or cloud-persistence claim is made.
+
+
+## Progress log — 19 November 2026 (local storage failure visibility)
+
+- Added a persistent in-app warning when browser localStorage rejects an autosave, including quota and storage-access failures.
+- The warning does not claim data was saved; it offers an explicit retry action and clears only after a confirmed successful write.
+- The informational last-saved timestamp is updated only after a successful state write.
+- No data is automatically deleted, reset, or moved to cloud storage.
+- This improves local-use safety but does not replace cloud persistence or a verified backup strategy.
+- Full CI validation is pending for this change.
