@@ -107,40 +107,8 @@ export default function App() {
     setIsAppAuthenticated(true);
   }, []);
 
-  // Inactivity timeout & background activity heartbeat
-  useEffect(() => {
-    if (!isAppAuthenticated) return;
-
-    let timeoutId: NodeJS.Timeout;
-    let lastPing = Date.now();
-
-    const resetInactivityTimer = () => {
-      clearTimeout(timeoutId);
-
-      const now = Date.now();
-      if (now - lastPing > 30000) {
-        lastPing = now;
-        fetch('/api/auth/activity', { method: 'POST' }).catch(() => {});
-      }
-
-      const timeoutMs = (inactivityTimeoutMins || 15) * 60 * 1000;
-      timeoutId = setTimeout(() => {
-        fetch('/api/auth/lock-app', { method: 'POST' }).catch(() => {});
-        setIsAppAuthenticated(false);
-        setInactivityLocked(true);
-      }, timeoutMs);
-    };
-
-    const events = ['mousemove', 'keydown', 'click', 'touchstart', 'scroll'];
-    events.forEach((evt) => window.addEventListener(evt, resetInactivityTimer, { passive: true }));
-
-    resetInactivityTimer();
-
-    return () => {
-      clearTimeout(timeoutId);
-      events.forEach((evt) => window.removeEventListener(evt, resetInactivityTimer));
-    };
-  }, [isAppAuthenticated, inactivityTimeoutMins]);
+  // No automatic startup or inactivity lock in this personal-use v1.
+  // Keep the explicit manual lock action available from Settings if desired.
 
   const handleLockApp = async () => {
     try {
@@ -1152,7 +1120,7 @@ export default function App() {
 
         {(currentTab === 'prive' || currentTab === 'mylife' || currentTab === 'meals' || currentTab === 'nutrition') && (
           <PriveDomainView
-            initialSubTab={currentTab === 'meals' || currentTab === 'nutrition' ? 'nutrition' : 'overview'}
+            initialSubTab={currentTab === 'meals' || currentTab === 'nutrition' ? 'nutrition' : currentTab === 'prive' ? 'cycle' : 'overview'}
             lifeProfile={state.lifeProfile}
             onUpdateProfile={handleUpdateProfile}
             personalStyle={state.personalStyle}
