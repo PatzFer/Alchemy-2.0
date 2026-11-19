@@ -46,6 +46,7 @@ export const IdeasView: React.FC<IdeasViewProps> = ({
   onOpenAssistantWithPrompt,
 }) => {
   const [quickIdeaText, setQuickIdeaText] = useState('');
+  const [quickIdeaTheme, setQuickIdeaTheme] = useState('');
   const [quickRealm, setQuickRealm] = useState<Realm>(activeWorld === 'mariluna' ? 'mariluna' : 'personal');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
@@ -76,13 +77,23 @@ export const IdeasView: React.FC<IdeasViewProps> = ({
     if (!quickIdeaText.trim()) return;
 
     setIsAnalyzing(true);
-    const analysis = await requestIdeaAnalysis(quickIdeaText, quickRealm);
-    setIsAnalyzing(false);
+    let analysis: { category?: string; summary?: string; suggestedNextAction?: string; followUpQuestions?: string[] } = {};
+    try {
+      const analysisInput = quickIdeaTheme.trim()
+        ? `Thema: ${quickIdeaTheme.trim()}\\n\\nIdee: ${quickIdeaText.trim()}`
+        : quickIdeaText.trim();
+      analysis = await requestIdeaAnalysis(analysisInput, quickRealm);
+    } catch (error) {
+      console.warn('Idea analysis unavailable; keeping the original brain dump.', error);
+    } finally {
+      setIsAnalyzing(false);
+    }
 
     onSaveIdea({
       id: 'i-' + Date.now(),
       title: quickIdeaText.split('\n')[0].slice(0, 60),
       content: quickIdeaText,
+      contentPillar: quickIdeaTheme.trim() || undefined,
       realm: quickRealm,
       category: analysis.category || (quickRealm === 'mariluna' ? 'strategy' : 'lifestyle'),
       status: 'raw',
@@ -94,6 +105,7 @@ export const IdeasView: React.FC<IdeasViewProps> = ({
     });
 
     setQuickIdeaText('');
+    setQuickIdeaTheme('');
   };
 
   return (
@@ -210,6 +222,14 @@ export const IdeasView: React.FC<IdeasViewProps> = ({
             </div>
           </div>
 
+          <input
+            type="text"
+            value={quickIdeaTheme}
+            onChange={(e) => setQuickIdeaTheme(e.target.value)}
+            placeholder="Thema of rode draad (optioneel, bv. vrouwelijke autonomie)"
+            className="w-full bg-[var(--surface-1)] border border-[var(--border-subtle)] rounded-xl px-3 py-2.5 text-xs sm:text-sm text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-hidden focus:border-[var(--accent-secondary)]"
+          />
+
           <textarea
             rows={3}
             required
@@ -265,7 +285,7 @@ export const IdeasView: React.FC<IdeasViewProps> = ({
                   >
                     {idea.realm}
                   </span>
-                  <span>{idea.category}</span>
+                  <span>{idea.contentPillar ? `${idea.contentPillar} · ${idea.category}` : idea.category}</span>
                 </div>
 
                 <h3 className="font-serif text-base font-medium text-[var(--text-primary)]">
