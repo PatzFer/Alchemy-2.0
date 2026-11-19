@@ -12,6 +12,8 @@ import {
   Filter,
   ShieldCheck,
   AlertCircle,
+  Archive,
+  RotateCcw,
 } from 'lucide-react';
 import {
   MemoryItem,
@@ -43,7 +45,7 @@ export const MemoryManagerView: React.FC<MemoryManagerViewProps> = ({
   onDeleteMemory,
   isNl = true,
 }) => {
-  const [activeTab, setActiveTab] = useState<'all' | 'explicit' | 'confirmed' | 'learned' | 'temporary'>('all');
+  const [activeTab, setActiveTab] = useState<'all' | 'explicit' | 'confirmed' | 'learned' | 'temporary' | 'archived'>('all');
   const [realmFilter, setRealmFilter] = useState<'all' | 'personal' | 'mariluna'>('all');
   const [contentInput, setContentInput] = useState('');
   const [categoryInput, setCategoryInput] = useState('Dagritme & Voorkeuren');
@@ -91,6 +93,18 @@ export const MemoryManagerView: React.FC<MemoryManagerViewProps> = ({
     onUpdateMemories((prev) => dismissLearnedMemory(prev, id));
   };
 
+  const handleArchive = (id: string) => {
+    onUpdateMemories((prev) => prev.map((memory) => memory.id === id
+      ? { ...memory, status: 'archived', updatedAt: new Date().toISOString() }
+      : memory));
+  };
+
+  const handleRestore = (id: string) => {
+    onUpdateMemories((prev) => prev.map((memory) => memory.id === id
+      ? { ...memory, status: 'active', updatedAt: new Date().toISOString() }
+      : memory));
+  };
+
   const handleStartEdit = (m: MemoryItem) => {
     setEditingId(m.id);
     setEditContent(m.content);
@@ -104,6 +118,8 @@ export const MemoryManagerView: React.FC<MemoryManagerViewProps> = ({
 
   const filtered = memories.filter((m) => {
     if (realmFilter !== 'all' && m.realm !== realmFilter) return false;
+    if (activeTab === 'archived') return m.status === 'archived';
+    if (m.status === 'archived') return false;
     if (activeTab === 'all') return true;
     return m.type === activeTab || (activeTab === 'explicit' && !m.type);
   });
@@ -211,6 +227,7 @@ export const MemoryManagerView: React.FC<MemoryManagerViewProps> = ({
             { id: 'confirmed', label: isNl ? 'Bevestigd' : 'Confirmed' },
             { id: 'learned', label: `${isNl ? 'Geleerd' : 'Learned'} ${pendingCount > 0 ? `(${pendingCount})` : ''}` },
             { id: 'temporary', label: isNl ? 'Tijdelijk' : 'Temporary' },
+            { id: 'archived', label: isNl ? 'Archief' : 'Archived' },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -312,6 +329,24 @@ export const MemoryManagerView: React.FC<MemoryManagerViewProps> = ({
 
                   {/* Actions */}
                   <div className="flex items-center gap-1.5">
+                    {m.status === 'archived' ? (
+                      <button
+                        onClick={() => handleRestore(m.id)}
+                        className="flex items-center gap-1 px-2 py-1 rounded-lg bg-[#EAE4D7] text-[#554C42] text-[11px] font-medium hover:bg-[#DDD5C7] transition cursor-pointer"
+                        title={isNl ? 'Terugzetten naar actief' : 'Restore to active'}
+                      >
+                        <RotateCcw className="w-3 h-3" />
+                        {isNl ? 'Herstellen' : 'Restore'}
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => handleArchive(m.id)}
+                        className="p-1.5 text-[#9E958B] hover:text-[#2C2825] rounded-lg hover:bg-[#FAF8F5] transition cursor-pointer"
+                        title={isNl ? 'Archiveren' : 'Archive'}
+                      >
+                        <Archive className="w-3.5 h-3.5" />
+                      </button>
+                    )}
                     {isLearnedPending && (
                       <button
                         onClick={() => handleConfirm(m.id)}
