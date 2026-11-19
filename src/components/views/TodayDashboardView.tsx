@@ -24,7 +24,7 @@ export const TodayDashboardView: React.FC<TodayDashboardViewProps> = ({
   const nl = lang === 'nl';
   const today = localDate();
   const visible = (realm?: string) => activeWorld === 'all' || realm === activeWorld;
-  const todayTasks = tasks.filter(t => !t.completed && (!t.dueDate || t.dueDate <= today) && visible(t.realm));
+  const todayTasks = tasks.filter(t => t.status !== 'completed' && (!t.dueDate || t.dueDate <= today) && visible(t.realm));
   const todayEvents = events.filter(e => e.date === today && visible(e.realm)).sort((a,b) => a.startTime.localeCompare(b.startTime));
   const dateLabel = new Intl.DateTimeFormat(nl ? 'nl-BE' : 'en-GB', { weekday:'long', day:'numeric', month:'long' }).format(new Date());
 
