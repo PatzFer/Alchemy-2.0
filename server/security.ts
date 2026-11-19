@@ -896,6 +896,7 @@ class SecurityVault {
 
     // Firewall Rule 5: Wellbeing & body progress data quarantine (Never sent to AI unless explicit permission granted)
     if (!this.permissions.allowWellbeingDataToAI) {
+      delete sanitized.dailyCheckIns;
       delete sanitized.wellbeing;
       delete sanitized.progressLogs;
       delete sanitized.bodyMeasurements;
