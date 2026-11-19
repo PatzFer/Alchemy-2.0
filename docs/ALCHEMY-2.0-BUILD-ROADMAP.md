@@ -834,3 +834,12 @@ A user can reliably open Alchemy without a startup security interstitial; captur
 - Calendar appointment validation is connected to the create flow, with inline errors for invalid time ranges and exact duplicates scoped to the same realm.
 - Existing calendar entries and stored data are unchanged. Google Calendar writes remain disabled; local appointment creation remains local.
 - Latest validation is running for the Jarvis privacy changes. Do not update AI Studio until this workflow is green and the current feature branch is reviewed.
+
+
+## Progress log — 19 November 2026 (server-side wellbeing privacy)
+
+- Extended the server-side wellbeing consent firewall to remove daily check-in payloads, including free-text notes, whenever wellbeing-to-AI consent is disabled.
+- Added a server security regression test proving daily check-in notes and wellbeing fields are absent from the sanitized personal AI context without the explicit wellbeing permission.
+- This complements the client-side default-deny behavior; the server remains authoritative even if a client sends fields manually.
+- The Jarvis privacy changes and calendar validation from the previous build checkpoint passed CI. This newest server-side regression is awaiting its own workflow result.
+- AI Studio handoff remains on hold until the current complete feature-branch checkpoint is green and reviewed.
