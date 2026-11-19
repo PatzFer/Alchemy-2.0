@@ -132,8 +132,9 @@ export const MarilunaIdeaSanctuary: React.FC<MarilunaIdeaSanctuaryProps> = ({
 
   const handleCreateIdea = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim()) return;
+    if (!title.trim() && !content.trim()) return;
 
+    const ideaTitle = title.trim() || content.trim().split(/\s+/).slice(0, 8).join(' ').slice(0, 64) || 'Nieuw idee';
     const parsedTags = tagsInput
       .split(',')
       .map((t) => t.trim())
@@ -141,7 +142,7 @@ export const MarilunaIdeaSanctuary: React.FC<MarilunaIdeaSanctuaryProps> = ({
 
     const newIdea: Partial<Idea> = {
       id: 'idea-' + Date.now(),
-      title: title.trim(),
+      title: ideaTitle,
       content: content.trim(),
       realm: 'mariluna',
       category: category || 'creative',
@@ -156,6 +157,8 @@ export const MarilunaIdeaSanctuary: React.FC<MarilunaIdeaSanctuaryProps> = ({
     };
 
     onSaveIdea(newIdea);
+    // Open the sparring space immediately so a raw thought can naturally become a conversation.
+    onOpenSparring(newIdea as Idea);
 
     // Reset capture form
     setTitle('');
@@ -208,8 +211,7 @@ export const MarilunaIdeaSanctuary: React.FC<MarilunaIdeaSanctuaryProps> = ({
         <form onSubmit={handleCreateIdea} className="space-y-3">
           <input
             type="text"
-            required
-            placeholder={isNl ? 'Titel van je idee of vonk...' : 'Spark or idea title...'}
+            placeholder={isNl ? 'Titel of thema (mag leeg blijven)...' : 'Idea title or theme (optional)...'}
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             className="w-full px-4 py-2.5 rounded-2xl bg-[#FFFFFF] border border-[#DDD4C5] text-xs sm:text-sm text-[#2C2825] focus:outline-none focus:border-[#8C7654] shadow-2xs font-medium"
@@ -336,14 +338,14 @@ export const MarilunaIdeaSanctuary: React.FC<MarilunaIdeaSanctuaryProps> = ({
 
           <div className="flex justify-between items-center pt-1 border-t border-[#EDE4D5]">
             <span className="text-[11px] text-[#7A7167]">
-              {isNl ? 'Wordt bewaard in Mariluna domein.' : 'Stored in Mariluna domain.'}
+              {isNl ? 'Dump je gedachte. Daarna kun je meteen verder sparren.' : 'Drop your thought. Then start sparring right away.'}
             </span>
             <button
               type="submit"
-              disabled={!title.trim()}
+              disabled={!title.trim() && !content.trim()}
               className="px-5 py-2 rounded-full bg-[#2C2825] text-[#FAF8F3] text-xs font-medium hover:bg-[#433D37] transition shadow-xs cursor-pointer disabled:opacity-40"
             >
-              {isNl ? '+ Idee Vastleggen' : '+ Save Spark'}
+              {isNl ? 'Bewaar & sparren met Jarvis' : 'Save & think with Jarvis'}
             </button>
           </div>
         </form>
