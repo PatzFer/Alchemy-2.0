@@ -843,3 +843,10 @@ A user can reliably open Alchemy without a startup security interstitial; captur
 - This complements the client-side default-deny behavior; the server remains authoritative even if a client sends fields manually.
 - The Jarvis privacy changes and calendar validation from the previous build checkpoint passed CI. This newest server-side regression is awaiting its own workflow result.
 - AI Studio handoff remains on hold until the current complete feature-branch checkpoint is green and reviewed.
+
+
+## Progress log — 19 November 2026 (privacy regression follow-up)
+
+- The first CI run for the daily-check-in server firewall exposed a missed insertion: the test correctly showed that the server-side sanitizer still retained the `dailyCheckIns` key.
+- Fixed the actual Rule 5 sanitizer to delete `dailyCheckIns` when wellbeing-to-AI consent is off. The earlier edit had not landed in the effective firewall block.
+- TypeScript and migration checks had passed on the preceding commit; privacy regression failed as expected and production build was skipped. A fresh full workflow is required after this correction.
