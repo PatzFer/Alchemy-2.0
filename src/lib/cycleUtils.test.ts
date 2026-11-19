@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { calculateCycleStatus } from './cycleUtils';
+import { calculateCycleStatus, hasValidCycleAnchor } from './cycleUtils';
 import type { CycleProfile } from '../types';
 
 const profile = (overridePhase?: CycleProfile['overridePhase']): CycleProfile => ({
@@ -25,4 +25,12 @@ test('only an explicit phase override is labeled user-confirmed', () => {
   assert.equal(status.activePhase, 'luteal');
   assert.equal(status.isOverridden, true);
   assert.equal(status.phaseConfidence, 'User-Confirmed');
+});
+
+
+test('cycle tracking requires a real, non-future period start date', () => {
+  assert.equal(hasValidCycleAnchor(profile(), '2026-11-19'), true);
+  assert.equal(hasValidCycleAnchor({ ...profile(), lastPeriodStartDate: '' }, '2026-11-19'), false);
+  assert.equal(hasValidCycleAnchor({ ...profile(), lastPeriodStartDate: 'not-a-date' }, '2026-11-19'), false);
+  assert.equal(hasValidCycleAnchor({ ...profile(), lastPeriodStartDate: '2026-11-20' }, '2026-11-19'), false);
 });
