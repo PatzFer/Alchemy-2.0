@@ -21,6 +21,49 @@ import {
   Check,
 } from 'lucide-react';
 import { Idea, ContentPlan, Project, Task, IdeaStatus } from '../../types';
+const IDEA_STOP_WORDS = new Set([
+  'de', 'het', 'een', 'en', 'of', 'in', 'op', 'van', 'voor', 'met', 'aan', 'naar',
+  'bij', 'dat', 'dit', 'die', 'wat', 'waar', 'hoe', 'ik', 'mijn', 'je', 'jij', 'we',
+  'ons', 'zijn', 'is', 'was', 'worden', 'kan', 'kunnen', 'wil', 'willen', 'the', 'and',
+  'for', 'with', 'from', 'that', 'this', 'your', 'you', 'are', 'into',
+]);
+
+function getIdeaTerms(idea: Idea): Set<string> {
+  const source = [idea.title, idea.content, ...(idea.tags || [])].join(' ').toLocaleLowerCase('nl-BE');
+  return new Set(
+    source
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .split(/[^a-z0-9]+/)
+      .map((word) => word.trim())
+      .filter((word) => word.length >= 4 && !IDEA_STOP_WORDS.has(word))
+  );
+}
+
+function findRelatedIdeas(current: Idea, allIdeas: Idea[]): { idea: Idea; reason: string; score: number }[] {
+  const currentTerms = getIdeaTerms(current);
+  const currentTags = new Set((current.tags || []).map((tag) => tag.trim().toLocaleLowerCase('nl-BE')).filter(Boolean));
+
+  return allIdeas
+    .filter((candidate) => candidate.id !== current.id && candidate.realm === 'mariluna' && candidate.status !== 'archived')
+    .map((candidate) => {
+      const candidateTerms = getIdeaTerms(candidate);
+      const sharedTerms = [...currentTerms].filter((term) => candidateTerms.has(term));
+      const sharedTags = (candidate.tags || []).filter((tag) => currentTags.has(tag.trim().toLocaleLowerCase('nl-BE')));
+      const score = sharedTags.length * 3 + sharedTerms.length;
+      return {
+        idea: candidate,
+        reason: sharedTags.length > 0
+          ? `Gedeelde tags: ${sharedTags.join(', ')}`
+          : `Gedeelde woorden: ${sharedTerms.slice(0, 3).join(', ')}`,
+        score,
+      };
+    })
+    .filter((match) => match.sharedTags?.length > 0 || match.score >= 2)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 2);
+}
+
 import {
   normalizePillars,
   getPillarName,
@@ -442,6 +485,7 @@ export const MarilunaIdeaSanctuary: React.FC<MarilunaIdeaSanctuaryProps> = ({
             const connectedProj = projects.find((p) => p.id === idea.connectedProjectId);
             const connectedTask = tasks.find((t) => t.id === idea.assignedTaskId);
             const relatedContentCount = (idea.relatedContentIds || []).length;
+            const relatedIdeas = findRelatedIdeas(idea, ideas);
 
             return (
               <div
@@ -508,6 +552,26 @@ export const MarilunaIdeaSanctuary: React.FC<MarilunaIdeaSanctuaryProps> = ({
                           #{tag}
                         </span>
                       ))}
+                    </div>
+                  )}
+
+                  {relatedIdeas.length > 0 && (
+                    <div className="pt-2 space-y-1.5">
+                      <div className="text-[10px] uppercase tracking-wider text-[#8C7654] font-semibold">Mogelijke verbanden</div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {relatedIdeas.map((match) => (
+                          <button
+                            key={match.idea.id}
+                            type="button"
+                            title={match.reason}
+                            onClick={() => onOpenSparring(match.idea)}
+                            className="text-[10px] px-2 py-1 rounded-lg border border-[#DDD4C5] bg-[#F7F3EA] text-[#554C42] hover:border-[#8C7654] transition"
+                          >
+                            ↗ {match.idea.title}
+                          </button>
+                        ))}
+                      </div>
+                      <p className="text-[9px] text-[#8A8175]">Automatische suggestie op basis van gedeelde woorden en tags; geen inhoudelijke beoordeling.</p>
                     </div>
                   )}
 
