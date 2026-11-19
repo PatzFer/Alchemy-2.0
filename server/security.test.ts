@@ -504,3 +504,22 @@ test('Jarvis AI quota is isolated between sessions', () => {
   assert.equal(first.remaining, 19);
   assert.equal(second.remaining, 19);
 });
+
+test('cycle phase context stays out of Jarvis prompts without explicit cycle consent', () => {
+  securityVault.updatePermissions({
+    allowPersonalDataToAI: true,
+    allowCycleDataToAI: false,
+  });
+  const result = securityVault.sanitizeContextForAi({
+    cyclePhase: 'luteal',
+    cycleDay: 23,
+    cyclePhaseConfidence: 'Estimated Model',
+  }, 'personal');
+  assert.equal('cyclePhase' in result, false);
+  assert.equal('cycleDay' in result, false);
+  assert.equal('cyclePhaseConfidence' in result, false);
+  securityVault.updatePermissions({
+    allowPersonalDataToAI: false,
+    allowCycleDataToAI: false,
+  });
+});
