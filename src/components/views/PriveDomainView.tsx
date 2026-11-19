@@ -39,6 +39,7 @@ import {
 import { CycleView } from './CycleView';
 import { WellbeingView } from './WellbeingView';
 import { MealsAndMenuPlanningView } from '../meals/MealsAndMenuPlanningView';
+import { PersonalStylingView } from '../styling/PersonalStylingView';
 import { calculateCycleStatus } from '../../lib/cycleUtils';
 import { calculateWaterStats } from '../../lib/healthUtils';
 
