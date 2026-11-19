@@ -55,3 +55,20 @@ test('backup restore does not report success when local storage is unavailable',
     /kon niet lokaal worden opgeslagen/,
   );
 });
+
+
+test('backup verification rejects backups from a newer app schema', async () => {
+  const backup = await createAlchemyBackup(minimalState);
+  await assert.rejects(() => verifyAlchemyBackup({
+    ...backup,
+    appSchemaVersion: backup.appSchemaVersion + 1,
+  }), /nieuwere Alchemy-versie/);
+});
+
+test('backup verification rejects malformed integrity hashes before comparing payloads', async () => {
+  const backup = await createAlchemyBackup(minimalState);
+  await assert.rejects(() => verifyAlchemyBackup({
+    ...backup,
+    checksum: 'not-a-sha256-hash',
+  }), /ongeldig formaat/);
+});
