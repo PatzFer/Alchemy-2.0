@@ -124,9 +124,22 @@ export function hasValidCycleAnchor(profile: CycleProfile, currentDateStr?: stri
 /**
  * Calculates current cycle status with estimated vs user-confirmed status.
  */
+function parseDateOnlyUtc(value: string): Date {
+  const [year, month, day] = value.split('-').map(Number);
+  return new Date(Date.UTC(year, month - 1, day));
+}
+
+function formatDateOnlyUtc(value: Date): string {
+  return `${value.getUTCFullYear()}-${String(value.getUTCMonth() + 1).padStart(2, '0')}-${String(value.getUTCDate()).padStart(2, '0')}`;
+}
+
 export function calculateCycleStatus(profile: CycleProfile, currentDateStr?: string): CalculatedCycleStatus {
-  const targetDate = currentDateStr ? new Date(currentDateStr) : new Date();
-  const startDate = new Date(profile.lastPeriodStartDate);
+  // Date-only cycle anchors are calendar dates, not instants. Keep arithmetic in
+  // UTC so local DST changes and timezone offsets cannot shift the predicted day.
+  const targetDate = currentDateStr
+    ? parseDateOnlyUtc(currentDateStr)
+    : (() => { const now = new Date(); return new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate())); })();
+  const startDate = parseDateOnlyUtc(profile.lastPeriodStartDate);
 
   // Calculate day difference (normalizing to midnight UTC)
   const diffTime = targetDate.getTime() - startDate.getTime();
@@ -167,8 +180,8 @@ export function calculateCycleStatus(profile: CycleProfile, currentDateStr?: str
   // Next Period calculation
   const daysUntilNext = cycleLen - cycleDay + 1;
   const nextPeriodDateObj = new Date(targetDate);
-  nextPeriodDateObj.setDate(nextPeriodDateObj.getDate() + daysUntilNext);
-  const nextPeriodDate = nextPeriodDateObj.toISOString().split('T')[0];
+  nextPeriodDateObj.setUTCDate(nextPeriodDateObj.getUTCDate() + daysUntilNext);
+  const nextPeriodDate = formatDateOnlyUtc(nextPeriodDateObj);
 
   // Cycle progress
   const cycleProgressPercent = Math.min(100, Math.round((cycleDay / cycleLen) * 100));
