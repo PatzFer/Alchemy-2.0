@@ -35,3 +35,25 @@ test('cycle tracking requires a real, non-future period start date', () => {
   assert.equal(hasValidCycleAnchor({ ...profile(), lastPeriodStartDate: '2026-02-31' }, '2026-11-19'), false);
   assert.equal(hasValidCycleAnchor({ ...profile(), lastPeriodStartDate: '2026-11-20' }, '2026-11-19'), false);
 });
+
+
+test('date-only cycle calculations remain stable across daylight-saving boundary dates', () => {
+  const status = calculateCycleStatus({
+    ...profile(),
+    lastPeriodStartDate: '2026-03-01',
+    averageCycleLength: 28,
+    history: [{ id: 'period-dst', startDate: '2026-03-01', confirmedByUser: true }],
+  }, '2026-03-22');
+  assert.equal(status.cycleDay, 22);
+  assert.equal(status.nextPeriodDate, '2026-03-29');
+});
+
+test('cycle calculations use the exact date-only anchor rather than a timezone-shifted instant', () => {
+  const status = calculateCycleStatus({
+    ...profile(),
+    lastPeriodStartDate: '2026-10-25',
+    averageCycleLength: 28,
+    history: [{ id: 'period-autumn', startDate: '2026-10-25', confirmedByUser: true }],
+  }, '2026-11-01');
+  assert.equal(status.cycleDay, 8);
+});
