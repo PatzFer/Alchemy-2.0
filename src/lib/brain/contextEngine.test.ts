@@ -22,6 +22,7 @@ test('Jarvis context excludes pending, archived, expired and malformed-expiry me
   state.memories = [
     makeMemory({ id: 'active', content: 'Keep plans realistic', realm: 'personal' }),
     makeMemory({ id: 'pending', content: 'Unconfirmed preference', realm: 'personal', type: 'learned', status: 'pending_confirmation' }),
+    makeMemory({ id: 'legacy-learned', content: 'Legacy suggestion without status', realm: 'personal', type: 'learned', status: 'active' }),
     makeMemory({ id: 'archived', content: 'Old preference', realm: 'personal', status: 'archived' }),
     makeMemory({ id: 'expired', content: 'Expired preference', realm: 'personal', expiresAt: '2020-01-01T00:00:00.000Z' }),
     makeMemory({ id: 'malformed', content: 'Invalid expiry preference', realm: 'personal', expiresAt: 'not-a-date' }),
