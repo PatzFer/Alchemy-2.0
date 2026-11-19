@@ -48,6 +48,8 @@ interface SettingsViewProps {
   isSampleData: boolean;
   onToggleSampleData: () => void;
   onExportData: () => void;
+  lastSavedAt?: string | null;
+  lastBackupAt?: string | null;
   onImportData: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onResetData: () => void;
   notificationSettings?: NotificationSettings;
@@ -70,6 +72,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   isSampleData,
   onToggleSampleData,
   onExportData,
+  lastSavedAt = null,
+  lastBackupAt = null,
   onImportData,
   onResetData,
   notificationSettings,
@@ -542,6 +546,30 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       {/* Tab 3: Data Management & Export */}
       {activeTab === 'data' && (
         <div className="space-y-6">
+          <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-2)] p-5 space-y-4">
+            <div>
+              <h3 className="font-serif text-lg font-medium text-[var(--text-primary)]">
+                {isNl ? 'Opslagstatus' : 'Storage status'}
+              </h3>
+              <p className="text-xs text-[var(--text-secondary)] mt-1">
+                {isNl ? 'Controleer wanneer Alchemy je gegevens lokaal heeft bewaard en wanneer je laatste reservekopie werd gemaakt.' : 'Check when Alchemy last saved your data locally and when your latest backup was created.'}
+              </p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="rounded-xl bg-[var(--surface-1)] border border-[var(--border-subtle)] p-4">
+                <div className="flex items-center gap-2 text-xs font-medium text-[var(--text-secondary)]"><Database className="w-4 h-4 text-[#8C7654]" />{isNl ? 'Laatst lokaal bewaard' : 'Last local save'}</div>
+                <p className="mt-2 text-sm font-semibold text-[var(--text-primary)]">{lastSavedAt ? new Date(lastSavedAt).toLocaleString(isNl ? 'nl-BE' : 'en-GB') : (isNl ? 'Nog geen wijziging sinds openen' : 'No changes since opening')}</p>
+              </div>
+              <div className="rounded-xl bg-[var(--surface-1)] border border-[var(--border-subtle)] p-4">
+                <div className="flex items-center gap-2 text-xs font-medium text-[var(--text-secondary)]"><Download className="w-4 h-4 text-[#8C7654]" />{isNl ? 'Laatste reservekopie' : 'Last backup'}</div>
+                <p className="mt-2 text-sm font-semibold text-[var(--text-primary)]">{lastBackupAt ? new Date(lastBackupAt).toLocaleString(isNl ? 'nl-BE' : 'en-GB') : (isNl ? 'Nog geen reservekopie geregistreerd' : 'No backup recorded yet')}</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-2 text-[11px] text-[var(--text-secondary)]">
+              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-[#A17B43]" />
+              <p>{isNl ? 'Dit zijn lokale opslag- en exportmomenten. Cloudopslag en synchronisatie zijn nog niet gekoppeld. Bewaar je JSON-reservekopie ook buiten dit toestel.' : 'These are local save and export timestamps. Cloud storage and sync are not connected yet. Keep your JSON backup outside this device too.'}</p>
+            </div>
+          </div>
           <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-2)] p-6 shadow-xs space-y-6">
             <div>
               <h3 className="font-serif text-lg font-medium text-[var(--text-primary)]">
