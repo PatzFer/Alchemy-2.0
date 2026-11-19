@@ -161,13 +161,13 @@ export const IdeasView: React.FC<IdeasViewProps> = ({
                     </div>
 
                     <div className="flex items-center gap-2 shrink-0">
-                      <button
+                      {idea.realm === 'mariluna' && <button
                         onClick={() => onConvertToProject(idea.id)}
                         className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[var(--text-primary)] text-[var(--text-primary)] text-xs font-medium hover:bg-[#433D37] transition cursor-pointer"
                       >
                         <FolderPlus className="w-3.5 h-3.5" />
                         <span>Maak project</span>
-                      </button>
+                      </button>}
                       <button
                         onClick={() => onArchiverenIdea(idea.id)}
                         className="px-2.5 py-1.5 rounded-lg border border-[var(--border-subtle)] text-xs text-[var(--text-secondary)] hover:bg-[var(--surface-2)] transition cursor-pointer"
@@ -353,13 +353,13 @@ export const IdeasView: React.FC<IdeasViewProps> = ({
                 )}
 
                 <div className="flex items-center gap-1">
-                  <button
+                  {idea.realm === 'mariluna' && <button
                     onClick={() => onConvertToProject(idea.id)}
                     title="Omzetten naar project"
                     className="p-1.5 rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-2)] transition cursor-pointer"
                   >
                     <FolderPlus className="w-3.5 h-3.5" />
-                  </button>
+                  </button>}
                   <button
                     onClick={() => onArchiverenIdea(idea.id)}
                     title="Archiveren spark"
