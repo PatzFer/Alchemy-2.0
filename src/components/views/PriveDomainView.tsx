@@ -239,7 +239,7 @@ export const PriveDomainView: React.FC<PriveDomainViewProps> = ({
 
         {/* Clean Scrollable Secondary Sub-Navigation */}
         <nav
-          className="mt-6 pt-4 border-t border-[#52695A] flex items-center gap-1.5 overflow-x-auto no-scrollbar"
+          className="mt-6 pt-4 border-t border-[#39776D] flex items-center gap-1.5 overflow-x-auto no-scrollbar"
           aria-label="Prive Subsections"
         >
           {subTabs.map((tab) => {
@@ -253,7 +253,7 @@ export const PriveDomainView: React.FC<PriveDomainViewProps> = ({
                 className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-medium transition shrink-0 cursor-pointer ${
                   isActive
                     ? 'bg-[#A2A36B] text-[#172F2B] shadow-xs'
-                    : 'text-[#D2DDD2] bg-[#304B40]/80 hover:bg-[#3B5B4B] hover:text-[#F0EBDD]'
+                    : 'text-[#D7DED1] bg-[#245047]/80 hover:bg-[#39776D] hover:text-[#F0EBDD]'
                 }`}
               >
                 <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-[#172F2B]' : 'text-[#B49A7A]'}`} />
@@ -397,7 +397,7 @@ export const PriveDomainView: React.FC<PriveDomainViewProps> = ({
                     {isNl ? 'Persoonlijke Taken' : 'Personal Tasks'}
                   </h3>
                 </div>
-                <span className="text-[11px] px-2 py-0.5 rounded-full bg-[#EAE2D3] text-[#5A5145] font-medium">
+                <span className="text-[11px] px-2 py-0.5 rounded-full bg-[#A2A36B] text-[#172F2B] font-medium">
                   {todayPersonalTasks.length} {isNl ? 'open' : 'open'}
                 </span>
               </div>
@@ -443,7 +443,7 @@ export const PriveDomainView: React.FC<PriveDomainViewProps> = ({
                     {isNl ? 'Persoonlijke Agenda' : 'Personal Calendar'}
                   </h3>
                 </div>
-                <span className="text-[11px] px-2 py-0.5 rounded-full bg-[#EAE2D3] text-[#5A5145] font-medium">
+                <span className="text-[11px] px-2 py-0.5 rounded-full bg-[#A2A36B] text-[#172F2B] font-medium">
                   {personalEvents.length}
                 </span>
               </div>
