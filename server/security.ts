@@ -686,6 +686,7 @@ class SecurityVault {
       delete sanitized.currentPhase;
       delete sanitized.symptoms;
       delete sanitized.cycleDay;
+      delete sanitized.cyclePhaseConfidence;
       delete sanitized.progressLogs;
       delete sanitized.bodyMeasurements;
       delete sanitized.measurements;
@@ -761,6 +762,7 @@ class SecurityVault {
       delete sanitized.currentPhase;
       delete sanitized.symptoms;
       delete sanitized.cycleDay;
+      delete sanitized.cyclePhaseConfidence;
       delete sanitized.personalRoutines;
       delete sanitized.lifestyle;
       delete sanitized.dailyCheckIns;
@@ -801,6 +803,7 @@ class SecurityVault {
       delete sanitized.currentPhase;
       delete sanitized.symptoms;
       delete sanitized.cycleDay;
+      delete sanitized.cyclePhaseConfidence;
     }
 
     // Firewall Rule 2: Personal data isolation
