@@ -533,3 +533,5 @@ Incremental implementation commits on `design/phase-1`:
 - Harmonized navigation shell colors with The Enchanted Atelier palette and kept the five-item mobile navigation: Start, Today, Mariluna, Private and Tasks.
 - CI passed TypeScript, Supabase migration safety, privacy regression tests and production build on the phase-2 branch before the final navigation palette-only follow-up. The follow-up has a new CI run queued/in progress and must pass before this phase is considered verified.
 - This phase remains on `build/phase-2-planner`; it has not been merged to `main` or pulled into AI Studio.
+
+- Fixed task creation/edit defaults to use the user's local calendar date rather than UTC date slicing, preventing date drift around midnight and timezone boundaries. Verified by TypeScript, Supabase migration safety, privacy regression tests and production build (CI run 44521709662, success).
