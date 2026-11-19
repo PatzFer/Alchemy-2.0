@@ -30,6 +30,7 @@ GitHub remains the canonical source of truth throughout implementation. Work sta
 - Privé identity: Earthbound — espresso #39312B, copper #B49A7A, muted taupe and soft cream.
 - Preserve existing modules and stored data; evolve rather than rebuild from scratch.
 - Keep Gemini as the current AI provider and target no additional AI spend.
+- Gmail/email integration is not required and is excluded from the product roadmap.
 - Integrations requested for Version 1.0: calendar/agenda, health data and Renpho smart-scale data, subject to supported APIs and explicit user consent.
 - AI Studio transition happens only after the Version 1.0 build and verification.
 
@@ -115,6 +116,8 @@ The user wants Alchemy to synchronize with three existing apps/services:
 1. **Agenda / calendar** — connect the calendar app/account the user uses and bring events into the shared Alchemy planner. Confirm the exact provider during integration setup; Google Calendar support already exists in the repository but its current sync behavior needs review.
 2. **Health** — connect the user's health app/data source. On Android, evaluate Health Connect as the preferred interoperability layer and identify whether the actual source is Samsung Health, Google Fit/Fitbit or another app. Do not equate a connected status with successful data access.
 3. **Renpho** — import smart-scale measurements if a supported export/API/Health Connect route is available. First verify the available pathway and which measurements can be read. Do not scrape private endpoints or store Renpho credentials directly.
+
+**Explicit exclusion:** Gmail and email synchronization are not part of Alchemy's planned integrations.
 
 Integration principles:
 - Read-only import by default; writing back to external apps requires a separate explicit decision.
@@ -535,3 +538,10 @@ Incremental implementation commits on `design/phase-1`:
 - This phase remains on `build/phase-2-planner`; it has not been merged to `main` or pulled into AI Studio.
 
 - Fixed task creation/edit defaults to use the user's local calendar date rather than UTC date slicing, preventing date drift around midnight and timezone boundaries. Verified by TypeScript, Supabase migration safety, privacy regression tests and production build (CI run 44521709662, success).
+
+
+## Progress log — 19 November 2026 (integration scope refinement)
+
+- Removed the Mariluna Gmail integration card from the Integrations hub at the user's request. Email synchronization is explicitly out of scope; Calendar, Android Health Connect and Renpho remain planned integrations.
+- No Gmail data model or historical data is deleted by hiding/removing this integration UI. Existing stored state is preserved for non-destructive compatibility.
+- Next integration work remains provider verification and native Android Health Connect feasibility, followed by Renpho import-path validation and calendar sync reliability.
