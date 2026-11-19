@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - design/phase-1
+      - build/phase-2-planner
   pull_request:
     branches:
       - main
