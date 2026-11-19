@@ -126,7 +126,7 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
   integrations,
 }) => {
   const isNl = lang === 'nl';
-  const [activeSubTab, setActiveSubTab] = useState<MarilunaSubTab>('overview');
+  const [activeSubTab, setActiveSubTab] = useState<MarilunaSubTab>('brainstorm');
 
   const todayStr = new Date().toISOString().split('T')[0];
 
@@ -163,11 +163,8 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
     { id: 'overview', label: isNl ? 'Overzicht' : 'Overview', icon: LayoutDashboard },
     { id: 'content', label: isNl ? 'Content' : 'Content', icon: FileText },
     { id: 'projects', label: isNl ? 'Projecten' : 'Projects', icon: Briefcase },
-    { id: 'metrics', label: isNl ? 'Cijfers' : 'Metrics', icon: TrendingUp },
     { id: 'brainstorm', label: isNl ? 'Brainstorm & Sparring' : 'Brainstorm & Sparring', icon: Lightbulb },
-    { id: 'strategy', label: isNl ? 'Doelen & Strategie' : 'Goals & Strategy', icon: Target },
     { id: 'offerings', label: isNl ? 'Producten & Diensten' : 'Products & Services', icon: Package },
-    { id: 'clients', label: isNl ? 'Klanten' : 'Clients', icon: Users },
   ];
 
   // Content post modal state
