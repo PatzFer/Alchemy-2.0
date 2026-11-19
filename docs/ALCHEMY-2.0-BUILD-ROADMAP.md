@@ -752,3 +752,16 @@ A user can reliably open Alchemy without a startup security interstitial; captur
 - New goal and idea capture defaults follow the active workspace more safely.
 - Latest verified workflow at this checkpoint: TypeScript check, Supabase migration safety checks, privacy regression tests and production build all passed on the preceding source snapshot. Changes after that snapshot still require a fresh run.
 - Still intentionally not represented as complete: Supabase project provisioning and live durable sync, production authentication/session persistence, Android Health Connect bridge, verified Renpho import, and full device QA/release.
+
+## Progress log — 19 November 2026 (Privé and Mariluna MVP polish)
+
+- Added editable goal details and status. Goals can now be reopened from their cards, changed and saved without losing their existing milestones; goals without milestones support direct manual progress updates.
+- Hardened older goal records that may not contain a milestone array so the planner remains usable after earlier schema versions.
+- Meal history now records a cooked recipe only once for the same planned date and recipe, preventing duplicate history entries when a meal status is toggled repeatedly.
+- Pantry starter loading now skips ingredients already present (case- and accent-insensitive) and avoids adding the same staple twice. Used-up stock can be added again.
+- Added automated tests for meal-history idempotency and pantry deduplication.
+- Cycle phase confidence is now labeled honestly: a logged period date anchors an estimate but does not confirm today's phase. Only a manual user-selected phase is shown as user-confirmed.
+- Period logging validates start/end dates, rejects future dates and duplicate period start entries, and explains validation errors before saving.
+- Added automated tests for cycle phase confidence semantics.
+- Verified on commit `330da8f`: TypeScript, Supabase migration safety, privacy regression tests and production build passed in GitHub Actions. The goal progress slider follow-up is committed separately as `cd3f38b` and has its own validation run pending.
+- These improvements do not enable live Supabase sync, native Health Connect, Renpho import or production deployment. Those remain gated on real project credentials, platform bridge work and end-to-end testing.
