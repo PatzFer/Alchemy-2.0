@@ -580,11 +580,12 @@ export default function App() {
       ...prev,
       projects: [...prev.projects, newProject],
       ideas: prev.ideas.map((i) =>
-        i.id === ideaId ? { ...i, status: 'converted_to_project' as const } : i
+        i.id === ideaId ? { ...i, status: 'converted_to_project' as const, convertedToType: 'project' as const } : i
       ),
     }));
 
-    setCurrentTab('mariluna');
+    setActiveWorld(idea.realm);
+    setCurrentTab(idea.realm === 'mariluna' ? 'mariluna' : 'prive');
   };
 
   const handleSaveProject = (projectData: Partial<Project>) => {
@@ -755,22 +756,29 @@ export default function App() {
 
   const handleExecuteAssistantAction = (action: any) => {
     if (!action) return;
+    const payload = action.payload || {};
+    // The action card carries the workspace selected in Jarvis. Never let a
+    // model-suggested payload silently file a task or memory in the other realm.
+    const workspace: Realm = action.workspace === 'mariluna' || action.workspace === 'personal'
+      ? action.workspace
+      : activeWorld === 'mariluna' ? 'mariluna' : 'personal';
+
     if (action.type === 'SUGGEST_TASK' || action.type === 'ADD_TASK') {
-      const payload = action.payload || {};
       handleSaveTask({
         id: 't-' + Date.now(),
-        title: payload.title || 'Recommended Action',
+        title: payload.title || 'Aanbevolen actie',
         description: payload.description || '',
-        realm: payload.realm || 'mariluna',
-        category: payload.category || 'strategy',
-        priority: 'high',
-        dueDate: getLocalDateString(),
+        realm: workspace,
+        category: payload.category || (workspace === 'mariluna' ? 'strategy' : 'self-care'),
+        priority: payload.priority === 'low' || payload.priority === 'medium' ? payload.priority : 'high',
+        dueDate: payload.dueDate || getLocalDateString(),
         estimatedDuration: payload.duration || 30,
         recurring: 'none',
         status: 'todo',
         subtasks: [],
         createdAt: getLocalDateString(),
       });
+      setActiveWorld(workspace);
       setIsAssistantOpen(false);
       setCurrentTab('tasks');
     } else if (action.type === 'RESCHEDULE_TASK') {
@@ -779,10 +787,46 @@ export default function App() {
       }
     } else if (action.type === 'ADD_MEMORY') {
       handleAddMemory({
-        content: action.payload?.content || '',
-        category: action.payload?.category || 'Insight',
-        realm: action.payload?.realm || 'mariluna',
+        content: payload.content || '',
+        category: payload.category || 'Insight',
+        realm: workspace,
       });
+    } else if (action.type === 'CREATE_PROJECT') {
+      handleSaveProject({
+        id: 'p-' + Date.now(),
+        title: payload.title || 'Nieuw project',
+        description: payload.description || '',
+        realm: workspace,
+        status: 'planning',
+        progress: 0,
+        taskIds: [],
+        ideaIds: payload.ideaId ? [payload.ideaId] : [],
+        priority: payload.priority === 'high' || payload.priority === 'low' ? payload.priority : 'normal',
+      });
+      if (payload.ideaId) {
+        handleSaveIdea({ id: payload.ideaId, status: 'converted_to_project', convertedToType: 'project' });
+      }
+      setActiveWorld(workspace);
+      setIsAssistantOpen(false);
+      setCurrentTab(workspace === 'mariluna' ? 'mariluna' : 'prive');
+    } else if (action.type === 'CREATE_CONTENT' && workspace === 'mariluna') {
+      handleAddContentPost({
+        id: 'post-' + Date.now(),
+        title: payload.title || 'Nieuw contentidee',
+        description: payload.description || '',
+        platform: payload.platform || 'Nog te bepalen',
+        status: 'idea',
+        pillar: payload.pillar || payload.theme || 'Nog te bepalen',
+        relatedIdeaId: payload.ideaId,
+        notes: payload.notes || '',
+        createdAt: new Date().toISOString(),
+      });
+      if (payload.ideaId) {
+        handleSaveIdea({ id: payload.ideaId, status: 'converted_to_project', convertedToType: 'content' });
+      }
+      setActiveWorld('mariluna');
+      setIsAssistantOpen(false);
+      setCurrentTab('mariluna');
     }
   };
 
