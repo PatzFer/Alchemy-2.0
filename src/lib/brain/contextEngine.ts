@@ -224,11 +224,19 @@ export function buildBrainContext(
   // -------------------------------------------------------------
   // RELEVANT MEMORIES (Filtered by Scope & Privacy)
   // -------------------------------------------------------------
+  const now = Date.now();
   const relevantMemories = (state.memories || []).filter((m) => {
-    if (m.status === 'archived') return false;
+    // Pending suggestions are not user-approved memories. Archived, expired,
+    // malformed-expiry and unscoped records must never enter Jarvis context.
+    if (m.status === 'archived' || m.status === 'pending_confirmation') return false;
+    if (m.expiresAt) {
+      const expiry = Date.parse(m.expiresAt);
+      if (!Number.isFinite(expiry) || expiry <= now) return false;
+    }
+    if (m.realm !== 'personal' && m.realm !== 'mariluna') return false;
     if (isMarilunaScope) return m.realm === 'mariluna';
     if (isPersonalScope) return m.realm === 'personal';
-    return true;
+    return m.realm === 'personal' || m.realm === 'mariluna';
   });
 
   return {
