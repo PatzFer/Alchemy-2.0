@@ -3,7 +3,7 @@ import {
   Lightbulb,
   Plus,
   Sparkles,
-  Archive,
+  Archiveren,
   ArrowRight,
   Clock,
   Trash2,
@@ -19,7 +19,7 @@ interface IdeasViewProps {
   activeWorld: ActiveWorldFilter;
   onSaveIdea: (idea: Partial<Idea>) => void;
   onConvertToProject: (ideaId: string) => void;
-  onArchiveIdea: (ideaId: string) => void;
+  onArchiverenIdea: (ideaId: string) => void;
   onDeleteIdea: (ideaId: string) => void;
   onOpenAssistantWithPrompt?: (prompt: string) => void;
 }
@@ -41,7 +41,7 @@ export const IdeasView: React.FC<IdeasViewProps> = ({
   activeWorld,
   onSaveIdea,
   onConvertToProject,
-  onArchiveIdea,
+  onArchiverenIdea,
   onDeleteIdea,
   onOpenAssistantWithPrompt,
 }) => {
@@ -113,10 +113,10 @@ export const IdeasView: React.FC<IdeasViewProps> = ({
       {/* Header */}
       <div className="border-b border-[var(--border-subtle)] pb-5">
         <h1 className="font-serif text-3xl font-normal text-[var(--text-primary)]">
-          Brain Dump & Sparks
+          Braindump & ideeën
         </h1>
         <p className="text-xs text-[var(--text-secondary)] mt-1 font-light">
-          Capture without cognitive friction. When you return here, Alchemy helps you notice ideas that may deserve another look.
+          Gooi je gedachten hier neer. Jarvis helpt je verbanden zien, verder denken en ideeën op het juiste moment opnieuw oppakken.
         </p>
       </div>
 
@@ -130,14 +130,14 @@ export const IdeasView: React.FC<IdeasViewProps> = ({
             <div className="flex-1">
               <div className="flex items-center gap-2">
                 <h3 className="font-serif text-base font-medium text-[var(--text-primary)]">
-                  Untouched Spark Revisited
+                  Idee om opnieuw op te pakken
                 </h3>
                 <span className="text-[10px] uppercase font-semibold text-[var(--accent-secondary)] bg-[var(--surface-2)] px-2 py-0.5 rounded-full">
-                  Memory Loop
+                  Terugblik
                 </span>
               </div>
               <p className="text-xs text-[var(--text-secondary)] mt-1">
-                This idea has been waiting for at least three weeks. Would you like to revisit it, park it, or turn it into a project?
+                Dit idee staat hier al minstens drie weken. Wil je het opnieuw bekijken, bewaren of omzetten naar een project?
               </p>
 
               <div className="mt-3 space-y-2">
@@ -166,13 +166,13 @@ export const IdeasView: React.FC<IdeasViewProps> = ({
                         className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[var(--text-primary)] text-[var(--text-primary)] text-xs font-medium hover:bg-[#433D37] transition cursor-pointer"
                       >
                         <FolderPlus className="w-3.5 h-3.5" />
-                        <span>Form Project</span>
+                        <span>Maak project</span>
                       </button>
                       <button
-                        onClick={() => onArchiveIdea(idea.id)}
+                        onClick={() => onArchiverenIdea(idea.id)}
                         className="px-2.5 py-1.5 rounded-lg border border-[var(--border-subtle)] text-xs text-[var(--text-secondary)] hover:bg-[var(--surface-2)] transition cursor-pointer"
                       >
-                        Archive
+                        Archiveren
                       </button>
                       <button
                         onClick={() => onDeleteIdea(idea.id)}
@@ -194,7 +194,7 @@ export const IdeasView: React.FC<IdeasViewProps> = ({
         <form onSubmit={handleCaptureIdea} className="space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium text-[#5A524A] uppercase tracking-wider">
-              Instant Capture
+              Nieuwe braindump
             </span>
             <div className="flex items-center gap-2">
               <button
@@ -206,7 +206,7 @@ export const IdeasView: React.FC<IdeasViewProps> = ({
                     : 'text-[var(--text-muted)]'
                 }`}
               >
-                Personal
+                Privé
               </button>
               <button
                 type="button"
@@ -217,7 +217,7 @@ export const IdeasView: React.FC<IdeasViewProps> = ({
                     : 'text-[var(--text-muted)]'
                 }`}
               >
-                Mariluna Studio
+                Mariluna
               </button>
             </div>
           </div>
@@ -235,21 +235,21 @@ export const IdeasView: React.FC<IdeasViewProps> = ({
             required
             value={quickIdeaText}
             onChange={(e) => setQuickIdeaText(e.target.value)}
-            placeholder="Type your fleeting thought, creative inspiration, or business seed..."
+            placeholder="Schrijf hier je gedachte, inspiratie of Mariluna-idee..."
             className="w-full bg-[var(--surface-1)] border border-[var(--border-subtle)] rounded-xl p-3 text-xs sm:text-sm text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-hidden focus:border-[var(--accent-secondary)]"
           />
 
           <div className="flex items-center justify-between pt-1">
             <span className="text-[11px] text-[var(--text-muted)] flex items-center gap-1">
               <Sparkles className="w-3 h-3 text-[#C5A880]" />
-              AI will automatically categorize and recommend next inquiry steps
+              Jarvis helpt je ordenen en stelt mogelijke vervolgstappen voor.
             </span>
             <button
               type="submit"
               disabled={!quickIdeaText.trim() || isAnalyzing}
               className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[var(--text-primary)] text-[var(--text-primary)] text-xs font-medium hover:bg-[#433D37] disabled:opacity-40 transition cursor-pointer"
             >
-              <span>{isAnalyzing ? 'Synthesizing...' : 'Capture Spark'}</span>
+              <span>{isAnalyzing ? 'Even ordenen...' : 'Idee bewaren'}</span>
             </button>
           </div>
         </form>
@@ -258,7 +258,7 @@ export const IdeasView: React.FC<IdeasViewProps> = ({
       {/* Ideas Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
         {filteredIdeas.map((idea) => {
-          const isArchived = idea.status === 'archived';
+          const isArchiverend = idea.status === 'archived';
           const relatedIdeas = filteredIdeas
             .filter((other) => other.id !== idea.id && other.realm === idea.realm && other.status !== 'archived')
             .map((other) => ({ idea: other, shared: getSharedIdeaKeywords(`${idea.title} ${idea.content}`, `${other.title} ${other.content}`) }))
@@ -269,7 +269,7 @@ export const IdeasView: React.FC<IdeasViewProps> = ({
             <div
               key={idea.id}
               className={`rounded-2xl border p-5 flex flex-col justify-between transition-all ${
-                isArchived
+                isArchiverend
                   ? 'bg-[var(--surface-2)]/50 border-[var(--border-subtle)] opacity-60'
                   : 'bg-[var(--surface-2)] border-[var(--border-subtle)] hover:border-[#C4B9A7] shadow-xs'
               }`}
@@ -316,7 +316,7 @@ export const IdeasView: React.FC<IdeasViewProps> = ({
                 {idea.followUpQuestions && idea.followUpQuestions.length > 0 && (
                   <div className="mt-4 pt-3 border-t border-[#F0EBE1] space-y-1.5">
                     <span className="text-[10px] uppercase tracking-wider font-semibold text-[var(--accent-secondary)] block">
-                      Reflective Questions
+                      Vragen om verder te denken
                     </span>
                     {idea.followUpQuestions.map((q, idx) => (
                       <div
@@ -344,32 +344,32 @@ export const IdeasView: React.FC<IdeasViewProps> = ({
                     className="inline-flex items-center gap-1.5 text-xs text-[var(--accent-secondary)] hover:text-[var(--text-primary)] font-medium transition cursor-pointer"
                   >
                     <Sparkles className="w-3.5 h-3.5 text-[var(--accent-secondary)]" />
-                    <span>Bespreek met Alchemy</span>
+                    <span>Spar met Jarvis</span>
                   </button>
                 ) : (
                   <span className="text-[10px] text-[var(--text-muted)]">
-                    Logged {idea.createdAt}
+                    Bewaard {idea.createdAt}
                   </span>
                 )}
 
                 <div className="flex items-center gap-1">
                   <button
                     onClick={() => onConvertToProject(idea.id)}
-                    title="Promote to dedicated project"
+                    title="Omzetten naar project"
                     className="p-1.5 rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-2)] transition cursor-pointer"
                   >
                     <FolderPlus className="w-3.5 h-3.5" />
                   </button>
                   <button
-                    onClick={() => onArchiveIdea(idea.id)}
-                    title="Archive spark"
+                    onClick={() => onArchiverenIdea(idea.id)}
+                    title="Archiveren spark"
                     className="p-1.5 rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-2)] transition cursor-pointer"
                   >
-                    <Archive className="w-3.5 h-3.5" />
+                    <Archiveren className="w-3.5 h-3.5" />
                   </button>
                   <button
                     onClick={() => onDeleteIdea(idea.id)}
-                    title="Delete permanently"
+                    title="Definitief verwijderen"
                     className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-[#733] hover:bg-[var(--surface-2)] transition cursor-pointer"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
