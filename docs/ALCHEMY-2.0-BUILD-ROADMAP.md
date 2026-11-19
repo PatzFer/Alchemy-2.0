@@ -796,3 +796,11 @@ A user can reliably open Alchemy without a startup security interstitial; captur
 - Added regression coverage for spring and autumn daylight-saving boundary dates.
 - Validation is running on the latest commits; no phase completion is claimed until the full workflow is green.
 - Existing data, privacy boundaries and integration scope remain unchanged.
+
+
+## Progress log — 19 November 2026 (integration scope cleanup)
+
+- Removed the unused Gmail OAuth/connect/sync/disconnect implementation from the integrations screen code. Gmail remains excluded from the approved Version 1.0 scope.
+- Retained the legacy Gmail data shape in stored integration state for backward compatibility; this change does not delete any existing stored data.
+- Calendar OAuth helpers remain in place. Health Connect and Renpho are still not represented as connected until their real platform/data pathways are implemented and verified.
+- Fresh CI validation is pending for the latest commits.
