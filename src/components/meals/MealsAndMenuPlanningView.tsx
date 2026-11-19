@@ -78,7 +78,8 @@ export const MealsAndMenuPlanningView: React.FC<MealsAndMenuPlanningViewProps> =
   // Modal States
   const [isThursdayModalOpen, setIsThursdayModalOpen] = useState(false);
   const [selectedRecipeForModal, setSelectedRecipeForModal] = useState<Recipe | null>(null);
-  const [modalPortions, setModalPortions] = useState<1 | 2>(2);
+  const [modalPortions, setModalPortions] = useState<number>(2);
+  const [quickRecipeRequest, setQuickRecipeRequest] = useState('');
 
   // Meal Replacement Modal
   const [replacementDayIndex, setReplacementDayIndex] = useState<number | null>(null);
@@ -704,6 +705,48 @@ export const MealsAndMenuPlanningView: React.FC<MealsAndMenuPlanningViewProps> =
       {/* ============================================================ */}
       {activeTab === 'recipes' && (
         <div className="space-y-6">
+          {/* Quick recipe request: ingredients or craving, with Jarvis doing the thinking */}
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (!quickRecipeRequest.trim() || !onOpenAssistantWithPrompt) return;
+              const dislikes = (nutrition.dislikes || []).filter(Boolean);
+              const prompt = [
+                'Help me choose a few practical dinner recipes.',
+                `My request: ${quickRecipeRequest.trim()}`,
+                'First suggest 3 distinct dishes with a short description so I can choose.',
+                'Only after I choose, ask how many people and provide scaled ingredients, steps and a shopping list for missing items.',
+                'Respect my saved food dislikes and preferences.',
+                dislikes.length ? `Foods I dislike/avoid: ${dislikes.join(', ')}.` : '',
+                nutrition.dietaryNotes ? `Other food preferences: ${nutrition.dietaryNotes}.` : '',
+                'Use cooked vegetables or blended/finely hidden vegetables where possible; avoid suggesting smoothies.',
+              ].filter(Boolean).join(' ');
+              onOpenAssistantWithPrompt(prompt);
+            }}
+            className="rounded-2xl border border-[#DCD3C4] bg-[#F7F3EA] p-4 sm:p-5 space-y-3"
+          >
+            <div>
+              <h3 className="font-serif text-lg text-[#2C2825]">{isNl ? 'Wat ligt er in je koelkast?' : 'What do you have in your fridge?'}</h3>
+              <p className="text-xs text-[#70665A]">{isNl ? 'Of waar heb je vandaag zin in? Jarvis zoekt enkele gerechten om uit te kiezen.' : 'Or what are you craving? Jarvis will suggest a few dishes to choose from.'}</p>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <input
+                type="text"
+                value={quickRecipeRequest}
+                onChange={(e) => setQuickRecipeRequest(e.target.value)}
+                placeholder={isNl ? 'Bijv. kip, champignons en room… of pasta' : 'E.g. chicken, mushrooms and cream… or pasta'}
+                className="flex-1 min-w-0 px-4 py-3 rounded-xl bg-white border border-[#DDD4C5] text-sm text-[#2C2825] focus:outline-none focus:border-[#8C7654]"
+              />
+              <button
+                type="submit"
+                disabled={!quickRecipeRequest.trim() || !onOpenAssistantWithPrompt}
+                className="px-5 py-3 rounded-xl bg-[#2C2825] text-[#FAF8F5] text-xs font-medium disabled:opacity-40"
+              >
+                {isNl ? 'Vind gerechten' : 'Find recipes'}
+              </button>
+            </div>
+          </form>
+
           {/* Header & Search */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
