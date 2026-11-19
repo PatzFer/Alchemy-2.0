@@ -734,3 +734,12 @@ A user can reliably open Alchemy without a startup security interstitial; captur
 - The UI explicitly distinguishes local storage/export from cloud persistence and reminds the owner to keep a backup outside the device.
 - This is observability only: it does not encrypt localStorage, create scheduled backups, or enable cloud sync. Cloud migration remains gated on a real Supabase project, Auth, and a verified restore drill.
 - TypeScript, migration safety, privacy and production-build CI checks are running for this change; do not call it verified until they finish successfully.
+
+## Progress log — 19 November 2026 (MVP usability and data-status polish)
+
+- The storage status now remembers the last successful local-save timestamp across reloads, rather than showing only the current session's timestamp.
+- New goals default to the Privé realm, matching the current personal-first use case; the suggested target date is now one month from the day the goal is created instead of a stale hard-coded date.
+- Idea capture defaults to Mariluna only when the Mariluna workspace is active; otherwise it defaults to Privé to reduce accidental cross-domain filing.
+- The idea revisit card now accurately describes its three-week threshold and only claims to surface ideas when the user returns to the ideas view; no background monitoring is implied.
+- Cycle tracking now uses the device's local calendar date rather than UTC, preventing late-evening date shifts in Belgium and other time zones.
+- These are usability and correctness improvements; they do not change the deferred cloud persistence, Health Connect native bridge, or production deployment requirements.
