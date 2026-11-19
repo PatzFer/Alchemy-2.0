@@ -545,3 +545,81 @@ Incremental implementation commits on `design/phase-1`:
 - Removed the Mariluna Gmail integration card from the Integrations hub at the user's request. Email synchronization is explicitly out of scope; Calendar, Android Health Connect and Renpho remain planned integrations.
 - No Gmail data model or historical data is deleted by hiding/removing this integration UI. Existing stored state is preserved for non-destructive compatibility.
 - Next integration work remains provider verification and native Android Health Connect feasibility, followed by Renpho import-path validation and calendar sync reliability.
+
+
+## Product scope reset — 19 November 2026 (user-confirmed Alchemy 1.0 MVP)
+
+The earlier broad business-suite scope is superseded for Version 1.0 by this lean, personal-first brief. The goal is a reliable second brain that reduces mental clutter, helps the user organize ideas and life, and supports sustainable wellbeing. Prioritize working end-to-end flows over breadth. Defer non-essential modules until the core app is stable and genuinely useful.
+
+### Product promise
+Alchemy is one personal operating system with two clearly separated spaces:
+- **Mariluna:** a low-pressure idea studio and organizer, not a full business-management suite.
+- **Privé:** a practical personal-life and wellbeing companion.
+- **Jarvis:** the central thinking partner that helps structure information, find connections, suggest next steps and support follow-through, while respecting the two spaces' privacy boundaries.
+
+### Mariluna — MVP scope
+1. **Brain Dump / Idea Studio (highest priority)**
+   - Fast capture of a raw idea with optional theme/category and free-form context.
+   - Open a conversational Jarvis sparring session around that idea; preserve the original idea and the discussion/decisions.
+   - Allow the user to explicitly classify/convert an idea into Content or Project with a clear action; Jarvis may suggest a destination, but must ask before moving/creating anything automatically.
+   - Content destination is intentionally lightweight: an idea/post entry, its source idea, notes and optional next step. No elaborate publishing calendar or social analytics.
+   - Project destination supports practical initiatives such as a ritual or women's circle, with a simple description, checklist/tasks and optional date.
+   - Jarvis should surface possible links to older ideas, duplicates, themes and combinations; suggestions must be explainable and dismissible, not silently merge records.
+   - Gentle resurfacing: ask whether the user wants to revisit an older idea, with snooze/dismiss/convert options and configurable frequency. Avoid nagging.
+2. **Services catalogue (simple personal reference)**
+   - User manually creates, edits, reorders and deletes service entries.
+   - Keep it as a flexible working list for experimenting with wording, structure, inclusions and prices/notes if desired.
+   - No CRM, client pipeline, bookings or invoicing in MVP.
+3. **Mariluna values & pillars**
+   - Provide a user-editable place to define values, boundaries, principles and content/brand pillars when ready.
+   - Jarvis should use only the values/pillars the user has actually entered and confirmed when reviewing ideas, service concepts or content. Until configured, it must say the framework is not yet defined rather than inventing values.
+4. **Social media support**
+   - No large social-media management suite. Offer optional hands-on assistance when the user chooses to make content: develop a raw idea into a post, suggest a format/caption and a manageable next action. Publishing/scheduling integrations are deferred.
+5. **Remove from MVP:** business metrics/financial dashboard, client management, elaborate content calendar and advanced marketing analytics.
+
+### Privé — MVP scope
+1. **Cycle, moon & natural rhythm (high priority)**
+   - Cycle tracking and phase overview remain central.
+   - Offer optional planning/reflection prompts that combine cycle phase, lunar cycle and seasonal/nature context in a practical, non-prescriptive way that can fit modern work and life.
+   - Distinguish astronomical/calendar facts from symbolic or traditional interpretations. Never present moon phases or cycle-based assumptions as medical facts or deterministic rules.
+   - User remains in control; no pressure to organize every day around a cycle phase.
+2. **Health, measurements & movement**
+   - Prioritize importing/recording measurements and a reliable Health Connect pathway over a large health dashboard.
+   - Show source, unit, timestamp and last successful sync. Do not fabricate connection/sync state.
+   - Support realistic movement goals and gentle encouragement, focusing on mobility, strength, consistency and healthy ageing as well as weight-related goals.
+   - Movement suggestions should be adaptable to available time, energy and user-selected goals; avoid shame, streak pressure or overclaiming health outcomes.
+3. **Meals & recipes — simple chooser workflow**
+   - One simple entry point: user can enter ingredients currently available, or a craving/category (e.g. pasta).
+   - Suggest a small set of recipes to choose from, respecting the user's configurable dislikes/preferences.
+   - After selection, ask how many people will eat; then show the scaled recipe and a shopping list for missing ingredients.
+   - Let the user edit/tweak recipes and save preferred versions. A user-editable "I don't like / avoid" list lives in settings.
+   - No complex calorie/macronutrient tracker required for MVP.
+4. **Goals & progress**
+   - Keep personal goals with clear progress bars/percentages, milestones and regular check-ins/reminders.
+   - Follow-through and visible progress are more important than adding more goal frameworks.
+5. **Remove from MVP:** Personal Styling, routines/habit module and other lifestyle modules that do not support the core promise. Revisit later only after the core app is stable.
+
+### Shared core — MVP scope
+- Neutral Start screen with two entry points: Mariluna and Privé.
+- A simple Today view showing relevant tasks, appointments and gentle priorities.
+- Shared planner with clear domain separation, tasks, appointments and recurring task support.
+- Global Quick Capture for task, idea, note, appointment and reminder, with explicit domain selection.
+- One Jarvis assistant with separate domain memory/context. It helps organize, connect, summarize, suggest and remind; it does not silently reclassify, merge, publish or delete data.
+- A small, useful notification/reminder system with user-controlled frequency and snooze.
+- Integrations: calendar, Android Health Connect and Renpho only if a supported route is verified. Gmail/email is explicitly excluded.
+- Durable data storage, backup/export and recovery are core reliability requirements, not optional polish.
+
+### Security and privacy — revised user experience
+- Remove the mandatory app-opening security lock / startup authentication screen from the MVP user experience.
+- Keep sound engineering safeguards: server-side secrets, least-privilege provider scopes, secure transport, data isolation between Mariluna and Privé, safe session handling where applicable, backups and user-controlled data export/deletion.
+- No prominent security-management product area is needed in the initial navigation. Put essential account/privacy controls in Settings and keep advanced security options deferred.
+- Never interpret the user's relaxed preference about a startup lock as permission to weaken server security, expose secrets or allow cross-domain data leakage.
+
+### MVP delivery priorities
+1. Make Start, Mariluna Brain Dump, Jarvis sparring, idea-to-content/project conversion, services list and Privé cycle/health/meals/goals work reliably.
+2. Make the shared planner and Quick Capture dependable and easy to use on mobile.
+3. Connect calendar and health/scale data only through verified, supportable integrations.
+4. Implement durable persistence, backup/recovery and privacy boundaries.
+5. Test core flows end-to-end on mobile and desktop before expanding scope.
+
+**Explicitly deferred:** full CRM, business financial reporting, advanced social publishing/analytics, personal styling, routines, complex nutrition tracking, elaborate automation, and Google AI Studio portability until the lean MVP is stable.
