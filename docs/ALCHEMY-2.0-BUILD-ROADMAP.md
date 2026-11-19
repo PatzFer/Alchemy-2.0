@@ -623,3 +623,97 @@ Alchemy is one personal operating system with two clearly separated spaces:
 5. Test core flows end-to-end on mobile and desktop before expanding scope.
 
 **Explicitly deferred:** full CRM, business financial reporting, advanced social publishing/analytics, personal styling, routines, complex nutrition tracking, elaborate automation, and Google AI Studio portability until the lean MVP is stable.
+
+
+## Product scope reset — user-confirmed Alchemy 1.0 direction (19 November 2026)
+
+This section supersedes any earlier roadmap ambition that conflicts with it. The immediate goal is a small, reliable, genuinely useful personal operating system — not a comprehensive business platform. Preserve useful existing modules and data, but simplify the product surface and defer nonessential features.
+
+### Product promise
+Alchemy is Patricia's second brain: it captures mental clutter, helps her think, organizes information, connects related ideas, follows up on intentions, and supports healthier, more intentional living. Jarvis is the central assistant across both domains, with strict context boundaries.
+
+### Mariluna — deliberately lightweight
+Mariluna is currently low-activity and exploratory. Do not build a full business-management suite in v1.
+
+1. **Braindump & Sparring (primary module)**
+   - Fast, low-friction capture of raw thoughts, ideas, themes, questions and possibilities.
+   - Conversational AI sparring: clarify, explore, challenge constructively and help develop ideas.
+   - Keep the original brain-dump intact; preserve conversation and provenance.
+   - Jarvis organizes ideas with useful metadata and can surface old ideas, reminders to revisit, similarities, duplicates/near-duplicates and possible combinations.
+   - Support explicit user actions to turn an idea into a content idea, project (e.g. ritual or women's circle), task, or keep it as a brainstorm.
+   - Jarvis may recommend a destination, but moving/creating structured records should be transparent and confirmed by the user. Maintain links to the source idea.
+   - Proactive resurfacing should be gentle, relevant, snoozable and controllable; no noisy notifications.
+
+2. **Services & Offerings (private reference catalogue)**
+   - Simple editable list for Patricia's own reference, not a sales or client system.
+   - Add, edit, tweak, archive and delete entries; user controls all content and pricing.
+   - No customer management, revenue dashboards, sales pipeline or booking functionality in v1.
+
+3. **Lightweight content assistance**
+   - No elaborate editorial calendar or social-media management suite.
+   - When requested, help turn a brain-dump/idea into a post, caption or content outline, and provide practical support because the user finds social media difficult and does not particularly enjoy it.
+   - Content may be linked back to its originating idea.
+
+4. **Values and pillars**
+   - Create an extensible place to define Mariluna's values, boundaries, principles and pillars later; they are not yet written.
+   - Once provided, Jarvis should use them as a review lens when discussing or developing Mariluna ideas. Do not invent the user's values.
+
+Remove/defer for v1: business metrics, client CRM, extensive strategy dashboards, complex content planning, sales/admin modules.
+
+### Privé — practical personal life support
+1. **Cycle, nature and rhythms (important)**
+   - Cycle tracking and phase-aware planning are core, not optional extras.
+   - Help the user live more in tune with her cycle and, where useful, lunar and seasonal/natural rhythms, in a realistic way compatible with work and modern life.
+   - Distinguish evidence-based cycle information from traditional, symbolic or reflective practices. Do not present lunar phase effects on physiology as established science.
+   - User remains in control of cycle dates, interpretations, reminders and recommendations.
+
+2. **Health, measurements and movement**
+   - Prioritize importing/synchronizing measurements and health/activity data through supported integrations, especially Android Health Connect.
+   - Renpho data route must be verified; do not promise a direct API. Offer supported export/import if needed.
+   - Focus on trends and meaningful measurements, not an overbuilt medical record.
+   - Help build sustainable movement and mobility habits for long-term health, healthy ageing, strength and weight management.
+   - Motivation should be empathetic and practical, not guilt-based. Adapt suggestions to real schedule, energy and preferences.
+   - Health data stays private and is never included in Mariluna context by default.
+
+3. **Meals & recipes (simple cooking helper)**
+   - One simple input: ingredients on hand (e.g. "I have X and Y") or a craving/category (e.g. pasta).
+   - Return a small set of recipe choices.
+   - After the user chooses, ask how many people; then provide adjusted quantities, method and a shopping list for missing ingredients.
+   - Allow recipes to be edited/tweaked and saved.
+   - Add a user-editable "foods I dislike / avoid" list in settings and use it in suggestions.
+   - No calorie tracker, complex nutrition database or mandatory meal logging in v1.
+
+4. **Goals and progress**
+   - Keep goals with clear milestones and simple progress bars/percentages.
+   - Make follow-up and progress visibility motivating and easy to maintain.
+   - Avoid turning goals into a burdensome project-management system.
+
+Remove/defer for v1: personal styling, wardrobe/body-shape tools, routines module, elaborate habit systems and unrelated lifestyle modules.
+
+### Global planner and capture
+- Keep a simple shared planner for appointments and tasks, with clear Private/Mariluna ownership.
+- Quick Capture should be easy to reach and default to the active domain.
+- Prioritize low-friction capture and reliable reminders over complex planning features.
+- Shared records remain deferred until explicit privacy and ownership semantics are safely designed.
+
+### Jarvis — central second brain
+- Available from both domains and aware of the active context.
+- Assemble context server-side and enforce domain boundaries before any AI-provider call.
+- Help capture, clarify, organize, compare, connect, retrieve and resurface ideas and commitments.
+- Offer suggested actions with previews; user confirmation before creating, moving, deleting or materially changing records.
+- Do not claim proactive monitoring or memory behavior unless implemented and tested.
+- Keep user control over what is saved, surfaced, and used as context.
+
+### Security and access
+- No mandatory login/security interstitial at app launch for the current personal-use v1. Do not add a startup PIN/password screen.
+- This does not mean weakening data security: use secure server-side authorization, protected secrets, least-privilege database access, safe session handling where applicable, encrypted transport and reliable backups.
+- Keep sensitive health/cycle data isolated from Mariluna and from AI contexts unless explicitly permitted.
+- Explain any remaining local-device exposure and backup limitations honestly.
+
+### Delivery priorities
+P0: working app shell, no startup security gate, dependable data persistence/recovery, safe domain boundaries, quick capture, core planner, Braindump & Sparring, editable service catalogue, basic goals/progress, cycle tracking, simple recipe flow.
+P1: Jarvis idea linking/resurfacing, content assistance, health/Health Connect sync, movement support, lunar/seasonal reflective layer.
+Later: Mariluna values/pillars authoring and review, richer integrations, styling, CRM, metrics, elaborate content calendar and broader automation.
+
+### Definition of a useful v1
+A user can reliably open Alchemy without a startup security interstitial; capture and find thoughts; spar with Jarvis; turn selected ideas into linked projects/content/tasks; maintain an editable personal service catalogue; manage basic tasks and appointments; track cycle and goals; request recipes and shopping lists; and retain data safely across sessions/devices to the extent supported by the implemented sync. Core flows must be tested on mobile. Do not call a feature complete unless its behavior is implemented and verified.
