@@ -174,10 +174,11 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {filteredGoals.map((goal) => {
-          const completedCount = goal.milestones.filter((m) => m.completed).length;
+          const milestones = goal.milestones || [];
+          const completedCount = milestones.filter((m) => m.completed).length;
           const calculatedProgress =
-            goal.milestones.length > 0
-              ? Math.round((completedCount / goal.milestones.length) * 100)
+            milestones.length > 0
+              ? Math.round((completedCount / milestones.length) * 100)
               : goal.progress;
 
           return (
@@ -240,12 +241,12 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
                 </div>
 
                 {/* Milestones / Micro-tasks */}
-                {goal.milestones.length > 0 && (
+                {milestones.length > 0 && (
                   <div className="mt-5 space-y-2">
                     <span className="text-[11px] uppercase tracking-wider font-semibold text-[var(--text-muted)] block">
-                      Realistic Micro-Actions ({completedCount}/{goal.milestones.length})
+                      Realistische tussenstappen ({completedCount}/{milestones.length})
                     </span>
-                    {goal.milestones.map((milestone) => (
+                    {milestones.map((milestone) => (
                       <div
                         key={milestone.id}
                         className="flex items-start justify-between gap-2 p-2.5 rounded-xl bg-[var(--surface-1)] border border-[var(--border-subtle)] hover:border-[#DDD4C6] transition"
