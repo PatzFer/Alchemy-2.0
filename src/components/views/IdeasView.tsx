@@ -10,6 +10,7 @@ import {
   FolderPlus,
   HelpCircle,
   Calendar,
+  Edit3,
 } from 'lucide-react';
 import { Idea, Realm, ActiveWorldFilter } from '../../types';
 import { requestIdeaAnalysis } from '../../lib/aiService';
