@@ -470,12 +470,12 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
   return (
     <div className="space-y-7 pb-24 text-[var(--text-primary)]">
       {/* Editorial Luxury Header for Mariluna */}
-      <header className="rounded-3xl border border-[#705B78] bg-[#392B40] text-[#F0EBDD] p-6 sm:p-8 shadow-md relative overflow-hidden">
-        <div className="absolute -right-16 -top-16 w-64 h-64 rounded-full bg-[#C5A9CC]/10 blur-2xl pointer-events-none" />
+      <header className="rounded-3xl border border-[#873F5B] bg-gradient-to-br from-[#59324F] via-[#321F32] to-[#211B27] text-[#F0EBDD] p-6 sm:p-8 shadow-md relative overflow-hidden">
+        <div className="absolute -right-16 -top-16 w-64 h-64 rounded-full bg-[#C17D87]/15 blur-2xl pointer-events-none" />
 
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div>
-            <div className="flex items-center gap-2 text-[11px] uppercase tracking-widest text-[#D9C3DE] font-semibold">
+            <div className="flex items-center gap-2 text-[11px] uppercase tracking-widest text-[#D1A9B9] font-semibold">
               <span>Studio & Enterprise</span>
               <span>•</span>
               <span>{isNl ? 'Zakelijk Domein' : 'Business Domain'}</span>
@@ -510,7 +510,7 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
 
         {/* Clean Scrollable Secondary Sub-Navigation */}
         <nav
-          className="relative z-10 mt-6 pt-5 border-t border-[#51405A] flex items-center gap-2 overflow-x-auto no-scrollbar text-xs"
+          className="relative z-10 mt-6 pt-5 border-t border-[#873F5B]/50 flex items-center gap-2 overflow-x-auto no-scrollbar text-xs"
           aria-label="Mariluna Subsections"
         >
           {subTabs.map((tab) => {
