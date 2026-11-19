@@ -229,6 +229,9 @@ export function buildBrainContext(
     // Pending suggestions are not user-approved memories. Archived, expired,
     // malformed-expiry and unscoped records must never enter Jarvis context.
     if (m.status === 'archived' || m.status === 'pending_confirmation') return false;
+    // Legacy learned suggestions may predate the explicit pending status. They
+    // remain suggestions until confirmLearnedMemory converts them to "confirmed".
+    if (m.type === 'learned') return false;
     if (m.expiresAt) {
       const expiry = Date.parse(m.expiresAt);
       if (!Number.isFinite(expiry) || expiry <= now) return false;
