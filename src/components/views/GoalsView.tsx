@@ -34,9 +34,9 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
   // Form State
   const [formTitle, setFormTitle] = useState('');
   const [formDesc, setFormDesc] = useState('');
-  const [formRealm, setFormRealm] = useState<Realm>('mariluna');
+  const [formRealm, setFormRealm] = useState<Realm>('personal');
   const [formTimeframe, setFormTimeframe] = useState<Goal['timeframe']>('quarterly');
-  const [formTargetDate, setFormTargetDate] = useState('2026-11-30');
+  const [formTargetDate, setFormTargetDate] = useState(() => { const d = new Date(); d.setMonth(d.getMonth() + 1); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; });
   const [formMilestones, setFormMilestones] = useState<Milestone[]>([]);
 
   const handleAiBreakdown = async () => {
@@ -82,6 +82,8 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
     setIsModalOpen(false);
     setFormTitle('');
     setFormDesc('');
+    setFormRealm('personal');
+    setFormTargetDate(() => { const d = new Date(); d.setMonth(d.getMonth() + 1); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; });
     setFormMilestones([]);
   };
 
