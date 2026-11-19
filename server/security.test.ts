@@ -556,3 +556,37 @@ test('cycle consent alone cannot bypass the personal-data AI permission', () => 
     allowCycleDataToAI: false,
   });
 });
+
+
+test('Jarvis rejects memories with malformed expiry timestamps and expired memories', () => {
+  securityVault.updatePermissions({
+    allowPersonalDataToAI: true,
+    allowMarilunaDataToAI: true,
+    allowWellbeingDataToAI: true,
+    allowCycleDataToAI: true,
+    allowFinancialDataToAI: true,
+  });
+
+  const result = securityVault.sanitizeContextForAi({
+    memoryItems: [
+      { content: 'Permanent memory', category: 'Planning', realm: 'personal', type: 'explicit', status: 'active' },
+      { content: 'Future expiry memory', category: 'Planning', realm: 'personal', type: 'confirmed', status: 'active', expiresAt: new Date(Date.now() + 60_000).toISOString() },
+      { content: 'Expired memory', category: 'Planning', realm: 'personal', type: 'confirmed', status: 'active', expiresAt: new Date(Date.now() - 60_000).toISOString() },
+      { content: 'Malformed expiry memory', category: 'Planning', realm: 'personal', type: 'confirmed', status: 'active', expiresAt: 'not-a-date' },
+      { content: 'Numeric expiry memory', category: 'Planning', realm: 'personal', type: 'confirmed', status: 'active', expiresAt: 1_900_000_000_000 },
+    ],
+  }, 'personal');
+
+  assert.deepEqual(result.memoryItems.map((item: any) => item.content), [
+    'Permanent memory',
+    'Future expiry memory',
+  ]);
+
+  securityVault.updatePermissions({
+    allowPersonalDataToAI: false,
+    allowMarilunaDataToAI: false,
+    allowWellbeingDataToAI: false,
+    allowCycleDataToAI: false,
+    allowFinancialDataToAI: false,
+  });
+});
