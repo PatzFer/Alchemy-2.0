@@ -615,7 +615,7 @@ export const MarilunaIdeaSanctuary: React.FC<MarilunaIdeaSanctuaryProps> = ({
                     className="w-full flex items-center justify-center gap-2 py-2 rounded-xl bg-[#2C2825] text-[#FAF8F3] text-xs font-medium hover:bg-[#433D37] transition shadow-2xs cursor-pointer"
                   >
                     <Sparkles className="w-3.5 h-3.5 text-[#C5A880]" />
-                    <span>{isNl ? '✨ Bespreek met Alchemy' : '✨ Spar with Alchemy'}</span>
+                    <span>{idea.sparringMessages && idea.sparringMessages.length > 1 ? (isNl ? 'Sparring hervatten' : 'Resume sparring') : (isNl ? 'Start sparring met Jarvis' : 'Start sparring with Jarvis')}</span>
                     <ArrowRight className="w-3 h-3 text-[#C5A880]" />
                   </button>
 
