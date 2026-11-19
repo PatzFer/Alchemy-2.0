@@ -52,6 +52,12 @@ export const IdeasView: React.FC<IdeasViewProps> = ({
 }) => {
   const [quickIdeaText, setQuickIdeaText] = useState('');
   const [quickIdeaTheme, setQuickIdeaTheme] = useState('');
+  const [editingIdeaId, setEditingIdeaId] = useState<string | null>(null);
+  const [editTitle, setEditTitle] = useState('');
+  const [editContent, setEditContent] = useState('');
+  const [editTheme, setEditTheme] = useState('');
+  const [editCategory, setEditCategory] = useState('');
+  const [editTags, setEditTags] = useState('');
   const [quickRealm, setQuickRealm] = useState<Realm>(activeWorld === 'mariluna' ? 'mariluna' : 'personal');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
@@ -76,6 +82,29 @@ export const IdeasView: React.FC<IdeasViewProps> = ({
     if (activeWorld !== 'all' && i.realm !== activeWorld) return false;
     return true;
   });
+
+  const openIdeaEditor = (idea: Idea) => {
+    setEditingIdeaId(idea.id);
+    setEditTitle(idea.title);
+    setEditContent(idea.content);
+    setEditTheme(idea.contentPillar || '');
+    setEditCategory(idea.category || '');
+    setEditTags((idea.tags || []).join(', '));
+  };
+
+  const handleSaveIdeaEdits = (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!editingIdeaId || !editTitle.trim() || !editContent.trim()) return;
+    onSaveIdea({
+      id: editingIdeaId,
+      title: editTitle.trim(),
+      content: editContent.trim(),
+      contentPillar: editTheme.trim() || undefined,
+      category: editCategory.trim() || 'Overig',
+      tags: [...new Set(editTags.split(',').map((tag) => tag.trim()).filter(Boolean))],
+    });
+    setEditingIdeaId(null);
+  };
 
   const handleCaptureIdea = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -376,6 +405,15 @@ export const IdeasView: React.FC<IdeasViewProps> = ({
                 )}
 
                 <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => openIdeaEditor(idea)}
+                    title="Idee bewerken"
+                    aria-label={`Bewerk idee ${idea.title}`}
+                    className="p-1.5 rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-2)] transition cursor-pointer"
+                  >
+                    <Edit3 className="w-3.5 h-3.5" />
+                  </button>
                   {idea.realm === 'mariluna' && <button
                     onClick={() => onConvertToProject(idea.id)}
                     title="Omzetten naar project"
@@ -402,6 +440,43 @@ export const IdeasView: React.FC<IdeasViewProps> = ({
             </div>
           );
         })}
+      {editingIdeaId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <form onSubmit={handleSaveIdeaEdits} className="w-full max-w-xl max-h-[90vh] overflow-y-auto rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-1)] p-5 sm:p-6 shadow-2xl space-y-4">
+            <div>
+              <h2 className="font-serif text-xl text-[var(--text-primary)]">Idee bewerken</h2>
+              <p className="mt-1 text-xs text-[var(--text-secondary)]">Pas je oorspronkelijke gedachte aan. De gekoppelde Jarvis-sparring en geschiedenis blijven behouden.</p>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Titel</label>
+              <input required value={editTitle} onChange={(e) => setEditTitle(e.target.value)} className="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-2)] px-3 py-2.5 text-sm text-[var(--text-primary)]" />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Gedachte / beschrijving</label>
+              <textarea required rows={6} value={editContent} onChange={(e) => setEditContent(e.target.value)} className="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-2)] px-3 py-2.5 text-sm text-[var(--text-primary)]" />
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Thema / pijler</label>
+                <input value={editTheme} onChange={(e) => setEditTheme(e.target.value)} placeholder="Bijv. autonomie" className="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-2)] px-3 py-2.5 text-xs text-[var(--text-primary)]" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Categorie</label>
+                <input value={editCategory} onChange={(e) => setEditCategory(e.target.value)} placeholder="Bijv. dienst, inzicht, product" className="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-2)] px-3 py-2.5 text-xs text-[var(--text-primary)]" />
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Tags (gescheiden door komma's)</label>
+              <input value={editTags} onChange={(e) => setEditTags(e.target.value)} placeholder="idee, onderzoek, later" className="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-2)] px-3 py-2.5 text-xs text-[var(--text-primary)]" />
+            </div>
+            <div className="flex justify-end gap-2 pt-2 border-t border-[var(--border-subtle)]">
+              <button type="button" onClick={() => setEditingIdeaId(null)} className="px-4 py-2 rounded-xl text-xs text-[var(--text-secondary)] hover:bg-[var(--surface-2)]">Annuleren</button>
+              <button type="submit" disabled={!editTitle.trim() || !editContent.trim()} className="px-4 py-2 rounded-xl bg-[var(--text-primary)] text-[var(--surface-1)] text-xs font-medium disabled:opacity-40">Wijzigingen bewaren</button>
+            </div>
+          </form>
+        </div>
+      )}
+
       </div>
     </div>
   );
