@@ -1354,7 +1354,7 @@ export default function App() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/65 backdrop-blur-sm p-4">
           <div className="w-full max-w-md rounded-2xl border border-[var(--border-strong)] bg-[var(--surface-1)] p-5 shadow-2xl">
             <div className="mb-4">
-              <p className="text-[10px] uppercase tracking-[0.2em] text-[var(--accent-secondary)]">Alchemy · Quick Capture</p>
+              <p className={`text-[10px] uppercase tracking-[0.2em] ${quickRealm === 'mariluna' ? 'text-[#D1A9B9]' : 'text-[#A2A36B]'}`}>Alchemy · Quick Capture</p>
               <h3 className="mt-1 font-serif text-2xl text-[var(--text-primary)]">Leg het even vast</h3>
               <p className="mt-1 text-xs text-[var(--text-secondary)]">Eerst bewaren, later verfijnen.</p>
             </div>
@@ -1452,14 +1452,14 @@ export default function App() {
               )}
               <div className="flex items-center gap-2">
                 <button type="button" onClick={() => setQuickRealm('personal')}
-                  className={`flex-1 rounded-lg border py-2 text-xs ${quickRealm === 'personal' ? 'border-[#B49A7A] bg-[#39312B] text-[#F0EBDD]' : 'border-[var(--border-subtle)] text-[var(--text-secondary)]'}`}>Privé</button>
+                  className={`flex-1 rounded-lg border py-2 text-xs transition ${quickRealm === 'personal' ? 'border-[#39776D] bg-[#172F2B] text-[#E8DCC7]' : 'border-[var(--border-subtle)] text-[var(--text-secondary)]'}`}>Privé</button>
                 <button type="button" onClick={() => setQuickRealm('mariluna')}
-                  className={`flex-1 rounded-lg border py-2 text-xs ${quickRealm === 'mariluna' ? 'border-[#A9B88A] bg-[#263D35] text-[#F0EBDD]' : 'border-[var(--border-subtle)] text-[var(--text-secondary)]'}`}>Mariluna</button>
+                  className={`flex-1 rounded-lg border py-2 text-xs transition ${quickRealm === 'mariluna' ? 'border-[#873F5B] bg-[#321F32] text-[#E8DCC7]' : 'border-[var(--border-subtle)] text-[var(--text-secondary)]'}`}>Mariluna</button>
               </div>
               <div className="flex justify-end gap-2 pt-1">
                 <button type="button" onClick={() => setIsQuickTaskModalOpen(false)}
                   className="rounded-lg px-3 py-2 text-xs text-[var(--text-secondary)] hover:bg-[var(--surface-2)]">Annuleren</button>
-                <button type="submit" className="rounded-lg bg-[var(--accent-primary)] px-4 py-2 text-xs font-semibold text-[#171916] hover:brightness-110">Bewaren</button>
+                <button type="submit" className={`rounded-lg px-4 py-2 text-xs font-semibold text-[#E8DCC7] hover:brightness-110 ${quickRealm === 'mariluna' ? 'bg-[#873F5B]' : 'bg-[#245047]'}`}>Bewaren</button>
               </div>
             </form>
           </div>
