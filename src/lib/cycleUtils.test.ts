@@ -32,5 +32,6 @@ test('cycle tracking requires a real, non-future period start date', () => {
   assert.equal(hasValidCycleAnchor(profile(), '2026-11-19'), true);
   assert.equal(hasValidCycleAnchor({ ...profile(), lastPeriodStartDate: '' }, '2026-11-19'), false);
   assert.equal(hasValidCycleAnchor({ ...profile(), lastPeriodStartDate: 'not-a-date' }, '2026-11-19'), false);
+  assert.equal(hasValidCycleAnchor({ ...profile(), lastPeriodStartDate: '2026-02-31' }, '2026-11-19'), false);
   assert.equal(hasValidCycleAnchor({ ...profile(), lastPeriodStartDate: '2026-11-20' }, '2026-11-19'), false);
 });
