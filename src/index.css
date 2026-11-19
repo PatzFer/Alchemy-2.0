@@ -23,10 +23,10 @@
     --status-danger: #D58B82;
     --status-info: #91AFC0;
 
-    --domain-mariluna: #263D35;
-    --domain-mariluna-moss: #A9B88A;
-    --domain-private: #39312B;
-    --domain-private-copper: #B49A7A;
+    --domain-mariluna: #392B40;
+    --domain-mariluna-moss: #C5A9CC;
+    --domain-private: #263D35;
+    --domain-private-copper: #A9B88A;
   }
 
   html, body, #root {
@@ -58,8 +58,8 @@
 .alchemy-home {
   color: var(--text-primary);
   background:
-    radial-gradient(ellipse at 14% 8%, rgba(169, 184, 138, 0.09), transparent 36rem),
-    radial-gradient(ellipse at 90% 80%, rgba(180, 154, 122, 0.08), transparent 32rem),
+    radial-gradient(ellipse at 14% 8%, rgba(197, 169, 204, 0.09), transparent 36rem),
+    radial-gradient(ellipse at 90% 80%, rgba(169, 184, 138, 0.08), transparent 32rem),
     var(--app-bg);
 }
 
@@ -135,13 +135,13 @@
 }
 .alchemy-domain-card--mariluna {
   background:
-    radial-gradient(ellipse at 88% 10%, rgba(169, 184, 138, 0.2), transparent 16rem),
-    linear-gradient(145deg, #304b40, #1e3029 82%);
+    radial-gradient(ellipse at 88% 10%, rgba(197, 169, 204, 0.22), transparent 16rem),
+    linear-gradient(145deg, #51405A, #302638 82%);
 }
 .alchemy-domain-card--private {
   background:
-    radial-gradient(ellipse at 88% 10%, rgba(180, 154, 122, 0.22), transparent 16rem),
-    linear-gradient(145deg, #514439, #302923 82%);
+    radial-gradient(ellipse at 88% 10%, rgba(169, 184, 138, 0.22), transparent 16rem),
+    linear-gradient(145deg, #304B40, #1E3029 82%);
 }
 .alchemy-domain-symbol {
   color: #D6C69B;
