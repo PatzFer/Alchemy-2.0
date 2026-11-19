@@ -102,9 +102,8 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
     const now = new Date();
     const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
     const rawContextItem = customContextItem || activeContextItem;
-    const safeContextItem = rawContextItem && (!rawContextItem.realm || rawContextItem.realm === scope)
-      ? rawContextItem
-      : undefined;
+    const contextRealm = rawContextItem?.realm || rawContextItem?.world || rawContextItem?.details?.realm;
+    const safeContextItem = rawContextItem && contextRealm === scope ? rawContextItem : undefined;
 
     return {
       currentDate: todayStr,
