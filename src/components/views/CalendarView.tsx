@@ -13,6 +13,8 @@ import {
 import { CalendarEvent, ActiveWorldFilter, Realm, LifeProfile, IntegrationsState, Task } from '../../types';
 import { findDuplicateCalendarEvent, validateCalendarEventInput } from '../../lib/calendarValidation';
 import { shiftCalendarDate } from '../../lib/calendarDate';
+import { getCalendarTasksForDate } from '../../lib/calendarTasks';
+import { calculateBusyMinutes } from '../../lib/scheduleCapacity';
 
 interface CalendarViewProps {
   events: CalendarEvent[];
@@ -130,23 +132,14 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   };
 
   // Tasks appear in the calendar on their due date, using the same workspace filter.
-  const filterTasksForDate = (dateStr: string) => tasks
-    .filter((task) => task.dueDate === dateStr && (activeWorld === 'all' || task.realm === activeWorld))
-    .sort((a, b) => Number(a.status === 'completed') - Number(b.status === 'completed') ||
-      ({ high: 0, medium: 1, low: 2 }[a.priority] - { high: 0, medium: 1, low: 2 }[b.priority]) ||
-      a.title.localeCompare(b.title, 'nl'));
+  const filterTasksForDate = (dateStr: string) => getCalendarTasksForDate(tasks, dateStr, activeWorld);
 
   // Day View events and due tasks
   const dayEvents = filterByRealm(events.filter((e) => e.date === currentDateStr));
   const dayTasks = filterTasksForDate(currentDateStr);
 
   // Calculate total committed hours for day
-  const totalEventMinutes = dayEvents.reduce((acc, evt) => {
-    if (!evt.startTime || !evt.endTime) return acc;
-    const [sH, sM] = evt.startTime.split(':').map(Number);
-    const [eH, eM] = evt.endTime.split(':').map(Number);
-    return acc + Math.max(0, (eH * 60 + (eM || 0)) - (sH * 60 + (sM || 0)));
-  }, 0);
+  const totalEventMinutes = calculateBusyMinutes(dayEvents);
 
   // Format Header Label depending on view mode
   const getHeaderLabel = () => {
@@ -606,7 +599,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
               </button>
             </div>
 
-            {dayEvents.length === 0 ? (
+            {dayEvents.length === 0 && dayTasks.length === 0 ? (
               <p className="text-xs text-[var(--text-muted)] py-2">
                 Geen afspraken gepland op deze datum.
               </p>
@@ -629,6 +622,18 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                       <span>{evt.startTime} — {evt.endTime}</span>
                     </div>
                   </div>
+                ))}
+              </div>
+            )}
+            {dayTasks.length > 0 && (
+              <div className="space-y-2 border-t border-[var(--border-subtle)] pt-3">
+                <h4 className="text-[11px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">Taken met deadline</h4>
+                {dayTasks.map((task) => (
+                  <button key={task.id} type="button" onClick={() => onToggleTask(task.id)} className="flex w-full items-center gap-3 rounded-xl bg-[var(--surface-2)] px-3 py-2 text-left text-xs">
+                    <span className={task.status === 'completed' ? 'text-[var(--accent-secondary)]' : 'text-[var(--text-muted)]'}>{task.status === 'completed' ? '✓' : '○'}</span>
+                    <span className={task.status === 'completed' ? 'flex-1 line-through text-[var(--text-muted)]' : 'flex-1 text-[var(--text-primary)]'}>{task.title}</span>
+                    <span className="text-[10px] text-[var(--text-muted)]">{task.status === 'completed' ? 'Afgerond' : 'Open'}</span>
+                  </button>
                 ))}
               </div>
             )}
