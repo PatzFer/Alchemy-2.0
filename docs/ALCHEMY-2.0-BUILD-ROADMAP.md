@@ -1143,3 +1143,6 @@ A user can reliably open Alchemy without a startup security interstitial; captur
 
 - Added goal search across names, descriptions, notes and milestone titles; it combines with workspace and timeframe filters and preserves source order.
 - Extracted goal filtering into a pure helper with regression tests.
+
+- Bounded both manually entered and Jarvis-generated task subtasks to the same title and count limits; opening an edit form clears stale validation feedback.
+- Goal editor now clears stale validation feedback and milestone-entry text when switching records or closing after save.
