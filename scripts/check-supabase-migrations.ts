@@ -86,4 +86,17 @@ if (!new RegExp("grant\\s+execute\\s+on\\s+function\\s+public\\.save_app_state_s
   throw new Error('Snapshot RPC must be executable by service_role.');
 }
 
+
+if (!/p_expected_revision\s+bigint/i.test(sql) ||
+    !/snapshot_revision_conflict/i.test(sql) ||
+    !/p_expected_revision\s+is\s+not\s+null[\s\S]*?p_expected_revision\s*<>\s*current_revision/i.test(sql)) {
+  throw new Error('Snapshot RPC must enforce optimistic compare-and-swap revision checks.');
+}
+if (!/revoke\s+all\s+on\s+function\s+public\.save_app_state_snapshot\s*\(uuid,\s*integer,\s*jsonb,\s*text,\s*text,\s*bigint\)\s+from\s+public\s*,\s*anon\s*,\s*authenticated/i.test(sql)) {
+  throw new Error('Revision-aware snapshot RPC must be inaccessible to browser roles.');
+}
+if (!/grant\s+execute\s+on\s+function\s+public\.save_app_state_snapshot\s*\(uuid,\s*integer,\s*jsonb,\s*text,\s*text,\s*bigint\)\s+to\s+service_role/i.test(sql)) {
+  throw new Error('Revision-aware snapshot RPC must be restricted to service_role.');
+}
+
 process.stdout.write(`Supabase migration checks passed: ${files.length} migration(s), unique versions, required tables, RLS and server-only grants.\\n`);
