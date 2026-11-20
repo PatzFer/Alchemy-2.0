@@ -52,10 +52,21 @@ function normalizeHeader(value: string): string {
   return value.toLowerCase().replace(/[\s_%-]/g, '').replace(/[()\[\]]/g, '');
 }
 
+function toIsoDate(year: number, month: number, day: number): string | null {
+  const candidate = new Date(year, month - 1, day);
+  if (
+    candidate.getFullYear() !== year ||
+    candidate.getMonth() !== month - 1 ||
+    candidate.getDate() !== day
+  ) return null;
+  return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+}
+
 function parseDate(value: string): string | null {
   const trimmed = value.trim();
   const iso = trimmed.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
-  if (iso) return `${iso[1]}-${iso[2].padStart(2, '0')}-${iso[3].padStart(2, '0')}`;
+  if (iso) return toIsoDate(Number(iso[1]), Number(iso[2]), Number(iso[3]));
+
   const regional = trimmed.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})/);
   if (regional) {
     const first = Number(regional[1]);
@@ -63,13 +74,12 @@ function parseDate(value: string): string | null {
     const dayFirst = first > 12 || second <= 12;
     const day = dayFirst ? first : second;
     const month = dayFirst ? second : first;
-    if (day >= 1 && day <= 31 && month >= 1 && month <= 12) {
-      return `${regional[3]}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    }
+    return toIsoDate(Number(regional[3]), month, day);
   }
+
   const parsed = new Date(trimmed);
   if (!Number.isFinite(parsed.getTime())) return null;
-  return `${parsed.getFullYear()}-${String(parsed.getMonth() + 1).padStart(2, '0')}-${String(parsed.getDate()).padStart(2, '0')}`;
+  return toIsoDate(parsed.getFullYear(), parsed.getMonth() + 1, parsed.getDate());
 }
 
 function parseNumber(value: string | undefined): number | undefined {
