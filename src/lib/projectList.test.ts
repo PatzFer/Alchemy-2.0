@@ -17,8 +17,9 @@ const validInput = {
 };
 
 test('project search covers title, description and notes and preserves order', () => {
-  const projects = [project({ id: 'a' }), project({ id: 'b', title: 'Nieuwe productlijn' })];
+  const projects = [project({ id: 'a' }), project({ id: 'b', title: 'Nieuwe productlijn', description: 'Andere scope', notes: 'Nieuwe verpakking' })];
   assert.deepEqual(filterProjectList(projects, { status: 'all', query: 'WEBSITE' }).map((p) => p.id), ['a']);
+  assert.deepEqual(filterProjectList(projects, { status: 'all', query: 'nieuwe website lanceren' }).map((p) => p.id), ['a']);
   assert.deepEqual(filterProjectList(projects, { status: 'all', query: 'webshop' }).map((p) => p.id), ['a']);
   assert.deepEqual(filterProjectList(projects, { status: 'all', query: '  PRODUCTLIJN ' }).map((p) => p.id), ['b']);
 });
