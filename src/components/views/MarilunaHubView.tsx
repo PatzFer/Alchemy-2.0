@@ -57,6 +57,7 @@ import {
 import { MarilunaClientsManager } from '../mariluna/MarilunaClientsManager';
 import { getLocalCalendarDateString } from '../../lib/calendarDate';
 import { validateOfferingInput } from '../../lib/offeringValidation';
+import { filterMarilunaOfferings } from '../../lib/offeringFilters';
 
 export type MarilunaSubTab =
   | 'overview'
@@ -1090,14 +1091,10 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
             </div>
           ) : (
             (() => {
-              const filteredOfferings = offerings.filter((off) => {
-                const matchesSearch =
-                  !offeringSearchQuery.trim() ||
-                  off.title.toLowerCase().includes(offeringSearchQuery.toLowerCase()) ||
-                  (off.description && off.description.toLowerCase().includes(offeringSearchQuery.toLowerCase()));
-                const matchesType = offeringTypeFilter === 'all' || off.type === offeringTypeFilter;
-                const matchesStatus = offeringStatusFilter === 'all' || (off.status || 'draft') === offeringStatusFilter;
-                return matchesSearch && matchesType && matchesStatus;
+              const filteredOfferings = filterMarilunaOfferings(offerings, {
+                query: offeringSearchQuery,
+                type: offeringTypeFilter as 'all' | MarilunaOffering['type'],
+                status: offeringStatusFilter,
               });
 
               if (filteredOfferings.length === 0) {
