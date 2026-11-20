@@ -1,4 +1,5 @@
 import { AppState } from '../storage';
+import { calculateBusyMinutes } from '../scheduleCapacity';
 import {
   ContextPrivacyScope,
   AssembledBrainContext,
@@ -91,16 +92,8 @@ export function buildBrainContext(
     return true;
   });
 
-  // Calculate busy minutes
-  let busyMinutes = 0;
-  relevantEvents.forEach((ev) => {
-    if (ev.startTime && ev.endTime) {
-      const [sh, sm] = ev.startTime.split(':').map(Number);
-      const [eh, em] = ev.endTime.split(':').map(Number);
-      const dur = (eh * 60 + em) - (sh * 60 + sm);
-      if (dur > 0) busyMinutes += dur;
-    }
-  });
+  // Calculate the union of occupied intervals so overlapping appointments count once.
+  const busyMinutes = calculateBusyMinutes(relevantEvents);
   const freeMinutes = Math.max(0, 480 - busyMinutes); // 8-hour nominal container
 
   // Today's Check-In
