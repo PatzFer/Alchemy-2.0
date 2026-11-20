@@ -53,7 +53,7 @@ import {
   ProactiveSuggestion,
   FoundationData,
 } from './types';
-import { evaluateSmartNotifications } from './lib/notificationEngine';
+import { evaluateSmartNotifications, isCurrentlyQuietHours } from './lib/notificationEngine';
 import { applyFoundationToAppState } from './lib/foundationDefaults';
 import { Sparkles } from 'lucide-react';
 import { MorningCheckInModal } from './components/MorningCheckInModal';
@@ -201,7 +201,7 @@ export default function App() {
         if (newOnes.length === 0) return prev;
 
         // Trigger native system push notification if allowed & enabled
-        if (prev.integrations?.pushNotifications?.enabled) {
+        if (prev.integrations?.pushNotifications?.enabled && !isCurrentlyQuietHours(prev.notificationSettings)) {
           for (const item of newOnes) {
             IntegrationsService.sendBrowserPush(item.title, {
               body: item.body,
@@ -215,7 +215,7 @@ export default function App() {
         };
       });
     }
-  }, [state.tasks, state.ideas, state.goals, state.dailyCheckIns, state.notificationSettings?.enabled]);
+  }, [state.tasks, state.calendarEvents, state.ideas, state.goals, state.dailyCheckIns, state.notificationSettings, state.integrations?.pushNotifications?.enabled]);
 
   const unreadNotificationCount = (state.notifications || []).filter(
     (n) => !n.read && !n.isRead
