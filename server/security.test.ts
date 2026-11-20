@@ -657,6 +657,8 @@ test('passkey storage validates credentials and returns defensive copies', () =>
   assert.equal(securityVault.getPasskey(credential.id)?.nickname, 'Test device');
   assert.deepEqual(securityVault.getPasskey(credential.id)?.transports, ['internal']);
   assert.throws(() => securityVault.savePasskey({ ...credential, counter: -1 }), /invalid/i);
+  assert.throws(() => securityVault.savePasskey({ ...credential, publicKey: 'not base64!' }), /invalid/i);
+  assert.throws(() => securityVault.savePasskey({ ...credential, transports: ['unknown'] }), /invalid/i);
   assert.equal(securityVault.deletePasskey(credential.id), true);
   assert.equal(securityVault.getPasskey(credential.id), undefined);
 });
