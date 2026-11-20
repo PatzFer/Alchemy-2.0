@@ -95,6 +95,19 @@ export function isCurrentlyQuietHours(settings?: NotificationSettings): boolean 
   return isWithinQuietHours(currentMinutes, start, end);
 }
 
+/** Central gate for native push: both the app setting and quiet-hours policy must allow it. */
+export function shouldDispatchBrowserPush(
+  settings: NotificationSettings | undefined,
+  integrationEnabled: boolean,
+  now: Date = new Date(),
+): boolean {
+  if (!settings?.enabled || !integrationEnabled) return false;
+  const currentMinutes = now.getHours() * 60 + now.getMinutes();
+  const start = settings.quietHoursStart || DEFAULT_NOTIFICATION_SETTINGS.quietHoursStart;
+  const end = settings.quietHoursEnd || DEFAULT_NOTIFICATION_SETTINGS.quietHoursEnd;
+  return !isWithinQuietHours(currentMinutes, start, end);
+}
+
 /**
  * Synthesizes a sparse, high-value notification digest rather than blasting individual pings.
  */
