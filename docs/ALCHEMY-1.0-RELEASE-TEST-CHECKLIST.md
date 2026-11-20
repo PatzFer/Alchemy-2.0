@@ -183,3 +183,12 @@ Do not mark a test as passed based only on source inspection or a successful com
 - [x] Capacity, task-fit, planning and sorting regression tests run in CI.
 - [ ] Manually verify capacity advice against a realistic workday and personal schedule.
 - [ ] Verify suggestions remain appropriate when many tasks are overdue or have no due date.
+
+
+## 15. Task list clarity
+
+- [x] Task list sorts active work by due date and priority.
+- [x] Completed tasks are separated below active tasks.
+- [x] Overdue tasks are visibly marked.
+- [x] Task deadlines use a readable local date format.
+- [ ] Verify overdue labels with real dates on Android and desktop.
