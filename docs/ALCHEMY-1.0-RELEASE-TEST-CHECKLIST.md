@@ -169,3 +169,16 @@ Do not mark a test as passed based only on source inspection or a successful com
 - [x] Calendar task filtering and ordering have automated regression tests.
 - [ ] Manually verify day/week/month task interactions on Android and desktop.
 - [ ] Verify recurring tasks and completed occurrences display as expected across calendar dates.
+
+
+## 14. Jarvis capacity and task planning
+
+- [x] Overlapping calendar events count once in Jarvis capacity.
+- [x] Task-fit advice respects remaining free minutes and the capacity limit.
+- [x] Oversized tasks receive split-task recommendations.
+- [x] Daily planning uses local date-only parsing.
+- [x] Task list prioritizes earlier due dates, then task priority.
+- [x] Completed tasks are grouped after active work.
+- [x] Capacity, task-fit, planning and sorting regression tests run in CI.
+- [ ] Manually verify capacity advice against a realistic workday and personal schedule.
+- [ ] Verify suggestions remain appropriate when many tasks are overdue or have no due date.
