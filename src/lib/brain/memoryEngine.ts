@@ -135,12 +135,16 @@ export function updateMemoryContent(
   newContent: string,
   newCategory?: string
 ): MemoryItem[] {
+  const normalizedContent = newContent.trim();
+  // Empty edits must not erase a useful memory or create a blank AI context item.
+  if (!normalizedContent) return memories;
+
   const now = new Date().toISOString();
   return memories.map((m) => {
-    if (m.id === memoryId) {
+    if (m.id === memoryId && m.status !== 'archived') {
       return {
         ...m,
-        content: newContent.trim(),
+        content: normalizedContent,
         category: newCategory || m.category,
         updatedAt: now,
       };
