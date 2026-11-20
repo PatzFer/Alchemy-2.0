@@ -79,3 +79,18 @@ test('memory dismissal only removes pending learned suggestions', async () => {
     ['explicit', 'confirmed'],
   );
 });
+
+test('memory edits cannot blank a memory or mutate an archived record', async () => {
+  const { updateMemoryContent } = await import('./memoryEngine');
+  const memories = [
+    makeMemory({ id: 'active', content: 'Useful preference', realm: 'personal' }),
+    makeMemory({ id: 'archived', content: 'Archived preference', realm: 'personal', status: 'archived' }),
+  ];
+  const blankEdit = updateMemoryContent(memories, 'active', '   ');
+  assert.equal(blankEdit[0].content, 'Useful preference');
+  const archivedEdit = updateMemoryContent(memories, 'archived', 'Changed text');
+  assert.equal(archivedEdit[1].content, 'Archived preference');
+  assert.equal(archivedEdit[1].status, 'archived');
+  const validEdit = updateMemoryContent(memories, 'active', ' Updated preference ');
+  assert.equal(validEdit[0].content, 'Updated preference');
+});
