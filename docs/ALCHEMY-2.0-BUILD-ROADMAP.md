@@ -1160,3 +1160,4 @@ A user can reliably open Alchemy without a startup security interstitial; captur
 - Goal cards now surface their linked tasks and projects, including completion state and due dates for connected tasks.
 - Tasks created directly inside a project inherit that project's linked goal, keeping the project → goal → task relationship intact.
 - Goal progress now derives from completed linked tasks when a goal has no manual milestones; milestone completion remains the primary progress source when milestones exist.
+- Extracted goal progress precedence into a pure tested helper: milestones first, linked task completion second, manual progress as the fallback.
