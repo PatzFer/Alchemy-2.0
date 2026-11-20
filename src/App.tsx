@@ -59,6 +59,7 @@ import { Sparkles } from 'lucide-react';
 import { MorningCheckInModal } from './components/MorningCheckInModal';
 import { purgeExpiredDailyCheckIns } from './lib/healthUtils';
 import { createAlchemyBackup, downloadAlchemyBackupFile, verifyAlchemyBackup } from './lib/backup';
+import { isValidCalendarDate } from './lib/calendarDate';
 
 const getLocalDateString = (date = new Date()): string => {
   const year = date.getFullYear();
@@ -786,8 +787,11 @@ export default function App() {
       setIsAssistantOpen(false);
       setCurrentTab('tasks');
     } else if (action.type === 'RESCHEDULE_TASK') {
-      if (action.payload?.taskId) {
-        handleRescheduleTask(action.payload.taskId, action.payload.newDate);
+      const taskId = typeof payload.taskId === 'string' ? payload.taskId : '';
+      const newDate = typeof payload.newDate === 'string' ? payload.newDate : '';
+      const taskExistsInWorkspace = state.tasks.some((task) => task.id === taskId && task.realm === workspace);
+      if (taskExistsInWorkspace && isValidCalendarDate(newDate)) {
+        handleRescheduleTask(taskId, newDate);
       }
     } else if (action.type === 'ADD_MEMORY') {
       handleAddMemory({
