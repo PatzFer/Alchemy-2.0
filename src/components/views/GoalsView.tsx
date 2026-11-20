@@ -69,6 +69,7 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
     setFormTimeframe(goal.timeframe);
     setFormTargetDate(goal.targetDate || '');
     setFormMilestones(goal.milestones || []);
+    setMilestoneInput('');
     setFormStatus(goal.status || 'active');
     setFormError(null);
     setIsModalOpen(true);
@@ -168,6 +169,8 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
     setFormRealm(activeWorld === 'mariluna' ? 'mariluna' : 'personal');
     setFormTargetDate(() => { const d = new Date(); d.setMonth(d.getMonth() + 1); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; });
     setFormMilestones([]);
+    setMilestoneInput('');
+    setFormError(null);
   };
 
   const filteredGoals = filterGoalList(goals, {
