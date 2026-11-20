@@ -15,6 +15,7 @@ import {
 import { Goal, Milestone, Realm, ActiveWorldFilter, GoalStatus } from '../../types';
 import { requestGoalBreakdown } from '../../lib/aiService';
 import { validateGoalInput } from '../../lib/goalValidation';
+import { filterGoalList } from '../../lib/goalListFilters';
 
 interface GoalsViewProps {
   goals: Goal[];
@@ -30,6 +31,7 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
   onToggleMilestone,
 }) => {
   const [selectedHorizon, setSelectedHorizon] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isAiBreakingDown, setIsAiBreakingDown] = useState(false);
   const [editingGoalId, setEditingGoalId] = useState<string | null>(null);
@@ -168,10 +170,10 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
     setFormMilestones([]);
   };
 
-  const filteredGoals = goals.filter((g) => {
-    if (activeWorld !== 'all' && g.realm !== activeWorld) return false;
-    if (selectedHorizon !== 'all' && g.timeframe !== selectedHorizon) return false;
-    return true;
+  const filteredGoals = filterGoalList(goals, {
+    activeWorld,
+    horizon: selectedHorizon,
+    query: searchQuery,
   });
 
   return (
@@ -212,6 +214,17 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
             {horizon}
           </button>
         ))}
+      </div>
+
+      <div>
+        <input
+          type="search"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Zoek doelen, omschrijvingen en tussenstappen..."
+          aria-label="Zoek in doelen"
+          className="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-1)] px-4 py-3 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--accent-secondary)]"
+        />
       </div>
 
       {/* Goal Cards */}
