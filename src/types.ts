@@ -451,7 +451,7 @@ export interface ContentPlan {
 }
 
 export interface AssistantAction {
-  type: 'SUGGEST_TASK' | 'RESCHEDULE_TASK' | 'ADD_MEMORY' | 'BREAKDOWN_GOAL' | 'CREATE_PROJECT' | 'CREATE_CONTENT';
+  type: 'SUGGEST_TASK' | 'RESCHEDULE_TASK' | 'ADD_MEMORY' | 'CREATE_PROJECT' | 'CREATE_CONTENT';
   label: string;
   payload: any;
 }
