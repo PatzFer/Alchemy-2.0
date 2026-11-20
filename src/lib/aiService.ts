@@ -4,7 +4,6 @@ const ALLOWED_ACTION_TYPES = new Set<AssistantAction['type']>([
   'SUGGEST_TASK',
   'RESCHEDULE_TASK',
   'ADD_MEMORY',
-  'BREAKDOWN_GOAL',
   'CREATE_PROJECT',
   'CREATE_CONTENT',
 ]);
