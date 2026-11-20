@@ -53,6 +53,8 @@ export const TasksView: React.FC<TasksViewProps> = ({
   const [formTitle, setFormTitle] = useState('');
   const [formDesc, setFormDesc] = useState('');
   const [formRealm, setFormRealm] = useState<Realm>('personal');
+  const [formProjectId, setFormProjectId] = useState('');
+  const [formGoalId, setFormGoalId] = useState('');
   const [formCategory, setFormCategory] = useState('self-care');
   const [formPriority, setFormPriority] = useState<'high' | 'medium' | 'low'>('medium');
   const [formDuration, setFormDuration] = useState<number>(30);
@@ -69,6 +71,8 @@ export const TasksView: React.FC<TasksViewProps> = ({
     setFormTitle('');
     setFormDesc('');
     setFormRealm(activeWorld === 'mariluna' ? 'mariluna' : 'personal');
+    setFormProjectId('');
+    setFormGoalId('');
     setFormCategory(activeWorld === 'mariluna' ? 'content' : 'self-care');
     setFormPriority('medium');
     setFormDuration(30);
@@ -85,6 +89,8 @@ export const TasksView: React.FC<TasksViewProps> = ({
     setFormTitle(task.title);
     setFormDesc(task.description || '');
     setFormRealm(task.realm);
+    setFormProjectId(task.projectId || '');
+    setFormGoalId(task.goalId || '');
     setFormCategory(task.category);
     setFormPriority(task.priority);
     setFormDuration(task.estimatedDuration);
@@ -126,6 +132,8 @@ export const TasksView: React.FC<TasksViewProps> = ({
       description: formDesc,
       realm: formRealm,
       category: formCategory,
+      projectId: formProjectId || undefined,
+      goalId: formGoalId || undefined,
       priority: formPriority,
       estimatedDuration: Math.max(5, Math.min(1440, Math.round(Number(formDuration) || 30))),
       dueDate: formDueDate,
@@ -528,6 +536,35 @@ export const TasksView: React.FC<TasksViewProps> = ({
                     <option value="daily">Daily</option>
                     <option value="weekly">Weekly</option>
                     <option value="monthly">Monthly</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Project koppelen</label>
+                  <select
+                    value={formProjectId}
+                    onChange={(e) => setFormProjectId(e.target.value)}
+                    className="w-full bg-[var(--surface-raised)] border border-[var(--border-subtle)] rounded-xl px-3 py-2 text-xs text-[var(--text-primary)]"
+                  >
+                    <option value="">Geen project</option>
+                    {projects.filter((project) => project.realm === formRealm && project.status !== 'archived').map((project) => (
+                      <option key={project.id} value={project.id}>{project.title}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Doel koppelen</label>
+                  <select
+                    value={formGoalId}
+                    onChange={(e) => setFormGoalId(e.target.value)}
+                    className="w-full bg-[var(--surface-raised)] border border-[var(--border-subtle)] rounded-xl px-3 py-2 text-xs text-[var(--text-primary)]"
+                  >
+                    <option value="">Geen doel</option>
+                    {goals.filter((goal) => goal.realm === formRealm && goal.status !== 'archived' && goal.status !== 'completed' && goal.status !== 'achieved').map((goal) => (
+                      <option key={goal.id} value={goal.id}>{goal.title}</option>
+                    ))}
                   </select>
                 </div>
               </div>
