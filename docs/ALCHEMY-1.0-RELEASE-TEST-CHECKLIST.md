@@ -1,6 +1,6 @@
 # Alchemy 1.0 Release Test Checklist
 
-Branch under test: `build/phase-2-planner`
+Branch under test: `main` (sole active development and test branch)
 
 This checklist separates a usable test candidate from a production release. A checkbox may only be marked after the test has actually been executed and its result recorded.
 
