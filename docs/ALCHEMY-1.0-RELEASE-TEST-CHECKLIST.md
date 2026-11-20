@@ -6,11 +6,11 @@ This checklist separates a usable test candidate from a production release. A ch
 
 ## 1. Automated quality gates
 
-- [x] Locked dependency installation passed in GitHub Actions run 44787152240 on commit `258444ca`.
-- [x] TypeScript check (`bun run lint`) passed on commit `258444ca`.
-- [x] Supabase migration safety checks passed on commit `258444ca`.
-- [x] Privacy and persistence regression tests (`bun run test`) passed on commit `258444ca`.
-- [x] Production client and server build (`bun run build`) passed on commit `258444ca`.
+- [x] Locked dependency installation passed in GitHub Actions run 44788487737 on commit `8076b40c`.
+- [x] TypeScript check (`bun run lint`) passed on commit `8076b40c`.
+- [x] Supabase migration safety checks passed on commit `8076b40c`.
+- [x] Privacy, Jarvis and Renpho import regression tests (`bun run test`) passed on commit `8076b40c`.
+- [x] Production client and server build (`bun run build`) passed on commit `8076b40c`.
 - [ ] No unreviewed dependency or lockfile drift.
 - [ ] Live Supabase staging migration, read/write and restore tests completed.
 
@@ -33,7 +33,7 @@ This checklist separates a usable test candidate from a production release. A ch
 
 ## 4. Authentication and privacy
 
-- [ ] First-time security setup can be completed from a clean account.
+- [ ] First-time security setup can be completed from a clean account.\n- [x] First-Time Foundation wizard is reachable from Settings; manual flow still needs browser acceptance.
 - [ ] TOTP setup, verification and recovery are tested.
 - [ ] Recovery codes are one-time, hashed at rest and rate limited.
 - [ ] Passkey registration and login work on supported HTTPS origins and devices.
@@ -48,12 +48,12 @@ This checklist separates a usable test candidate from a production release. A ch
 - [ ] Google Calendar OAuth grants only required read permissions.
 - [ ] Calendar import handles pagination, all-day events, time zones and duplicates.
 - [ ] Disconnect clears local tokens and revokes provider grants where supported.
-- [ ] Gmail access is separately scoped and independently disconnectable.
+- [x] Gmail/email integration is excluded from Version 1.0 scope.
 - [ ] Health Connect is clearly unavailable until a native Android bridge is delivered.
-- [ ] Renpho sync is not advertised as available until its actual supported data path is verified.
+- [ ] Renpho CSV import is available in Wellbeing → Progress; manually verify a real export and duplicate-date merge.
 - [ ] Integration errors are visible and do not create fake successful sync timestamps.
 
-## 6. Jarvis
+- [x] Jarvis action blocks accept only supported action types and malformed/unsupported JSON is not shown to the user.\n\n## 6. Jarvis
 
 - [ ] Jarvis works with the configured Gemini key and reports unavailable state clearly when missing.
 - [ ] Local fallback is clearly distinguished from live AI responses.
@@ -87,3 +87,12 @@ Do not mark a test as passed based only on source inspection or a successful com
 - [ ] Verify a snapshot can be loaded, checksum-validated and restored without changing the existing local copy.
 - [ ] Verify owner A cannot read or write owner B's snapshots.
 - [ ] Verify service-role credentials and APP_ENCRYPTION_KEY are absent from browser bundles and logs.
+
+
+## 8. 1.0 testability additions
+
+- [x] Server-gated preview authentication is wired to the client; the server rejects it in production.
+- [x] Jarvis response validation and failure messaging are covered by automated tests.
+- [x] Renpho CSV parser and non-destructive merge are covered by automated tests.
+- [ ] Verify the First-Time Setup wizard manually on Android and desktop.
+- [ ] Import a real Renpho CSV export and compare the imported values against the Renpho app.
