@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createAlchemyBackup, verifyAlchemyBackup, restoreAlchemyBackup } from './backup';
+import { createAlchemyBackup, verifyAlchemyBackup, restoreAlchemyBackup, downloadAlchemyBackupFile } from './backup';
 import { INITIAL_STATE } from './storage';
 
 const minimalState = structuredClone(INITIAL_STATE);
@@ -96,4 +96,78 @@ test('backup file size guard accepts normal files and rejects oversized or inval
   assert.equal(isBackupFileSizeAllowed(-1), false);
   assert.equal(isBackupFileSizeAllowed(Number.NaN), false);
   assert.equal(isBackupFileSizeAllowed(Number.POSITIVE_INFINITY), false);
+});
+
+
+test('backup download keeps its object URL alive until the browser has time to initialize it', () => {
+  const originalWindow = Object.getOwnPropertyDescriptor(globalThis, 'window');
+  const originalDocument = Object.getOwnPropertyDescriptor(globalThis, 'document');
+  const originalCreate = Object.getOwnPropertyDescriptor(URL, 'createObjectURL');
+  const originalRevoke = Object.getOwnPropertyDescriptor(URL, 'revokeObjectURL');
+  let scheduledCallback: (() => void) | undefined;
+  let scheduledDelay = 0;
+  let revokedUrl = '';
+  let clicked = false;
+  let removed = false;
+
+  const anchor = {
+    href: '',
+    download: '',
+    click() { clicked = true; },
+    remove() { removed = true; },
+  };
+
+  try {
+    Object.defineProperty(globalThis, 'window', {
+      configurable: true,
+      value: { setTimeout(callback: () => void, delay: number) {
+        scheduledCallback = callback;
+        scheduledDelay = delay;
+        return 1;
+      } },
+    });
+    Object.defineProperty(globalThis, 'document', {
+      configurable: true,
+      value: { createElement: () => anchor },
+    });
+    Object.defineProperty(URL, 'createObjectURL', {
+      configurable: true,
+      value: () => 'blob:alchemy-backup',
+    });
+    Object.defineProperty(URL, 'revokeObjectURL', {
+      configurable: true,
+      value: (url: string) => { revokedUrl = url; },
+    });
+
+    downloadAlchemyBackupFile({
+      format: 'p-m-alchemy-backup',
+      backupVersion: 1,
+      appSchemaVersion: 1,
+      exportedAt: '2026-11-20T12:00:00.000Z',
+      checksumAlgorithm: 'SHA-256',
+      checksum: 'a'.repeat(64),
+      payload: minimalState,
+    });
+
+    assert.equal(clicked, true);
+    assert.equal(removed, true);
+    assert.equal(anchor.href, 'blob:alchemy-backup');
+    assert.equal(anchor.download, 'alchemy-backup-2026-11-20.json');
+    assert.equal(scheduledDelay, 1000);
+    assert.equal(revokedUrl, '');
+    assert.ok(scheduledCallback);
+
+    scheduledCallback?.();
+    assert.equal(revokedUrl, 'blob:alchemy-backup');
+  } finally {
+    for (const [target, key, descriptor] of [
+      [globalThis, 'window', originalWindow],
+      [globalThis, 'document', originalDocument],
+      [URL, 'createObjectURL', originalCreate],
+      [URL, 'revokeObjectURL', originalRevoke],
+    ] as const) {
+      if (descriptor) Object.defineProperty(target, key, descriptor);
+      else delete (target as any)[key];
+    }
+  }
 });
