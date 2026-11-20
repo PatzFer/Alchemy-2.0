@@ -25,6 +25,18 @@ test('daily planning capacity counts overlapping events once', () => {
   );
   assert.equal(result.scheduledEventsMinutes, 120);
   assert.equal(result.workdayHours, 8);
+  assert.equal(result.availableFreeMinutes, 330, 'appointments inside working hours must not reduce free time twice');
+});
+
+test('appointments outside working hours reduce remaining free time', () => {
+  const result = calculateDayCapacity(
+    [],
+    [event('evening', '18:00', '19:00')],
+    profile,
+    '2026-11-20',
+  );
+  assert.equal(result.scheduledEventsMinutes, 60);
+  assert.equal(result.availableFreeMinutes, 270);
 });
 
 test('daily planning ignores malformed and reversed event times', () => {
