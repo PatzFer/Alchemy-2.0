@@ -16,7 +16,7 @@ test('calendar tasks match the selected date and active workspace', () => {
     task({ id: 'tomorrow', dueDate: '2026-11-21' }),
   ];
   assert.deepEqual(getCalendarTasksForDate(items, '2026-11-20', 'personal').map((x) => x.id), ['personal']);
-  assert.deepEqual(getCalendarTasksForDate(items, '2026-11-20', 'all').map((x) => x.id), ['mariluna', 'personal']);
+  assert.deepEqual(getCalendarTasksForDate(items, '2026-11-20', 'all').map((x) => x.id), ['personal', 'mariluna']);
 });
 
 test('calendar task ordering puts open high-priority work first and completed work last', () => {
