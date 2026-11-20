@@ -920,3 +920,5 @@ A user can reliably open Alchemy without a startup security interstitial; captur
 - These changes preserve existing stored records; CI validation is pending for the latest combined commit.
 
 - Follow-up: Jarvis subtask generation no longer inserts generic placeholder tasks when the AI endpoint fails or returns empty content; the editor now shows an actionable error instead.
+
+- Recurring task scheduling now uses a validated local-date helper. Invalid legacy due dates no longer generate malformed future tasks; daily, weekly, month-end, leap-year and year-boundary behavior is covered by automated tests.
