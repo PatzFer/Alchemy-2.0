@@ -918,3 +918,5 @@ A user can reliably open Alchemy without a startup security interstitial; captur
 - Mariluna due-task filtering uses the browser's local calendar date instead of UTC date serialization, avoiding day-boundary drift.
 - Mariluna offering prices now reject negative and non-finite values, with inline validation and cent precision.
 - These changes preserve existing stored records; CI validation is pending for the latest combined commit.
+
+- Follow-up: Jarvis subtask generation no longer inserts generic placeholder tasks when the AI endpoint fails or returns empty content; the editor now shows an actionable error instead.
