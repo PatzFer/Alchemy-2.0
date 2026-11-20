@@ -10,7 +10,7 @@
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
     "lint": "tsc --noEmit",
-    "test": "tsx --test server/secretEncryption.test.ts server/security.test.ts server/webauthnOrigin.test.ts server/supabasePersistence.test.ts server/persistenceRoutes.test.ts src/lib/persistenceClient.test.ts src/lib/persistenceMigration.test.ts src/lib/backup.test.ts src/lib/storage.test.ts src/lib/mealPlanningSafety.test.ts src/lib/cycleUtils.test.ts src/lib/notificationEngine.test.ts src/lib/calendarValidation.test.ts src/lib/brain/contextEngine.test.ts src/lib/taskRecurrence.test.ts src/lib/calendarDate.test.ts",
+    "test": "tsx --test server/secretEncryption.test.ts server/security.test.ts server/webauthnOrigin.test.ts server/supabasePersistence.test.ts server/persistenceRoutes.test.ts src/lib/persistenceClient.test.ts src/lib/persistenceMigration.test.ts src/lib/aiService.test.ts src/lib/backup.test.ts src/lib/storage.test.ts src/lib/mealPlanningSafety.test.ts src/lib/cycleUtils.test.ts src/lib/notificationEngine.test.ts src/lib/calendarValidation.test.ts src/lib/brain/contextEngine.test.ts src/lib/taskRecurrence.test.ts src/lib/calendarDate.test.ts",
     "check:supabase": "tsx scripts/check-supabase-migrations.ts"
   },
   "dependencies": {
