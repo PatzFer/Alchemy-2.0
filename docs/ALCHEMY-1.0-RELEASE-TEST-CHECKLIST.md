@@ -6,11 +6,11 @@ This checklist separates a usable test candidate from a production release. A ch
 
 ## 1. Automated quality gates
 
-- [x] Locked dependency installation passed in GitHub Actions run 44789834222 on commit `cb2056db`.
-- [x] TypeScript check (`bun run lint`) passed on commit `cb2056db`.
-- [x] Supabase migration safety checks passed on commit `cb2056db`.
-- [x] Privacy, Jarvis and Renpho import regression tests (`bun run test`) passed on commit `cb2056db`.
-- [x] Production client and server build (`bun run build`) passed on commit `cb2056db`.
+- [x] Locked dependency installation passed in GitHub Actions run 44790369982 on commit `2757f1c5`.
+- [x] TypeScript check (`bun run lint`) passed on commit `2757f1c5`.
+- [x] Supabase migration safety checks passed on commit `2757f1c5`.
+- [x] Privacy, Jarvis and Renpho import regression tests (`bun run test`) passed on commit `2757f1c5`.
+- [x] Production client and server build (`bun run build`) passed on commit `2757f1c5`.
 - [ ] No unreviewed dependency or lockfile drift.
 - [ ] Live Supabase staging migration, read/write and restore tests completed.
 
@@ -93,6 +93,6 @@ Do not mark a test as passed based only on source inspection or a successful com
 
 - [x] Server-gated preview authentication is wired to the client; the server rejects it in production.\n- [x] Active preview sessions display a synthetic-data warning.
 - [x] Jarvis response validation and failure messaging are covered by automated tests.
-- [x] Renpho CSV parser and non-destructive merge are covered by automated tests.
+- [x] Renpho CSV parser, regional date handling, composition bounds and non-destructive merge are covered by automated tests.
 - [ ] Verify the First-Time Setup wizard manually on Android and desktop.
 - [ ] Import a real Renpho CSV export and compare the imported values against the Renpho app.
