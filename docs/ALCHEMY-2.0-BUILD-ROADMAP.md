@@ -1187,3 +1187,12 @@ A user can reliably open Alchemy without a startup security interstitial; captur
 - The Today dashboard now shows estimated task workload and appointment time separately; appointment time uses overlap-safe interval totals.
 - Task cards now show localized deadline dates and visibly flag overdue items; malformed legacy dates are not incorrectly marked overdue.
 - Daily free-time estimates now merge work-hour blocks and calendar appointments into one occupied-time timeline, avoiding double-counting meetings that take place during work hours.
+
+
+## Progress log — 20 November 2026 (integration sync truthfulness hardening)
+
+- Removed the integration sync route's ability to return a successful timestamp when no provider fetch or import actually happened.
+- Added a fail-closed decision helper: unknown services return 400, disconnected services return 409, and connected-but-unimplemented provider syncs return 501 with an explicit no-data-fetched message.
+- Added automated regression tests for calendar, Health Connect, Gmail and Instagram placeholder sync paths, and included the tests in the standard test command.
+- This is a correctness/security improvement, not completion of provider integrations. Google OAuth still uses a browser-side short-lived token flow, server-side token exchange and durable token storage are not implemented, and Health Connect still needs a native Android bridge.
+- CI for this new commit is pending; no test result is claimed until GitHub Actions reports it.
