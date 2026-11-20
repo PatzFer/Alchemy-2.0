@@ -76,3 +76,22 @@ test('migration planner never silently picks a winner when both sides contain da
   assert.equal(plan.remoteRecordCount, 1);
   assert.match(plan.explanation, /niets automatisch overschreven/);
 });
+
+test('migration planner protects local-only Jarvis chat history', () => {
+  const chatOnly = { ...INITIAL_STATE, chatHistory: [{ id: 'chat-1', role: 'user', content: 'Keep this thought', timestamp: '2026-11-20T10:00:00.000Z' }] };
+  const plan = planPersistenceMigration(chatOnly, null);
+  assert.equal(plan.action, 'upload_local_after_confirmation');
+  assert.equal(plan.requiresExplicitChoice, true);
+  assert.equal(plan.localRecordCount, 1);
+});
+
+test('migration planner counts Mariluna content planning and Jarvis suggestions', () => {
+  const contentOnly = {
+    ...INITIAL_STATE,
+    contentPlan: { ...INITIAL_STATE.contentPlan, quarterTheme: 'Modern alchemy', posts: [{ id: 'post-1' }] },
+    brain: { ...INITIAL_STATE.brain, activeSuggestions: [{ id: 'suggestion-1' }] },
+  };
+  const plan = planPersistenceMigration(contentOnly, null);
+  assert.equal(plan.action, 'upload_local_after_confirmation');
+  assert.equal(plan.localRecordCount, 3);
+});
