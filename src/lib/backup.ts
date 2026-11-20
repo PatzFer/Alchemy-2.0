@@ -141,5 +141,8 @@ export function downloadAlchemyBackupFile(envelope: AlchemyBackupEnvelope): void
   anchor.href = url;
   anchor.download = `alchemy-backup-${new Date(envelope.exportedAt).toISOString().slice(0, 10)}.json`;
   anchor.click();
-  URL.revokeObjectURL(url);
+  anchor.remove();
+  // Mobile browsers may start consuming the object URL after click() returns.
+  // Keep it alive briefly so the download can initialize before releasing it.
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
