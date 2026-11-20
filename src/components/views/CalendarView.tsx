@@ -500,9 +500,15 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                   {day.dayTasks.length > 0 && (
                     <div className="pt-1 space-y-1">
                       {day.dayTasks.slice(0, 3).map((task) => (
-                        <div key={task.id} className={`rounded-md px-2 py-1 text-[10px] truncate ${task.status === 'completed' ? 'bg-[var(--surface-2)] text-[var(--text-muted)] line-through' : 'bg-[var(--surface-raised)] text-[var(--text-primary)]'}`}>
+                        <button
+                          key={task.id}
+                          type="button"
+                          onClick={(event) => { event.stopPropagation(); onToggleTask(task.id); }}
+                          aria-label={task.status === 'completed' ? `Heropen taak: ${task.title}` : `Voltooi taak: ${task.title}`}
+                          className={`block w-full rounded-md px-2 py-1 text-left text-[10px] truncate transition hover:ring-1 hover:ring-[var(--accent-secondary)] ${task.status === 'completed' ? 'bg-[var(--surface-2)] text-[var(--text-muted)] line-through' : 'bg-[var(--surface-raised)] text-[var(--text-primary)]'}`}
+                        >
                           {task.status === 'completed' ? '✓' : '○'} {task.title}
-                        </div>
+                        </button>
                       ))}
                       {day.dayTasks.length > 3 && <p className="px-1 text-[10px] text-[var(--text-muted)]">+{day.dayTasks.length - 3} taken</p>}
                     </div>
