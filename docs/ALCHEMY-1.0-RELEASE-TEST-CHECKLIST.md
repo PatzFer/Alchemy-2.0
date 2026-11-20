@@ -154,3 +154,17 @@ Do not mark a test as passed based only on source inspection or a successful com
 - [x] Automated project search, status and validation tests are included in CI.
 - [ ] Manually verify project creation, task links and goal links on Android and desktop.
 - [ ] Verify links remain correct after changing workspace, archiving or deleting a linked record.
+
+
+## 13. Calendar and task integration
+
+- [x] Calendar day view displays tasks due on the selected date.
+- [x] Calendar week view previews due tasks on each day.
+- [x] Calendar month cells count appointments and due tasks together.
+- [x] Selected-date details in month view display due tasks.
+- [x] Calendar task completion/reopening uses the shared task handler.
+- [x] Calendar task visibility respects the active workspace.
+- [x] Overlapping calendar appointments are counted once in occupied-time totals.
+- [x] Calendar task filtering and ordering have automated regression tests.
+- [ ] Manually verify day/week/month task interactions on Android and desktop.
+- [ ] Verify recurring tasks and completed occurrences display as expected across calendar dates.
