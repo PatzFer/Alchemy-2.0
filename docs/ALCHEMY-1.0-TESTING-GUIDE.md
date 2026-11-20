@@ -23,7 +23,7 @@ The preview-unlock endpoint is rejected when `NODE_ENV=production`, even if the 
 
 ## Core workflows to test
 
-- Complete or reopen the personal Foundation setup from Settings.
+- On a fresh local profile, complete the Foundation wizard on first launch; reopen it later from Settings.
 - Switch between the Privé and Mariluna workspaces.
 - Create, edit, complete, reschedule and delete tasks.
 - Create ideas, goals and projects; test the Mariluna offering editor.
