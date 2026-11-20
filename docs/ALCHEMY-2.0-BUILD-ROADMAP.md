@@ -955,3 +955,10 @@ A user can reliably open Alchemy without a startup security interstitial; captur
 - This closes a data-loss risk where a workspace containing only these records could previously be misclassified as empty and bypass the explicit migration choice.
 - Added regression tests for chat-only and content-planning/Jarvis-only local data.
 - The planner remains read-only: no upload, restore, merge or overwrite is performed automatically.
+
+
+## Progress log — 20 November 2026 (migration inventory hardening)
+
+- Extended migration inventory counts to include content-plan platform metadata and Jarvis accepted/dismissed suggestion IDs, in addition to chat history, content posts/pillars/themes, active suggestions, recent task splits and the latest brief.
+- Fixed strict TypeScript types in the new migration regression fixtures so the CI type-check can validate the tests.
+- The migration planner remains read-only and still requires explicit user choice whenever local or remote data exists.
