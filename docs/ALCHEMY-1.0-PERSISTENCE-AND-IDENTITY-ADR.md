@@ -104,3 +104,10 @@ Do not commit real values. Do not use the service-role key in the browser. Rotat
 ## Feature-branch security hardening checkpoint — 20 November 2026
 
 The current in-memory security vault has received additional input validation and defensive-copy protections for passkeys, strict six-digit TOTP input validation, format-bounded one-time recovery-code verification with constant-time digest comparison, and bounded WebAuthn challenge input validation. Regression tests cover these boundaries. This does **not** change the ADR's deployment decision: credentials, sessions, rate-limit state and TOTP encryption remain unpersisted/unconfigured in the live app. The feature branch must not be treated as production-ready until durable owner-scoped storage, external encryption key management, staging restore, RLS and restart/revocation tests are implemented and verified.
+
+
+## Feature-branch encryption primitive — 20 November 2026
+
+A server-only AES-256-GCM envelope encryption helper now exists on the feature branch. It uses a fresh 96-bit nonce per encryption, an authentication tag, and additional authenticated data binding the ciphertext to the owner UUID and secret purpose. The helper requires a 32-byte base64 APP_ENCRYPTION_KEY and an explicit key version; it rejects missing or mismatched key versions and malformed envelopes. Unit tests are included in the standard CI test command.
+
+This helper is not yet integrated into TOTP or provider-token storage. No live encryption key is provisioned, no key rotation/recovery procedure is verified, and the in-memory security vault remains unchanged. It must not be interpreted as completion of durable encrypted credential storage.
