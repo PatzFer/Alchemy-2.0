@@ -1196,3 +1196,14 @@ A user can reliably open Alchemy without a startup security interstitial; captur
 - Added automated regression tests for calendar, Health Connect, Gmail and Instagram placeholder sync paths, and included the tests in the standard test command.
 - This is a correctness/security improvement, not completion of provider integrations. Google OAuth still uses a browser-side short-lived token flow, server-side token exchange and durable token storage are not implemented, and Health Connect still needs a native Android bridge.
 - CI for this new commit is pending; no test result is claimed until GitHub Actions reports it.
+
+
+## Progress log — 20 November 2026 (optional OpenAI Jarvis provider)
+
+- Added a server-only OpenAI Responses API adapter with bounded request validation, explicit API-key and model configuration, safe response extraction, and generic failure handling that does not leak provider response bodies.
+- Added an explicit OpenAI provider option to the server-side AI permission allowlist and Security & Privacy provider selector. Workspace/data consent remains independently enforced; selecting OpenAI alone does not authorize personal or Mariluna context.
+- Wired the central Jarvis chat endpoint to use OpenAI only when selected and when the relevant workspace consent is enabled. Missing configuration or provider failure returns the deterministic local response with a clear local-mode label.
+- OpenAI credentials are read only from server environment variables OPENAI_API_KEY and OPENAI_MODEL; neither is exposed to the browser. No API key has been provisioned and no paid provider call has been made by this change.
+- Added adapter and permission allowlist regression tests to the standard CI test command.
+- Scope limitation: this provider adapter currently covers the central Jarvis chat endpoint only. Day planning, goal breakdown, idea analysis and other specialized AI endpoints remain on their existing local/Gemini paths until separately migrated and tested. Provider selection and security permissions remain in-memory and reset on server restart; durable owner-scoped settings and live credentials are still release blockers.
+- CI result for this change is pending; no automated pass is claimed until GitHub Actions completes.
