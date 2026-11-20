@@ -62,6 +62,7 @@ interface SettingsViewProps {
   integrations?: IntegrationsState;
   onUpdateIntegrations?: (updater: (prev: IntegrationsState) => IntegrationsState) => void;
   onSyncCalendarEvents?: (events: CalendarEvent[]) => void;
+  onOpenSetupWizard?: () => void;
 }
 
 export const SettingsView: React.FC<SettingsViewProps> = ({
@@ -86,8 +87,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   integrations,
   onUpdateIntegrations,
   onSyncCalendarEvents,
+  onOpenSetupWizard,
 }) => {
   const [activeTab, setActiveTab] = useState<'foundation' | 'memory' | 'notifications' | 'integrations' | 'security' | 'data'>(initialTab);
+
+  useEffect(() => {
+    setActiveTab(initialTab);
+  }, [initialTab]);
   const [newMemoryContent, setNewMemoryContent] = useState('');
   const [newMemoryCategory, setNewMemoryCategory] = useState('Lifestyle & Energy');
   const [newMemoryRealm, setNewMemoryRealm] = useState<Realm>('personal');
@@ -149,6 +155,17 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         <p className="text-xs text-[var(--text-secondary)] mt-1 font-light">
           Inspect and govern what your JARVIS knows, calibrate thoughtful quiet hours, and configure data privacy.
         </p>
+
+        {onOpenSetupWizard && (
+          <button
+            type="button"
+            onClick={onOpenSetupWizard}
+            className="mt-4 inline-flex items-center gap-2 rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-2)] px-4 py-2.5 text-xs font-medium text-[var(--text-primary)] transition hover:border-[var(--accent-secondary)]"
+          >
+            <Sparkles className="h-4 w-4" />
+            {isNl ? 'Start persoonlijke Alchemy-inrichting' : 'Open personal Alchemy setup'}
+          </button>
+        )}
 
         {/* Tab switch */}
         <div className="mt-5 flex items-center gap-2 text-xs flex-wrap">
