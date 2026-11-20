@@ -55,6 +55,7 @@ import {
   ConvertToTaskModal,
 } from '../mariluna/IdeaConversionModals';
 import { MarilunaClientsManager } from '../mariluna/MarilunaClientsManager';
+import { getLocalCalendarDateString } from '../../lib/calendarDate';
 
 export type MarilunaSubTab =
   | 'overview'
@@ -258,7 +259,7 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
     onSaveIdea({
       ...target,
       sparringMessages,
-      lastRevisitedAt: new Date().toISOString().split('T')[0],
+      lastRevisitedAt: getLocalCalendarDateString(),
     });
   };
 
@@ -269,7 +270,7 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
       onSaveIdea({
         ...target,
         sparringNotes,
-        lastRevisitedAt: new Date().toISOString().split('T')[0],
+        lastRevisitedAt: getLocalCalendarDateString(),
       });
     }
   };
@@ -281,7 +282,7 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
       onSaveIdea({
         ...target,
         status: 'parked',
-        lastRevisitedAt: new Date().toISOString().split('T')[0],
+        lastRevisitedAt: getLocalCalendarDateString(),
       });
     }
   };
@@ -301,7 +302,7 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
           status: 'converted',
           convertedToType: 'content',
           relatedContentIds: [...prevRelated, post.id],
-          lastRevisitedAt: new Date().toISOString().split('T')[0],
+          lastRevisitedAt: getLocalCalendarDateString(),
         });
       }
     }
@@ -325,7 +326,7 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
           status: 'converted',
           convertedToType: 'project',
           connectedProjectId: proj.id,
-          lastRevisitedAt: new Date().toISOString().split('T')[0],
+          lastRevisitedAt: getLocalCalendarDateString(),
         });
       }
     }
@@ -349,7 +350,7 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
           status: 'converted',
           convertedToType: 'task',
           assignedTaskId: task.id,
-          lastRevisitedAt: new Date().toISOString().split('T')[0],
+          lastRevisitedAt: getLocalCalendarDateString(),
         });
       }
     }
