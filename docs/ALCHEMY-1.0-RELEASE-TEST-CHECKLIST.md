@@ -163,6 +163,7 @@ Do not mark a test as passed based only on source inspection or a successful com
 - [x] Calendar month cells count appointments and due tasks together.
 - [x] Selected-date details in month view display due tasks.
 - [x] Calendar task completion/reopening uses the shared task handler.
+- [x] Tasks can be completed/reopened directly from week previews.
 - [x] Calendar task visibility respects the active workspace.
 - [x] Overlapping calendar appointments are counted once in occupied-time totals.
 - [x] Calendar task filtering and ordering have automated regression tests.
