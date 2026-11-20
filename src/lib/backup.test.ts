@@ -87,3 +87,13 @@ test('backup verification requires the full Alchemy state contract', async () =>
     await assert.rejects(() => verifyAlchemyBackup(malformed), /onvolledig|ongeldig/);
   }
 });
+
+test('backup file size guard accepts normal files and rejects oversized or invalid sizes', async () => {
+  const { isBackupFileSizeAllowed, MAX_ALCHEMY_BACKUP_BYTES } = await import('./backup');
+  assert.equal(isBackupFileSizeAllowed(0), true);
+  assert.equal(isBackupFileSizeAllowed(MAX_ALCHEMY_BACKUP_BYTES), true);
+  assert.equal(isBackupFileSizeAllowed(MAX_ALCHEMY_BACKUP_BYTES + 1), false);
+  assert.equal(isBackupFileSizeAllowed(-1), false);
+  assert.equal(isBackupFileSizeAllowed(Number.NaN), false);
+  assert.equal(isBackupFileSizeAllowed(Number.POSITIVE_INFINITY), false);
+});
