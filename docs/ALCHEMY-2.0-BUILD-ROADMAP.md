@@ -931,3 +931,11 @@ A user can reliably open Alchemy without a startup security interstitial; captur
 - Added regression tests for both guarded operations.
 - The change preserves existing records and metadata; validation is pending on the combined branch checkpoint.
 - The Memory Manager now asks for explicit confirmation before permanently deleting a memory; archive remains the reversible first choice.
+
+## Progress log — 20 November 2026 (calendar month navigation)
+
+- Month navigation now clamps dates to the last valid day in the target month rather than overflowing into the following month (for example, January 31 to February 28/29).
+- Day/week/year boundary navigation remains based on local calendar dates.
+- Invalid date inputs and non-integer shifts are rejected without manufacturing a new date.
+- Added regression tests for month ends, leap years, reverse navigation and year boundaries.
+- Full CI validation is pending for the latest combined branch state.
