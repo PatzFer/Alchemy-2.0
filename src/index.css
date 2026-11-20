@@ -6,27 +6,27 @@
     --font-serif: 'Cormorant Garamond', Georgia, serif;
     --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 
-    --app-bg: #191D20;
-    --surface-1: #24262A;
-    --surface-2: #302B33;
-    --surface-raised: #3B343D;
-    --text-primary: #E8DCC7;
-    --text-secondary: #BDB3AA;
-    --text-muted: #928A85;
-    --border-subtle: rgba(224, 220, 203, 0.13);
-    --border-strong: rgba(224, 220, 203, 0.24);
-    --focus-ring: #C58B55;
-    --accent-primary: #C17D87;
-    --accent-secondary: #D6C69B;
+    --app-bg: #171719;
+    --surface-1: #242127;
+    --surface-2: #302832;
+    --surface-raised: #3C303B;
+    --text-primary: #E9DDE0;
+    --text-secondary: #BDB0B7;
+    --text-muted: #938690;
+    --border-subtle: rgba(191, 157, 176, 0.17);
+    --border-strong: rgba(191, 157, 176, 0.32);
+    --focus-ring: #B98A62;
+    --accent-primary: #9B4565;
+    --accent-secondary: #C5A477;
     --status-success: #91B58D;
     --status-warning: #D5B477;
     --status-danger: #D58B82;
     --status-info: #91AFC0;
 
-    --domain-mariluna: #321F32;
-    --domain-mariluna-moss: #D1A9B9;
-    --domain-private: #172F2B;
-    --domain-private-copper: #A2A36B;
+    --domain-mariluna: #351A2B;
+    --domain-mariluna-moss: #B77A91;
+    --domain-private: #18372F;
+    --domain-private-copper: #8D986E;
   }
 
   html, body, #root {
@@ -251,5 +251,104 @@
     background-color: var(--surface-2) !important;
     color: var(--text-primary) !important;
     border-color: var(--border-subtle) !important;
+  }
+}
+
+
+/* Alchemy Botanical Noir — consistent dark surfaces across every module.
+   Legacy light cards, modals, controls and badges are recoloured centrally. */
+@layer utilities {
+  [class~="bg-white"],
+  [class*="bg-white/"],
+  [class*="bg-[#FA"],
+  [class*="bg-[#FC"],
+  [class*="bg-[#F9"],
+  [class*="bg-[#F8"],
+  [class*="bg-[#F7"],
+  [class*="bg-[#F6"],
+  [class*="bg-[#F5"],
+  [class*="bg-[#F4"],
+  [class*="bg-[#F3"],
+  [class*="bg-[#F2"],
+  [class*="bg-[#F0"],
+  [class*="bg-[#EF"],
+  [class*="bg-[#EE"],
+  [class*="bg-[#ED"],
+  [class*="bg-[#EB"],
+  [class*="bg-[#EA"],
+  [class*="bg-[#E8"],
+  [class*="bg-[#E5"],
+  [class*="bg-[#E3"],
+  [class*="bg-[#E0"],
+  [class*="bg-[#DD"],
+  [class*="bg-[#DC"],
+  [class*="bg-[#D5"],
+  [class~="bg-stone-50"],
+  [class~="bg-gray-50"],
+  [class~="bg-neutral-50"],
+  [class~="bg-amber-50"] {
+    background-color: var(--surface-1) !important;
+    border-color: var(--border-subtle) !important;
+    color: var(--text-primary) !important;
+  }
+
+  /* Darken the nested copy inside converted legacy panels for consistent contrast. */
+  [class*="bg-[#FA"] *,
+  [class*="bg-[#FC"] *,
+  [class*="bg-[#F9"] *,
+  [class*="bg-[#F8"] *,
+  [class*="bg-[#F7"] *,
+  [class*="bg-[#F6"] *,
+  [class*="bg-[#F5"] *,
+  [class*="bg-[#F4"] *,
+  [class*="bg-[#F3"] *,
+  [class*="bg-[#F2"] *,
+  [class*="bg-[#F0"] *,
+  [class*="bg-[#EF"] *,
+  [class*="bg-[#EE"] *,
+  [class*="bg-[#ED"] *,
+  [class*="bg-[#EB"] *,
+  [class*="bg-[#EA"] *,
+  [class*="bg-[#E8"] *,
+  [class*="bg-[#E5"] *,
+  [class*="bg-[#E3"] *,
+  [class*="bg-[#E0"] *,
+  [class*="bg-[#DD"] *,
+  [class*="bg-[#DC"] *,
+  [class*="bg-[#D5"] *,
+  [class~="bg-white"] *,
+  [class*="bg-white/"] * {
+    color: var(--text-primary);
+  }
+
+  /* Legacy brown/near-black text on the old cream palette becomes soft ivory. */
+  [class*="text-[#2C2825]"],
+  [class*="text-[#3A332D]"],
+  [class*="text-[#4A4035]"],
+  [class*="text-[#4A433B]"],
+  [class*="text-[#554C42]"],
+  [class*="text-[#5C5245]"],
+  [class*="text-[#60564C]"],
+  [class*="text-[#686055]"] {
+    color: var(--text-primary) !important;
+  }
+  [class*="text-[#7A7167]"],
+  [class*="text-[#7A7267]"],
+  [class*="text-[#756C60]"],
+  [class*="text-[#8C8377]"],
+  [class*="text-[#A49A8D]"] {
+    color: var(--text-secondary) !important;
+  }
+
+  /* Inputs and select menus retain a clear, quiet edge on dark surfaces. */
+  input[class*="bg-white"],
+  textarea[class*="bg-white"],
+  select[class*="bg-white"],
+  input[class*="bg-[#F"],
+  textarea[class*="bg-[#F"],
+  select[class*="bg-[#F"] {
+    background-color: var(--surface-2) !important;
+    color: var(--text-primary) !important;
+    border-color: var(--border-strong) !important;
   }
 }
