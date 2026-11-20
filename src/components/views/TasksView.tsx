@@ -14,6 +14,7 @@ import {
   ChevronDown,
 } from 'lucide-react';
 import { Task, Realm, ActiveWorldFilter, Goal, Project } from '../../types';
+import { filterTaskList } from '../../lib/taskListFilters';
 
 const getLocalDateString = (date = new Date()): string => {
   const year = date.getFullYear();
@@ -43,6 +44,7 @@ export const TasksView: React.FC<TasksViewProps> = ({
 }) => {
   const [filterStatus, setFilterStatus] = useState<'active' | 'completed' | 'all'>('active');
   const [filterPriority, setFilterPriority] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
 
@@ -170,17 +172,13 @@ export const TasksView: React.FC<TasksViewProps> = ({
     }
   };
 
-  // Filter tasks
-  const scopedTasks = tasks.filter((t) => activeWorld === 'all' || t.realm === activeWorld);
-  const filteredTasks = scopedTasks.filter((t) => {
-    // World filter
-    if (activeWorld !== 'all' && t.realm !== activeWorld) return false;
-    // Status filter
-    if (filterStatus === 'active' && t.status === 'completed') return false;
-    if (filterStatus === 'completed' && t.status !== 'completed') return false;
-    // Priority filter
-    if (filterPriority !== 'all' && t.priority !== filterPriority) return false;
-    return true;
+  // Keep counts scoped to the active workspace; search only changes the visible result set.
+  const scopedTasks = tasks.filter((task) => activeWorld === 'all' || task.realm === activeWorld);
+  const filteredTasks = filterTaskList(tasks, {
+    activeWorld,
+    status: filterStatus,
+    priority: filterPriority as 'all' | Task['priority'],
+    query: searchQuery,
   });
 
   return (
@@ -252,6 +250,18 @@ export const TasksView: React.FC<TasksViewProps> = ({
             <option value="low">Laag</option>
           </select>
         </div>
+      </div>
+
+      {/* Search */}
+      <div className="relative">
+        <input
+          type="search"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Zoek in taken, notities en subtaken..."
+          aria-label="Zoek in taken"
+          className="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-raised)] px-4 py-3 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--accent-secondary)]"
+        />
       </div>
 
       {/* Task List */}
