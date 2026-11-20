@@ -891,6 +891,15 @@ export default function App() {
     const file = e.target.files?.[0];
     if (!file) return;
     const input = e.target;
+    // Refuse oversized imports before FileReader allocates the full file and
+    // JSON.parse duplicates it in memory. Normal Alchemy backups are far below
+    // this ceiling; the limit protects mobile browsers from accidental huge files.
+    const maxBackupBytes = 15 * 1024 * 1024;
+    if (file.size > maxBackupBytes) {
+      alert('Dit back-upbestand is groter dan 15 MB en kan niet veilig worden geïmporteerd. Controleer of je het juiste Alchemy-bestand hebt geselecteerd.');
+      input.value = '';
+      return;
+    }
     const reader = new FileReader();
     reader.onload = async (event) => {
       try {
