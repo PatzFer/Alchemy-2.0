@@ -116,3 +116,11 @@ Do not mark a test as passed based only on source inspection or a successful com
 - [x] Offering search covers titles, descriptions and included deliverables.
 - [x] Type and status filters combine correctly; legacy offerings without status remain visible as drafts.
 - [ ] Manually create, edit, filter, archive and delete an offering on Android and desktop.
+
+
+## 10. Task list search
+
+- [x] Search task titles, descriptions, notes, categories, due dates and subtask titles.
+- [x] Combine search with workspace, status and priority filters.
+- [x] Automated tests cover case-insensitive search, whitespace, combined filters and stable ordering.
+- [ ] Manually verify task search and keyboard behavior on Android and desktop.
