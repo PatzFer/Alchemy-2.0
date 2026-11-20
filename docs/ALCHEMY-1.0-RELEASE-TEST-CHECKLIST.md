@@ -144,6 +144,7 @@ Do not mark a test as passed based only on source inspection or a successful com
 - [x] Project editor validates required names, text bounds and date order.
 - [x] Tasks can be linked to active projects and goals in the same workspace.
 - [x] Task search includes linked project and goal names.
+- [x] Goal search includes linked task and project names.
 - [x] Linked project and goal names are visible on task cards.
 - [x] Goal cards show linked tasks and projects.
 - [x] Goal progress derives from linked task completion when no milestones are defined.
