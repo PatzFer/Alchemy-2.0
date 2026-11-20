@@ -254,12 +254,12 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
         <div className="flex items-center gap-3">
           {/* Connection status badge */}
           {integrations?.calendar?.status === 'connected' ? (
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#D0E2D4] bg-[#E8EFE9] text-[11px] text-[#2D5A3C]">
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[var(--status-success)]/30 bg-[var(--surface-1)] text-[11px] text-[var(--status-success)]">
               <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-primary)] animate-pulse" />
               <span>Google Agenda gekoppeld • {integrations?.calendar?.readOnly ? 'Alleen-lezen' : 'Lezen & Schrijven'}</span>
             </div>
           ) : (
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#DCD3C4] bg-[var(--surface-2)] text-[11px] text-[#695B49]">
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#DCD3C4] bg-[var(--surface-2)] text-[11px] text-[var(--text-secondary)]">
               <ShieldCheck className="w-3.5 h-3.5 text-[var(--accent-secondary)]" />
               <span>Lokale Agenda • Directe opslag</span>
             </div>
@@ -398,7 +398,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                             {evt.realm}
                           </span>
                           {evt.isExternalSync || evt.source === 'google' ? (
-                            <span className="text-[9px] px-2 py-0.5 rounded-full bg-[#E8EFE9] text-[#2D5A3C] font-medium border border-[#D0E2D4]">
+                            <span className="text-[9px] px-2 py-0.5 rounded-full bg-[var(--surface-1)] text-[var(--status-success)] font-medium border border-[var(--status-success)]/30">
                               Google Agenda
                             </span>
                           ) : (
@@ -663,7 +663,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
             </div>
 
             <form onSubmit={handleCreateEvent} className="space-y-4" noValidate>
-              {formError && <div role="alert" className="rounded-xl border border-[#E4B7AE] bg-[#FDF2F0] px-3 py-2 text-xs text-[#9B382B]">{formError}</div>}
+              {formError && <div role="alert" className="rounded-xl border border-[var(--status-danger)]/40 bg-[var(--surface-1)] px-3 py-2 text-xs text-[var(--status-danger)]">{formError}</div>}
               <div>
                 <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">
                   Titel
