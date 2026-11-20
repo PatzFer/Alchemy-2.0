@@ -52,3 +52,13 @@ test('Renpho CSV import rejects unclosed quoted fields', () => {
     /niet-afgesloten/i,
   );
 });
+
+
+test('Renpho CSV import supports European semicolon separators and decimal commas', () => {
+  const logs = parseRenphoCsv([
+    'Date;Weight(kg);Body Fat(%)',
+    '2026-11-20 08:00;90,4;35,2',
+  ].join('\n'));
+  assert.equal(logs[0].weightKg, 90.4);
+  assert.equal(logs[0].composition?.bodyFatPercentage, 35.2);
+});
