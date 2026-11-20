@@ -1054,3 +1054,11 @@ A user can reliably open Alchemy without a startup security interstitial; captur
 - Added explicit Jarvis system-prompt guidance: never guess which task to reschedule; include the exact task ID and date, and wait for user confirmation.
 - GitHub Actions run 44789834222 passed on commit cb2056db: dependency install, TypeScript, Supabase migration safety checks, regression tests and production build.
 - The branch remains separate from `main`; no merge or deployment has been performed.
+
+
+## Progress log — 20 November 2026 (1.0 beta identity)
+
+- Updated the package identity from the starter-project placeholder to `p-and-m-alchemy`.
+- Set the current internal test candidate version to `1.0.0-beta.1` and aligned the Bun workspace lockfile.
+- GitHub Actions run 44790064626 passed on commit f41e29de, including frozen dependency installation, TypeScript, migration checks, regression tests and production build.
+- The next checkpoint is manual Android/desktop acceptance and an AI Studio private-preview smoke test. No main-branch merge or production deployment has occurred.
