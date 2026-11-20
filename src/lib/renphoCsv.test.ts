@@ -100,3 +100,15 @@ test('Renpho CSV import handles European and US regional dates', () => {
   assert.equal(european[0].date, '2026-11-20');
   assert.equal(american[0].date, '2026-11-20');
 });
+
+
+test('Renpho CSV import ignores impossible body-composition percentages', () => {
+  const logs = parseRenphoCsv([
+    'Date,Weight(kg),Body Fat(%),Skeletal Muscle(%),Body Water(%)',
+    '2026-11-20,90,120,27,105',
+  ].join('\n'));
+  assert.equal(logs[0].weightKg, 90);
+  assert.equal(logs[0].composition?.bodyFatPercentage, undefined);
+  assert.equal(logs[0].composition?.muscleMassPercentage, 27);
+  assert.equal(logs[0].composition?.hydrationPercentage, undefined);
+});
