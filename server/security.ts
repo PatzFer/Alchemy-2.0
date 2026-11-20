@@ -54,7 +54,7 @@ export interface SecurityPermissions {
   allowMarilunaDataToAI: boolean;
   allowFinancialDataToAI: boolean;
   allowWellbeingDataToAI: boolean; // default FALSE - strictly quarantined
-  activeAiProvider: 'gemini-server' | 'local-rules';
+  activeAiProvider: 'openai-server' | 'gemini-server' | 'local-rules';
 }
 
 export interface RecoveryCodeItem {
@@ -104,7 +104,7 @@ class SecurityVault {
     allowMarilunaDataToAI: false,
     allowFinancialDataToAI: false,
     allowWellbeingDataToAI: false, // Default quarantined: user explicitly permits in settings/module
-    activeAiProvider: 'local-rules', // Explicit opt-in required before any workspace context is sent to Gemini
+    activeAiProvider: 'local-rules', // Explicit opt-in required before any workspace context is sent to an external AI provider
   };
 
   constructor() {
@@ -590,7 +590,7 @@ class SecurityVault {
         (allowed as any)[key] = updates[key];
       }
     }
-    if (updates.activeAiProvider === 'gemini-server' || updates.activeAiProvider === 'local-rules') {
+    if (updates.activeAiProvider === 'openai-server' || updates.activeAiProvider === 'gemini-server' || updates.activeAiProvider === 'local-rules') {
       allowed.activeAiProvider = updates.activeAiProvider;
     }
 
