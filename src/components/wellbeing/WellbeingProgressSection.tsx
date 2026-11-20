@@ -302,6 +302,9 @@ export const WellbeingProgressSection: React.FC<WellbeingProgressSectionProps> =
             <span>+ Metingen</span>
           </button>
         </div>
+        <p className="mt-2 text-[11px] text-[#8A8074]">
+          Exporteer je meetgeschiedenis als CSV in Renpho en importeer die hier. Bestaande handmatige notities blijven behouden.
+        </p>
         {renphoImportMessage && (
           <p role="status" aria-live="polite" className="mt-2 text-xs text-[#6D6255]">{renphoImportMessage}</p>
         )}
