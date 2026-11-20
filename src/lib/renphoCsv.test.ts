@@ -1,0 +1,54 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { parseRenphoCsv } from './renphoCsv';
+
+test('Renpho CSV import maps metric weight and body composition by local date', () => {
+  const logs = parseRenphoCsv([
+    'Date,Weight(kg),Body Fat(%),Skeletal Muscle(%),Body Water(%)',
+    '2026-11-18 08:15,91.2,43.5,27.1,40.2',
+    '2026-11-19 08:20,90.8,43.2,27.3,40.5',
+  ].join('\n'));
+
+  assert.equal(logs.length, 2);
+  assert.equal(logs[0].date, '2026-11-18');
+  assert.equal(logs[0].weightKg, 91.2);
+  assert.equal(logs[0].composition?.bodyFatPercentage, 43.5);
+  assert.equal(logs[0].composition?.muscleMassPercentage, 27.1);
+  assert.equal(logs[0].composition?.hydrationPercentage, 40.2);
+});
+
+test('Renpho CSV import converts pounds to kilograms and handles quoted CSV cells', () => {
+  const logs = parseRenphoCsv([
+    'Date,Weight(lb),Body Fat(%)',
+    '"2026-11-20 07:30",200,35.5',
+  ].join('\n'));
+
+  assert.equal(logs[0].weightKg, 90.72);
+  assert.equal(logs[0].composition?.bodyFatPercentage, 35.5);
+});
+
+test('Renpho CSV import merges duplicate dates and skips invalid rows', () => {
+  const logs = parseRenphoCsv([
+    'Date,Weight(kg),Body Fat(%)',
+    '2026-11-20,90,35',
+    '2026-11-20,89.8,34.8',
+    'not-a-date,91,34',
+    '2026-11-21,,',
+  ].join('\n'));
+
+  assert.equal(logs.length, 1);
+  assert.equal(logs[0].weightKg, 89.8);
+  assert.equal(logs[0].composition?.bodyFatPercentage, 34.8);
+});
+
+test('Renpho CSV import rejects unrelated or empty exports with a clear error', () => {
+  assert.throws(() => parseRenphoCsv(''), /leeg/i);
+  assert.throws(() => parseRenphoCsv('Name,Value\nWeight,90'), /datum en gewicht/i);
+});
+
+test('Renpho CSV import rejects unclosed quoted fields', () => {
+  assert.throws(
+    () => parseRenphoCsv('Date,Weight(kg)\n"2026-11-20,90'),
+    /niet-afgesloten/i,
+  );
+});
