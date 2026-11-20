@@ -91,3 +91,11 @@ test('Renpho merge updates scale fields while preserving manual notes and measur
   assert.equal(merged[0].composition?.bodyFatPercentage, 43.5);
   assert.equal(merged[0].composition?.hydrationPercentage, 41);
 });
+
+
+test('Renpho CSV import handles European and US regional dates', () => {
+  const european = parseRenphoCsv('Date,Weight(kg)\n20/11/2026,90');
+  const american = parseRenphoCsv('Date,Weight(kg)\n11/20/2026,90');
+  assert.equal(european[0].date, '2026-11-20');
+  assert.equal(american[0].date, '2026-11-20');
+});
