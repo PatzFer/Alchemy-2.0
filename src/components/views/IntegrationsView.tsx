@@ -32,6 +32,7 @@ import {
   fetchRealInstagramPostsFromApi,
   getCachedAccessToken,
   setCachedAccessToken,
+  revokeGoogleAccessToken,
 } from '../../lib/googleAuthService';
 
 interface IntegrationsViewProps {
@@ -183,7 +184,7 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
 
   const handleDisconnectCalendar = async () => {
     setSyncingService('calendar');
-    setCachedAccessToken('calendar', null);
+    await revokeGoogleAccessToken('calendar');
     if (onSyncCalendarEvents) {
       onSyncCalendarEvents([]);
     }
