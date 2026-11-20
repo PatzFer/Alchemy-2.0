@@ -48,6 +48,7 @@ This checklist separates a usable test candidate from a production release. A ch
 - [ ] Google Calendar OAuth grants only required read permissions.
 - [ ] Calendar import handles pagination, all-day events, time zones and duplicates.
 - [ ] Disconnect clears local tokens and revokes provider grants where supported.
+- [x] Automated tests cover in-memory token expiry, explicit clearing and local disconnect cleanup.
 - [x] Gmail/email integration is excluded from Version 1.0 scope.
 - [ ] Health Connect is clearly unavailable until a native Android bridge is delivered.
 - [ ] Renpho CSV import is available in Wellbeing → Progress; manually verify a real export and duplicate-date merge.
