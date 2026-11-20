@@ -82,7 +82,7 @@ export default function App() {
   const [isNotificationCenterOpen, setIsNotificationCenterOpen] = useState(false);
 
   // FINAL SECURITY ARCHITECTURE: Perimeter Lock & Session Management
-  const [isAppAuthenticated, setIsAppAuthenticated] = useState<boolean | null>(true);
+  const [isAppAuthenticated, setIsAppAuthenticated] = useState<boolean | null>(null);
   const [inactivityLocked, setInactivityLocked] = useState<boolean>(false);
   const [securityLevel, setSecurityLevel] = useState<1 | 2 | 3>(2);
   const [isSensitiveUnlocked, setIsSensitiveUnlocked] = useState<boolean>(true);
@@ -91,28 +91,34 @@ export default function App() {
 
   const checkAuthStatus = async () => {
     try {
-      const res = await fetch('/api/auth/status');
-      if (res.ok) {
-        const data = await res.json();
-        setIsAppAuthenticated(!!data.isAppAuthenticated);
-        if (data.currentSecurityLevel) setSecurityLevel(data.currentSecurityLevel);
-        if (data.isSensitiveUnlocked !== undefined) setIsSensitiveUnlocked(data.isSensitiveUnlocked);
-        if (data.inactivityTimeoutMinutes) setInactivityTimeoutMins(data.inactivityTimeoutMinutes);
-      } else {
-        // Fail closed: an unavailable auth endpoint must never unlock private data.
-        setIsAppAuthenticated(false);
+      let res = await fetch('/api/auth/status');
+      if (!res.ok) throw new Error('Authentication status unavailable.');
+      let data = await res.json();
+
+      // The server permits this one-click preview session only when
+      // ENABLE_PREVIEW_AUTH=true and NODE_ENV is not production.
+      // Production never accepts this route; all normal credentials remain required.
+      if (!data.isAppAuthenticated) {
+        const preview = await fetch('/api/auth/preview-unlock', { method: 'POST' });
+        if (preview.ok) {
+          res = await fetch('/api/auth/status');
+          if (!res.ok) throw new Error('Authentication status unavailable after preview unlock.');
+          data = await res.json();
+        }
       }
+
+      setIsAppAuthenticated(!!data.isAppAuthenticated);
+      if (data.currentSecurityLevel) setSecurityLevel(data.currentSecurityLevel);
+      if (data.isSensitiveUnlocked !== undefined) setIsSensitiveUnlocked(data.isSensitiveUnlocked);
+      if (data.inactivityTimeoutMinutes) setInactivityTimeoutMins(data.inactivityTimeoutMinutes);
     } catch {
-      // Fail closed when the auth service cannot be reached.
+      // Fail closed: a missing API, disabled preview or auth outage never unlocks private data.
       setIsAppAuthenticated(false);
     }
   };
 
   useEffect(() => {
-    // TEMPORARY PREVIEW BYPASS: start directly in the app while the
-    // perimeter authentication flow is being tested and configured.
-    // Restore checkAuthStatus() here before production release.
-    setIsAppAuthenticated(true);
+    void checkAuthStatus();
   }, []);
 
   // No automatic startup or inactivity lock in this personal-use v1.
