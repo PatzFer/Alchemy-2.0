@@ -1184,6 +1184,8 @@ export default function App() {
         {currentTab === 'calendar' && (
           <CalendarView
             events={state.calendarEvents}
+            tasks={state.tasks}
+            onToggleTask={handleToggleTask}
             lifeProfile={state.lifeProfile}
             activeWorld={activeWorld}
             onAddEvent={handleAddCalendarEvent}
