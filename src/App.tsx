@@ -242,7 +242,7 @@ export default function App() {
       // A recurring task creates its next occurrence only when completed.
       // Keep the original occurrence in history and reset subtasks on the new one.
       if (completing && current.recurring !== 'none' && current.dueDate) {
-        const nextDueDate = getNextRecurringTaskDate(current.dueDate, current.recurring);
+        const nextDueDate = getNextRecurringTaskDate(current.dueDate, current.recurring, getLocalDateString());
         // Invalid legacy dates must never create malformed "NaN-NaN-NaN" tasks.
         if (nextDueDate) {
           const nextOccurrence: Task = {
