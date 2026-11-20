@@ -33,6 +33,7 @@ test('Renpho CSV import merges duplicate dates and skips invalid rows', () => {
     '2026-11-20,90,35',
     '2026-11-20,89.8,34.8',
     'not-a-date,91,34',
+    '31/02/2026,92,33',
     '2026-11-21,,',
   ].join('\n'));
 
