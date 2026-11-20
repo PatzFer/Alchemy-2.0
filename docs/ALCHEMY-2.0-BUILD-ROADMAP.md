@@ -1099,3 +1099,12 @@ A user can reliably open Alchemy without a startup security interstitial; captur
 - The change still requires hands-on mobile/PWA permission and notification acceptance; browser delivery cannot be proven by unit tests alone.
 
 - Verification: GitHub Actions run 44793351195 passed on commit `e7027bf0`, including TypeScript, Supabase migration safety, privacy regression tests and the production build.
+
+## Progress log — 20 November 2026 (calendar capacity and idea review accuracy)
+
+- Jarvis now calculates occupied time as the union of valid calendar intervals. Overlapping or nested appointments no longer get counted twice when estimating remaining capacity.
+- Added regression tests for independent, overlapping, nested, touching, malformed and zero-length appointments.
+- The Ideas view now uses local calendar-day arithmetic for its three-week review prompt, avoiding UTC date-only parsing shifts near the review threshold.
+- Invalid and impossible ISO date-only values are ignored rather than normalized into a different date.
+- Added automated tests for the 21-day threshold, last-revisited precedence, future/invalid dates and invalid review thresholds.
+- Browser/device acceptance remains separate from automated checks.
