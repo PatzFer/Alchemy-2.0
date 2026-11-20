@@ -71,3 +71,15 @@ test('saveState refuses incomplete runtime payloads without overwriting the last
   assert.equal(saveState(invalid), false);
   assert.equal(storage.getItem('pm_alchemy_os_data_v1'), valid);
 });
+
+test('resetState still returns clean defaults when browser storage removal throws', () => {
+  Object.defineProperty(globalThis, 'window', { configurable: true, value: {} });
+  Object.defineProperty(globalThis, 'localStorage', {
+    configurable: true,
+    value: { removeItem: () => { throw new Error('SecurityError'); } },
+  });
+  const reset = resetState();
+  assert.deepEqual(reset.tasks, []);
+  assert.deepEqual(reset.ideas, []);
+  assert.equal(reset.isSampleData, false);
+});
