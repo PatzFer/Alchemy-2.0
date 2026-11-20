@@ -58,7 +58,7 @@ import { applyFoundationToAppState } from './lib/foundationDefaults';
 import { Sparkles } from 'lucide-react';
 import { MorningCheckInModal } from './components/MorningCheckInModal';
 import { purgeExpiredDailyCheckIns } from './lib/healthUtils';
-import { createAlchemyBackup, downloadAlchemyBackupFile, verifyAlchemyBackup } from './lib/backup';
+import { createAlchemyBackup, downloadAlchemyBackupFile, verifyAlchemyBackup, isBackupFileSizeAllowed } from './lib/backup';
 import { isValidCalendarDate } from './lib/calendarDate';
 
 const getLocalDateString = (date = new Date()): string => {
@@ -894,8 +894,7 @@ export default function App() {
     // Refuse oversized imports before FileReader allocates the full file and
     // JSON.parse duplicates it in memory. Normal Alchemy backups are far below
     // this ceiling; the limit protects mobile browsers from accidental huge files.
-    const maxBackupBytes = 15 * 1024 * 1024;
-    if (file.size > maxBackupBytes) {
+    if (!isBackupFileSizeAllowed(file.size)) {
       alert('Dit back-upbestand is groter dan 15 MB en kan niet veilig worden geïmporteerd. Controleer of je het juiste Alchemy-bestand hebt geselecteerd.');
       input.value = '';
       return;
