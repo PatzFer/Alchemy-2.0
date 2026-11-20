@@ -183,7 +183,7 @@ export const IdeasView: React.FC<IdeasViewProps> = ({
                         <span className="text-sm font-serif font-medium text-[var(--text-primary)]">
                           {idea.title}
                         </span>
-                        <span className="text-[9px] uppercase px-2 py-0.5 rounded-full bg-[#EAE4D7] text-[#554C42]">
+                        <span className="text-[9px] uppercase px-2 py-0.5 rounded-full bg-[var(--surface-1)] text-[var(--text-secondary)] border border-[var(--border-subtle)]">
                           {idea.realm}
                         </span>
                       </div>
@@ -213,7 +213,7 @@ export const IdeasView: React.FC<IdeasViewProps> = ({
                       </button>
                       {idea.realm === 'mariluna' && <button
                         onClick={() => onConvertToProject(idea.id)}
-                        className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[var(--text-primary)] text-[var(--text-primary)] text-xs font-medium hover:bg-[#433D37] transition cursor-pointer"
+                        className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[var(--surface-raised)] text-[var(--text-primary)] border border-[var(--border-strong)] text-xs font-medium hover:bg-[#433D37] transition cursor-pointer"
                       >
                         <FolderPlus className="w-3.5 h-3.5" />
                         <span>Maak project</span>
@@ -243,7 +243,7 @@ export const IdeasView: React.FC<IdeasViewProps> = ({
       <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-2)] p-5 shadow-xs">
         <form onSubmit={handleCaptureIdea} className="space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-[#5A524A] uppercase tracking-wider">
+            <span className="text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">
               Nieuwe braindump
             </span>
             <div className="flex items-center gap-2">
@@ -252,7 +252,7 @@ export const IdeasView: React.FC<IdeasViewProps> = ({
                 onClick={() => setQuickRealm('personal')}
                 className={`text-xs px-2.5 py-1 rounded-full transition cursor-pointer ${
                   quickRealm === 'personal'
-                    ? 'bg-[#EAE4D7] text-[#4A433B] font-medium'
+                    ? 'bg-[var(--surface-raised)] text-[var(--text-primary)] border border-[var(--border-strong)] font-medium'
                     : 'text-[var(--text-muted)]'
                 }`}
               >
@@ -263,7 +263,7 @@ export const IdeasView: React.FC<IdeasViewProps> = ({
                 onClick={() => setQuickRealm('mariluna')}
                 className={`text-xs px-2.5 py-1 rounded-full transition cursor-pointer ${
                   quickRealm === 'mariluna'
-                    ? 'bg-[var(--text-primary)] text-[var(--text-primary)] font-medium'
+                    ? 'bg-[var(--surface-raised)] text-[var(--text-primary)] border border-[var(--border-strong)] font-medium'
                     : 'text-[var(--text-muted)]'
                 }`}
               >
@@ -297,7 +297,7 @@ export const IdeasView: React.FC<IdeasViewProps> = ({
             <button
               type="submit"
               disabled={!quickIdeaText.trim() || isAnalyzing}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[var(--text-primary)] text-[var(--text-primary)] text-xs font-medium hover:bg-[#433D37] disabled:opacity-40 transition cursor-pointer"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[var(--surface-raised)] text-[var(--text-primary)] border border-[var(--border-strong)] text-xs font-medium hover:bg-[#433D37] disabled:opacity-40 transition cursor-pointer"
             >
               <span>{isAnalyzing ? 'Even ordenen...' : 'Idee bewaren'}</span>
             </button>
@@ -329,8 +329,8 @@ export const IdeasView: React.FC<IdeasViewProps> = ({
                   <span
                     className={`px-2 py-0.5 rounded-full ${
                       idea.realm === 'mariluna'
-                        ? 'bg-[var(--text-primary)] text-[var(--text-primary)]'
-                        : 'bg-[#EAE4D7] text-[#554C42]'
+                        ? 'bg-[var(--surface-raised)] text-[var(--text-primary)] border border-[var(--border-strong)]'
+                        : 'bg-[var(--surface-1)] text-[var(--text-secondary)] border border-[var(--border-subtle)]'
                     }`}
                   >
                     {idea.realm}
@@ -341,7 +341,7 @@ export const IdeasView: React.FC<IdeasViewProps> = ({
                 <h3 className="font-serif text-base font-medium text-[var(--text-primary)]">
                   {idea.title}
                 </h3>
-                <p className="text-xs text-[#5A524A] mt-2 font-light leading-relaxed whitespace-pre-wrap">
+                <p className="text-xs text-[var(--text-secondary)] mt-2 font-light leading-relaxed whitespace-pre-wrap">
                   {idea.content}
                 </p>
 
@@ -364,7 +364,7 @@ export const IdeasView: React.FC<IdeasViewProps> = ({
                 )}
                 {/* AI Follow-up Questions if present */}
                 {idea.followUpQuestions && idea.followUpQuestions.length > 0 && (
-                  <div className="mt-4 pt-3 border-t border-[#F0EBE1] space-y-1.5">
+                  <div className="mt-4 pt-3 border-t border-[var(--border-subtle)] space-y-1.5">
                     <span className="text-[10px] uppercase tracking-wider font-semibold text-[var(--accent-secondary)] block">
                       Vragen om verder te denken
                     </span>
@@ -381,7 +381,7 @@ export const IdeasView: React.FC<IdeasViewProps> = ({
               </div>
 
               {/* Actions Footer */}
-              <div className="mt-5 pt-3 border-t border-[#F0EBE1] flex items-center justify-between text-xs">
+              <div className="mt-5 pt-3 border-t border-[var(--border-subtle)] flex items-center justify-between text-xs">
                 {onOpenAssistantWithPrompt ? (
                   <button
                     type="button"
