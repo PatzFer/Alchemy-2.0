@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import type { CalendarEvent, LifeProfile, Task } from '../types';
+import type { CalendarEvent, LifeProfile } from '../types';
 import { calculateDayCapacity, formatApproximateTime } from './planningEngine';
 
 const event = (id: string, startTime: string, endTime: string): CalendarEvent => ({
