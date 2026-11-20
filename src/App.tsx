@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Navigation,
   NavTab,
@@ -53,7 +53,7 @@ import {
   ProactiveSuggestion,
   FoundationData,
 } from './types';
-import { evaluateSmartNotifications, isCurrentlyQuietHours } from './lib/notificationEngine';
+import { evaluateSmartNotifications, shouldDispatchBrowserPush } from './lib/notificationEngine';
 import { applyFoundationToAppState } from './lib/foundationDefaults';
 import { Sparkles } from 'lucide-react';
 import { MorningCheckInModal } from './components/MorningCheckInModal';
@@ -179,11 +179,16 @@ export default function App() {
     try { localStorage.setItem('alchemy_last_saved_at', savedAt); } catch { /* Timestamp is informational; state save already succeeded. */ }
   }, [state]);
 
-  // Periodic evaluation of smart notifications
+  // Prevent duplicate external pushes when React replays effects in development Strict Mode.
+  const dispatchedPushIds = useRef(new Set<string>());
+
+  // Evaluate the notification digest whenever its source data changes.
   useEffect(() => {
-    if (!state.notificationSettings?.enabled) return;
+    const settings = state.notificationSettings;
+    if (!settings?.enabled) return;
+
     const generated = evaluateSmartNotifications({
-      settings: state.notificationSettings,
+      settings,
       existingNotifications: state.notifications || [],
       tasks: state.tasks || [],
       calendarEvents: state.calendarEvents || [],
@@ -191,31 +196,44 @@ export default function App() {
       goals: state.goals || [],
       cycleProfile: state.cycleProfile,
       todayCheckIn: (state.dailyCheckIns || []).find(
-        (c) => c.date === getLocalDateString()
+        (checkIn) => checkIn.date === getLocalDateString()
       ),
     });
-    if (generated && generated.length > 0) {
-      setState((prev) => {
-        const existingIds = new Set((prev.notifications || []).map((n) => n.id));
-        const newOnes = generated.filter((n) => !existingIds.has(n.id));
-        if (newOnes.length === 0) return prev;
+    if (!generated.length) return;
 
-        // Trigger native system push notification if allowed & enabled
-        if (prev.integrations?.pushNotifications?.enabled && !isCurrentlyQuietHours(prev.notificationSettings)) {
-          for (const item of newOnes) {
-            IntegrationsService.sendBrowserPush(item.title, {
-              body: item.body,
-            });
-          }
-        }
+    const existingIds = new Set((state.notifications || []).map((item) => item.id));
+    const newOnes = generated.filter((item) => !existingIds.has(item.id));
+    if (!newOnes.length) return;
 
-        return {
-          ...prev,
-          notifications: [...newOnes, ...(prev.notifications || [])].slice(0, 30),
-        };
-      });
+    // External side effects stay outside the React state updater.
+    if (shouldDispatchBrowserPush(settings, !!state.integrations?.pushNotifications?.enabled)) {
+      for (const item of newOnes) {
+        if (dispatchedPushIds.current.has(item.id)) continue;
+        dispatchedPushIds.current.add(item.id);
+        void IntegrationsService.sendBrowserPush(item.title, { body: item.body });
+      }
     }
-  }, [state.tasks, state.calendarEvents, state.ideas, state.goals, state.dailyCheckIns, state.notificationSettings, state.integrations?.pushNotifications?.enabled]);
+
+    setState((previous) => {
+      const previousIds = new Set((previous.notifications || []).map((item) => item.id));
+      const additions = newOnes.filter((item) => !previousIds.has(item.id));
+      if (!additions.length) return previous;
+      return {
+        ...previous,
+        notifications: [...additions, ...(previous.notifications || [])].slice(0, 30),
+      };
+    });
+  }, [
+    state.tasks,
+    state.calendarEvents,
+    state.ideas,
+    state.goals,
+    state.dailyCheckIns,
+    state.cycleProfile,
+    state.notificationSettings,
+    state.notifications,
+    state.integrations?.pushNotifications?.enabled,
+  ]);
 
   const unreadNotificationCount = (state.notifications || []).filter(
     (n) => !n.read && !n.isRead
