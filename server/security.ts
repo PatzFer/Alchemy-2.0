@@ -444,17 +444,17 @@ class SecurityVault {
 
   public savePasskey(cred: PasskeyCredential): void {
     if (!cred || typeof cred.id !== 'string' || !cred.id || cred.id.length > 2048 ||
-        typeof cred.publicKey !== 'string' || !cred.publicKey || cred.publicKey.length > 8192 ||
+        typeof cred.publicKey !== 'string' || !/^[A-Za-z0-9_-]+$/.test(cred.publicKey) || cred.publicKey.length > 8192 ||
         !Number.isSafeInteger(cred.counter) || cred.counter < 0 ||
-        typeof cred.nickname !== 'string' || !cred.nickname.trim() || cred.nickname.length > 120) {
+        typeof cred.nickname !== 'string' || !cred.nickname.trim() || cred.nickname.length > 120 ||
+        (cred.transports !== undefined && (!Array.isArray(cred.transports) ||
+          cred.transports.some((item) => !['usb', 'nfc', 'ble', 'internal', 'hybrid'].includes(item))))) {
       throw new Error('Passkey credential data is invalid.');
     }
     this.passkeys.set(cred.id, {
       ...cred,
       nickname: cred.nickname.trim(),
-      transports: Array.isArray(cred.transports)
-        ? cred.transports.filter((item) => typeof item === 'string').slice(0, 8)
-        : undefined,
+      transports: cred.transports ? [...cred.transports] : undefined,
     });
   }
 
