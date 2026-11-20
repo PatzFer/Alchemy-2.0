@@ -11,7 +11,7 @@ import {
   Info,
 } from 'lucide-react';
 import { CalendarEvent, ActiveWorldFilter, Realm, LifeProfile, IntegrationsState } from '../../types';
-import { findDuplicateCalendarEvent, validateCalendarTimeRange } from '../../lib/calendarValidation';
+import { findDuplicateCalendarEvent, validateCalendarEventInput } from '../../lib/calendarValidation';
 import { shiftCalendarDate } from '../../lib/calendarDate';
 
 interface CalendarViewProps {
@@ -79,13 +79,14 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   // Create Event Handler
   const handleCreateEvent = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newTitle.trim()) {
-      setFormError('Geef je afspraak een titel.');
-      return;
-    }
-    const timeError = validateCalendarTimeRange(newStartTime, newEndTime);
-    if (timeError) {
-      setFormError(timeError);
+    const inputError = validateCalendarEventInput({
+      title: newTitle,
+      date: newDate,
+      startTime: newStartTime,
+      endTime: newEndTime,
+    });
+    if (inputError) {
+      setFormError(inputError);
       return;
     }
     if (findDuplicateCalendarEvent(events, { title: newTitle, date: newDate, startTime: newStartTime, endTime: newEndTime, realm: newRealm })) {
