@@ -711,7 +711,7 @@ export const TodayView: React.FC<TodayViewProps> = ({
           const stepCount = integrations.healthConnect.todaySteps ?? integrations.healthConnect.stepsToday ?? 0;
           if (stepCount <= 0) return null;
           return (
-            <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[var(--surface-2)] border border-[#E5DFD3] text-xs text-[var(--text-secondary)] w-fit shadow-2xs select-none">
+            <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[var(--surface-2)] border border-[var(--border-subtle)] text-xs text-[var(--text-secondary)] w-fit shadow-2xs select-none">
               <Footprints className="w-3.5 h-3.5 text-[var(--accent-secondary)]" />
               <span>
                 {isNl
@@ -1102,7 +1102,7 @@ export const TodayView: React.FC<TodayViewProps> = ({
             {todayEvents.map((event) => (
               <div
                 key={event.id}
-                className="p-3.5 rounded-2xl border border-[#E5DFD3] bg-[var(--surface-2)] shadow-2xs flex items-center justify-between gap-3"
+                className="p-3.5 rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-2)] shadow-2xs flex items-center justify-between gap-3"
               >
                 <div className="flex items-center gap-3 min-w-0">
                   <div className="w-8 h-8 rounded-xl bg-[var(--surface-2)] text-[var(--accent-secondary)] flex items-center justify-center shrink-0 border border-[var(--border-subtle)]">
@@ -1144,7 +1144,7 @@ export const TodayView: React.FC<TodayViewProps> = ({
       {/* ============================================================ */}
       {/* 3. DAILY CHECK-IN                                            */}
       {/* ============================================================ */}
-      <section className="rounded-2xl border border-[#E5DFD3] bg-[var(--surface-2)] p-4 sm:p-4.5 space-y-3 shadow-2xs">
+      <section className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-2)] p-4 sm:p-4.5 space-y-3 shadow-2xs">
         <div className="flex items-center justify-between">
           <div className="space-y-0.5">
             <span className="text-[10px] uppercase tracking-wider font-semibold text-[var(--accent-secondary)] font-sans">
@@ -1300,7 +1300,7 @@ export const TodayView: React.FC<TodayViewProps> = ({
 
             {/* ONE Short Follow-Up Question when useful */}
             {pendingFeeling && pendingFeeling !== 'good' && (
-              <div className="pt-2 border-t border-[#EAE1D3] space-y-2">
+              <div className="pt-2 border-t border-[var(--border-subtle)] space-y-2">
                 <span className="text-xs font-medium text-[var(--text-primary)] block">
                   {isNl ? 'Wat beïnvloedt je vandaag voornamelijk?' : 'What is mainly affecting you today?'}
                 </span>
@@ -1430,7 +1430,7 @@ export const TodayView: React.FC<TodayViewProps> = ({
                   className={`group p-3.5 rounded-2xl border transition-all ${
                     isDone
                       ? 'bg-[var(--surface-2)]/60 border-[var(--border-subtle)] opacity-60'
-                      : 'bg-[var(--surface-2)] border-[#E5DFD3] hover:border-[var(--text-muted)] shadow-2xs'
+                      : 'bg-[var(--surface-2)] border-[var(--border-subtle)] hover:border-[var(--text-muted)] shadow-2xs'
                   }`}
                 >
                   <div className="flex items-start justify-between gap-2.5">
@@ -1569,7 +1569,7 @@ export const TodayView: React.FC<TodayViewProps> = ({
                             <Repeat className="w-3.5 h-3.5 text-[var(--accent-secondary)]" />
                             <span>{isNl ? 'Bewaar voor later' : 'Keep for later'}</span>
                           </button>
-                          <div className="border-t border-[#EAE1D3] my-1" />
+                          <div className="border-t border-[var(--border-subtle)] my-1" />
                           <button
                             type="button"
                             onClick={() => {
@@ -1663,7 +1663,7 @@ export const TodayView: React.FC<TodayViewProps> = ({
         </div>
 
         {smallInsight.actionPrompt && (
-          <div className="pt-2 border-t border-[#ECE3D4] flex justify-end">
+          <div className="pt-2 border-t border-[var(--border-subtle)] flex justify-end">
             <button
               type="button"
               onClick={() => {
@@ -1709,7 +1709,7 @@ export const TodayView: React.FC<TodayViewProps> = ({
           </p>
 
           {celestialNote.optionalAstrologicalNote && (
-            <p className="text-[11px] text-[var(--text-muted)] italic pt-1 border-t border-[#ECE3D4]">
+            <p className="text-[11px] text-[var(--text-muted)] italic pt-1 border-t border-[var(--border-subtle)]">
               {celestialNote.optionalAstrologicalNote}
             </p>
           )}
