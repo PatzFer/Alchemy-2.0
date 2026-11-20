@@ -247,16 +247,18 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
         {filteredGoals.map((goal) => {
           const milestones = goal.milestones || [];
           const completedCount = milestones.filter((m) => m.completed).length;
-          const calculatedProgress =
-            milestones.length > 0
-              ? Math.round((completedCount / milestones.length) * 100)
-              : goal.progress;
           const linkedTasks = tasks.filter((task) =>
             task.realm === goal.realm && (task.goalId === goal.id || goal.connectedTaskIds?.includes(task.id))
           );
           const linkedProjects = projects.filter((project) =>
             project.realm === goal.realm && (project.goalId === goal.id || goal.connectedProjectIds?.includes(project.id))
           );
+          const completedLinkedTasks = linkedTasks.filter((task) => task.status === 'completed').length;
+          const calculatedProgress = milestones.length > 0
+            ? Math.round((completedCount / milestones.length) * 100)
+            : linkedTasks.length > 0
+              ? Math.round((completedLinkedTasks / linkedTasks.length) * 100)
+              : goal.progress;
 
           return (
             <div
@@ -309,7 +311,7 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
                     <span>Voortgang</span>
                     <span className="font-medium text-[var(--text-primary)]">{calculatedProgress}%</span>
                   </div>
-                  {milestones.length === 0 && (
+                  {milestones.length === 0 && linkedTasks.length === 0 && (
                     <div className="mb-3 flex items-center gap-3">
                       <label htmlFor={`goal-progress-${goal.id}`} className="text-[10px] text-[var(--text-muted)] shrink-0">
                         Voortgang aanpassen
