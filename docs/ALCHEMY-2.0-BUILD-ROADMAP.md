@@ -1173,3 +1173,4 @@ A user can reliably open Alchemy without a startup security interstitial; captur
 - Extracted calendar task filtering into a pure helper with workspace, date and ordering regression tests.
 - Calendar occupied-time totals now use the overlap-safe interval union helper so overlapping appointments are not counted twice.
 - Added calendar task regression tests to the automated CI suite.
+- Week-view task previews are interactive: tasks can be completed or reopened without leaving the calendar, and the click does not change the selected calendar day.
