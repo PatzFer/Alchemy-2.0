@@ -1,12 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createAlchemyBackup, verifyAlchemyBackup, restoreAlchemyBackup } from './backup';
+import { INITIAL_STATE } from './storage';
 
-const minimalState: any = {
-  tasks: [], goals: [], ideas: [], projects: [], calendarEvents: [], memories: [],
-  dailyCheckIns: [], notifications: [], proactiveSuggestions: [],
-  foundation: {}, integrations: {},
-};
+const minimalState = structuredClone(INITIAL_STATE);
 
 test('Alchemy backup can be created and verified without changing its payload', async () => {
   const backup = await createAlchemyBackup(minimalState);
@@ -71,4 +68,22 @@ test('backup verification rejects malformed integrity hashes before comparing pa
     ...backup,
     checksum: 'not-a-sha256-hash',
   }), /ongeldig formaat/);
+});
+
+test('backup verification requires the full Alchemy state contract', async () => {
+  const backup = await createAlchemyBackup(minimalState);
+  for (const payload of [
+    { ...minimalState, chatHistory: undefined },
+    { ...minimalState, nutrition: undefined },
+    { ...minimalState, foundation: { ...minimalState.foundation, aboutYou: [] } },
+    { ...minimalState, integrations: { ...minimalState.integrations, calendar: null } },
+    { ...minimalState, setupStatus: 'unknown' },
+  ]) {
+    const malformed = { ...backup, payload, checksum: await (async () => {
+      // Recreate a valid checksum so this test exercises schema validation, not tampering.
+      const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify(payload)));
+      return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('');
+    })() };
+    await assert.rejects(() => verifyAlchemyBackup(malformed), /onvolledig|ongeldig/);
+  }
 });
