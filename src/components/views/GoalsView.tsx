@@ -89,15 +89,24 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
 
     try {
       const result = await requestGoalBreakdown(formTitle, formRealm, formTimeframe);
-      if (result && result.milestones) {
-        const generated: Milestone[] = result.milestones.map((m: any, idx: number) => ({
-          id: 'm-gen-' + idx + '-' + Date.now(),
-          title: m.title,
-          completed: false,
-          suggestedDay: m.suggestedDay || 'Upcoming',
-          durationMins: m.durationMins || 45,
-        }));
-        setFormMilestones(generated);
+      if (result && Array.isArray(result.milestones)) {
+        const generated: Milestone[] = result.milestones
+          .filter((milestone: any) =>
+            typeof milestone?.title === 'string' &&
+            milestone.title.trim().length > 0 &&
+            milestone.title.trim().length <= 160
+          )
+          .slice(0, 50)
+          .map((milestone: any, index: number) => ({
+            id: 'm-gen-' + Date.now() + '-' + index,
+            title: milestone.title.trim(),
+            completed: false,
+            suggestedDay: typeof milestone.suggestedDay === 'string' ? milestone.suggestedDay.slice(0, 80) : 'Binnenkort',
+            durationMins: Number.isFinite(milestone.durationMins)
+              ? Math.max(5, Math.min(1440, Math.round(milestone.durationMins)))
+              : 45,
+          }));
+        setFormMilestones((current) => [...current, ...generated].slice(0, 50));
       }
     } catch (err) {
       console.warn('AI breakdown error:', err);
