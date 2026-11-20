@@ -128,11 +128,16 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
   const isNl = lang === 'nl';
   const [activeSubTab, setActiveSubTab] = useState<MarilunaSubTab>('brainstorm');
 
-  const todayStr = new Date().toISOString().split('T')[0];
+  // Use the browser's local calendar date; ISO/UTC can roll over a day
+  // early or late for users outside UTC.
+  const now = new Date();
+  const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
   // Domain filtered data
   const marilunaTasks = tasks.filter((t) => t.realm === 'mariluna');
-  const todayMarilunaTasks = marilunaTasks.filter((t) => !t.completed && (!t.dueDate || t.dueDate <= todayStr));
+  const todayMarilunaTasks = marilunaTasks.filter(
+    (t) => t.status !== 'completed' && (!t.dueDate || t.dueDate <= todayStr)
+  );
   const marilunaProjects = projects.filter((p) => p.realm === 'mariluna');
   const marilunaIdeas = ideas.filter((i) => i.realm === 'mariluna' && i.status !== 'archived');
   const marilunaGoals = goals.filter((g) => g.realm === 'mariluna');
