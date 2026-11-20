@@ -1021,3 +1021,15 @@ A user can reliably open Alchemy without a startup security interstitial; captur
 - GitHub Actions run 44787152240 passed on commit 258444ca: dependency install, TypeScript, migration checks, regression tests and production build.
 - A second duplicate workflow run for the same commit was still running at the last check; one complete successful run is confirmed.
 - No live Supabase project was provisioned or migrated, so concurrency, restore and owner-isolation behavior still require staging verification.
+
+
+## Progress log — 20 November 2026 (1.0 testability and Renpho bridge)
+
+- Replaced the client-only authentication preview bypass with a server-gated preview session. The preview endpoint remains unavailable in production and requires the explicit local `ENABLE_PREVIEW_AUTH=true` flag.
+- Made the First-Time Setup wizard reachable from Settings and synchronized the Settings subtab with the selected navigation destination.
+- Improved Jarvis response handling: invalid/unsupported action blocks are rejected, raw action JSON is not shown, and unavailable/empty API responses are explained without pretending that an operation succeeded.
+- Added automated tests for valid Jarvis actions, rejected action types, empty responses and server unavailability.
+- Added an in-browser Renpho CSV import in Wellbeing → Progress. It supports kg/lb, comma/semicolon separators and decimal commas, maps weight/body-fat/skeletal-muscle/body-water data, and merges readings by date without discarding manual notes or measurements.
+- Added a private 1.0 testing guide documenting preview setup, core test flows and honest integration/persistence boundaries.
+- GitHub Actions run 44788487737 passed on commit 8076b40c: TypeScript, Supabase migration checks, regression tests and production build.
+- Remaining: manual browser/Android acceptance, live Google OAuth test, live Supabase staging/restore, durable identity and native Health Connect. The app remains an internal test candidate, not a production-secure release.
