@@ -24,3 +24,13 @@ test('invalid dates and non-integer shifts are unchanged', () => {
   assert.equal(shiftCalendarDate('invalid', 'month', 1), 'invalid');
   assert.equal(shiftCalendarDate('2026-01-01', 'day', 1.5), '2026-01-01');
 });
+
+
+test('isValidCalendarDate accepts real local dates and rejects impossible dates', async () => {
+  const { isValidCalendarDate } = await import('./calendarDate');
+  assert.equal(isValidCalendarDate('2026-11-20'), true);
+  assert.equal(isValidCalendarDate('2024-02-29'), true);
+  assert.equal(isValidCalendarDate('2026-02-29'), false);
+  assert.equal(isValidCalendarDate('2026-13-01'), false);
+  assert.equal(isValidCalendarDate('20/11/2026'), false);
+});
