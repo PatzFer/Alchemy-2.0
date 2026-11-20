@@ -62,3 +62,12 @@ test('explicit reset clears both current and legacy storage keys', () => {
   assert.equal(storage.getItem('pm_alchemy_os_data_v1'), null);
   assert.equal(storage.getItem('mariluna_os_data_v1'), null);
 });
+
+test('saveState refuses incomplete runtime payloads without overwriting the last good state', () => {
+  const storage = installStorage();
+  const valid = JSON.stringify(INITIAL_STATE);
+  storage.setItem('pm_alchemy_os_data_v1', valid);
+  const invalid = { ...INITIAL_STATE, chatHistory: undefined } as any;
+  assert.equal(saveState(invalid), false);
+  assert.equal(storage.getItem('pm_alchemy_os_data_v1'), valid);
+});
