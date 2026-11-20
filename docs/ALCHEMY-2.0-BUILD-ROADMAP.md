@@ -1156,3 +1156,6 @@ A user can reliably open Alchemy without a startup security interstitial; captur
 - Added task-editor selectors to connect a task to an active project and goal in the same workspace. Existing links are restored when editing; changing workspace clears stale links. Linked project/goal names now appear on task cards.
 - Fixed quick task creation from a Mariluna project to use the local calendar date rather than a UTC date conversion.
 - Added automated project search, status-filter and validation boundary tests; included them in CI.
+
+- Goal cards now surface their linked tasks and projects, including completion state and due dates for connected tasks.
+- Tasks created directly inside a project inherit that project's linked goal, keeping the project → goal → task relationship intact.
