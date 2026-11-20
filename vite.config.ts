@@ -16,7 +16,7 @@ export default defineConfig(() => {
           id: '/',
           name: 'P & M Alchemy',
           short_name: 'Alchemy',
-          description: 'A quiet-luxury personal operating system and strategic AI assistant balancing Personal life and Mariluna Business.',
+          description: 'Een persoonlijke werkruimte voor Privé en Mariluna: planning, ideeën, welzijn, maaltijden en Jarvis.',
           theme_color: '#171916',
           background_color: '#171916',
           display: 'standalone',
