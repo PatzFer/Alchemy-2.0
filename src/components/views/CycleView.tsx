@@ -220,7 +220,7 @@ export const CycleView: React.FC<CycleViewProps> = ({
           <button
             onClick={() => setIsEditingSettings(!isEditingSettings)}
             id="cycle-settings-btn"
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-2)] text-xs text-[var(--text-secondary)] hover:bg-[#EBE5D9] transition cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-2)] text-xs text-[var(--text-secondary)] hover:bg-[var(--surface-raised)] transition cursor-pointer"
           >
             <Sliders className="w-3.5 h-3.5 text-[var(--text-secondary)]" />
             <span>Settings</span>
@@ -326,7 +326,7 @@ export const CycleView: React.FC<CycleViewProps> = ({
             </button>
             <button
               type="submit"
-              className="px-4 py-1.5 rounded-lg bg-[var(--text-primary)] text-[var(--text-primary)] text-xs font-medium hover:bg-[#453E37] transition"
+              className="px-4 py-1.5 rounded-lg bg-[var(--text-primary)] text-[var(--text-primary)] text-xs font-medium hover:bg-[var(--surface-raised)] transition"
             >
               Update Parameters
             </button>
@@ -336,7 +336,7 @@ export const CycleView: React.FC<CycleViewProps> = ({
 
       {hasCycleAnchor ? <>
       {/* Main Cycle Status Dashboard Hero */}
-      <div className="rounded-3xl border border-[#E4DCCF] bg-radial from-[var(--surface-1)] to-[var(--surface-2)] p-6 sm:p-8 shadow-xs relative overflow-hidden">
+      <div className="rounded-3xl border border-[var(--border-subtle)] bg-radial from-[var(--surface-1)] to-[var(--surface-2)] p-6 sm:p-8 shadow-xs relative overflow-hidden">
         {/* Subtle decorative motif */}
         <div className="absolute top-0 right-0 w-80 h-80 rounded-full bg-[#E8DEC8]/25 blur-3xl -mr-20 -mt-20 pointer-events-none"></div>
 
@@ -362,12 +362,12 @@ export const CycleView: React.FC<CycleViewProps> = ({
               <h2 className="font-serif text-3xl sm:text-4xl text-[var(--text-primary)] font-normal tracking-tight">
                 {activePhaseDetails.title}
               </h2>
-              <p className="mt-1 text-xs sm:text-sm text-[#7A6E5F] font-light">
+              <p className="mt-1 text-xs sm:text-sm text-[var(--text-secondary)] font-light">
                 {activePhaseDetails.subheading}
               </p>
             </div>
 
-            <p className="text-sm text-[#4E463D] leading-relaxed max-w-lg font-normal">
+            <p className="text-sm text-[var(--text-primary)] leading-relaxed max-w-lg font-normal">
               {activePhaseDetails.generalExperiences[0]}
             </p>
 
@@ -375,7 +375,7 @@ export const CycleView: React.FC<CycleViewProps> = ({
             <div className="space-y-1.5 pt-2">
               <div className="flex items-center justify-between text-xs text-[var(--text-secondary)]">
                 <span>Cycle Rhythm Progress</span>
-                <span className="font-mono text-[11px] text-[#4E463D]">{cycleStatus.cycleProgressPercent}%</span>
+                <span className="font-mono text-[11px] text-[var(--text-primary)]">{cycleStatus.cycleProgressPercent}%</span>
               </div>
               <div className="h-2 w-full rounded-full bg-[#E5DDCF] overflow-hidden p-0.5">
                 <div
@@ -455,8 +455,8 @@ export const CycleView: React.FC<CycleViewProps> = ({
       )}
 
       {/* Daily User-Reported Energy Check-in */}
-      <div className="rounded-2xl border border-[#E2DDD2] bg-[var(--surface-1)] p-6 shadow-xs space-y-5">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#EAE4D8] pb-4">
+      <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-1)] p-6 shadow-xs space-y-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[var(--border-subtle)] pb-4">
           <div>
             <div className="flex items-center gap-2">
               <Activity className="w-4 h-4 text-[var(--accent-secondary)]" />
@@ -514,7 +514,7 @@ export const CycleView: React.FC<CycleViewProps> = ({
           {/* Optional Mood & Physical Comfort Nuances */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-1">
             <div>
-              <label className="block text-[11px] font-medium text-[#5A524A] mb-1">
+              <label className="block text-[11px] font-medium text-[var(--text-secondary)] mb-1">
                 Mood Nuance (Optional)
               </label>
               <select
@@ -533,7 +533,7 @@ export const CycleView: React.FC<CycleViewProps> = ({
             </div>
 
             <div>
-              <label className="block text-[11px] font-medium text-[#5A524A] mb-1">
+              <label className="block text-[11px] font-medium text-[var(--text-secondary)] mb-1">
                 Appetite & Satiety (Optional)
               </label>
               <select
@@ -549,7 +549,7 @@ export const CycleView: React.FC<CycleViewProps> = ({
             </div>
 
             <div>
-              <label className="block text-[11px] font-medium text-[#5A524A] mb-1">
+              <label className="block text-[11px] font-medium text-[var(--text-secondary)] mb-1">
                 Physical Comfort (Optional)
               </label>
               <select
@@ -568,7 +568,7 @@ export const CycleView: React.FC<CycleViewProps> = ({
 
           {/* Quick reflection note */}
           <div>
-            <label className="block text-[11px] font-medium text-[#5A524A] mb-1">
+            <label className="block text-[11px] font-medium text-[var(--text-secondary)] mb-1">
               Personal Reflection or Physical Notes
             </label>
             <input
@@ -588,7 +588,7 @@ export const CycleView: React.FC<CycleViewProps> = ({
               type="button"
               onClick={handleSaveCheckIn}
               id="save-daily-checkin-btn"
-              className="px-4 py-2 rounded-xl bg-[var(--text-primary)] text-[var(--text-primary)] text-xs font-medium hover:bg-[#3E3831] transition shadow-xs cursor-pointer"
+              className="px-4 py-2 rounded-xl bg-[var(--text-primary)] text-[var(--text-primary)] text-xs font-medium hover:bg-[var(--surface-raised)] transition shadow-xs cursor-pointer"
             >
               Record Today’s Check-In
             </button>
@@ -598,8 +598,8 @@ export const CycleView: React.FC<CycleViewProps> = ({
 
       {hasCycleAnchor && <>
       {/* Weekly Cycle Insight Section: "Your Week" */}
-      <div className="rounded-2xl border border-[#E0D9CB] bg-[var(--surface-2)] p-6 shadow-xs space-y-4">
-        <div className="flex items-center justify-between border-b border-[#E8E2D4] pb-3">
+      <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-2)] p-6 shadow-xs space-y-4">
+        <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-3">
           <div className="flex items-center gap-2">
             <Compass className="w-4 h-4 text-[var(--accent-secondary)]" />
             <h3 className="font-serif text-lg font-medium text-[var(--text-primary)]">
@@ -616,18 +616,18 @@ export const CycleView: React.FC<CycleViewProps> = ({
         </p>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-          <div className="p-4 rounded-xl bg-[var(--surface-2)] border border-[#E2DDD2] space-y-2">
+          <div className="p-4 rounded-xl bg-[var(--surface-2)] border border-[var(--border-subtle)] space-y-2">
             <span className="font-medium text-[var(--text-primary)] block text-xs">What you might notice</span>
-            <p className="text-[#645C52] leading-relaxed">{weeklyInsight.whatYouMightNotice}</p>
+            <p className="text-[var(--text-secondary)] leading-relaxed">{weeklyInsight.whatYouMightNotice}</p>
             <span className="font-medium text-[var(--text-primary)] block text-xs pt-2">What could be useful</span>
-            <p className="text-[#645C52] leading-relaxed">{weeklyInsight.whatCouldBeUseful}</p>
+            <p className="text-[var(--text-secondary)] leading-relaxed">{weeklyInsight.whatCouldBeUseful}</p>
           </div>
 
-          <div className="p-4 rounded-xl bg-[var(--surface-2)] border border-[#E2DDD2] space-y-2">
+          <div className="p-4 rounded-xl bg-[var(--surface-2)] border border-[var(--border-subtle)] space-y-2">
             <span className="font-medium text-[var(--text-primary)] block text-xs">Recommended Priorities</span>
-            <p className="text-[#645C52] leading-relaxed">{weeklyInsight.whatToPrioritize}</p>
+            <p className="text-[var(--text-secondary)] leading-relaxed">{weeklyInsight.whatToPrioritize}</p>
             <span className="font-medium text-[var(--text-primary)] block text-xs pt-2">What to avoid overloading</span>
-            <p className="text-[#645C52] leading-relaxed">{weeklyInsight.whatToAvoid}</p>
+            <p className="text-[var(--text-secondary)] leading-relaxed">{weeklyInsight.whatToAvoid}</p>
           </div>
         </div>
 
@@ -703,7 +703,7 @@ export const CycleView: React.FC<CycleViewProps> = ({
       {/* Cycle History & Privacy Safeguards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Cycle History card */}
-        <div className="rounded-2xl border border-[#E2DDD2] bg-[var(--surface-1)] p-5 shadow-xs space-y-3">
+        <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-1)] p-5 shadow-xs space-y-3">
           <div className="flex items-center justify-between">
             <h4 className="font-serif text-sm font-medium text-[var(--text-primary)]">
               Recorded Cycle History
@@ -762,7 +762,7 @@ export const CycleView: React.FC<CycleViewProps> = ({
       {showLogPeriodModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#1A1816]/40 backdrop-blur-xs p-4">
           <div className="w-full max-w-md rounded-2xl bg-[var(--surface-1)] border border-[var(--border-subtle)] p-6 shadow-2xl space-y-4 text-[var(--text-primary)]">
-            <div className="flex items-center justify-between pb-3 border-b border-[#EAE4D8]">
+            <div className="flex items-center justify-between pb-3 border-b border-[var(--border-subtle)]">
               <h3 className="font-serif text-lg font-medium">Record Period Onset</h3>
               <button
                 onClick={() => setShowLogPeriodModal(false)}
