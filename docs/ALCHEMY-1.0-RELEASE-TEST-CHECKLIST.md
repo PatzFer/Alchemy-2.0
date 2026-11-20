@@ -67,6 +67,8 @@ This checklist separates a usable test candidate from a production release. A ch
 ## 7. Responsive and device checks
 
 - [x] Daily dashboard task grouping has automated coverage for overdue/today separation, world filtering, priority ordering and invalid dates.
+- [x] Jarvis calendar-capacity calculation counts overlapping appointments only once; automated interval tests included.
+- [x] Ideas review prompt uses local calendar-day thresholds and rejects invalid date-only values; automated tests included.
 - [ ] Android phone portrait layout.
 - [ ] Android phone landscape layout.
 - [ ] Desktop wide layout.
