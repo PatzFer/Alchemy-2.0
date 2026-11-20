@@ -32,12 +32,13 @@ test('snapshot save sends only the user bearer token and confirms the saved revi
       },
     }), { status: 201 });
   };
-  const saved = await saveAlchemySnapshot('user-access-token', INITIAL_STATE, fetcher);
+  const saved = await saveAlchemySnapshot('user-access-token', INITIAL_STATE, fetcher, 'migration', 0);
   assert.equal(saved.revision, 3);
   assert.equal(new Headers(request?.headers).get('Authorization'), 'Bearer user-access-token');
   assert.equal(new Headers(request?.headers).has('apikey'), false);
   const body = JSON.parse(String(request?.body));
   assert.equal(body.source, 'migration');
+  assert.equal(body.expectedRevision, 0);
   assert.equal(body.schemaVersion, 1);
   assert.equal(body.payload.setupStatus, INITIAL_STATE.setupStatus);
 });
@@ -119,4 +120,18 @@ test('client persistence returns a safe error when the server rejects the reques
     () => loadAlchemySnapshot('user-access-token', fetcher),
     /Supabase persistence is not configured/,
   );
+});
+
+
+test('snapshot save rejects invalid expected revision without sending local data', async () => {
+  let called = false;
+  const fetcher: PersistenceFetch = async () => {
+    called = true;
+    return new Response('{}', { status: 200 });
+  };
+  await assert.rejects(
+    () => saveAlchemySnapshot('user-access-token', INITIAL_STATE, fetcher, 'autosave', -1),
+    /verwachte cloudversie moet een niet-negatief geheel getal zijn/,
+  );
+  assert.equal(called, false);
 });
