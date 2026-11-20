@@ -1176,6 +1176,7 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
                     </label>
                     <input
                       type="text"
+                      maxLength={120}
                       placeholder={isNl ? 'bijv. Lenormand Reading' : 'e.g. Lenormand Reading'}
                       value={offeringTitle}
                       onChange={(e) => setOfferingTitle(e.target.value)}
@@ -1221,6 +1222,7 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
                     </label>
                     <textarea
                       rows={3}
+                      maxLength={3000}
                       placeholder={isNl ? 'Wat houdt de dienst in? Voor wie is ze bedoeld?' : 'What does this offering include? Who is it for?'}
                       value={offeringDesc}
                       onChange={(e) => setOfferingDesc(e.target.value)}
@@ -1233,6 +1235,7 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
                     </label>
                     <textarea
                       rows={3}
+                      maxLength={5000}
                       placeholder={isNl ? 'Bijv. intakegesprek\\nPersoonlijke reading\\nNabespreking' : 'e.g. Intake\\nPersonal reading\\nFollow-up'}
                       value={offeringDeliverables}
                       onChange={(e) => setOfferingDeliverables(e.target.value)}
