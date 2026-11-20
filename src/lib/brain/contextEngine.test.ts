@@ -48,3 +48,34 @@ test('Jarvis context never mixes personal and Mariluna memories across workspace
     ['business', 'private'],
   );
 });
+
+test('memory confirmation only promotes pending learned suggestions', async () => {
+  const { confirmLearnedMemory } = await import('./memoryEngine');
+  const memories = [
+    makeMemory({ id: 'pending', content: 'Candidate', realm: 'personal', type: 'learned', status: 'pending_confirmation' }),
+    makeMemory({ id: 'archived', content: 'Archived', realm: 'personal', type: 'learned', status: 'archived' }),
+    makeMemory({ id: 'explicit', content: 'Explicit', realm: 'personal', type: 'explicit', status: 'active' }),
+  ];
+  const result = confirmLearnedMemory(memories, 'archived');
+  assert.equal(result.find((memory) => memory.id === 'archived')?.status, 'archived');
+  assert.equal(result.find((memory) => memory.id === 'explicit')?.type, 'explicit');
+  const confirmed = confirmLearnedMemory(result, 'pending');
+  assert.equal(confirmed.find((memory) => memory.id === 'pending')?.type, 'confirmed');
+});
+
+test('memory dismissal only removes pending learned suggestions', async () => {
+  const { dismissLearnedMemory } = await import('./memoryEngine');
+  const memories = [
+    makeMemory({ id: 'pending', content: 'Candidate', realm: 'personal', type: 'learned', status: 'pending_confirmation' }),
+    makeMemory({ id: 'explicit', content: 'Explicit', realm: 'personal', type: 'explicit', status: 'active' }),
+    makeMemory({ id: 'confirmed', content: 'Confirmed', realm: 'personal', type: 'confirmed', status: 'active' }),
+  ];
+  assert.deepEqual(
+    dismissLearnedMemory(memories, 'explicit').map((memory) => memory.id),
+    ['pending', 'explicit', 'confirmed'],
+  );
+  assert.deepEqual(
+    dismissLearnedMemory(memories, 'pending').map((memory) => memory.id),
+    ['explicit', 'confirmed'],
+  );
+});
