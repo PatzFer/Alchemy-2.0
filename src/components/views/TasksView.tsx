@@ -307,6 +307,8 @@ export const TasksView: React.FC<TasksViewProps> = ({
         ) : (
           filteredTasks.map((task) => {
             const isCompleted = task.status === 'completed';
+            const linkedProject = projects.find((project) => project.id === task.projectId);
+            const linkedGoal = goals.find((goal) => goal.id === task.goalId);
             return (
               <div
                 key={task.id}
@@ -356,6 +358,17 @@ export const TasksView: React.FC<TasksViewProps> = ({
                         {task.priority === 'high' && (
                           <span className="text-[9px] uppercase tracking-wider font-semibold text-[var(--accent-secondary)] bg-[var(--surface-2)] px-2 py-0.5 rounded-full">
                             High
+                          </span>
+                        )}
+
+                        {linkedProject && (
+                          <span className="text-[10px] rounded-full bg-[var(--surface-2)] px-2 py-0.5 text-[var(--text-secondary)]">
+                            Project: {linkedProject.title}
+                          </span>
+                        )}
+                        {linkedGoal && (
+                          <span className="text-[10px] rounded-full bg-[var(--surface-2)] px-2 py-0.5 text-[var(--text-secondary)]">
+                            Goal: {linkedGoal.title}
                           </span>
                         )}
                       </div>
@@ -481,7 +494,7 @@ export const TasksView: React.FC<TasksViewProps> = ({
                   <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">World</label>
                   <select
                     value={formRealm}
-                    onChange={(e) => setFormRealm(e.target.value as Realm)}
+                    onChange={(e) => { setFormRealm(e.target.value as Realm); setFormProjectId(''); setFormGoalId(''); }}
                     className="w-full bg-[var(--surface-raised)] border border-[var(--border-subtle)] rounded-xl px-3 py-2 text-xs text-[var(--text-primary)]"
                   >
                     <option value="personal">Personal</option>
