@@ -460,10 +460,11 @@ class SecurityVault {
 
   public updatePasskeyUsage(id: string, counter: number): void {
     const cred = this.passkeys.get(id);
-    if (cred) {
-      cred.counter = counter;
-      cred.lastUsedAt = new Date().toISOString();
-    }
+    // WebAuthn signature counters must never move backwards. Some authenticators
+    // legitimately report zero, but an invalid or regressing value is not stored.
+    if (!cred || !Number.isSafeInteger(counter) || counter < 0 || counter < cred.counter) return;
+    cred.counter = counter;
+    cred.lastUsedAt = new Date().toISOString();
   }
 
   public deletePasskey(id: string): boolean {
