@@ -1,6 +1,6 @@
 # Alchemy 1.0 Release Test Checklist
 
-Branch under test: `design/phase-1`
+Branch under test: `build/phase-2-planner`
 
 This checklist separates a usable test candidate from a production release. A checkbox may only be marked after the test has actually been executed and its result recorded.
 
@@ -74,3 +74,14 @@ This checklist separates a usable test candidate from a production release. A ch
 **Production 1.0:** all applicable automated gates pass, critical security/privacy tests pass, persistence and recovery are verified, and unresolved release blockers are closed.
 
 Do not mark a test as passed based only on source inspection or a successful commit.
+
+
+## 7. Snapshot concurrency and recovery
+
+- [ ] Apply the revision compare-and-swap migration to a disposable Supabase staging project.
+- [ ] Verify an expected revision of 0 creates the first snapshot.
+- [ ] Verify two writers using the same expected revision cannot both commit.
+- [ ] Verify the losing writer receives HTTP 409 and can reload before retrying.
+- [ ] Verify a snapshot can be loaded, checksum-validated and restored without changing the existing local copy.
+- [ ] Verify owner A cannot read or write owner B's snapshots.
+- [ ] Verify service-role credentials and APP_ENCRYPTION_KEY are absent from browser bundles and logs.
