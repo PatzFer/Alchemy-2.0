@@ -1130,3 +1130,13 @@ A user can reliably open Alchemy without a startup security interstitial; captur
 - Search combines with workspace, active/completed and priority filters without mutating task records or changing their source order.
 - Extracted the filtering behavior into a pure helper and added automated tests for search fields, combined filters, whitespace and case handling.
 - This is a lightweight daily-use improvement; no external AI or paid service is required.
+
+
+## Progress log — 20 November 2026 (task and goal editor reliability)
+
+- Added reusable task validation for required/trimmed titles, bounded descriptions, valid local due dates, realistic durations and bounded subtask input.
+- The task editor now presents actionable Dutch validation messages and applies matching browser-side input limits.
+- Added reusable goal validation for title, description, optional target date and milestone limits.
+- The goal editor now supports adding and removing milestones manually, in addition to Jarvis suggestions.
+- AI-generated milestones are treated as untrusted input: invalid/oversized titles are discarded, suggested labels are bounded, durations are clamped, existing manual milestones are preserved and the total remains capped at 50.
+- Added automated boundary tests for task and goal validation.
