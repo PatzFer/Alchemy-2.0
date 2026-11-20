@@ -144,6 +144,8 @@ Do not mark a test as passed based only on source inspection or a successful com
 - [x] Project editor validates required names, text bounds and date order.
 - [x] Tasks can be linked to active projects and goals in the same workspace.
 - [x] Linked project and goal names are visible on task cards.
+- [x] Goal cards show linked tasks and projects.
+- [x] Project-created tasks inherit the project's linked goal.
 - [x] Project quick-task creation uses the local calendar date.
 - [x] Automated project search, status and validation tests are included in CI.
 - [ ] Manually verify project creation, task links and goal links on Android and desktop.
