@@ -1,6 +1,6 @@
 import type { ProgressLog } from '../types';
 
-function parseCsvRows(input: string): string[][] {
+function detectDelimiter(input: string): ',' | ';' {\n  const firstLine = input.split(/\\r?\\n/, 1)[0] || '';\n  let quoted = false;\n  let commas = 0;\n  let semicolons = 0;\n  for (let i = 0; i < firstLine.length; i += 1) {\n    if (firstLine[i] === '\"') quoted = !quoted;\n    else if (!quoted && firstLine[i] === ',') commas += 1;\n    else if (!quoted && firstLine[i] === ';') semicolons += 1;\n  }\n  return semicolons > commas ? ';' : ',';\n}\n\nfunction parseCsvRows(input: string, delimiter: ',' | ';'): string[][] {
   const rows: string[][] = [];
   let row: string[] = [];
   let cell = '';
@@ -15,7 +15,7 @@ function parseCsvRows(input: string): string[][] {
       } else {
         quoted = !quoted;
       }
-    } else if (char === ',' && !quoted) {
+    } else if (char === delimiter && !quoted) {
       row.push(cell.trim());
       cell = '';
     } else if ((char === '\n' || char === '\r') && !quoted) {
