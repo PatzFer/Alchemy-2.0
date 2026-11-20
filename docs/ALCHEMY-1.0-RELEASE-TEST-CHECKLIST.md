@@ -6,11 +6,11 @@ This checklist separates a usable test candidate from a production release. A ch
 
 ## 1. Automated quality gates
 
-- [x] Locked dependency installation passed in GitHub Actions run 44788487737 on commit `8076b40c`.
-- [x] TypeScript check (`bun run lint`) passed on commit `8076b40c`.
-- [x] Supabase migration safety checks passed on commit `8076b40c`.
-- [x] Privacy, Jarvis and Renpho import regression tests (`bun run test`) passed on commit `8076b40c`.
-- [x] Production client and server build (`bun run build`) passed on commit `8076b40c`.
+- [x] Locked dependency installation passed in GitHub Actions run 44789482370 on commit `11b95192`.
+- [x] TypeScript check (`bun run lint`) passed on commit `11b95192`.
+- [x] Supabase migration safety checks passed on commit `11b95192`.
+- [x] Privacy, Jarvis and Renpho import regression tests (`bun run test`) passed on commit `11b95192`.
+- [x] Production client and server build (`bun run build`) passed on commit `11b95192`.
 - [ ] No unreviewed dependency or lockfile drift.
 - [ ] Live Supabase staging migration, read/write and restore tests completed.
 
@@ -53,7 +53,7 @@ This checklist separates a usable test candidate from a production release. A ch
 - [ ] Renpho CSV import is available in Wellbeing → Progress; manually verify a real export and duplicate-date merge.
 - [ ] Integration errors are visible and do not create fake successful sync timestamps.
 
-- [x] Jarvis action blocks accept only supported action types and malformed/unsupported JSON is not shown to the user.\n\n## 6. Jarvis
+- [x] Jarvis action blocks accept only supported action types and malformed/unsupported JSON is not shown to the user.\n- [x] Jarvis defaults to local privacy mode; Gemini free-tier data-use warning is visible before opt-in.\n\n## 6. Jarvis
 
 - [ ] Jarvis works with the configured Gemini key and reports unavailable state clearly when missing.
 - [ ] Local fallback is clearly distinguished from live AI responses.
@@ -91,7 +91,7 @@ Do not mark a test as passed based only on source inspection or a successful com
 
 ## 8. 1.0 testability additions
 
-- [x] Server-gated preview authentication is wired to the client; the server rejects it in production.
+- [x] Server-gated preview authentication is wired to the client; the server rejects it in production.\n- [x] Active preview sessions display a synthetic-data warning.
 - [x] Jarvis response validation and failure messaging are covered by automated tests.
 - [x] Renpho CSV parser and non-destructive merge are covered by automated tests.
 - [ ] Verify the First-Time Setup wizard manually on Android and desktop.
