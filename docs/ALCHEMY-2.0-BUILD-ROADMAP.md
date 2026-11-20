@@ -1000,3 +1000,14 @@ A user can reliably open Alchemy without a startup security interstitial; captur
 - Registered the tests in the standard CI test command.
 - This is a reusable cryptographic primitive only. It is not yet wired into TOTP or integration-token persistence, no live APP_ENCRYPTION_KEY has been provisioned, and no key rotation/recovery drill has been performed. Durable security storage remains blocked.
 - The current branch CI result at commit 24a788a was successful for TypeScript, migration checks, regression tests and production build. New encryption changes require a fresh CI run before they can be considered validated.
+
+
+## Progress log — 20 November 2026 (snapshot concurrency protection)
+
+- Added a forward-only Supabase migration that extends the owner-scoped snapshot RPC with an optional expected-revision precondition.
+- A stale writer can now be rejected with a database conflict instead of silently writing on top of a newer revision when it supplies the revision it last read.
+- The API returns HTTP 409 for a snapshot revision conflict and validates malformed revision values before contacting Supabase.
+- The browser persistence adapter can send the expected revision; it never receives a service-role credential.
+- Added unit coverage for expected-revision propagation and invalid client/server inputs.
+- Extended the migration CI guard to require the revision-aware RPC, conflict branch and service-role-only execution grants.
+- This does not yet activate autosave or cloud sync. The database migration is not applied to a live Supabase project; the real concurrent-write and restore drill remain outstanding.
