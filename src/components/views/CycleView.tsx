@@ -495,14 +495,16 @@ export const CycleView: React.FC<CycleViewProps> = ({
                     key={item.val}
                     type="button"
                     onClick={() => setEnergyLevel(item.val as EnergyLevel)}
-                    className={`p-3 rounded-xl border text-left transition cursor-pointer ${
-                      isSelected
-                        ? 'bg-[#74334D] text-[#FFF4F0] border-[#C77A99] shadow-[0_0_0_1px_rgba(199,122,153,0.18)]'
-                        : 'bg-[var(--surface-2)] text-[var(--text-secondary)] border-[var(--border-subtle)] hover:border-[#BFAF98]'
-                    }`}
+                    style={{
+                      backgroundColor: isSelected ? '#74334D' : 'var(--surface-2)',
+                      color: isSelected ? '#FFF4F0' : 'var(--text-secondary)',
+                      borderColor: isSelected ? '#C77A99' : 'var(--border-subtle)',
+                      boxShadow: isSelected ? '0 0 0 1px rgba(199,122,153,0.18)' : 'none',
+                    }}
+                    className="p-3 rounded-xl border text-left transition cursor-pointer hover:border-[#E18449]"
                   >
                     <span className="block text-xs font-semibold">{item.label}</span>
-                    <span className={`block text-[10px] mt-0.5 ${isSelected ? 'text-[#F1DCE4]' : 'text-[var(--text-muted)]'}`}>
+                    <span style={{ color: isSelected ? '#F1DCE4' : 'var(--text-muted)' }} className="block text-[10px] mt-0.5">
                       {item.desc}
                     </span>
                   </button>
@@ -588,7 +590,7 @@ export const CycleView: React.FC<CycleViewProps> = ({
               type="button"
               onClick={handleSaveCheckIn}
               id="save-daily-checkin-btn"
-              className="px-4 py-2 rounded-xl bg-[var(--text-primary)] text-[var(--text-primary)] text-xs font-medium hover:bg-[var(--surface-raised)] transition shadow-xs cursor-pointer"
+              className="px-4 py-2 rounded-xl bg-[#74334D] text-[#FFF4F0] border border-[#C77A99] text-xs font-medium hover:bg-[#87405B] transition shadow-xs cursor-pointer"
             >
               Record Today’s Check-In
             </button>
