@@ -177,7 +177,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             id="settings-tab-foundation"
             className={`px-3.5 py-1.5 rounded-full transition cursor-pointer flex items-center gap-1.5 ${
               activeTab === 'foundation'
-                ? 'bg-[var(--text-primary)] text-[var(--text-primary)] font-medium shadow-xs'
+                ? 'bg-[var(--surface-raised)] text-[var(--text-primary)] border border-[var(--border-strong)] font-medium shadow-xs'
                 : 'bg-[var(--surface-2)] border border-[var(--border-subtle)] text-[var(--text-secondary)] hover:bg-[var(--surface-2)]'
             }`}
           >
@@ -188,7 +188,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             onClick={() => setActiveTab('memory')}
             className={`px-3.5 py-1.5 rounded-full transition cursor-pointer ${
               activeTab === 'memory'
-                ? 'bg-[var(--text-primary)] text-[var(--text-primary)] font-medium shadow-xs'
+                ? 'bg-[var(--surface-raised)] text-[var(--text-primary)] border border-[var(--border-strong)] font-medium shadow-xs'
                 : 'bg-[var(--surface-2)] border border-[var(--border-subtle)] text-[var(--text-secondary)] hover:bg-[var(--surface-2)]'
             }`}
           >
@@ -198,7 +198,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             onClick={() => setActiveTab('notifications')}
             className={`px-3.5 py-1.5 rounded-full transition cursor-pointer flex items-center gap-1.5 ${
               activeTab === 'notifications'
-                ? 'bg-[var(--text-primary)] text-[var(--text-primary)] font-medium shadow-xs'
+                ? 'bg-[var(--surface-raised)] text-[var(--text-primary)] border border-[var(--border-strong)] font-medium shadow-xs'
                 : 'bg-[var(--surface-2)] border border-[var(--border-subtle)] text-[var(--text-secondary)] hover:bg-[var(--surface-2)]'
             }`}
           >
@@ -210,7 +210,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             id="settings-tab-integrations"
             className={`px-3.5 py-1.5 rounded-full transition cursor-pointer flex items-center gap-1.5 ${
               activeTab === 'integrations'
-                ? 'bg-[var(--text-primary)] text-[var(--text-primary)] font-medium shadow-xs'
+                ? 'bg-[var(--surface-raised)] text-[var(--text-primary)] border border-[var(--border-strong)] font-medium shadow-xs'
                 : 'bg-[var(--surface-2)] border border-[var(--border-subtle)] text-[var(--text-secondary)] hover:bg-[var(--surface-2)]'
             }`}
           >
@@ -221,7 +221,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             onClick={() => setActiveTab('security')}
             className={`px-3.5 py-1.5 rounded-full transition cursor-pointer ${
               activeTab === 'security'
-                ? 'bg-[var(--text-primary)] text-[var(--text-primary)] font-medium shadow-xs'
+                ? 'bg-[var(--surface-raised)] text-[var(--text-primary)] border border-[var(--border-strong)] font-medium shadow-xs'
                 : 'bg-[var(--surface-2)] border border-[var(--border-subtle)] text-[var(--text-secondary)] hover:bg-[var(--surface-2)]'
             }`}
           >
@@ -231,7 +231,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             onClick={() => setActiveTab('data')}
             className={`px-3.5 py-1.5 rounded-full transition cursor-pointer ${
               activeTab === 'data'
-                ? 'bg-[var(--text-primary)] text-[var(--text-primary)] font-medium shadow-xs'
+                ? 'bg-[var(--surface-raised)] text-[var(--text-primary)] border border-[var(--border-strong)] font-medium shadow-xs'
                 : 'bg-[var(--surface-2)] border border-[var(--border-subtle)] text-[var(--text-secondary)] hover:bg-[var(--surface-2)]'
             }`}
           >
@@ -286,7 +286,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   }
                   className={`px-4 py-1.5 rounded-full text-xs font-medium transition cursor-pointer ${
                     notificationSettings.enabled
-                      ? 'bg-[var(--text-primary)] text-[var(--text-primary)]'
+                      ? 'bg-[var(--surface-raised)] text-[var(--text-primary)] border border-[var(--border-strong)]'
                       : 'bg-[var(--surface-2)] text-[var(--text-secondary)]'
                   }`}
                 >
@@ -518,7 +518,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                       key={item.key}
                       className="flex items-center justify-between p-3 rounded-xl bg-[var(--surface-1)] border border-[var(--border-subtle)] cursor-pointer hover:bg-[var(--surface-2)] transition"
                     >
-                      <span className="text-xs text-[#3E372E] pr-2">{item.label}</span>
+                      <span className="text-xs text-[var(--text-primary)] pr-2">{item.label}</span>
                       <input
                         type="checkbox"
                         checked={isChecked}
@@ -601,7 +601,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             </div>
 
             {/* Sample Data Toggle */}
-            <div className="flex items-center justify-between p-4 rounded-xl bg-[var(--surface-1)] border border-[#E2DBD0]">
+            <div className="flex items-center justify-between p-4 rounded-xl bg-[var(--surface-1)] border border-[var(--border-subtle)]">
               <div>
                 <span className="text-xs font-semibold text-[var(--text-primary)] block">
                   Sample Data Mode
@@ -614,7 +614,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               </div>
               <button
                 onClick={onToggleSampleData}
-                className="px-3.5 py-1.5 rounded-lg border border-[var(--border-subtle)] text-xs font-medium text-[var(--text-primary)] hover:bg-[#EFE9DE] transition cursor-pointer"
+                className="px-3.5 py-1.5 rounded-lg border border-[var(--border-subtle)] text-xs font-medium text-[var(--text-primary)] hover:bg-[var(--surface-raised)] transition cursor-pointer"
               >
                 {isSampleData ? 'Clear Sample Data' : 'Reload Sample Data'}
               </button>
@@ -643,9 +643,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             </div>
 
             {/* Danger Zone: Reset */}
-            <div className="pt-4 border-t border-[#F0EBE1] flex items-center justify-between">
+            <div className="pt-4 border-t border-[var(--border-subtle)] flex items-center justify-between">
               <div>
-                <span className="text-xs font-medium text-[#733] block">
+                <span className="text-xs font-medium text-[var(--status-danger)] block">
                   Reset Environment
                 </span>
                 <span className="text-[11px] text-[var(--text-muted)]">
@@ -654,7 +654,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               </div>
               <button
                 onClick={onResetData}
-                className="px-4 py-1.5 rounded-lg border border-[#6B3B37] bg-[#332321] text-xs font-medium text-[#842] hover:bg-[#49302E] transition cursor-pointer"
+                className="px-4 py-1.5 rounded-lg border border-[#6B3B37] bg-[#332321] text-xs font-medium text-[var(--status-danger)] hover:bg-[var(--surface-raised)] transition cursor-pointer"
               >
                 Reset to Default
               </button>
