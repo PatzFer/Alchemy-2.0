@@ -50,7 +50,7 @@ export async function requestOpenAIResponse(
         model,
         input: messages.map((message) => ({
           role: message.role,
-          content: [{ type: 'input_text', text: message.content }],
+          content: message.content,
         })),
       }),
     });
