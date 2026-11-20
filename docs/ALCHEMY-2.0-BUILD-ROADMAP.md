@@ -999,7 +999,7 @@ A user can reliably open Alchemy without a startup security interstitial; captur
 - Added regression tests for round-trip decryption, owner/purpose isolation, nonce uniqueness, tampering, missing/malformed keys and key-version mismatch.
 - Registered the tests in the standard CI test command.
 - This is a reusable cryptographic primitive only. It is not yet wired into TOTP or integration-token persistence, no live APP_ENCRYPTION_KEY has been provisioned, and no key rotation/recovery drill has been performed. Durable security storage remains blocked.
-- The current branch CI result at commit 24a788a was successful for TypeScript, migration checks, regression tests and production build. New encryption changes require a fresh CI run before they can be considered validated.
+- GitHub Actions run 44787152240 completed successfully on commit 258444ca (20 November 2026): dependency installation, TypeScript check, Supabase migration safety checks, privacy regression tests and production build all passed.
 
 
 ## Progress log — 20 November 2026 (snapshot concurrency protection)
@@ -1011,3 +1011,13 @@ A user can reliably open Alchemy without a startup security interstitial; captur
 - Added unit coverage for expected-revision propagation and invalid client/server inputs.
 - Extended the migration CI guard to require the revision-aware RPC, conflict branch and service-role-only execution grants.
 - This does not yet activate autosave or cloud sync. The database migration is not applied to a live Supabase project; the real concurrent-write and restore drill remain outstanding.
+
+
+## Progress log — 20 November 2026 (revision-aware persistence CI)
+
+- Added the forward-only compare-and-swap migration and wired its expected revision through the server persistence API and browser adapter.
+- Added server/client validation and regression tests for invalid or stale revision inputs.
+- CI static migration checks now require the revision-aware RPC to validate the expected revision and restrict execution to service_role.
+- GitHub Actions run 44787152240 passed on commit 258444ca: dependency install, TypeScript, migration checks, regression tests and production build.
+- A second duplicate workflow run for the same commit was still running at the last check; one complete successful run is confirmed.
+- No live Supabase project was provisioned or migrated, so concurrency, restore and owner-isolation behavior still require staging verification.
