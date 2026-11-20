@@ -124,7 +124,10 @@ export function evaluateSmartNotifications(params: {
 
   if (!settings || !settings.enabled) return existingNotifications;
 
-  const maxFrequency = settings.maxDailyFrequency || 3;
+  const configuredFrequency = settings.maxDailyFrequency;
+  const maxFrequency = Number.isFinite(configuredFrequency)
+    ? Math.max(0, Math.min(20, Math.floor(configuredFrequency)))
+    : DEFAULT_NOTIFICATION_SETTINGS.maxDailyFrequency;
   const categories = settings.categories || DEFAULT_NOTIFICATION_SETTINGS.categories;
 
   const todayStr = getNotificationLocalDateKey();
