@@ -92,6 +92,7 @@ export const TasksView: React.FC<TasksViewProps> = ({
     setFormRecurring(task.recurring);
     setFormSubtasks(task.subtasks || []);
     setSubtaskGenerationError(null);
+    setFormError(null);
     setIsModalOpen(true);
   };
 
@@ -139,12 +140,14 @@ export const TasksView: React.FC<TasksViewProps> = ({
   };
 
   const handleAddSubtask = () => {
-    if (!subtaskInput.trim()) return;
-    setFormSubtasks([
-      ...formSubtasks,
-      { id: 'st-' + Date.now(), title: subtaskInput.trim(), completed: false },
+    const title = subtaskInput.trim();
+    if (!title || title.length > 160 || formSubtasks.length >= 30) return;
+    setFormSubtasks((current) => [
+      ...current,
+      { id: 'st-' + Date.now(), title, completed: false },
     ]);
     setSubtaskInput('');
+    setFormError(null);
   };
 
   // AI Subtask Generator
@@ -174,8 +177,8 @@ export const TasksView: React.FC<TasksViewProps> = ({
         const lines = responseText
           .split('\n')
           .map((l: string) => l.replace(/^[-*•\d.]+\s*/, '').trim())
-          .filter((l: string) => l.length > 0)
-          .slice(0, 4);
+          .filter((l: string) => l.length > 0 && l.length <= 160)
+          .slice(0, Math.max(0, 30 - formSubtasks.length));
         const newSubtasks = lines.map((title: string) => ({
           id: 'st-' + Date.now() + '-' + Math.random().toString(36).slice(2, 9),
           title,
@@ -185,7 +188,7 @@ export const TasksView: React.FC<TasksViewProps> = ({
         if (newSubtasks.length === 0) {
           throw new Error('Jarvis gaf geen bruikbare subtaken terug. Probeer het opnieuw of voeg ze zelf toe.');
         }
-        setFormSubtasks([...formSubtasks, ...newSubtasks]);
+        setFormSubtasks((current) => [...current, ...newSubtasks].slice(0, 30));
       }
     } catch (err) {
       console.warn('Jarvis subtask generation failed:', err);
