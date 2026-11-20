@@ -1,6 +1,7 @@
 import React from 'react';
 import { CalendarDays, CheckCircle2, Circle, Clock, ArrowRight, Sparkles } from 'lucide-react';
 import { Task, CalendarEvent, ActiveWorldFilter } from '../../types';
+import { groupTasksForToday } from '../../lib/todayDashboardModel';
 
 interface TodayDashboardViewProps {
   tasks: Task[];
@@ -24,13 +25,9 @@ export const TodayDashboardView: React.FC<TodayDashboardViewProps> = ({
   const nl = lang === 'nl';
   const today = localDate();
   const visible = (realm?: string) => activeWorld === 'all' || realm === activeWorld;
-  const todayTasks = tasks
-    .filter(t => t.status !== 'completed' && !!t.dueDate && t.dueDate <= today && visible(t.realm))
-    .sort((a, b) => {
-      const priority = { high: 0, medium: 1, low: 2 };
-      return priority[a.priority] - priority[b.priority] || (a.dueDate || '').localeCompare(b.dueDate || '');
-    });
-  const overdueCount = todayTasks.filter(t => !!t.dueDate && t.dueDate < today).length;
+  const taskGroups = groupTasksForToday(tasks, today, activeWorld);
+  const todayTasks = [...taskGroups.overdue, ...taskGroups.dueToday];
+  const overdueCount = taskGroups.overdue.length;
   const todayEvents = events.filter(e => e.date === today && visible(e.realm)).sort((a,b) => a.startTime.localeCompare(b.startTime));
   const priorityLabel = (priority: Task['priority']) => nl
     ? priority === 'high' ? 'Hoog' : priority === 'medium' ? 'Gemiddeld' : 'Laag'
