@@ -1086,3 +1086,5 @@ A user can reliably open Alchemy without a startup security interstitial; captur
 - Daily notification frequency now respects an explicit zero limit and clamps malformed/out-of-range values instead of silently turning zero into the default of three.
 - Added regression tests for quiet-hour boundaries, malformed settings and zero/negative notification limits.
 - Automated checks are running for the latest changes. Device-level notification delivery and real browser permission flows still need manual acceptance.
+
+- Verification note: the first quiet-hours CI run exposed an over-escaped clock-validation regex; this was corrected, and GitHub Actions run 44792717642 passed TypeScript, Supabase migration safety, privacy regression tests and the production build on commit 17fed248.
