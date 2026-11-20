@@ -1108,3 +1108,13 @@ A user can reliably open Alchemy without a startup security interstitial; captur
 - Invalid and impossible ISO date-only values are ignored rather than normalized into a different date.
 - Added automated tests for the 21-day threshold, last-revisited precedence, future/invalid dates and invalid review thresholds.
 - Browser/device acceptance remains separate from automated checks.
+
+
+## Progress log — 20 November 2026 (Mariluna offering editor validation)
+
+- Added a dedicated, pure validation helper for Mariluna services and offerings.
+- The editor now validates required names, name length, non-negative finite prices, description length, number of included deliverables and individual deliverable length.
+- Validation errors are shown in Dutch or English, depending on the active language.
+- Added browser-side field length limits to prevent oversized input before save.
+- Added automated regression tests for valid input and each validation boundary.
+- This improves the reliability of the user-managed service catalogue without expanding Mariluna into unnecessary content-management scope.
