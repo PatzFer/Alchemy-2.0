@@ -43,7 +43,7 @@ import {
 import { BodyMeasurementsModal } from '../health/BodyMeasurementsModal';
 import { WeeklyReminderBanner } from '../health/WeeklyReminderBanner';
 import { BodyShapeCard } from '../health/BodyShapeCard';
-import { parseRenphoCsv } from '../../lib/renphoCsv';
+import { mergeRenphoProgressLogs, parseRenphoCsv } from '../../lib/renphoCsv';
 
 type TimeRange = '4w' | '3m' | '6m' | '1y' | 'all';
 
@@ -186,30 +186,10 @@ export const WellbeingProgressSection: React.FC<WellbeingProgressSectionProps> =
         throw new Error('Het CSV-bestand is groter dan 5 MB.');
       }
       const imported = parseRenphoCsv(await file.text());
-      onUpdateWellbeing((prev) => {
-        const byDate = new Map(prev.progressLogs.map((log) => [log.date, log]));
-        for (const incoming of imported) {
-          const existing = byDate.get(incoming.date);
-          byDate.set(incoming.date, {
-            ...existing,
-            ...incoming,
-            id: existing?.id || incoming.id,
-            weightKg: incoming.weightKg ?? existing?.weightKg,
-            measurements: existing?.measurements || incoming.measurements,
-            composition: {
-              ...(existing?.composition || {}),
-              ...(incoming.composition || {}),
-            },
-            recordedFact: existing?.recordedFact || incoming.recordedFact,
-            feelingNotes: existing?.feelingNotes,
-            aiInterpretation: existing?.aiInterpretation,
-          });
-        }
-        return {
-          ...prev,
-          progressLogs: [...byDate.values()].sort((a, b) => a.date.localeCompare(b.date)),
-        };
-      });
+      onUpdateWellbeing((prev) => ({
+        ...prev,
+        progressLogs: mergeRenphoProgressLogs(prev.progressLogs, imported),
+      }));
       setRenphoImportMessage(`${imported.length} Renpho-meetingen geïmporteerd. Bestaande handmatige metingen zijn behouden.`);
     } catch (error) {
       setRenphoImportMessage(error instanceof Error ? error.message : 'Importeren is mislukt.');
