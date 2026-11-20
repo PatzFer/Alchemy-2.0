@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { filterTaskList } from './taskListFilters';
-import type { Task } from '../types';
+import type { Goal, Project, Task } from '../types';
 
 const task = (overrides: Partial<Task> = {}): Task => ({
   id: 'one', title: 'Boodschappen doen', description: 'Voor het avondeten',
@@ -28,6 +28,14 @@ test('task filters combine workspace, completion status and priority', () => {
   ];
   assert.deepEqual(filterTaskList(items, { ...defaults, activeWorld: 'personal', status: 'active', priority: 'high' }).map(x => x.id), ['private']);
   assert.deepEqual(filterTaskList(items, { ...defaults, status: 'completed' }).map(x => x.id), ['done']);
+});
+
+test('task search also matches linked project and goal names', () => {
+  const item = task({ projectId: 'p1', goalId: 'g1' });
+  const projects = [{ id: 'p1', title: 'Mariluna website' } as Project];
+  const goals = [{ id: 'g1', title: 'Meer rust en ruimte' } as Goal];
+  assert.deepEqual(filterTaskList([item], { ...defaults, query: 'website', projects }).map((x) => x.id), ['one']);
+  assert.deepEqual(filterTaskList([item], { ...defaults, query: 'rust en ruimte', goals }).map((x) => x.id), ['one']);
 });
 
 test('task search trims whitespace, ignores case and preserves original order', () => {
