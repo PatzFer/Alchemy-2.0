@@ -28,6 +28,7 @@ import {
   resetState,
   AppState,
   INITIAL_STATE,
+  SAMPLE_STATE,
   DEFAULT_INTEGRATIONS_STATE,
 } from './lib/storage';
 import { IntegrationsService } from './lib/integrationsService';
@@ -866,7 +867,8 @@ export default function App() {
       // projects and profile data mixed into a real workspace.
       setState(resetState());
     } else {
-      setState(INITIAL_STATE);
+      // Load the curated demo dataset; INITIAL_STATE is intentionally empty.
+      setState(structuredClone(SAMPLE_STATE));
     }
   };
 
