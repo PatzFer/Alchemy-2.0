@@ -202,7 +202,7 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
         <button
           onClick={openNewGoalModal}
           id="new-goal-btn"
-          className="flex items-center gap-2 px-4 py-2 rounded-full bg-[var(--text-primary)] text-[var(--text-primary)] text-xs font-medium hover:bg-[#453E38] transition shadow-xs cursor-pointer w-fit"
+          className="flex items-center gap-2 px-4 py-2 rounded-full bg-[var(--surface-raised)] text-[var(--text-primary)] border border-[var(--border-strong)] text-xs font-medium hover:bg-[#453E38] transition shadow-xs cursor-pointer w-fit"
         >
           <Plus className="w-4 h-4" />
           <span>Nieuw doel</span>
@@ -217,7 +217,7 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
             onClick={() => setSelectedHorizon(horizon)}
             className={`px-3 py-1.5 rounded-full capitalize transition cursor-pointer shrink-0 ${
               selectedHorizon === horizon
-                ? 'bg-[var(--text-primary)] text-[var(--text-primary)] font-medium shadow-xs'
+                ? 'bg-[var(--surface-raised)] text-[var(--text-primary)] border border-[var(--border-strong)] font-medium shadow-xs'
                 : 'bg-[var(--surface-2)] border border-[var(--border-subtle)] text-[var(--text-secondary)] hover:bg-[var(--surface-2)]'
             }`}
           >
@@ -269,8 +269,8 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
                     <span
                       className={`text-[9px] uppercase font-semibold px-2 py-0.5 rounded-full ${
                         goal.realm === 'mariluna'
-                          ? 'bg-[var(--text-primary)] text-[var(--text-primary)]'
-                          : 'bg-[#EAE4D7] text-[#554C42]'
+                          ? 'bg-[var(--surface-raised)] text-[var(--text-primary)] border border-[var(--border-strong)]'
+                          : 'bg-[var(--surface-1)] text-[var(--text-secondary)] border border-[var(--border-subtle)]'
                       }`}
                     >
                       {goal.realm}
@@ -304,7 +304,7 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
                 )}
 
                 {/* Progress bar */}
-                <div className="mt-4 pt-3 border-t border-[#F0EBE1]">
+                <div className="mt-4 pt-3 border-t border-[var(--border-subtle)]">
                   <div className="flex items-center justify-between text-xs text-[var(--text-secondary)] mb-1.5">
                     <span>Voortgang</span>
                     <span className="font-medium text-[var(--text-primary)]">{calculatedProgress}%</span>
@@ -407,7 +407,7 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
       {/* Create Goal Modal with AI Breakdown */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#1A1816]/40 backdrop-blur-xs p-4 overflow-y-auto">
-          <div className="w-full max-w-lg rounded-2xl bg-[var(--surface-1)] border border-[#E3DCD0] p-6 shadow-2xl my-8">
+          <div className="w-full max-w-lg rounded-2xl bg-[var(--surface-1)] border border-[var(--border-subtle)] p-6 shadow-2xl my-8">
             <h2 className="font-serif text-xl font-medium text-[var(--text-primary)] mb-4">
               {editingGoalId ? 'Bewerk doel' : 'Nieuw doel'}
             </h2>
@@ -419,7 +419,7 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
                 </p>
               )}
               <div>
-                <label className="block text-xs font-medium text-[#5A524A] mb-1">
+                <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">
                   Naam van je doel
                 </label>
                 <input
@@ -434,7 +434,7 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-[#5A524A] mb-1">
+                <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">
                   Waarom is dit belangrijk?
                 </label>
                 <textarea
@@ -449,7 +449,7 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-medium text-[#5A524A] mb-1">
+                  <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">
                     Werkruimte
                   </label>
                   <select
@@ -462,7 +462,7 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-[#5A524A] mb-1">
+                  <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">
                     Periode
                   </label>
                   <select
@@ -480,7 +480,7 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-[#5A524A] mb-1">Status</label>
+                <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Status</label>
                 <select
                   value={formStatus}
                   onChange={(e) => setFormStatus(e.target.value as GoalStatus)}
@@ -493,7 +493,7 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-[#5A524A] mb-1">
+                <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">
                   Streefdatum
                 </label>
                 <input
@@ -547,7 +547,7 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
               </div>
 
               {/* AI Goal Breakdown Assistant */}
-              <div className="p-4 rounded-xl border border-[#DFD6C7] bg-[var(--surface-2)]">
+              <div className="p-4 rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-2)]">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-[var(--accent-secondary)]">
                     <Sparkles className="w-4 h-4" />
@@ -559,7 +559,7 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
                     type="button"
                     onClick={handleAiBreakdown}
                     disabled={!formTitle.trim() || isAiBreakingDown}
-                    className="px-3 py-1 rounded-lg bg-[var(--text-primary)] text-[var(--text-primary)] text-xs font-medium hover:bg-[#433D37] disabled:opacity-40 transition cursor-pointer"
+                    className="px-3 py-1 rounded-lg bg-[var(--surface-raised)] text-[var(--text-primary)] border border-[var(--border-strong)] text-xs font-medium hover:bg-[#433D37] disabled:opacity-40 transition cursor-pointer"
                   >
                     {isAiBreakingDown ? 'Deconstructing...' : 'Deconstruct Goal'}
                   </button>
@@ -583,7 +583,7 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
                 )}
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-4 border-t border-[#E8E2D6]">
+              <div className="flex items-center justify-end gap-2 pt-4 border-t border-[var(--border-subtle)]">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
@@ -593,7 +593,7 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl bg-[var(--text-primary)] text-[var(--text-primary)] text-xs font-medium hover:bg-[#453E38]"
+                  className="px-5 py-2 rounded-xl bg-[var(--surface-raised)] text-[var(--text-primary)] border border-[var(--border-strong)] text-xs font-medium hover:bg-[#453E38]"
                 >
                   {editingGoalId ? 'Wijzigingen bewaren' : 'Doel bewaren'}
                 </button>
