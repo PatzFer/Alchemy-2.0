@@ -113,4 +113,6 @@ Do not mark a test as passed based only on source inspection or a successful com
 - [x] Deliverable count and per-item length are bounded.
 - [x] Validation messages follow the selected Dutch/English language.
 - [x] Pure validation helper has automated boundary tests.
+- [x] Offering search covers titles, descriptions and included deliverables.
+- [x] Type and status filters combine correctly; legacy offerings without status remain visible as drafts.
 - [ ] Manually create, edit, filter, archive and delete an offering on Android and desktop.
