@@ -88,6 +88,11 @@ function parseNumber(value: string | undefined): number | undefined {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : undefined;
 }
 
+function parsePercentage(value: string | undefined): number | undefined {
+  const parsed = parseNumber(value);
+  return parsed !== undefined && parsed <= 100 ? parsed : undefined;
+}
+
 function findColumn(headers: string[], candidates: string[]): number {
   return headers.findIndex((header) => candidates.some((candidate) => header.includes(candidate)));
 }
@@ -122,9 +127,9 @@ export function parseRenphoCsv(csv: string): ProgressLog[] {
     if (!date) continue;
     const rawWeight = parseNumber(values[weightColumn]);
     const weightKg = rawWeight === undefined ? undefined : Number((weightIsPounds ? rawWeight * 0.45359237 : rawWeight).toFixed(2));
-    const bodyFatPercentage = parseNumber(values[bodyFatColumn]);
-    const muscleMassPercentage = parseNumber(values[muscleColumn]);
-    const hydrationPercentage = parseNumber(values[waterColumn]);
+    const bodyFatPercentage = parsePercentage(values[bodyFatColumn]);
+    const muscleMassPercentage = parsePercentage(values[muscleColumn]);
+    const hydrationPercentage = parsePercentage(values[waterColumn]);
 
     if (weightKg === undefined && bodyFatPercentage === undefined && muscleMassPercentage === undefined && hydrationPercentage === undefined) continue;
 
