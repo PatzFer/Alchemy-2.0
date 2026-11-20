@@ -16,6 +16,7 @@ import {
 import { Task, Realm, ActiveWorldFilter, Goal, Project } from '../../types';
 import { filterTaskList } from '../../lib/taskListFilters';
 import { validateTaskInput } from '../../lib/taskValidation';
+import { isValidCalendarDate } from '../../lib/calendarDate';
 
 const getLocalDateString = (date = new Date()): string => {
   const year = date.getFullYear();
@@ -309,6 +310,10 @@ export const TasksView: React.FC<TasksViewProps> = ({
         ) : (
           filteredTasks.map((task) => {
             const isCompleted = task.status === 'completed';
+            const isOverdue = !isCompleted && isValidCalendarDate(task.dueDate) && task.dueDate < getLocalDateString();
+            const formattedDueDate = isValidCalendarDate(task.dueDate)
+              ? new Date(Number(task.dueDate.slice(0, 4)), Number(task.dueDate.slice(5, 7)) - 1, Number(task.dueDate.slice(8, 10))).toLocaleDateString('nl-BE', { day: 'numeric', month: 'short', year: 'numeric' })
+              : 'Geen geldige datum';
             const linkedProject = projects.find((project) => project.id === task.projectId);
             const linkedGoal = goals.find((goal) => goal.id === task.goalId);
             return (
@@ -414,9 +419,9 @@ export const TasksView: React.FC<TasksViewProps> = ({
                           <Clock className="w-3 h-3 text-[var(--text-muted)]" />
                           {task.estimatedDuration} min
                         </span>
-                        <span className="flex items-center gap-1">
-                          <Calendar className="w-3 h-3 text-[var(--text-muted)]" />
-                          Deadline: {task.dueDate}
+                        <span className={`flex items-center gap-1 ${isOverdue ? 'font-semibold text-amber-600 dark:text-amber-300' : ''}`}>
+                          <Calendar className="w-3 h-3" />
+                          {isOverdue ? 'Achterstallig · ' : 'Deadline · '}{formattedDueDate}
                         </span>
                         {task.recurring !== 'none' && (
                           <span className="flex items-center gap-1 capitalize">
