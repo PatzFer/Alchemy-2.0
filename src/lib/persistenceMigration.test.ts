@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { INITIAL_STATE, SAMPLE_STATE } from './storage';
 import { planPersistenceMigration } from './persistenceMigration';
 import type { AlchemySnapshot } from './persistenceClient';
+import type { AppState } from './storage';
 
 const remote: AlchemySnapshot = {
   id: 'd4f1c1a2-1234-4a5b-9c8d-1234567890ab',
@@ -78,7 +79,7 @@ test('migration planner never silently picks a winner when both sides contain da
 });
 
 test('migration planner protects local-only Jarvis chat history', () => {
-  const chatOnly = { ...INITIAL_STATE, chatHistory: [{ id: 'chat-1', role: 'user', content: 'Keep this thought', timestamp: '2026-11-20T10:00:00.000Z' }] };
+  const chatOnly = { ...INITIAL_STATE, chatHistory: [{ id: 'chat-1', role: 'user', content: 'Keep this thought', timestamp: '2026-11-20T10:00:00.000Z' }] } as unknown as AppState;
   const plan = planPersistenceMigration(chatOnly, null);
   assert.equal(plan.action, 'upload_local_after_confirmation');
   assert.equal(plan.requiresExplicitChoice, true);
@@ -90,7 +91,7 @@ test('migration planner counts Mariluna content planning and Jarvis suggestions'
     ...INITIAL_STATE,
     contentPlan: { ...INITIAL_STATE.contentPlan, quarterTheme: 'Modern alchemy', posts: [{ id: 'post-1' }] },
     brain: { ...INITIAL_STATE.brain, activeSuggestions: [{ id: 'suggestion-1' }] },
-  };
+  } as unknown as AppState;
   const plan = planPersistenceMigration(contentOnly, null);
   assert.equal(plan.action, 'upload_local_after_confirmation');
   assert.equal(plan.localRecordCount, 3);
