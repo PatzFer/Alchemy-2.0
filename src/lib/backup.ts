@@ -4,6 +4,13 @@ import { saveState } from './storage';
 export const ALCHEMY_BACKUP_FORMAT = 'p-m-alchemy-backup';
 export const ALCHEMY_BACKUP_VERSION = 1;
 export const ALCHEMY_APP_SCHEMA_VERSION = 1;
+export const MAX_ALCHEMY_BACKUP_BYTES = 15 * 1024 * 1024;
+
+/** Keep untrusted backup imports bounded before reading them into browser memory. */
+export function isBackupFileSizeAllowed(size: number): boolean {
+  return Number.isSafeInteger(size) && size >= 0 && size <= MAX_ALCHEMY_BACKUP_BYTES;
+}
+
 
 export interface AlchemyBackupEnvelope {
   format: typeof ALCHEMY_BACKUP_FORMAT;
