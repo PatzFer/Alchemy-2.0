@@ -199,6 +199,7 @@ export const MarilunaProjectsSection: React.FC<MarilunaProjectsSectionProps> = (
       realm: 'mariluna',
       category: 'project',
       projectId: proj.id,
+      goalId: proj.goalId,
       priority: newTaskPriority === 'normal' ? 'medium' : newTaskPriority,
       dueDate: getLocalDateString(),
       estimatedDuration: 30,
@@ -739,6 +740,7 @@ export const MarilunaProjectsSection: React.FC<MarilunaProjectsSectionProps> = (
               <div className="flex gap-2">
                 <input
                   type="text"
+                  maxLength={160}
                   placeholder={isNl ? 'Nieuwe taak voor dit project toevoegen...' : 'Add new task for this project...'}
                   value={newTaskTitle}
                   onChange={(e) => setNewTaskTitle(e.target.value)}
@@ -762,6 +764,7 @@ export const MarilunaProjectsSection: React.FC<MarilunaProjectsSectionProps> = (
                 <button
                   type="button"
                   onClick={() => handleAddTaskToProject(selectedProject)}
+                  disabled={!newTaskTitle.trim() || newTaskTitle.trim().length > 160}
                   className="px-3 py-2 rounded-xl bg-[#2C2825] text-[#FAF8F3] text-xs font-medium hover:bg-[#433D37] transition cursor-pointer shrink-0"
                 >
                   <Plus className="w-3.5 h-3.5" />
