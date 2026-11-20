@@ -1070,3 +1070,11 @@ A user can reliably open Alchemy without a startup security interstitial; captur
 - Added regression tests for expiry, explicit clearing, expiry bounds and disconnect behavior; included them in the standard test command.
 - Live OAuth consent, refresh behavior on a real account, and provider-side revocation still require manual browser acceptance; automated checks do not prove those external flows.
 - Work remains on `build/phase-2-planner`; `main` has not been changed or merged.
+
+## Progress log — 20 November 2026 (daily dashboard task accuracy)
+
+- Extracted daily task grouping into a reusable, tested model: overdue work and work due today are now separate groups in the dashboard data.
+- Dashboard grouping validates local ISO dates, excludes completed tasks and respects the active Privé/Mariluna workspace filter.
+- Sorting is deterministic: priority first, then deadline, then title. Invalid legacy dates are ignored instead of being treated as urgent work.
+- Added four regression tests and included them in the standard CI test command.
+- Next: continue tightening the day-planning experience and close manual device/integration acceptance gaps. No cloud persistence or native Android capability is claimed by this change.
