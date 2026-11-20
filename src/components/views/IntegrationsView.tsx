@@ -31,7 +31,6 @@ import {
   fetchRealCalendarEventsFromApi,
   fetchRealInstagramPostsFromApi,
   getCachedAccessToken,
-  setCachedAccessToken,
   revokeGoogleAccessToken,
 } from '../../lib/googleAuthService';
 
