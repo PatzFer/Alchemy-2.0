@@ -1151,6 +1151,9 @@ export const SecurityPrivacyCenter: React.FC<SecurityPrivacyCenterProps> = ({
             <p className="text-[11px] text-[#6E655A] font-light leading-relaxed">
               Gemini is used only when the relevant workspace and data permissions are also enabled. Local mode keeps Jarvis on deterministic, on-server rules.
             </p>
+            <div role="note" className="rounded-lg border border-[#E4D6B8] bg-[#F7F1E5] p-3 text-[11px] leading-relaxed text-[#65553F]">
+              <strong>Privacy warning / Privacywaarschuwing:</strong> Google's free Gemini API tier may use submitted content to improve Google products. Keep real client, health, cycle and financial data in Local privacy mode. Google states that Paid-tier content is not used for product improvement, but that tier may incur costs. Check the tier attached to your API key before enabling workspace consent. <a href="https://ai.google.dev/gemini-api/docs/pricing" target="_blank" rel="noreferrer" className="underline font-medium">Gemini API pricing & data use</a>.
+            </div>
           </div>
 
           {/* Financial Data Firewall — separate from general Mariluna consent */}
