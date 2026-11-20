@@ -930,3 +930,4 @@ A user can reliably open Alchemy without a startup security interstitial; captur
 - Archived memories cannot be reactivated by a stale confirmation action.
 - Added regression tests for both guarded operations.
 - The change preserves existing records and metadata; validation is pending on the combined branch checkpoint.
+- The Memory Manager now asks for explicit confirmation before permanently deleting a memory; archive remains the reversible first choice.
