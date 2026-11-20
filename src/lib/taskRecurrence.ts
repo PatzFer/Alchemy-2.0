@@ -1,34 +1,51 @@
+import { isValidCalendarDate } from './calendarDate';
+
 export type TaskRecurrence = 'none' | 'daily' | 'weekly' | 'monthly';
+
+function formatLocalDate(date: Date): string {
+  return [
+    date.getFullYear(),
+    String(date.getMonth() + 1).padStart(2, '0'),
+    String(date.getDate()).padStart(2, '0'),
+  ].join('-');
+}
+
+/** Calculate one anchored recurrence step without drifting monthly end-of-month dates. */
+function getNextAnchoredDate(baseDate: string, occurrenceIndex: number, recurrence: Exclude<TaskRecurrence, 'none'>): string {
+  const [year, month, day] = baseDate.split('-').map(Number);
+  if (recurrence === 'daily' || recurrence === 'weekly') {
+    const date = new Date(year, month - 1, day);
+    date.setDate(date.getDate() + occurrenceIndex * (recurrence === 'daily' ? 1 : 7));
+    return formatLocalDate(date);
+  }
+
+  const absoluteMonth = year * 12 + (month - 1) + occurrenceIndex;
+  const targetYear = Math.floor(absoluteMonth / 12);
+  const targetMonth = absoluteMonth % 12;
+  const lastDay = new Date(targetYear, targetMonth + 1, 0).getDate();
+  return formatLocalDate(new Date(targetYear, targetMonth, Math.min(day, lastDay)));
+}
 
 /**
  * Calculate the next local calendar date for a recurring task.
- * Returns null for non-recurring tasks or malformed dates.
+ * When afterDate is supplied, skip missed occurrences and return the first future occurrence.
  */
-export function getNextRecurringTaskDate(dueDate: string, recurrence: TaskRecurrence): string | null {
-  if (recurrence === 'none' || !/^\d{4}-\d{2}-\d{2}$/.test(dueDate)) return null;
+export function getNextRecurringTaskDate(
+  dueDate: string,
+  recurrence: TaskRecurrence,
+  afterDate?: string,
+): string | null {
+  if (recurrence === 'none' || !isValidCalendarDate(dueDate)) return null;
+  if (afterDate !== undefined && !isValidCalendarDate(afterDate)) return null;
 
-  const [year, month, day] = dueDate.split('-').map(Number);
-  if (year < 1000 || month < 1 || month > 12 || day < 1 || day > 31) return null;
+  let occurrenceIndex = 1;
+  let nextDate = getNextAnchoredDate(dueDate, occurrenceIndex, recurrence);
+  if (!afterDate) return nextDate;
 
-  const nextDate = new Date(year, month - 1, day);
-  if (
-    nextDate.getFullYear() !== year ||
-    nextDate.getMonth() !== month - 1 ||
-    nextDate.getDate() !== day
-  ) return null;
-
-  if (recurrence === 'daily') nextDate.setDate(nextDate.getDate() + 1);
-  if (recurrence === 'weekly') nextDate.setDate(nextDate.getDate() + 7);
-  if (recurrence === 'monthly') {
-    const targetYear = month === 12 ? year + 1 : year;
-    const targetMonth = month === 12 ? 0 : month;
-    const lastDayOfTargetMonth = new Date(targetYear, targetMonth + 1, 0).getDate();
-    nextDate.setFullYear(targetYear, targetMonth, Math.min(day, lastDayOfTargetMonth));
+  // Bound iteration to guard corrupted inputs; four centuries is beyond any practical task series.
+  while (nextDate <= afterDate && occurrenceIndex < 5000) {
+    occurrenceIndex += 1;
+    nextDate = getNextAnchoredDate(dueDate, occurrenceIndex, recurrence);
   }
-
-  return [
-    nextDate.getFullYear(),
-    String(nextDate.getMonth() + 1).padStart(2, '0'),
-    String(nextDate.getDate()).padStart(2, '0'),
-  ].join('-');
+  return nextDate > afterDate ? nextDate : null;
 }
