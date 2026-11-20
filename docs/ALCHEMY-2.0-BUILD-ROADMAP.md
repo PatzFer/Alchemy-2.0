@@ -1062,3 +1062,11 @@ A user can reliably open Alchemy without a startup security interstitial; captur
 - Set the current internal test candidate version to `1.0.0-beta.1` and aligned the Bun workspace lockfile.
 - GitHub Actions run 44790064626 passed on commit f41e29de, including frozen dependency installation, TypeScript, migration checks, regression tests and production build.
 - The next checkpoint is manual Android/desktop acceptance and an AI Studio private-preview smoke test. No main-branch merge or production deployment has occurred.
+
+## Progress log — 20 November 2026 (Google integration lifecycle hardening)
+
+- Google OAuth access tokens remain in memory only, now carry a bounded expiry and are treated as expired one minute before provider expiry.
+- Calendar disconnect now clears the local token and requests provider-side revocation through Google Identity Services when available.
+- Added regression tests for expiry, explicit clearing, expiry bounds and disconnect behavior; included them in the standard test command.
+- Live OAuth consent, refresh behavior on a real account, and provider-side revocation still require manual browser acceptance; automated checks do not prove those external flows.
+- Work remains on `build/phase-2-planner`; `main` has not been changed or merged.
