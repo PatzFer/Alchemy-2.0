@@ -1,5 +1,3 @@
-import { AssistantMessage, Task, CalendarEvent, LifeProfile } from '../types';
-
 import { AssistantMessage, AssistantAction, Task, CalendarEvent, LifeProfile } from '../types';
 
 const ALLOWED_ACTION_TYPES = new Set<AssistantAction['type']>([
