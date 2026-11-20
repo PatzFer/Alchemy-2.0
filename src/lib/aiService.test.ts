@@ -28,14 +28,14 @@ test('Jarvis returns a validated assistant message and supported suggested actio
 
 test('Jarvis ignores unsupported action types and never displays raw action JSON', async () => {
   mockFetch(async () => new Response(JSON.stringify({
-    content: 'Hier is mijn antwoord.\n```action\n{"type":"DELETE_ALL_DATA","data":{}}\n```',
+    content: 'Hier is mijn antwoord.\n```action\n{"type":"BREAKDOWN_GOAL","data":{}}\n```',
   }), { status: 200 }));
 
   const result = await sendChatMessage([{ role: 'user', content: 'Wat stel je voor?' }], {}, 'mariluna');
   assert.equal(result.world, 'mariluna');
   assert.equal(result.suggestedAction, undefined);
   assert.equal(result.content, 'Hier is mijn antwoord.');
-  assert.equal(result.content.includes('DELETE_ALL_DATA'), false);
+  assert.equal(result.content.includes('BREAKDOWN_GOAL'), false);
 });
 
 test('Jarvis reports an unavailable endpoint without inventing a successful result', async () => {
