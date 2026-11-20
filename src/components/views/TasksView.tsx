@@ -151,6 +151,11 @@ export const TasksView: React.FC<TasksViewProps> = ({
           .map((l: string) => l.replace(/^[-*•\d.]+\s*/, '').trim())
           .filter((l: string) => l.length > 0)
           .slice(0, 4);
+        const newSubtasks = lines.map((title: string) => ({
+          id: 'st-' + Date.now() + '-' + Math.random().toString(36).slice(2, 9),
+          title,
+          completed: false,
+        }));
 
         if (newSubtasks.length === 0) {
           throw new Error('Jarvis gaf geen bruikbare subtaken terug. Probeer het opnieuw of voeg ze zelf toe.');
