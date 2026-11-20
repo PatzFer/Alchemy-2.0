@@ -618,3 +618,52 @@ test('authentication lockout state is isolated between client keys', () => {
   assert.equal(securityVault.checkRateLimit(cleanKey).allowed, true);
   securityVault.clearFailedAttempts(lockedKey);
 });
+
+test('TOTP verification rejects malformed codes before attempting verification', () => {
+  securityVault.disableTotp();
+  const setup = securityVault.generateTotpSetup();
+  assert.ok(setup.secret.length >= 16);
+  assert.equal(securityVault.verifyAndEnableTotp('12345'), false);
+  assert.equal(securityVault.isTotpEnabled(), false);
+  securityVault.disableTotp();
+});
+
+test('recovery codes are format-checked, one-time and reject replay', () => {
+  const codes = securityVault.regenerateRecoveryCodesInternal();
+  assert.equal(codes.length, 8);
+  assert.equal(securityVault.verifyAndConsumeRecoveryCode('not-a-code'), false);
+  assert.equal(securityVault.verifyAndConsumeRecoveryCode('PMAL-XXXX-YYYY'), false);
+  assert.equal(securityVault.verifyAndConsumeRecoveryCode(codes[0]), true);
+  assert.equal(securityVault.verifyAndConsumeRecoveryCode(codes[0]), false);
+  const status = securityVault.getRecoveryCodesStatus();
+  assert.equal(status.total, 8);
+  assert.equal(status.remaining, 7);
+});
+
+test('passkey storage validates credentials and returns defensive copies', () => {
+  const credential = {
+    id: 'test-passkey-credential',
+    publicKey: Buffer.from('public-key').toString('base64url'),
+    counter: 0,
+    transports: ['internal'],
+    nickname: 'Test device',
+    createdAt: new Date().toISOString(),
+    lastUsedAt: new Date().toISOString(),
+  };
+  securityVault.savePasskey(credential);
+  const fetched = securityVault.getPasskey(credential.id)!;
+  fetched.nickname = 'Tampered outside vault';
+  fetched.transports?.push('usb');
+  assert.equal(securityVault.getPasskey(credential.id)?.nickname, 'Test device');
+  assert.deepEqual(securityVault.getPasskey(credential.id)?.transports, ['internal']);
+  assert.throws(() => securityVault.savePasskey({ ...credential, counter: -1 }), /invalid/i);
+  assert.equal(securityVault.deletePasskey(credential.id), true);
+  assert.equal(securityVault.getPasskey(credential.id), undefined);
+});
+
+test('WebAuthn challenge storage rejects invalid oversized keys and values', () => {
+  assert.throws(() => securityVault.setChallenge('', 'nonce'), /valid WebAuthn challenge/i);
+  assert.throws(() => securityVault.setChallenge('key', ''), /valid WebAuthn challenge/i);
+  assert.throws(() => securityVault.setChallenge('x'.repeat(257), 'nonce'), /valid WebAuthn challenge/i);
+  assert.throws(() => securityVault.setChallenge('key', 'x'.repeat(1025)), /valid WebAuthn challenge/i);
+});
