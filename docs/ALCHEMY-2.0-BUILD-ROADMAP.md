@@ -922,3 +922,11 @@ A user can reliably open Alchemy without a startup security interstitial; captur
 - Follow-up: Jarvis subtask generation no longer inserts generic placeholder tasks when the AI endpoint fails or returns empty content; the editor now shows an actionable error instead.
 
 - Recurring task scheduling now uses a validated local-date helper. Invalid legacy due dates no longer generate malformed future tasks; daily, weekly, month-end, leap-year and year-boundary behavior is covered by automated tests.
+
+## Progress log — 20 November 2026 (Jarvis memory lifecycle guard)
+
+- Memory confirmation now promotes only records that are explicitly marked as learned and pending confirmation.
+- Dismissal now removes only pending learned suggestions; stale UI actions cannot delete explicit or already-confirmed memories.
+- Archived memories cannot be reactivated by a stale confirmation action.
+- Added regression tests for both guarded operations.
+- The change preserves existing records and metadata; validation is pending on the combined branch checkpoint.
