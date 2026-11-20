@@ -897,3 +897,12 @@ A user can reliably open Alchemy without a startup security interstitial; captur
 - Registered the tests in the standard CI test command.
 - These tests cover local browser persistence behavior only; they do not represent cloud backup or multi-device synchronization.
 - CI validation is pending for the latest commits.
+
+
+## Progress log — 20 November 2026 (legacy reset resurrection fix)
+
+- Fixed an edge case in explicit reset: the app now clears both the current storage key and the legacy compatibility key.
+- Previously, a reset could remove the current key while leaving the legacy key behind; the next load could then fall back to that legacy payload and resurrect old data.
+- Added a regression test that seeds both keys, performs reset, and verifies that neither key remains.
+- This affects only the explicit reset action. Normal legacy loading and migration compatibility remain intact.
+- CI validation is pending for the latest changes.
