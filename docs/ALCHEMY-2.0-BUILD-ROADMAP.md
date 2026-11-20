@@ -991,3 +991,12 @@ A user can reliably open Alchemy without a startup security interstitial; captur
 
 
 - Follow-up: passkey signature counters now reject invalid values and counter rollback instead of replacing a newer stored counter; regression coverage added. This is an in-memory anti-rollback guard and does not replace durable credential storage.
+
+
+## Progress log — 20 November 2026 (secret-encryption primitive)
+
+- Added a server-only AES-256-GCM envelope encryption utility for small persisted secrets, with random 96-bit nonces, authentication tags, owner-and-purpose AAD binding, bounded inputs and explicit key-version matching.
+- Added regression tests for round-trip decryption, owner/purpose isolation, nonce uniqueness, tampering, missing/malformed keys and key-version mismatch.
+- Registered the tests in the standard CI test command.
+- This is a reusable cryptographic primitive only. It is not yet wired into TOTP or integration-token persistence, no live APP_ENCRYPTION_KEY has been provisioned, and no key rotation/recovery drill has been performed. Durable security storage remains blocked.
+- The current branch CI result at commit 24a788a was successful for TypeScript, migration checks, regression tests and production build. New encryption changes require a fresh CI run before they can be considered validated.
