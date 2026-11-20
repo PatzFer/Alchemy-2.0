@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { findDuplicateCalendarEvent, validateCalendarTimeRange } from './calendarValidation';
+import { findDuplicateCalendarEvent, validateCalendarEventInput, validateCalendarTimeRange } from './calendarValidation';
 import type { CalendarEvent } from '../types';
 
 const event: CalendarEvent = {
@@ -30,4 +30,14 @@ test('does not treat an event in the other realm as a duplicate', () => {
     title: event.title, date: event.date, startTime: event.startTime,
     endTime: event.endTime, realm: 'mariluna',
   }), undefined);
+});
+
+test('calendar event validation rejects blank titles and impossible dates', () => {
+  assert.ok(validateCalendarEventInput({ title: '  ', date: '2026-11-20', startTime: '10:00', endTime: '11:00' }));
+  assert.ok(validateCalendarEventInput({ title: 'Tandarts', date: '2026-02-30', startTime: '10:00', endTime: '11:00' }));
+  assert.ok(validateCalendarEventInput({ title: 'Tandarts', date: 'not-a-date', startTime: '10:00', endTime: '11:00' }));
+});
+
+test('calendar event validation accepts a real date and valid title and time range', () => {
+  assert.equal(validateCalendarEventInput({ title: ' Tandarts ', date: '2026-11-20', startTime: '10:00', endTime: '11:00' }), null);
 });
