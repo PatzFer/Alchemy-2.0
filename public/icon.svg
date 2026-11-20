@@ -26,5 +26,5 @@
   <path d="M340 188 L340 220 M324 204 L356 204" stroke="#2C2825" stroke-width="1.5" stroke-linecap="round" opacity="0.6"/>
 
   <!-- Typography Monogram M subtle detail -->
-  <text x="256" y="435" font-family="'Cormorant Garamond', Georgia, serif" font-size="28" letter-spacing="8" fill="#5A524A" text-anchor="middle" font-weight="400">MARILUNA</text>
+  <text x="256" y="435" font-family="'Cormorant Garamond', Georgia, serif" font-size="24" letter-spacing="4" fill="#5A524A" text-anchor="middle" font-weight="400">P&amp;M ALCHEMY</text>
 </svg>
