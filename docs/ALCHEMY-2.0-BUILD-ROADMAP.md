@@ -906,3 +906,15 @@ A user can reliably open Alchemy without a startup security interstitial; captur
 - Added a regression test that seeds both keys, performs reset, and verifies that neither key remains.
 - This affects only the explicit reset action. Normal legacy loading and migration compatibility remain intact.
 - CI validation is pending for the latest changes.
+
+
+## Progress log — 20 November 2026 (planner and Mariluna workflow hardening)
+
+- Task cards now tolerate legacy records without a subtasks array instead of crashing while rendering.
+- Individual task subtasks can be checked off and saved without replacing the parent task or its metadata.
+- Task duration input is constrained to a sensible positive range before saving.
+- Jarvis subtask generation now handles non-success API responses explicitly and avoids creating duplicate fallback subtask IDs.
+- Mariluna's due-task overview now checks the canonical task status instead of a non-existent legacy `completed` flag.
+- Mariluna due-task filtering uses the browser's local calendar date instead of UTC date serialization, avoiding day-boundary drift.
+- Mariluna offering prices now reject negative and non-finite values, with inline validation and cent precision.
+- These changes preserve existing stored records; CI validation is pending for the latest combined commit.
