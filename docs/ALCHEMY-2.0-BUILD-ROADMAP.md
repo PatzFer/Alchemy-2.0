@@ -1078,3 +1078,11 @@ A user can reliably open Alchemy without a startup security interstitial; captur
 - Sorting is deterministic: priority first, then deadline, then title. Invalid legacy dates are ignored instead of being treated as urgent work.
 - Added four regression tests and included them in the standard CI test command.
 - Next: continue tightening the day-planning experience and close manual device/integration acceptance gaps. No cloud persistence or native Android capability is claimed by this change.
+
+## Progress log — 20 November 2026 (daily workflow and notification safeguards)
+
+- The Today dashboard now displays overdue tasks and tasks due today as distinct sections, with accessible completion labels and a clear six-item display limit.
+- Quiet-hours logic now uses validated 24-hour clock values, handles both overnight and same-day windows, treats the end time as exclusive, and safely ignores malformed/equal endpoints.
+- Daily notification frequency now respects an explicit zero limit and clamps malformed/out-of-range values instead of silently turning zero into the default of three.
+- Added regression tests for quiet-hour boundaries, malformed settings and zero/negative notification limits.
+- Automated checks are running for the latest changes. Device-level notification delivery and real browser permission flows still need manual acceptance.
