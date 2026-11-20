@@ -988,3 +988,6 @@ A user can reliably open Alchemy without a startup security interstitial; captur
 - WebAuthn challenge storage rejects empty and oversized keys/values; existing one-time consume and expiry behavior remains.
 - Added regression tests for malformed TOTP, recovery-code replay, passkey validation/defensive copies and malformed challenge inputs.
 - These are in-memory credential-boundary safeguards. They do not make credentials durable across server restarts; the security vault still requires owner-scoped Supabase persistence and envelope encryption before production readiness.
+
+
+- Follow-up: passkey signature counters now reject invalid values and counter rollback instead of replacing a newer stored counter; regression coverage added. This is an in-memory anti-rollback guard and does not replace durable credential storage.
