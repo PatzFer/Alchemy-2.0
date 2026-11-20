@@ -182,6 +182,8 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
     activeWorld,
     horizon: selectedHorizon,
     query: searchQuery,
+    tasks,
+    projects,
   });
 
   return (
