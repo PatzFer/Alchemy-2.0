@@ -995,8 +995,15 @@ export function resetState(): AppState {
   if (typeof window !== 'undefined') {
     // Clear both current and legacy keys. Otherwise loadState() can fall back
     // to the legacy payload after a reset and silently resurrect old data.
-    localStorage.removeItem(STORAGE_KEY);
-    localStorage.removeItem(LEGACY_STORAGE_KEY);
+    // Storage can be unavailable in restricted/private browser contexts; the
+    // in-memory reset should still complete and the normal save path will
+    // surface whether the new state could be persisted.
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(LEGACY_STORAGE_KEY);
+    } catch {
+      // Do not let a browser storage exception prevent the in-memory reset.
+    }
   }
   return { ...INITIAL_STATE };
 }
