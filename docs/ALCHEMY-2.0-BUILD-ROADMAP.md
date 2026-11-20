@@ -977,3 +977,14 @@ A user can reliably open Alchemy without a startup security interstitial; captur
 - Added regression tests for the existing failed-authentication lockout: the fifth failed attempt blocks the client key, a verified-login clear resets it, and lockout state is isolated between client keys.
 - This change adds test coverage only; it does not change authentication policy or claim persistence of lockout state across server restarts.
 - Durable sessions, passkey/TOTP configuration and security-vault persistence remain unresolved release blockers; no in-memory security state has been represented as production durable.
+
+
+## Progress log — 20 November 2026 (authentication credential hardening)
+
+- Passkey credential writes now validate the credential ID, base64url public-key encoding, non-negative safe counter, bounded nickname and supported WebAuthn transports.
+- Passkey getters return defensive copies, so callers cannot mutate vault-held transport arrays or credential metadata by editing a returned object.
+- TOTP setup verification and login verification reject malformed non-six-digit codes before invoking the authenticator verifier.
+- Recovery-code verification validates the exact generated code format, bounds input length, hashes the normalized value and uses constant-time digest comparison before consuming a code once.
+- WebAuthn challenge storage rejects empty and oversized keys/values; existing one-time consume and expiry behavior remains.
+- Added regression tests for malformed TOTP, recovery-code replay, passkey validation/defensive copies and malformed challenge inputs.
+- These are in-memory credential-boundary safeguards. They do not make credentials durable across server restarts; the security vault still requires owner-scoped Supabase persistence and envelope encryption before production readiness.
