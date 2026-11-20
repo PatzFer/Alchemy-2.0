@@ -64,6 +64,7 @@ This checklist separates a usable test candidate from a production release. A ch
 
 ## 7. Responsive and device checks
 
+- [x] Daily dashboard task grouping has automated coverage for overdue/today separation, world filtering, priority ordering and invalid dates.
 - [ ] Android phone portrait layout.
 - [ ] Android phone landscape layout.
 - [ ] Desktop wide layout.
