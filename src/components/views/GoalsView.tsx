@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { Goal, Milestone, Realm, ActiveWorldFilter, GoalStatus } from '../../types';
 import { requestGoalBreakdown } from '../../lib/aiService';
+import { validateGoalInput } from '../../lib/goalValidation';
 
 interface GoalsViewProps {
   goals: Goal[];
@@ -41,6 +42,7 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
   const [formTimeframe, setFormTimeframe] = useState<Goal['timeframe']>('quarterly');
   const [formTargetDate, setFormTargetDate] = useState(() => { const d = new Date(); d.setMonth(d.getMonth() + 1); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; });
   const [formMilestones, setFormMilestones] = useState<Milestone[]>([]);
+  const [formError, setFormError] = useState<string | null>(null);
 
   const openNewGoalModal = () => {
     setEditingGoalId(null);
@@ -51,6 +53,7 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
     setFormTimeframe('quarterly');
     setFormTargetDate(() => { const d = new Date(); d.setMonth(d.getMonth() + 1); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; });
     setFormMilestones([]);
+    setFormError(null);
     setIsModalOpen(true);
   };
 
@@ -63,6 +66,7 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
     setFormTargetDate(goal.targetDate || '');
     setFormMilestones(goal.milestones || []);
     setFormStatus(goal.status || 'active');
+    setFormError(null);
     setIsModalOpen(true);
   };
 
@@ -91,7 +95,25 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
 
   const handleSaveGoal = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formTitle.trim()) return;
+    const validationError = validateGoalInput({
+      title: formTitle,
+      description: formDesc,
+      targetDate: formTargetDate,
+      milestones: formMilestones,
+    });
+    if (validationError) {
+      const messages: Record<typeof validationError, string> = {
+        title_required: 'Geef je doel een naam.',
+        title_too_long: 'De naam van je doel mag maximaal 160 tekens bevatten.',
+        description_too_long: 'De omschrijving mag maximaal 5000 tekens bevatten.',
+        invalid_target_date: 'Kies een geldige streefdatum.',
+        too_many_milestones: 'Je kunt maximaal 50 tussenstappen toevoegen.',
+        milestone_title_invalid: 'Elke tussenstap moet een naam hebben van maximaal 160 tekens.',
+      };
+      setFormError(messages[validationError]);
+      return;
+    }
+    setFormError(null);
 
     const existingGoal = editingGoalId ? goals.find((goal) => goal.id === editingGoalId) : undefined;
     onSaveGoal({
@@ -323,6 +345,11 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
             </h2>
 
             <form onSubmit={handleSaveGoal} className="space-y-4">
+              {formError && (
+                <p role="alert" className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-xs text-rose-300">
+                  {formError}
+                </p>
+              )}
               <div>
                 <label className="block text-xs font-medium text-[#5A524A] mb-1">
                   Naam van je doel
@@ -330,6 +357,7 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
                 <input
                   type="text"
                   required
+                  maxLength={160}
                   value={formTitle}
                   onChange={(e) => setFormTitle(e.target.value)}
                   placeholder="Bijvoorbeeld: vaker bewegen, een ritme vinden dat bij mij past"
@@ -343,6 +371,7 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
                 </label>
                 <textarea
                   rows={2}
+                  maxLength={5000}
                   value={formDesc}
                   onChange={(e) => setFormDesc(e.target.value)}
                   placeholder="Waarom is dit belangrijk voor jou?"
