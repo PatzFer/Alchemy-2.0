@@ -136,3 +136,15 @@ Do not mark a test as passed based only on source inspection or a successful com
 - [x] Goal search covers descriptions, notes and milestone titles and combines with workspace/timeframe filters.
 - [ ] Manually verify task and goal creation/editing on Android and desktop.
 - [ ] Verify Jarvis milestone suggestions with a configured AI provider.
+
+
+## 12. Projects and cross-linking
+
+- [x] Mariluna project search spans names, descriptions and notes.
+- [x] Project editor validates required names, text bounds and date order.
+- [x] Tasks can be linked to active projects and goals in the same workspace.
+- [x] Linked project and goal names are visible on task cards.
+- [x] Project quick-task creation uses the local calendar date.
+- [x] Automated project search, status and validation tests are included in CI.
+- [ ] Manually verify project creation, task links and goal links on Android and desktop.
+- [ ] Verify links remain correct after changing workspace, archiving or deleting a linked record.
