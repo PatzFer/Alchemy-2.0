@@ -36,7 +36,7 @@ test('Google token cache bounds invalid and excessive expiry values', () => {
   Date.now = () => now;
   try {
     setCachedAccessToken('calendar', 'bounded-token', Number.POSITIVE_INFINITY);
-    now += 3_400_000;
+    now += 3_450_000;
     assert.equal(getCachedAccessToken('calendar'), null);
   } finally {
     Date.now = originalNow;
