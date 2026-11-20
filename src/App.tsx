@@ -22,6 +22,7 @@ import { SettingsView } from './components/views/SettingsView';
 import { SecurityPrivacyCenter } from './components/views/SecurityPrivacyCenter';
 import { AppAuthLockScreen } from './components/AppAuthLockScreen';
 import { FirstTimeSetup } from './components/onboarding/FirstTimeSetup';
+import { getNextRecurringTaskDate } from './lib/taskRecurrence';
 import {
   loadState,
   saveState,
@@ -232,35 +233,25 @@ export default function App() {
       // A recurring task creates its next occurrence only when completed.
       // Keep the original occurrence in history and reset subtasks on the new one.
       if (completing && current.recurring !== 'none' && current.dueDate) {
-        const [year, month, day] = current.dueDate.split('-').map(Number);
-        const nextDate = new Date(year, month - 1, day);
-        if (current.recurring === 'daily') nextDate.setDate(nextDate.getDate() + 1);
-        if (current.recurring === 'weekly') nextDate.setDate(nextDate.getDate() + 7);
-        if (current.recurring === 'monthly') {
-          const targetMonth = new Date(year, month, 1);
-          const lastDayOfTargetMonth = new Date(year, month + 1, 0).getDate();
-          nextDate.setFullYear(targetMonth.getFullYear(), targetMonth.getMonth(), Math.min(day, lastDayOfTargetMonth));
+        const nextDueDate = getNextRecurringTaskDate(current.dueDate, current.recurring);
+        // Invalid legacy dates must never create malformed "NaN-NaN-NaN" tasks.
+        if (nextDueDate) {
+          const nextOccurrence: Task = {
+            ...current,
+            id: `${current.id}-${nextDueDate}-${Date.now()}`,
+            dueDate: nextDueDate,
+            status: 'todo',
+            missed: false,
+            completedAt: undefined,
+            subtasks: (current.subtasks || []).map((subtask) => ({
+              ...subtask,
+              id: `${subtask.id}-${nextDueDate}`,
+              completed: false,
+            })),
+            createdAt: nextDueDate,
+          };
+          updatedTasks.unshift(nextOccurrence);
         }
-        const nextDueDate = [
-          nextDate.getFullYear(),
-          String(nextDate.getMonth() + 1).padStart(2, '0'),
-          String(nextDate.getDate()).padStart(2, '0'),
-        ].join('-');
-        const nextOccurrence: Task = {
-          ...current,
-          id: `${current.id}-${nextDueDate}-${Date.now()}`,
-          dueDate: nextDueDate,
-          status: 'todo',
-          missed: false,
-          completedAt: undefined,
-          subtasks: (current.subtasks || []).map((subtask) => ({
-            ...subtask,
-            id: `${subtask.id}-${nextDueDate}`,
-            completed: false,
-          })),
-          createdAt: nextDueDate,
-        };
-        updatedTasks.unshift(nextOccurrence);
       }
 
       return { ...prev, tasks: updatedTasks };
