@@ -25,6 +25,21 @@ For a private AI Studio Build preview, configure `ENABLE_PREVIEW_AUTH=true` as a
 
 To test live Gemini, first review the data-use warning in Settings → Security & Privacy, then explicitly choose Gemini and enable only the synthetic-data workspace scopes you intend to test. Local privacy mode is the default.
 
+
+## Google AI Studio handoff
+
+The GitHub branch is the source of truth. For the visual preview, update/import the latest code from `build/phase-2-planner`, not `main`.
+
+1. Confirm the latest GitHub Actions quality-gate run for the branch has completed successfully.
+2. In AI Studio, use the existing GitHub-connected project and pull/update from `build/phase-2-planner`. If the import flow asks for a branch, select that exact branch.
+3. Confirm the imported commit matches the latest branch head shown in GitHub.
+4. Run the app in AI Studio's full-stack preview. Alchemy requires both the Vite/React client and its Express server; a client-only preview is insufficient.
+5. For a private synthetic-data preview only, set `ENABLE_PREVIEW_AUTH=true` as a server-side environment variable. Do not use preview authentication when `NODE_ENV=production`.
+6. Leave `GEMINI_API_KEY` unset unless you deliberately want to test live Gemini. If configured, add it only through server-side secrets, then review the provider consent controls inside Alchemy.
+7. Verify the app opens, navigate through Privé and Mariluna, and test one task, one idea, one calendar item and a backup export/import.
+
+**Important:** this preview is for visual and workflow testing with synthetic data. Records remain in this browser's local storage; there is no live Supabase sync, durable account session, or native Android Health Connect bridge. Do not enter confidential personal, health, financial or client information. Export a backup before testing reset/restore.
+
 ## Core workflows to test
 
 - On a fresh local profile, complete the Foundation wizard on first launch; reopen it later from Settings.
