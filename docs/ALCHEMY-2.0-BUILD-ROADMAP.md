@@ -1161,3 +1161,4 @@ A user can reliably open Alchemy without a startup security interstitial; captur
 - Tasks created directly inside a project inherit that project's linked goal, keeping the project → goal → task relationship intact.
 - Goal progress now derives from completed linked tasks when a goal has no manual milestones; milestone completion remains the primary progress source when milestones exist.
 - Extracted goal progress precedence into a pure tested helper: milestones first, linked task completion second, manual progress as the fallback.
+- Task search now also finds linked project and goal names, so users can retrieve actions by the larger outcome they belong to.
