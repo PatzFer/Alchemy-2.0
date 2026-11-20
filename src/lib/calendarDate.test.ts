@@ -34,3 +34,11 @@ test('isValidCalendarDate accepts real local dates and rejects impossible dates'
   assert.equal(isValidCalendarDate('2026-13-01'), false);
   assert.equal(isValidCalendarDate('20/11/2026'), false);
 });
+
+
+test('local calendar date formatter does not convert through UTC', async () => {
+  const { getLocalCalendarDateString } = await import('./calendarDate');
+  const localDate = new Date(2026, 10, 20, 0, 15);
+  assert.equal(getLocalCalendarDateString(localDate), '2026-11-20');
+  assert.equal(getLocalCalendarDateString(new Date(2024, 1, 29, 23, 59)), '2024-02-29');
+});
