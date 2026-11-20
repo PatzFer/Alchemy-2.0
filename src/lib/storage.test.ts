@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { loadState, saveState, INITIAL_STATE } from './storage';
+import { loadState, saveState, resetState, INITIAL_STATE } from './storage';
 
 function installStorage(initial: Record<string, string> = {}) {
   const values = new Map(Object.entries(initial));
@@ -49,4 +49,16 @@ test('loadState keeps legacy storage readable without deleting its original key'
   const loaded = loadState();
   assert.deepEqual(loaded.tasks, INITIAL_STATE.tasks);
   assert.equal(storage.getItem('mariluna_os_data_v1'), legacy);
+});
+
+
+test('explicit reset clears both current and legacy storage keys', () => {
+  const storage = installStorage({
+    pm_alchemy_os_data_v1: JSON.stringify(INITIAL_STATE),
+    mariluna_os_data_v1: JSON.stringify(INITIAL_STATE),
+  });
+  const reset = resetState();
+  assert.deepEqual(reset.tasks, []);
+  assert.equal(storage.getItem('pm_alchemy_os_data_v1'), null);
+  assert.equal(storage.getItem('mariluna_os_data_v1'), null);
 });
