@@ -36,3 +36,13 @@ export function isValidCalendarDate(dateStr: string): boolean {
   const date = new Date(year, month - 1, day);
   return date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day;
 }
+
+
+/** Format a Date as a local YYYY-MM-DD key (never UTC-shift a local calendar day). */
+export function getLocalCalendarDateString(date: Date = new Date()): string {
+  return [
+    date.getFullYear(),
+    String(date.getMonth() + 1).padStart(2, '0'),
+    String(date.getDate()).padStart(2, '0'),
+  ].join('-');
+}
