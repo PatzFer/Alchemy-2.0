@@ -16,6 +16,7 @@ import { Goal, Milestone, Realm, ActiveWorldFilter, GoalStatus, Task, Project } 
 import { requestGoalBreakdown } from '../../lib/aiService';
 import { validateGoalInput } from '../../lib/goalValidation';
 import { filterGoalList } from '../../lib/goalListFilters';
+import { calculateGoalProgress } from '../../lib/goalProgress';
 
 interface GoalsViewProps {
   goals: Goal[];
@@ -253,12 +254,7 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
           const linkedProjects = projects.filter((project) =>
             project.realm === goal.realm && (project.goalId === goal.id || goal.connectedProjectIds?.includes(project.id))
           );
-          const completedLinkedTasks = linkedTasks.filter((task) => task.status === 'completed').length;
-          const calculatedProgress = milestones.length > 0
-            ? Math.round((completedCount / milestones.length) * 100)
-            : linkedTasks.length > 0
-              ? Math.round((completedLinkedTasks / linkedTasks.length) * 100)
-              : goal.progress;
+          const calculatedProgress = calculateGoalProgress(milestones, linkedTasks, goal.progress);
 
           return (
             <div
