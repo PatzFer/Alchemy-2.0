@@ -865,12 +865,10 @@ export default function App() {
   // Sample data & backup handlers
   const handleToggleSampleData = () => {
     if (state.isSampleData) {
-      setState((prev) => ({
-        ...prev,
-        isSampleData: false,
-        tasks: [],
-        ideas: [],
-      }));
+      // Sample data spans every module. Reset the complete sample state rather
+      // than clearing only tasks and ideas, which left demo goals, events,
+      // projects and profile data mixed into a real workspace.
+      setState(resetState());
     } else {
       setState(INITIAL_STATE);
     }
