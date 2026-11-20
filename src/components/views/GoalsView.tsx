@@ -43,6 +43,7 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
   const [formTargetDate, setFormTargetDate] = useState(() => { const d = new Date(); d.setMonth(d.getMonth() + 1); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; });
   const [formMilestones, setFormMilestones] = useState<Milestone[]>([]);
   const [formError, setFormError] = useState<string | null>(null);
+  const [milestoneInput, setMilestoneInput] = useState('');
 
   const openNewGoalModal = () => {
     setEditingGoalId(null);
@@ -53,6 +54,7 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
     setFormTimeframe('quarterly');
     setFormTargetDate(() => { const d = new Date(); d.setMonth(d.getMonth() + 1); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; });
     setFormMilestones([]);
+    setMilestoneInput('');
     setFormError(null);
     setIsModalOpen(true);
   };
@@ -68,6 +70,17 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
     setFormStatus(goal.status || 'active');
     setFormError(null);
     setIsModalOpen(true);
+  };
+
+  const handleAddMilestone = () => {
+    const title = milestoneInput.trim();
+    if (!title || formMilestones.length >= 50 || title.length > 160) return;
+    setFormMilestones((current) => [
+      ...current,
+      { id: 'm-' + Date.now() + '-' + current.length, title, completed: false },
+    ]);
+    setMilestoneInput('');
+    setFormError(null);
   };
 
   const handleAiBreakdown = async () => {
@@ -434,6 +447,48 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
                   onChange={(e) => setFormTargetDate(e.target.value)}
                   className="w-full bg-[var(--surface-2)] border border-[var(--border-subtle)] rounded-xl px-3 py-2 text-xs text-[var(--text-primary)]"
                 />
+              </div>
+
+              <div className="rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-2)] p-4 space-y-2">
+                <label className="block text-xs font-semibold text-[var(--text-primary)]">Tussenstappen</label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    maxLength={160}
+                    value={milestoneInput}
+                    onChange={(e) => setMilestoneInput(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddMilestone(); } }}
+                    placeholder="Voeg zelf een kleine stap toe..."
+                    aria-label="Nieuwe tussenstap"
+                    className="min-w-0 flex-1 rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-1)] px-3 py-2 text-xs text-[var(--text-primary)]"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddMilestone}
+                    disabled={!milestoneInput.trim() || formMilestones.length >= 50 || milestoneInput.trim().length > 160}
+                    className="rounded-lg border border-[var(--border-subtle)] px-3 py-2 text-xs text-[var(--text-primary)] disabled:opacity-40"
+                  >
+                    Toevoegen
+                  </button>
+                </div>
+                {formMilestones.length > 0 && (
+                  <div className="space-y-1">
+                    {formMilestones.map((milestone) => (
+                      <div key={milestone.id} className="flex items-center justify-between gap-2 rounded-lg bg-[var(--surface-1)] px-3 py-2 text-xs">
+                        <span className="min-w-0 flex-1 text-[var(--text-primary)]">{milestone.title}</span>
+                        <button
+                          type="button"
+                          onClick={() => setFormMilestones((current) => current.filter((item) => item.id !== milestone.id))}
+                          aria-label={`Verwijder tussenstap ${milestone.title}`}
+                          className="text-[var(--text-muted)] hover:text-rose-400"
+                        >
+                          Verwijderen
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <p className="text-[10px] text-[var(--text-muted)]">Je kunt maximaal 50 tussenstappen toevoegen, zelf of met Jarvis.</p>
               </div>
 
               {/* AI Goal Breakdown Assistant */}
