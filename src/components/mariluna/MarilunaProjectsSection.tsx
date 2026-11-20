@@ -25,6 +25,7 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import { Project, ProjectStatus, Task, Goal, Idea, ContentPost, Realm } from '../../types';
+import { filterProjectList, validateProjectInput } from '../../lib/projectList';
 
 interface MarilunaProjectsSectionProps {
   projects: Project[];
@@ -63,6 +64,8 @@ export const MarilunaProjectsSection: React.FC<MarilunaProjectsSectionProps> = (
 
   // Filter tab state
   const [statusFilter, setStatusFilter] = useState<'all' | ProjectStatus>('all');
+  const [projectSearch, setProjectSearch] = useState('');
+  const [projectFormError, setProjectFormError] = useState<string | null>(null);
   
   // Selected project for detail modal
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
@@ -112,12 +115,9 @@ export const MarilunaProjectsSection: React.FC<MarilunaProjectsSectionProps> = (
     );
   };
 
-  const filteredProjects = marilunaProjects.filter((p) => {
-    if (statusFilter === 'all') {
-      // By default show all except archived unless explicitly filtered to archived
-      return p.status !== 'archived';
-    }
-    return p.status === statusFilter;
+  const filteredProjects = filterProjectList(marilunaProjects, {
+    status: statusFilter,
+    query: projectSearch,
   });
 
   // Action handlers
@@ -135,19 +135,41 @@ export const MarilunaProjectsSection: React.FC<MarilunaProjectsSectionProps> = (
       relatedContentIds: [],
       notes: '',
     });
+    setProjectFormError(null);
     setIsEditModalOpen(true);
   };
 
   const handleOpenEditModal = (proj: Project) => {
     setEditingProject({ ...proj });
+    setProjectFormError(null);
     setIsEditModalOpen(true);
   };
 
   const handleSaveProjectForm = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editingProject || !editingProject.title?.trim()) return;
-
-    onSaveProject(editingProject);
+    if (!editingProject) return;
+    const validationError = validateProjectInput({
+      title: editingProject.title || '',
+      description: editingProject.description || '',
+      notes: editingProject.notes || '',
+      startDate: editingProject.startDate,
+      deadline: editingProject.deadline,
+    });
+    if (validationError) {
+      const messages: Record<typeof validationError, string> = {
+        title_required: isNl ? 'Geef je project een naam.' : 'Enter a project name.',
+        title_too_long: isNl ? 'De projectnaam mag maximaal 160 tekens bevatten.' : 'Project name must be 160 characters or fewer.',
+        description_too_long: isNl ? 'De omschrijving mag maximaal 5000 tekens bevatten.' : 'Description must be 5000 characters or fewer.',
+        notes_too_long: isNl ? 'Notities mogen maximaal 5000 tekens bevatten.' : 'Notes must be 5000 characters or fewer.',
+        invalid_start_date: isNl ? 'Kies een geldige startdatum.' : 'Choose a valid start date.',
+        invalid_deadline: isNl ? 'Kies een geldige deadline.' : 'Choose a valid deadline.',
+        deadline_before_start: isNl ? 'De deadline kan niet vóór de startdatum liggen.' : 'Deadline cannot be before the start date.',
+      };
+      setProjectFormError(messages[validationError]);
+      return;
+    }
+    setProjectFormError(null);
+    onSaveProject({ ...editingProject, title: editingProject.title!.trim() });
     setIsEditModalOpen(false);
     setEditingProject(null);
   };
@@ -379,6 +401,17 @@ export const MarilunaProjectsSection: React.FC<MarilunaProjectsSectionProps> = (
             </button>
           );
         })}
+      </div>
+
+      <div>
+        <input
+          type="search"
+          value={projectSearch}
+          onChange={(e) => setProjectSearch(e.target.value)}
+          placeholder={isNl ? 'Zoek projecten, omschrijvingen en notities...' : 'Search projects, descriptions and notes...'}
+          aria-label={isNl ? 'Zoek Mariluna-projecten' : 'Search Mariluna projects'}
+          className="w-full rounded-xl border border-[#DCD3C4] bg-[#FAF8F3] px-4 py-3 text-xs text-[#2C2825] placeholder:text-[#8C8174] focus:outline-none focus:border-[#8C7654]"
+        />
       </div>
 
       {/* Project Grid */}
@@ -980,6 +1013,11 @@ export const MarilunaProjectsSection: React.FC<MarilunaProjectsSectionProps> = (
             </div>
 
             <form onSubmit={handleSaveProjectForm} className="space-y-3.5">
+              {projectFormError && (
+                <p role="alert" className="rounded-xl border border-rose-300 bg-rose-50 px-3 py-2 text-xs text-rose-800">
+                  {projectFormError}
+                </p>
+              )}
               <div>
                 <label className="block text-[11px] font-semibold text-[#7A7167] uppercase tracking-wider mb-1">
                   {isNl ? 'Projectnaam *' : 'Project Name *'}
@@ -987,6 +1025,7 @@ export const MarilunaProjectsSection: React.FC<MarilunaProjectsSectionProps> = (
                 <input
                   type="text"
                   required
+                  maxLength={160}
                   placeholder={isNl ? 'Bijv. Lancering Herfstcollectie' : 'E.g. Autumn Collection Launch'}
                   value={editingProject.title || ''}
                   onChange={(e) => setEditingProject({ ...editingProject, title: e.target.value })}
@@ -1004,6 +1043,7 @@ export const MarilunaProjectsSection: React.FC<MarilunaProjectsSectionProps> = (
                   value={editingProject.description || ''}
                   onChange={(e) => setEditingProject({ ...editingProject, description: e.target.value })}
                   rows={2}
+                  maxLength={5000}
                   className="w-full px-3 py-2 rounded-xl bg-[#FFFFFF] border border-[#DDD4C5] text-xs text-[#2C2825] focus:outline-none focus:border-[#8C7654] resize-none"
                 />
               </div>
