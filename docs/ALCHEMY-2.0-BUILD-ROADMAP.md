@@ -947,3 +947,11 @@ A user can reliably open Alchemy without a startup security interstitial; captur
 - Archived memories are immutable through the ordinary edit path; restore remains an explicit separate action.
 - Added regression coverage for blank edits, archived records and normal active-memory edits.
 - Existing stored memories are not rewritten by this change.
+
+
+## Progress log — 20 November 2026 (migration data inventory)
+
+- The local/cloud migration planner now counts Jarvis chat history, content-plan posts and pillars, saved quarter/month themes, and active Jarvis suggestions/briefs.
+- This closes a data-loss risk where a workspace containing only these records could previously be misclassified as empty and bypass the explicit migration choice.
+- Added regression tests for chat-only and content-planning/Jarvis-only local data.
+- The planner remains read-only: no upload, restore, merge or overwrite is performed automatically.
