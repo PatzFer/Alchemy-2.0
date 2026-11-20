@@ -58,6 +58,7 @@ export const TasksView: React.FC<TasksViewProps> = ({
   const [formSubtasks, setFormSubtasks] = useState<{ id: string; title: string; completed: boolean }[]>([]);
   const [subtaskInput, setSubtaskInput] = useState('');
   const [isGeneratingSubtasks, setIsGeneratingSubtasks] = useState(false);
+  const [subtaskGenerationError, setSubtaskGenerationError] = useState<string | null>(null);
 
   const openNewTaskModal = () => {
     setEditingTask(null);
@@ -70,6 +71,7 @@ export const TasksView: React.FC<TasksViewProps> = ({
     setFormDueDate(getLocalDateString());
     setFormRecurring('none');
     setFormSubtasks([]);
+    setSubtaskGenerationError(null);
     setIsModalOpen(true);
   };
 
@@ -84,6 +86,7 @@ export const TasksView: React.FC<TasksViewProps> = ({
     setFormDueDate(task.dueDate);
     setFormRecurring(task.recurring);
     setFormSubtasks(task.subtasks || []);
+    setSubtaskGenerationError(null);
     setIsModalOpen(true);
   };
 
@@ -123,6 +126,7 @@ export const TasksView: React.FC<TasksViewProps> = ({
   const handleAISubtaskGeneration = async () => {
     if (!formTitle.trim()) return;
     setIsGeneratingSubtasks(true);
+    setSubtaskGenerationError(null);
 
     try {
       const res = await fetch('/api/ai/chat', {
@@ -148,22 +152,14 @@ export const TasksView: React.FC<TasksViewProps> = ({
           .filter((l: string) => l.length > 0)
           .slice(0, 4);
 
-        const newSubtasks = lines.map((title: string) => ({
-          id: 'st-' + Date.now() + '-' + Math.random().toString(36).slice(2, 9),
-          title,
-          completed: false,
-        }));
-
+        if (newSubtasks.length === 0) {
+          throw new Error('Jarvis gaf geen bruikbare subtaken terug. Probeer het opnieuw of voeg ze zelf toe.');
+        }
         setFormSubtasks([...formSubtasks, ...newSubtasks]);
       }
     } catch (err) {
-      console.warn('Fallback subtasks generation:', err);
-      setFormSubtasks([
-        ...formSubtasks,
-        { id: 'st-' + Date.now() + '-1', title: 'Prepare foundational materials', completed: false },
-        { id: 'st-' + Date.now() + '-2', title: 'Core focused implementation', completed: false },
-        { id: 'st-' + Date.now() + '-3', title: 'Final review and clean closing', completed: false },
-      ]);
+      console.warn('Jarvis subtask generation failed:', err);
+      setSubtaskGenerationError(err instanceof Error ? err.message : 'Jarvis kon geen subtaken maken. Probeer het opnieuw of voeg ze zelf toe.');
     } finally {
       setIsGeneratingSubtasks(false);
     }
@@ -511,6 +507,9 @@ export const TasksView: React.FC<TasksViewProps> = ({
                     <Sparkles className="w-3 h-3 text-[var(--accent-secondary)]" />
                     <span>{isGeneratingSubtasks ? 'Thinking...' : 'AI Suggest Subtasks'}</span>
                   </button>
+                  {subtaskGenerationError && (
+                    <p role="alert" className="mt-2 text-[11px] text-[#A33A32]">{subtaskGenerationError}</p>
+                  )}
                 </div>
 
                 <div className="flex gap-2 mb-2">
