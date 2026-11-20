@@ -104,7 +104,7 @@ class SecurityVault {
     allowMarilunaDataToAI: false,
     allowFinancialDataToAI: false,
     allowWellbeingDataToAI: false, // Default quarantined: user explicitly permits in settings/module
-    activeAiProvider: 'gemini-server',
+    activeAiProvider: 'local-rules', // Explicit opt-in required before any workspace context is sent to Gemini
   };
 
   constructor() {
