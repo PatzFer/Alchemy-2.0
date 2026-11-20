@@ -1044,3 +1044,13 @@ A user can reliably open Alchemy without a startup security interstitial; captur
 - Validated Renpho date parsing for ISO, European and US formats and rejects impossible dates before importing.
 - GitHub Actions run 44789482370 passed on commit 11b95192: locked dependency installation, TypeScript, Supabase migration checks, all regression tests and production build.
 - Current delivery target is a usable internal test candidate. Production release still requires durable identity/session storage, live Supabase provisioning and isolation/restore tests, and native Android Health Connect.
+
+
+## Progress log — 20 November 2026 (confirmed Jarvis action safety)
+
+- Jarvis suggested actions are restricted to action types that the app actually implements. The unsupported goal-breakdown action contract was removed instead of silently accepting a no-op.
+- Reschedule suggestions now require an existing task in the active workspace and a strictly valid local calendar date before the app applies the change.
+- Added reusable date validation and regression coverage for leap years, impossible dates and non-ISO strings.
+- Added explicit Jarvis system-prompt guidance: never guess which task to reschedule; include the exact task ID and date, and wait for user confirmation.
+- GitHub Actions run 44789834222 passed on commit cb2056db: dependency install, TypeScript, Supabase migration safety checks, regression tests and production build.
+- The branch remains separate from `main`; no merge or deployment has been performed.
