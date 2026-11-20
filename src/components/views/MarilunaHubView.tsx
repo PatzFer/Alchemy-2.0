@@ -1021,7 +1021,7 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
                   placeholder={isNl ? 'Zoek op titel of beschrijving...' : 'Search by title or description...'}
                   value={offeringSearchQuery}
                   onChange={(e) => setOfferingSearchQuery(e.target.value)}
-                  className="w-full pl-8 pr-3 py-1.5 rounded-xl bg-white border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-secondary)]"
+                  className="w-full pl-8 pr-3 py-1.5 rounded-xl bg-[var(--surface-1)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-secondary)]"
                 />
               </div>
               <div className="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0">
@@ -1077,7 +1077,7 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
           )}
 
           {offerings.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-[#DCD3C4] p-10 text-center space-y-2">
+            <div className="rounded-2xl border border-dashed border-[var(--border-subtle)] p-10 text-center space-y-2">
               <p className="text-xs text-[var(--text-secondary)] italic">
                 {isNl ? 'Je aanbod is nog leeg. Voeg je eerste dienst toe wanneer je er klaar voor bent.' : 'Your catalogue is empty. Add your first service whenever you are ready.'}
               </p>
@@ -1115,7 +1115,7 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
                       <div className="space-y-2">
                         <div className="flex items-start justify-between gap-2">
                           <h4 className="font-serif text-base font-medium text-[var(--text-primary)] line-clamp-1">{off.title}</h4>
-                          <span className="text-[10px] uppercase font-semibold px-2 py-0.5 rounded-md bg-[#EAE2D3] text-[#554C42] shrink-0">
+                          <span className="text-[10px] uppercase font-semibold px-2 py-0.5 rounded-md bg-[var(--surface-1)] text-[var(--text-secondary)] border border-[var(--border-subtle)] shrink-0">
                             {off.type}
                           </span>
                           <span className={`text-[9px] uppercase font-semibold px-2 py-0.5 rounded-md shrink-0 ${off.status === 'active' ? 'bg-emerald-900/30 text-emerald-300' : off.status === 'archived' ? 'bg-[var(--surface-2)] text-[var(--text-muted)]' : 'bg-amber-900/25 text-amber-200'}`}>
@@ -1279,7 +1279,7 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
                     </select>
                   </div>
                   {offeringFormError && (
-                    <p role="alert" className="text-xs text-[#A33A32]">{offeringFormError}</p>
+                    <p role="alert" className="text-xs text-[var(--status-danger)]">{offeringFormError}</p>
                   )}
                   <div className="flex justify-end gap-2 pt-2">
                     <button
