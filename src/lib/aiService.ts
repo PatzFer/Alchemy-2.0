@@ -1,10 +1,42 @@
 import { AssistantMessage, Task, CalendarEvent, LifeProfile } from '../types';
 
+import { AssistantMessage, AssistantAction, Task, CalendarEvent, LifeProfile } from '../types';
+
+const ALLOWED_ACTION_TYPES = new Set<AssistantAction['type']>([
+  'SUGGEST_TASK',
+  'RESCHEDULE_TASK',
+  'ADD_MEMORY',
+  'BREAKDOWN_GOAL',
+  'CREATE_PROJECT',
+  'CREATE_CONTENT',
+]);
+
+function assistantWorld(world: string): AssistantMessage['world'] {
+  return world === 'mariluna' ? 'mariluna' : world === 'all' ? 'all' : 'personal';
+}
+
+function createAssistantMessage(
+  content: string,
+  world: string,
+  suggestedAction?: AssistantAction,
+): AssistantMessage {
+  return {
+    id: `msg-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    role: 'assistant',
+    content,
+    timestamp: new Date().toISOString(),
+    world: assistantWorld(world),
+    ...(suggestedAction ? { suggestedAction } : {}),
+  };
+}
+
 export async function sendChatMessage(
   messages: { role: string; content: string }[],
   context: Record<string, any>,
   world: string
 ): Promise<AssistantMessage> {
+  const lastMsg = messages.length > 0 ? messages[messages.length - 1].content : '';
+
   try {
     const res = await fetch('/api/ai/chat', {
       method: 'POST',
@@ -13,61 +45,48 @@ export async function sendChatMessage(
     });
 
     if (!res.ok) {
-      throw new Error(`Server returned ${res.status}`);
+      throw new Error(`Jarvis endpoint returned HTTP ${res.status}`);
     }
 
     const data = await res.json();
-    let content = data.content || '';
-    let suggestedAction = undefined;
+    if (!data || typeof data.content !== 'string' || !data.content.trim()) {
+      throw new Error('Jarvis returned an empty or invalid response.');
+    }
 
-    // Check if the response contains an action block
+    let content = data.content;
+    let suggestedAction: AssistantAction | undefined;
     const actionMatch = content.match(/```action\s*([\s\S]*?)\s*```/);
     if (actionMatch) {
       try {
         const actionData = JSON.parse(actionMatch[1]);
-        suggestedAction = {
-          type: actionData.type,
-          label: actionData.label || 'Accept Recommendation',
-          payload: actionData.data || actionData,
-        };
-        // Clean out action block from user display text
-        content = content.replace(/```action[\s\S]*?```/, '').trim();
+        const validType = ALLOWED_ACTION_TYPES.has(actionData?.type);
+        const validPayload = actionData?.data !== null && typeof actionData?.data === 'object';
+        if (validType && validPayload) {
+          suggestedAction = {
+            type: actionData.type,
+            label: typeof actionData.label === 'string' && actionData.label.trim()
+              ? actionData.label.slice(0, 100)
+              : 'Aanbeveling bekijken',
+            payload: actionData.data,
+          };
+        } else {
+          console.warn('Jarvis action block rejected: unsupported type or invalid payload.');
+        }
       } catch (err) {
-        console.warn('Failed to parse action block:', err);
+        console.warn('Jarvis action block could not be parsed:', err);
       }
+      // Never show raw machine instructions or malformed action JSON in the conversation.
+      content = content.replace(/```action[\s\S]*?```/, '').trim();
     }
 
-    return {
-      id: 'msg-' + Date.now(),
-      role: 'assistant',
-      content,
-      timestamp: new Date().toISOString(),
-      world: world === 'mariluna' ? 'mariluna' : world === 'all' ? 'all' : 'personal',
-      suggestedAction,
-    };
-  } catch (error: any) {
-    console.error('AI chat communication error:', error);
-    const lastMsg = messages.length > 0 ? messages[messages.length - 1].content : '';
-    const isDutch = /\b(wat|is|er|op|mijn|planning|vrijdag|hoe|waar|moet|ik|me|richten|sparren|bespreek|idee|taken|project|welke)\b/i.test(lastMsg);
-    
-    let fallbackText = isDutch
-      ? `Ik luister met je mee over "${lastMsg || 'je vraag'}". Je planning en prioriteiten blijven lokaal geborgd. Waar wil je nu als eerste de focus op leggen?`
-      : `Reflecting on "${lastMsg || 'your query'}". Your schedule and priorities remain securely held. What specific outcome shall we focus on first?`;
-
-    // Handle agenda / friday specifically in offline catch
-    if (/vrijdag|friday|planning|agenda/i.test(lastMsg)) {
-      fallbackText = isDutch
-        ? `Er staan momenteel geen afspraken of taken op je planning voor vrijdag.`
-        : `There are currently no events or tasks scheduled on your planning for Friday.`;
-    }
-
-    return {
-      id: 'msg-' + Date.now(),
-      role: 'assistant',
-      content: fallbackText,
-      timestamp: new Date().toISOString(),
-      world: world === 'mariluna' ? 'mariluna' : world === 'all' ? 'all' : 'personal',
-    };
+    return createAssistantMessage(content || 'Ik heb je bericht ontvangen, maar geen tekstueel antwoord gekregen.', world, suggestedAction);
+  } catch (error) {
+    console.warn('Jarvis is temporarily unavailable:', error);
+    const isDutch = /\b(wat|is|er|op|mijn|planning|vrijdag|hoe|waar|moet|ik|me|richten|sparren|bespreek|idee|taken|project|welke|kun je|wil je)\b/i.test(lastMsg);
+    const fallbackText = isDutch
+      ? 'Jarvis is momenteel niet bereikbaar. Je bericht blijft in dit gesprek staan, maar ik heb je agenda of gegevens niet kunnen raadplegen en er is niets gewijzigd. Controleer je verbinding of probeer het straks opnieuw.'
+      : 'Jarvis is temporarily unavailable. Your message remains in this conversation, but I could not access your schedule or data and nothing has been changed. Check your connection or try again shortly.';
+    return createAssistantMessage(fallbackText, world);
   }
 }
 
