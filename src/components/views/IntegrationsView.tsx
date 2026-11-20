@@ -555,15 +555,15 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
                 </div>
                 <p className="text-xs text-[var(--text-secondary)] mt-0.5">
                   {isNl
-                    ? 'De native Android Health Connect-koppeling is nog in ontwikkeling. Er worden pas gegevens getoond nadat echte Android-toestemming en synchronisatie beschikbaar zijn.'
-                    : 'The native Android Health Connect connection is still in development. Data will appear only after real Android permissions and synchronization are available.'}
+                    ? 'De native Android Health Connect-koppeling is nog in ontwikkeling. Renpho-metingen kun je voorlopig via CSV importeren in Welzijn → Voortgang.'
+                    : 'The native Android Health Connect connection is still in development. Renpho readings can currently be imported from CSV in Wellbeing → Progress.'}
                 </p>
               </div>
             </div>
 
             <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
               <span className="text-xs text-[var(--text-muted)] italic">
-                {isNl ? 'Binnenkort beschikbaar via de Android-app' : 'Coming soon through the Android app'}
+                {isNl ? 'Native Android-koppeling in ontwikkeling' : 'Native Android connection in development'}
               </span>
             </div>
           </div>
