@@ -366,7 +366,14 @@ export const MemoryManagerView: React.FC<MemoryManagerViewProps> = ({
                     </button>
 
                     <button
-                      onClick={() => onDeleteMemory(m.id)}
+                      onClick={() => {
+                        const confirmed = window.confirm(
+                          isNl
+                            ? 'Deze herinnering definitief verwijderen? Dit kan niet ongedaan worden gemaakt.'
+                            : 'Permanently delete this memory? This cannot be undone.'
+                        );
+                        if (confirmed) onDeleteMemory(m.id);
+                      }}
                       className="p-1.5 text-[#9E958B] hover:text-[#8A2424] rounded-lg hover:bg-[#FBEAEB] transition cursor-pointer"
                       title={isNl ? 'Verwijderen' : 'Delete'}
                     >
