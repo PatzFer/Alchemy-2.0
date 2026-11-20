@@ -52,3 +52,13 @@ test('Jarvis rejects empty server responses and returns a clear recovery message
   const result = await sendChatMessage([{ role: 'user', content: 'Help me' }], {}, 'personal');
   assert.match(result.content, /niet bereikbaar/i);
 });
+
+
+test('Jarvis discards incomplete action fences and array payloads', async () => {
+  mockFetch(async () => new Response(JSON.stringify({
+    content: 'Ik heb een voorstel.\n```action\n{"type":"SUGGEST_TASK","data":[{"title":"Onjuist"}]}',
+  }), { status: 200 }));
+  const result = await sendChatMessage([{ role: 'user', content: 'Maak een voorstel' }], {}, 'personal');
+  assert.equal(result.suggestedAction, undefined);
+  assert.equal(result.content, 'Ik heb een voorstel.');
+});
