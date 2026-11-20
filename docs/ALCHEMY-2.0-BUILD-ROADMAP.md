@@ -14,7 +14,7 @@ GitHub remains the canonical source of truth throughout implementation. Work sta
 - Continue through implementation phases without asking for approval of every visual detail.
 - Use considered design defaults and preserve the user's confirmed decisions.
 - Stop and ask only when a product decision materially affects privacy, data ownership, irreversible behavior, costs, or the user experience in a way that cannot be safely inferred.
-- At the end of each meaningful phase, report what was completed, what was tested, what remains, and ask whether to start the next phase.
+- Continue through all non-blocked implementation phases without waiting for confirmation. Report only at meaningful checkpoints; ask only when a decision materially affects privacy, data ownership, irreversible behavior, costs, or requires user action.
 - Do not describe work as complete or tested unless the relevant checks actually ran.
 - Preserve existing user data and feature behavior. Prefer gradual migration and compatibility over destructive replacement.
 
