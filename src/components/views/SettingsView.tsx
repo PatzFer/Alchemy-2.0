@@ -150,10 +150,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       {/* Header */}
       <div className="border-b border-[var(--border-subtle)] pb-5">
         <h1 className="font-serif text-3xl font-normal text-[var(--text-primary)]">
-          P & M Alchemy Sovereignty & Settings
+          {isNl ? 'P & M Alchemy — Instellingen' : 'P & M Alchemy — Settings'}
         </h1>
         <p className="text-xs text-[var(--text-secondary)] mt-1 font-light">
-          Inspect and govern what your JARVIS knows, calibrate thoughtful quiet hours, and configure data privacy.
+          {isNl ? 'Beheer wat Jarvis mag weten, stel meldingen en stille uren af en bepaal je privacy.' : 'Inspect what Jarvis knows, calibrate quiet hours, and configure data privacy.'}
         </p>
 
         {onOpenSetupWizard && (
