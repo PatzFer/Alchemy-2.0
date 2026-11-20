@@ -367,7 +367,7 @@ app.post("/api/ai/chat", requireAppAuth, requireAiRateLimit, async (req: Request
       const fallbackResponse = buildIntentAwareResponse(intentObj, lastUserMsg, sanitizedContext, world);
       return res.json({
         role: "assistant",
-        content: fallbackResponse,
+        content: `[${isDutch ? 'Lokale modus — Gemini API-sleutel ontbreekt' : 'Local mode — Gemini API key is not configured'}] ${fallbackResponse}`,
       });
     }
 
@@ -456,7 +456,7 @@ REAL SYSTEM CONTEXT PROVIDED:
     const intentObj = classifyIntent(lastUserMsg, safeMessages, sanitizedContext);
     res.json({
       role: "assistant",
-      content: buildIntentAwareResponse(intentObj, lastUserMsg, sanitizedContext, safeWorld),
+      content: `[${isDutchMessage(lastUserMsg) ? 'Lokale modus — Gemini tijdelijk niet beschikbaar' : 'Local mode — Gemini temporarily unavailable'}] ${buildIntentAwareResponse(intentObj, lastUserMsg, sanitizedContext, safeWorld)}`,
     });
   }
 });
