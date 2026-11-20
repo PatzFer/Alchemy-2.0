@@ -684,3 +684,12 @@ test('WebAuthn challenge storage rejects invalid oversized keys and values', () 
   assert.throws(() => securityVault.setChallenge('x'.repeat(257), 'nonce'), /valid WebAuthn challenge/i);
   assert.throws(() => securityVault.setChallenge('key', 'x'.repeat(1025)), /valid WebAuthn challenge/i);
 });
+
+
+test('OpenAI is an explicitly allowlisted provider and unknown provider values are ignored', () => {
+  const selected = securityVault.updatePermissions({ activeAiProvider: 'openai-server' });
+  assert.equal(selected.activeAiProvider, 'openai-server');
+  const unchanged = securityVault.updatePermissions({ activeAiProvider: 'unexpected-provider' as any });
+  assert.equal(unchanged.activeAiProvider, 'openai-server');
+  securityVault.updatePermissions({ activeAiProvider: 'local-rules' });
+});
