@@ -29,8 +29,7 @@ router.get('/snapshot', async (req: Request, res: Response) => {
     return res.json({ snapshot });
   } catch (error) {
     const status = error instanceof Error && error.message.includes('(401)') ? 401 :
-      error instanceof Error && error.message.includes('(403)') ? 403 :
-      error instanceof Error && error.message.includes('snapshot_revision_conflict') ? 409 : 500;
+      error instanceof Error && error.message.includes('(403)') ? 403 : 500;
     return res.status(status).json({ error: 'Unable to load the authenticated owner snapshot.' });
   }
 });
@@ -72,7 +71,8 @@ router.post('/snapshot', async (req: Request, res: Response) => {
     return res.status(201).json({ snapshot });
   } catch (error) {
     const status = error instanceof Error && error.message.includes('(401)') ? 401 :
-      error instanceof Error && error.message.includes('(403)') ? 403 : 500;
+      error instanceof Error && error.message.includes('(403)') ? 403 :
+      error instanceof Error && error.message.includes('snapshot_revision_conflict') ? 409 : 500;
     return res.status(status).json({ error: 'Unable to save the authenticated owner snapshot.' });
   }
 });
