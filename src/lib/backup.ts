@@ -76,16 +76,35 @@ export async function verifyAlchemyBackup(input: unknown): Promise<AlchemyBackup
   const payload = candidate.payload as AppState;
   const requiredArrays: (keyof AppState)[] = [
     'tasks', 'goals', 'ideas', 'projects', 'calendarEvents', 'memories',
-    'dailyCheckIns', 'notifications', 'proactiveSuggestions',
+    'dailyCheckIns', 'notifications', 'proactiveSuggestions', 'chatHistory',
   ];
   for (const key of requiredArrays) {
     if (!Array.isArray(payload[key])) {
       throw new Error(`De back-up is onvolledig: ${String(key)} ontbreekt of is ongeldig.`);
     }
   }
-  if (!payload.foundation || typeof payload.foundation !== 'object' ||
-      !payload.integrations || typeof payload.integrations !== 'object') {
-    throw new Error('De basisgegevens van de back-up ontbreken.');
+
+  const requiredObjects: (keyof AppState)[] = [
+    'lifeProfile', 'contentPlan', 'personalStyle', 'nutrition', 'cycleProfile',
+    'wellbeing', 'notificationSettings', 'foundation', 'integrations',
+  ];
+  for (const key of requiredObjects) {
+    const value = payload[key];
+    if (!value || typeof value !== 'object' || Array.isArray(value)) {
+      throw new Error(`De back-up is onvolledig: ${String(key)} ontbreekt of is ongeldig.`);
+    }
+  }
+
+  if (typeof payload.isSampleData !== 'boolean' ||
+      !['not_started', 'in_progress', 'skipped', 'completed'].includes(payload.setupStatus)) {
+    throw new Error('De algemene Alchemy-status in de back-up is ongeldig.');
+  }
+  const foundation = payload.foundation as AppState['foundation'];
+  const integrations = payload.integrations as AppState['integrations'];
+  if (!foundation.aboutYou || typeof foundation.aboutYou !== 'object' || Array.isArray(foundation.aboutYou) ||
+      !integrations.calendar || typeof integrations.calendar !== 'object' || Array.isArray(integrations.calendar) ||
+      !integrations.gmail || typeof integrations.gmail !== 'object' || Array.isArray(integrations.gmail)) {
+    throw new Error('De basisgegevens of integraties van de back-up zijn onvolledig.');
   }
 
   const expected = await sha256(stablePayloadString(payload));
