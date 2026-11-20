@@ -21,7 +21,7 @@ export interface PersistenceMigrationPlan {
 const COLLECTIONS = [
   'tasks', 'goals', 'ideas', 'projects', 'calendarEvents', 'memories',
   'dailyCheckIns', 'intentions', 'notifications', 'proactiveSuggestions',
-  'marilunaOfferings', 'marilunaClients',
+  'chatHistory', 'marilunaOfferings', 'marilunaClients',
 ] as const;
 
 function countRecords(value: unknown): number {
@@ -65,6 +65,15 @@ function countStateRecords(state: Record<string, unknown>): number {
     .reduce((sum, key) => sum + countRecords(admin?.[key]), 0);
   const metrics = state.marilunaMetrics as Record<string, unknown> | undefined;
   total += countRecords(metrics?.metrics) + countRecords(metrics?.records);
+
+  const contentPlan = state.contentPlan as Record<string, unknown> | undefined;
+  total += countRecords(contentPlan?.posts) + countRecords(contentPlan?.pillars);
+  if (typeof contentPlan?.quarterTheme === 'string' && contentPlan.quarterTheme.trim()) total += 1;
+  if (typeof contentPlan?.monthlyTheme === 'string' && contentPlan.monthlyTheme.trim()) total += 1;
+
+  const brain = state.brain as Record<string, unknown> | undefined;
+  total += countRecords(brain?.activeSuggestions) + countRecords(brain?.recentSplitTasks);
+  if (brain?.lastBrief && typeof brain.lastBrief === 'object') total += 1;
 
   const integrations = state.integrations as Record<string, unknown> | undefined;
   if (integrations && Object.values(integrations).some((value) =>
