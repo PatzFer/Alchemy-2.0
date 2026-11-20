@@ -1,9 +1,11 @@
-import type { ActiveWorldFilter, Goal } from '../types';
+import type { ActiveWorldFilter, Goal, Project, Task } from '../types';
 
 export interface GoalListFilters {
   activeWorld: ActiveWorldFilter;
   horizon?: string;
   query?: string;
+  tasks?: Task[];
+  projects?: Project[];
 }
 
 /** Search goals and their milestones while preserving source order. */
@@ -18,6 +20,8 @@ export function filterGoalList(goals: Goal[], filters: GoalListFilters): Goal[] 
       goal.description || '',
       goal.notes || '',
       ...(goal.milestones || []).map((milestone) => milestone.title),
+      ...(filters.tasks || []).filter((task) => task.realm === goal.realm && (task.goalId === goal.id || goal.connectedTaskIds?.includes(task.id))).map((task) => task.title),
+      ...(filters.projects || []).filter((project) => project.realm === goal.realm && (project.goalId === goal.id || goal.connectedProjectIds?.includes(project.id))).map((project) => project.title),
     ].join(' ').toLocaleLowerCase('nl-BE');
     return searchable.includes(query);
   });
