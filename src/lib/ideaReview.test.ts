@@ -6,7 +6,6 @@ const today = new Date(2026, 10, 20, 12, 0);
 
 test('idea review age uses local calendar days at the exact threshold', () => {
   assert.equal(isIdeaDueForReview('2026-10-31', '2026-11-01', today, 21), false);
-  assert.equal(isIdeaDueForReview('2026-10-30', '2026-11-01', today, 21), false);
   assert.equal(isIdeaDueForReview('2026-10-30', '2026-11-01', today, 21), true);
 });
 
