@@ -212,7 +212,7 @@ export const CycleView: React.FC<CycleViewProps> = ({
           <button
             onClick={() => { setPeriodLogError(null); setShowLogPeriodModal(true); }}
             id="log-period-btn"
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[var(--text-primary)] text-[var(--text-primary)] text-xs font-medium hover:bg-[var(--text-primary)] transition shadow-xs cursor-pointer"
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#74334D] text-[#FFF4F0] text-xs font-medium hover:bg-[#87405B] transition shadow-xs cursor-pointer"
           >
             <Plus className="w-3.5 h-3.5 text-[#C5A880]" />
             <span>Log Period Date</span>
@@ -326,7 +326,7 @@ export const CycleView: React.FC<CycleViewProps> = ({
             </button>
             <button
               type="submit"
-              className="px-4 py-1.5 rounded-lg bg-[var(--text-primary)] text-[var(--text-primary)] text-xs font-medium hover:bg-[var(--surface-raised)] transition"
+              className="px-4 py-1.5 rounded-lg bg-[#74334D] text-[#FFF4F0] text-xs font-medium hover:bg-[#87405B] transition"
             >
               Update Parameters
             </button>
@@ -450,7 +450,7 @@ export const CycleView: React.FC<CycleViewProps> = ({
           <div className="text-[10px] uppercase tracking-widest text-[var(--accent-secondary)] font-semibold">Cyclusregistratie</div>
           <h2 className="font-serif text-2xl text-[var(--text-primary)]">Begin met jouw eigen cyclusgegevens</h2>
           <p className="text-sm text-[var(--text-secondary)] leading-relaxed max-w-xl">Log een menstruatiestartdatum om een persoonlijke cyclusinschatting te zien. Zonder die datum tonen we geen fase of volgende menstruatie alsof we die kennen.</p>
-          <button type="button" onClick={() => { setPeriodLogError(null); setShowLogPeriodModal(true); }} className="px-4 py-2 rounded-xl bg-[var(--text-primary)] text-[var(--surface-1)] text-xs font-medium">Eerste menstruatiedatum toevoegen</button>
+          <button type="button" onClick={() => { setPeriodLogError(null); setShowLogPeriodModal(true); }} className="px-4 py-2 rounded-xl bg-[#74334D] text-[#FFF4F0] text-xs font-medium">Eerste menstruatiedatum toevoegen</button>
         </div>
       )}
 
@@ -497,12 +497,12 @@ export const CycleView: React.FC<CycleViewProps> = ({
                     onClick={() => setEnergyLevel(item.val as EnergyLevel)}
                     className={`p-3 rounded-xl border text-left transition cursor-pointer ${
                       isSelected
-                        ? 'bg-[var(--text-primary)] text-[var(--text-primary)] border-[var(--text-primary)] shadow-xs'
+                        ? 'bg-[#74334D] text-[#FFF4F0] border-[#C77A99] shadow-[0_0_0_1px_rgba(199,122,153,0.18)]'
                         : 'bg-[var(--surface-2)] text-[var(--text-secondary)] border-[var(--border-subtle)] hover:border-[#BFAF98]'
                     }`}
                   >
                     <span className="block text-xs font-semibold">{item.label}</span>
-                    <span className={`block text-[10px] mt-0.5 ${isSelected ? 'text-[var(--border-subtle)]' : 'text-[var(--text-muted)]'}`}>
+                    <span className={`block text-[10px] mt-0.5 ${isSelected ? 'text-[#F1DCE4]' : 'text-[var(--text-muted)]'}`}>
                       {item.desc}
                     </span>
                   </button>
@@ -824,7 +824,7 @@ export const CycleView: React.FC<CycleViewProps> = ({
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded-xl bg-[var(--text-primary)] text-[var(--text-primary)] font-medium hover:bg-[#433D37] transition"
+                  className="px-4 py-2 rounded-xl bg-[#74334D] text-[#FFF4F0] font-medium hover:bg-[#87405B] transition"
                 >
                   Confirm & Update Cycle
                 </button>
