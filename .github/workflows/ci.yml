@@ -5,6 +5,7 @@ on:
     branches:
       - design/phase-1
       - build/phase-2-planner
+      - main
   pull_request:
     branches:
       - main
