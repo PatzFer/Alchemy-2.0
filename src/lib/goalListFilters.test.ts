@@ -27,7 +27,7 @@ test('goal filters combine workspace and horizon', () => {
 test('goal search includes names of linked tasks and projects', () => {
   const item = goal({ connectedTaskIds: ['t1'], connectedProjectIds: ['p1'] });
   const tasks = [{ id: 't1', title: 'Plan website launch', realm: 'personal' } as Task];
-  const projects = [{ id: 'p1', title: 'Mariluna webshop' } as Project];
+  const projects = [{ id: 'p1', title: 'Mariluna webshop', realm: 'personal' } as Project];
   assert.deepEqual(filterGoalList([item], { activeWorld: 'all', query: 'website launch', tasks }).map((x) => x.id), ['g1']);
   assert.deepEqual(filterGoalList([item], { activeWorld: 'all', query: 'webshop', projects }).map((x) => x.id), ['g1']);
 });
