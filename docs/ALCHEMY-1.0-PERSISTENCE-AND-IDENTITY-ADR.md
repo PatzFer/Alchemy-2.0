@@ -99,3 +99,8 @@ Do not commit real values. Do not use the service-role key in the browser. Rotat
 - Session timeout and revocation survive server restart.
 - A backup restores all modules, both realms and historical records with matching counts/checksum.
 - Jarvis cannot read personal/cycle/wellbeing/nutrition records without explicit permission, even if a client sends them in its context payload.
+
+
+## Feature-branch security hardening checkpoint — 20 November 2026
+
+The current in-memory security vault has received additional input validation and defensive-copy protections for passkeys, strict six-digit TOTP input validation, format-bounded one-time recovery-code verification with constant-time digest comparison, and bounded WebAuthn challenge input validation. Regression tests cover these boundaries. This does **not** change the ADR's deployment decision: credentials, sessions, rate-limit state and TOTP encryption remain unpersisted/unconfigured in the live app. The feature branch must not be treated as production-ready until durable owner-scoped storage, external encryption key management, staging restore, RLS and restart/revocation tests are implemented and verified.
