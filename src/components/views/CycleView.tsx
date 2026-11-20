@@ -496,15 +496,15 @@ export const CycleView: React.FC<CycleViewProps> = ({
                     type="button"
                     onClick={() => setEnergyLevel(item.val as EnergyLevel)}
                     style={{
-                      backgroundColor: isSelected ? '#74334D' : 'var(--surface-2)',
-                      color: isSelected ? '#FFF4F0' : 'var(--text-secondary)',
-                      borderColor: isSelected ? '#C77A99' : 'var(--border-subtle)',
-                      boxShadow: isSelected ? '0 0 0 1px rgba(199,122,153,0.18)' : 'none',
+                      backgroundColor: isSelected ? '#563044' : 'var(--surface-2)',
+                      color: isSelected ? '#F7EAF0' : 'var(--text-primary)',
+                      borderColor: isSelected ? '#B8758E' : 'var(--border-subtle)',
+                      boxShadow: isSelected ? '0 0 0 1px rgba(184,117,142,0.22)' : 'none',
                     }}
-                    className="p-3 rounded-xl border text-left transition cursor-pointer hover:border-[#E18449]"
+                    className="p-3 rounded-xl border text-left transition cursor-pointer hover:border-[var(--accent-rose)]"
                   >
                     <span className="block text-xs font-semibold">{item.label}</span>
-                    <span style={{ color: isSelected ? '#F1DCE4' : 'var(--text-muted)' }} className="block text-[10px] mt-0.5">
+                    <span style={{ color: isSelected ? '#E9CAD6' : 'var(--text-secondary)' }} className="block text-[10px] mt-0.5">
                       {item.desc}
                     </span>
                   </button>
