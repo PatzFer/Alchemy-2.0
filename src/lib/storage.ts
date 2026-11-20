@@ -948,8 +948,40 @@ export function loadState(): AppState {
   }
 }
 
+function isPersistableAlchemyState(value: unknown): value is AppState {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  const state = value as Record<string, unknown>;
+  const requiredArrays = [
+    'tasks', 'goals', 'ideas', 'projects', 'calendarEvents', 'memories',
+    'dailyCheckIns', 'notifications', 'proactiveSuggestions', 'chatHistory',
+  ];
+  const requiredObjects = [
+    'lifeProfile', 'contentPlan', 'personalStyle', 'nutrition', 'cycleProfile',
+    'wellbeing', 'notificationSettings', 'foundation', 'integrations',
+  ];
+  if (!requiredArrays.every((key) => Array.isArray(state[key]))) return false;
+  if (!requiredObjects.every((key) =>
+    state[key] !== null && typeof state[key] === 'object' && !Array.isArray(state[key])
+  )) return false;
+  if (typeof state.isSampleData !== 'boolean' ||
+      !['not_started', 'in_progress', 'skipped', 'completed'].includes(String(state.setupStatus))) return false;
+
+  const foundation = state.foundation as Record<string, unknown>;
+  const integrations = state.integrations as Record<string, unknown>;
+  return foundation.aboutYou !== null && typeof foundation.aboutYou === 'object' &&
+    !Array.isArray(foundation.aboutYou) &&
+    integrations.calendar !== null && typeof integrations.calendar === 'object' &&
+    !Array.isArray(integrations.calendar) &&
+    integrations.gmail !== null && typeof integrations.gmail === 'object' &&
+    !Array.isArray(integrations.gmail);
+}
+
 export function saveState(state: AppState): boolean {
   if (typeof window === 'undefined') return false;
+  if (!isPersistableAlchemyState(state)) {
+    console.error('Refusing to overwrite Alchemy storage with an incomplete state payload.');
+    return false;
+  }
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     return true;
