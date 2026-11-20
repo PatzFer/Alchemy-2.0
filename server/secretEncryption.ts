@@ -60,14 +60,15 @@ export function encryptSecret(
     throw new Error('Secret must contain between 1 byte and 16 KB.');
   }
   const { key, version } = readKey(env);
-  const cipher = createCipheriv(ALGORITHM, key, randomBytes(IV_BYTES));
+  const iv = randomBytes(IV_BYTES);
+  const cipher = createCipheriv(ALGORITHM, key, iv);
   const aad = buildAad(ownerId, purpose);
   cipher.setAAD(aad);
   const ciphertext = Buffer.concat([cipher.update(plaintext, 'utf8'), cipher.final()]);
   return {
     version: 1,
     key_version: version,
-    iv: cipher.getAuthTag ? (cipher as any).__iv?.toString('base64') ?? '' : '',
+    iv: iv.toString('base64'),
     ciphertext: ciphertext.toString('base64'),
     auth_tag: cipher.getAuthTag().toString('base64'),
   };
