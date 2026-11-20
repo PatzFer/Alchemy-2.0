@@ -296,3 +296,34 @@ test('snapshot integrity is stable when PostgreSQL jsonb returns object keys in 
   const loaded = await store.loadLatestSnapshot('verified-token');
   assert.deepEqual(loaded?.payload, originalPayload);
 });
+
+
+test('snapshot save sends the expected revision for stale-write protection', async () => {
+  let rpcBody: Record<string, unknown> | undefined;
+  const fetcher: FetchLike = async (input, init) => {
+    const url = String(input);
+    if (url.endsWith('/auth/v1/user')) {
+      return new Response(JSON.stringify({ id: ownerId }), { status: 200 });
+    }
+    rpcBody = JSON.parse(String(init?.body));
+    const body = rpcBody;
+    return new Response(JSON.stringify([{
+      id: 'd4f1c1a2-1234-4a5b-9c8d-1234567890ab',
+      owner_id: ownerId,
+      schema_version: 1,
+      revision: 6,
+      payload: body.p_payload,
+      payload_sha256: body.p_payload_sha256,
+      source: body.p_source,
+      created_at: new Date().toISOString(),
+    }]), { status: 200 });
+  };
+  const store = new SupabasePersistence(readSupabaseServerConfig(env)!, fetcher);
+  const saved = await store.saveSnapshot('verified-token', validPayload, 1, 'autosave', 5);
+  assert.equal(saved.revision, 6);
+  assert.equal(rpcBody?.p_expected_revision, 5);
+  await assert.rejects(
+    () => store.saveSnapshot('verified-token', validPayload, 1, 'autosave', -1),
+    /expectedRevision must be a non-negative integer/,
+  );
+});
