@@ -50,7 +50,7 @@ test('active tasks sort by deadline then priority, with completed tasks last', (
     task({ id: 'later', dueDate: '2026-11-22', priority: 'high' }),
     task({ id: 'low', dueDate: '2026-11-20', priority: 'low' }),
     task({ id: 'high', dueDate: '2026-11-20', priority: 'high' }),
-    task({ id: 'invalid', dueDate: 'not-a-date', priority: 'high' }),
+    task({ id: 'invalid', dueDate: '2026-02-30', priority: 'high' }),
   ];
   assert.deepEqual(filterTaskList(items, defaults).map((x) => x.id), ['high', 'low', 'later', 'invalid', 'completed']);
 });
