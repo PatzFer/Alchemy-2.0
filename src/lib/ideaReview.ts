@@ -23,6 +23,8 @@ export function isIdeaDueForReview(
   if (isValidCalendarDate(source)) {
     touchedDate = source;
   } else {
+    // Date-only ISO strings must be strictly valid; do not let Date normalize impossible dates.
+    if (/^\d{4}-\d{2}-\d{2}$/.test(source)) return false;
     const parsed = new Date(source);
     if (!Number.isFinite(parsed.getTime())) return false;
     touchedDate = localDateKey(parsed);
