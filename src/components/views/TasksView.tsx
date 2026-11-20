@@ -370,7 +370,7 @@ export const TasksView: React.FC<TasksViewProps> = ({
                         )}
                         {linkedGoal && (
                           <span className="text-[10px] rounded-full bg-[var(--surface-2)] px-2 py-0.5 text-[var(--text-secondary)]">
-                            Goal: {linkedGoal.title}
+                            Doel: {linkedGoal.title}
                           </span>
                         )}
                       </div>
@@ -585,7 +585,7 @@ export const TasksView: React.FC<TasksViewProps> = ({
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Due Date</label>
+                <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Deadline</label>
                 <input
                   type="date"
                   required
