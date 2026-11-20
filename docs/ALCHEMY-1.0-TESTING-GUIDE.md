@@ -21,6 +21,10 @@ Use synthetic or non-sensitive test data only. Do not enter real cycle, health, 
 
 The preview-unlock endpoint is rejected when `NODE_ENV=production`, even if the flag is set. Do not enable preview authentication on a public production deployment.
 
+For a private AI Studio Build preview, configure `ENABLE_PREVIEW_AUTH=true` as a server-side environment variable for the preview runtime. If the flag is not present, Alchemy intentionally stays on the authentication screen. The server still rejects preview unlock when `NODE_ENV=production`.
+
+To test live Gemini, first review the data-use warning in Settings → Security & Privacy, then explicitly choose Gemini and enable only the synthetic-data workspace scopes you intend to test. Local privacy mode is the default.
+
 ## Core workflows to test
 
 - On a fresh local profile, complete the Foundation wizard on first launch; reopen it later from Settings.
