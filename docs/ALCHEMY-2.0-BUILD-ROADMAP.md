@@ -939,3 +939,11 @@ A user can reliably open Alchemy without a startup security interstitial; captur
 - Invalid date inputs and non-integer shifts are rejected without manufacturing a new date.
 - Added regression tests for month ends, leap years, reverse navigation and year boundaries.
 - Full CI validation is pending for the latest combined branch state.
+
+
+## Progress log — 20 November 2026 (Jarvis memory edit safety)
+
+- Memory edits now ignore blank/whitespace-only content, preventing accidental erasure of a useful saved memory.
+- Archived memories are immutable through the ordinary edit path; restore remains an explicit separate action.
+- Added regression coverage for blank edits, archived records and normal active-memory edits.
+- Existing stored memories are not rewritten by this change.
