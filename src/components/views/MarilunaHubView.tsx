@@ -209,7 +209,7 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
   const [isOfferingModalOpen, setIsOfferingModalOpen] = useState(false);
   const [editingOfferingId, setEditingOfferingId] = useState<string | null>(null);
   const [offeringSearchQuery, setOfferingSearchQuery] = useState('');
-  const [offeringTypeFilter, setOfferingTypeFilter] = useState<string>('all');
+  const [offeringTypeFilter, setOfferingTypeFilter] = useState<'all' | MarilunaOffering['type']>('all');
   const [offeringStatusFilter, setOfferingStatusFilter] = useState<'all' | MarilunaOffering['status']>('all');
   const [offeringTitle, setOfferingTitle] = useState('');
   const [offeringType, setOfferingType] = useState<MarilunaOffering['type']>('service');
@@ -1093,7 +1093,7 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
             (() => {
               const filteredOfferings = filterMarilunaOfferings(offerings, {
                 query: offeringSearchQuery,
-                type: offeringTypeFilter as 'all' | MarilunaOffering['type'],
+                type: offeringTypeFilter,
                 status: offeringStatusFilter,
               });
 
