@@ -590,3 +590,31 @@ test('Jarvis rejects memories with malformed expiry timestamps and expired memor
     allowFinancialDataToAI: false,
   });
 });
+
+test('authentication lockout starts after five failed attempts and can be cleared after verified login', () => {
+  const key = 'auth-lockout-regression-test';
+  for (let attempt = 0; attempt < 4; attempt += 1) {
+    securityVault.recordFailedAttempt(key);
+    assert.equal(securityVault.checkRateLimit(key).allowed, true);
+  }
+
+  securityVault.recordFailedAttempt(key);
+  const locked = securityVault.checkRateLimit(key);
+  assert.equal(locked.allowed, false);
+  assert.ok((locked.remainingLockoutSeconds ?? 0) > 0);
+
+  securityVault.clearFailedAttempts(key);
+  assert.equal(securityVault.checkRateLimit(key).allowed, true);
+});
+
+test('authentication lockout state is isolated between client keys', () => {
+  const lockedKey = 'auth-lockout-isolation-locked';
+  const cleanKey = 'auth-lockout-isolation-clean';
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    securityVault.recordFailedAttempt(lockedKey);
+  }
+
+  assert.equal(securityVault.checkRateLimit(lockedKey).allowed, false);
+  assert.equal(securityVault.checkRateLimit(cleanKey).allowed, true);
+  securityVault.clearFailedAttempts(lockedKey);
+});
