@@ -177,6 +177,7 @@ Do not mark a test as passed based only on source inspection or a successful com
 - [x] Task-fit advice respects remaining free minutes and the capacity limit.
 - [x] Oversized tasks receive split-task recommendations.
 - [x] Daily planning uses local date-only parsing.
+- [x] Work-hour blocks and appointments are merged so meetings during work hours are not double-counted.
 - [x] Task list prioritizes earlier due dates, then task priority.
 - [x] Completed tasks are grouped after active work.
 - [x] Today dashboard shows estimated task workload and overlap-safe appointment time separately.
