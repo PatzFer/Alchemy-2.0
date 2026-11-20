@@ -67,12 +67,13 @@ function countStateRecords(state: Record<string, unknown>): number {
   total += countRecords(metrics?.metrics) + countRecords(metrics?.records);
 
   const contentPlan = state.contentPlan as Record<string, unknown> | undefined;
-  total += countRecords(contentPlan?.posts) + countRecords(contentPlan?.pillars);
+  total += countRecords(contentPlan?.posts) + countRecords(contentPlan?.pillars) + countRecords(contentPlan?.platforms);
   if (typeof contentPlan?.quarterTheme === 'string' && contentPlan.quarterTheme.trim()) total += 1;
   if (typeof contentPlan?.monthlyTheme === 'string' && contentPlan.monthlyTheme.trim()) total += 1;
 
   const brain = state.brain as Record<string, unknown> | undefined;
-  total += countRecords(brain?.activeSuggestions) + countRecords(brain?.recentSplitTasks);
+  total += countRecords(brain?.activeSuggestions) + countRecords(brain?.recentSplitTasks) +
+    countRecords(brain?.dismissedSuggestionIds) + countRecords(brain?.acceptedSuggestionIds);
   if (brain?.lastBrief && typeof brain.lastBrief === 'object') total += 1;
 
   const integrations = state.integrations as Record<string, unknown> | undefined;
