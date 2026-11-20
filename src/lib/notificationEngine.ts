@@ -67,25 +67,32 @@ export const DEFAULT_NOTIFICATION_SETTINGS: NotificationSettings = {
 /**
  * Checks if current time is inside user-configured Quiet Hours.
  */
-export function isCurrentlyQuietHours(settings?: NotificationSettings): boolean {
-  if (!settings || !settings.enabled) return false;
+function parseClockMinutes(value: string): number | null {
+  if (!/^([01]\\d|2[0-3]):[0-5]\\d$/.test(value)) return null;
+  const [hours, minutes] = value.split(':').map(Number);
+  return hours * 60 + minutes;
+}
 
-  const now = new Date();
-  const currentMinutes = now.getHours() * 60 + now.getMinutes();
-
-  const [startH, startM] = (settings.quietHoursStart || '21:00').split(':').map(Number);
-  const [endH, endM] = (settings.quietHoursEnd || '08:30').split(':').map(Number);
-
-  const startMinutes = (startH || 0) * 60 + (startM || 0);
-  const endMinutes = (endH || 0) * 60 + (endM || 0);
+/** Pure quiet-hours check; the end boundary is exclusive and equal endpoints disable the window. */
+export function isWithinQuietHours(currentMinutes: number, start: string, end: string): boolean {
+  if (!Number.isInteger(currentMinutes) || currentMinutes < 0 || currentMinutes >= 1440) return false;
+  const startMinutes = parseClockMinutes(start);
+  const endMinutes = parseClockMinutes(end);
+  if (startMinutes === null || endMinutes === null || startMinutes === endMinutes) return false;
 
   if (startMinutes > endMinutes) {
-    // Spans overnight (e.g. 21:00 to 08:30)
     return currentMinutes >= startMinutes || currentMinutes < endMinutes;
-  } else {
-    // Same day window
-    return currentMinutes >= startMinutes && currentMinutes < endMinutes;
   }
+  return currentMinutes >= startMinutes && currentMinutes < endMinutes;
+}
+
+export function isCurrentlyQuietHours(settings?: NotificationSettings): boolean {
+  if (!settings || !settings.enabled) return false;
+  const now = new Date();
+  const currentMinutes = now.getHours() * 60 + now.getMinutes();
+  const start = settings.quietHoursStart || DEFAULT_NOTIFICATION_SETTINGS.quietHoursStart;
+  const end = settings.quietHoursEnd || DEFAULT_NOTIFICATION_SETTINGS.quietHoursEnd;
+  return isWithinQuietHours(currentMinutes, start, end);
 }
 
 /**
