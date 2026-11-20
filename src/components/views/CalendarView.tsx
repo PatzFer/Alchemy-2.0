@@ -230,6 +230,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
         isToday: ds === todayStr,
         isSelected: ds === currentDateStr,
         dayEvents: filterByRealm(events.filter((e) => e.date === ds)),
+        dayTasks: filterTasksForDate(ds),
       });
     }
 
