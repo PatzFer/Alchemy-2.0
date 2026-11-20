@@ -3,6 +3,16 @@ import assert from 'node:assert/strict';
 import { securityVault, requireAppAuth } from './security';
 import { buildIntentAwareResponse } from './brainEngine';
 
+test('Jarvis defaults to local privacy mode with all sensitive AI scopes disabled', () => {
+  const permissions = securityVault.getPermissions();
+  assert.equal(permissions.activeAiProvider, 'local-rules');
+  assert.equal(permissions.allowPersonalDataToAI, false);
+  assert.equal(permissions.allowMarilunaDataToAI, false);
+  assert.equal(permissions.allowFinancialDataToAI, false);
+  assert.equal(permissions.allowWellbeingDataToAI, false);
+  assert.equal(permissions.allowCycleDataToAI, false);
+});
+
 test('Mariluna AI context excludes personal events, projects, memories and private preferences', () => {
   securityVault.updatePermissions({ allowPersonalDataToAI: true, allowMarilunaDataToAI: true });
   const result = securityVault.sanitizeContextForAi({
