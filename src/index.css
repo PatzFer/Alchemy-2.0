@@ -210,3 +210,46 @@
 ::-webkit-scrollbar-thumb:hover {
   background: #747A6D;
 }
+
+
+/* Global dark-surface harmonisation: replace legacy cream/white panels
+   with the same charcoal-plum surfaces used throughout Alchemy. */
+@layer utilities {
+  [class~="bg-white"],
+  [class~="bg-stone-50"],
+  [class~="bg-neutral-50"],
+  [class*="bg-[#FFFFFF]"],
+  [class*="bg-[#FAF8F3]"],
+  [class*="bg-[#FAF8F4]"],
+  [class*="bg-[#F9F7F2]"],
+  [class*="bg-[#F5EFE4]"],
+  [class*="bg-[#F4EFE6]"],
+  [class*="bg-[#F0EBDD]"],
+  [class*="bg-[#F3ECE1]"],
+  [class*="bg-[#EAE3D4]"],
+  [class*="bg-[#E3D8C6]"] {
+    background-color: var(--surface-1) !important;
+    border-color: var(--border-subtle) !important;
+    color: var(--text-primary) !important;
+  }
+
+  /* Legacy dark text was designed for cream cards; keep it legible on dark panels. */
+  [class*="text-[#2C2825]"],
+  [class*="text-[#3A332D]"],
+  [class*="text-[#4A4035]"],
+  [class*="text-[#6C6358]"],
+  [class*="text-[#686055]"],
+  [class*="text-[#756C60]"],
+  [class*="text-[#7A7167]"] {
+    color: var(--text-secondary) !important;
+  }
+
+  /* Light neutral form fields and nested cards follow the same dark palette. */
+  input[class*="bg-[#FAF"],
+  textarea[class*="bg-[#FAF"],
+  select[class*="bg-[#FAF"] {
+    background-color: var(--surface-2) !important;
+    color: var(--text-primary) !important;
+    border-color: var(--border-subtle) !important;
+  }
+}
