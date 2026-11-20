@@ -153,9 +153,13 @@ export class SupabasePersistence {
     payload: Record<string, unknown>,
     schemaVersion = 1,
     source: 'migration' | 'autosave' | 'manual_backup' | 'restore' = 'autosave',
+    expectedRevision?: number,
   ): Promise<SnapshotRecord> {
     if (!Number.isInteger(schemaVersion) || schemaVersion < 1) {
       throw new Error('schemaVersion must be a positive integer.');
+    }
+    if (expectedRevision !== undefined && (!Number.isInteger(expectedRevision) || expectedRevision < 0)) {
+      throw new Error('expectedRevision must be a non-negative integer.');
     }
     const owner = await this.verifyOwner(accessToken);
     if (!isValidAlchemySnapshotPayload(payload)) {
@@ -180,6 +184,7 @@ export class SupabasePersistence {
         p_payload: payload,
         p_payload_sha256: payloadSha256,
         p_source: source,
+        p_expected_revision: expectedRevision ?? null,
       }),
     });
     if (!Array.isArray(rows) || !rows[0]) {
