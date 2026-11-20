@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { parseRenphoCsv } from './renphoCsv';
+import { mergeRenphoProgressLogs, parseRenphoCsv } from './renphoCsv';
 
 test('Renpho CSV import maps metric weight and body composition by local date', () => {
   const logs = parseRenphoCsv([
@@ -61,4 +61,33 @@ test('Renpho CSV import supports European semicolon separators and decimal comma
   ].join('\n'));
   assert.equal(logs[0].weightKg, 90.4);
   assert.equal(logs[0].composition?.bodyFatPercentage, 35.2);
+});
+
+
+test('Renpho merge updates scale fields while preserving manual notes and measurements', () => {
+  const existing = [{
+    id: 'manual-1',
+    date: '2026-11-20',
+    weightKg: 91,
+    measurements: { waistCm: 90, hipsCm: 120 },
+    composition: { bodyFatPercentage: 44 },
+    feelingNotes: 'Voel me energiek',
+    recordedFact: 'Handmatige meting',
+    aiInterpretation: 'Bestaande interpretatie',
+  }];
+  const imported = parseRenphoCsv([
+    'Date,Weight(kg),Body Fat(%),Body Water(%)',
+    '2026-11-20,90.5,43.5,41',
+  ].join('\n'));
+  const merged = mergeRenphoProgressLogs(existing, imported);
+
+  assert.equal(merged.length, 1);
+  assert.equal(merged[0].id, 'manual-1');
+  assert.equal(merged[0].weightKg, 90.5);
+  assert.equal(merged[0].measurements?.waistCm, 90);
+  assert.equal(merged[0].feelingNotes, 'Voel me energiek');
+  assert.equal(merged[0].recordedFact, 'Handmatige meting');
+  assert.equal(merged[0].aiInterpretation, 'Bestaande interpretatie');
+  assert.equal(merged[0].composition?.bodyFatPercentage, 43.5);
+  assert.equal(merged[0].composition?.hydrationPercentage, 41);
 });
