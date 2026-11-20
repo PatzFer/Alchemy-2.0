@@ -92,7 +92,7 @@ export const Navigation: React.FC<NavigationProps> = ({
   ];
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-[#51424A]/70 bg-[#1D191F]/96 backdrop-blur-md transition-colors">
+    <header className="sticky top-0 z-40 w-full border-b border-[var(--border-subtle)] bg-[#1C191E]/96 backdrop-blur-md transition-colors">
       {/* Top Header Bar */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         {/* Brand & World Filter */}
@@ -102,24 +102,24 @@ export const Navigation: React.FC<NavigationProps> = ({
             id="brand-logo-btn"
             className="flex items-center gap-3 text-left group cursor-pointer"
           >
-            <div className="w-8 h-8 rounded-full border border-[#B49A79]/50 bg-[#29232D] flex items-center justify-center shadow-xs group-hover:border-[#B5A48B] transition shrink-0">
-              <span className="font-serif text-[11px] font-semibold text-[#D6C69B] tracking-tighter">
+            <div className="w-8 h-8 rounded-full border border-[var(--accent-secondary)]/40 bg-[var(--surface-1)] flex items-center justify-center shadow-xs group-hover:border-[#B5A48B] transition shrink-0">
+              <span className="font-serif text-[11px] font-semibold text-[var(--accent-secondary)] tracking-tighter">
                 P&M
               </span>
             </div>
-            <span className="font-serif text-base sm:text-lg tracking-[0.2em] uppercase font-medium text-[#E8DCC7] group-hover:text-[#D6C69B] transition-colors select-none">
+            <span className="font-serif text-base sm:text-lg tracking-[0.2em] uppercase font-medium text-[var(--text-primary)] group-hover:text-[var(--accent-secondary)] transition-colors select-none">
               ALCHEMY
             </span>
           </button>
 
           {/* World Switcher: Balanced vs Personal vs Mariluna */}
-          <div className="hidden md:flex items-center rounded-full border border-[#51424A] bg-[#24262A] p-0.5 text-xs">
+          <div className="hidden md:flex items-center rounded-full border border-[var(--border-subtle)] bg-[var(--surface-1)] p-0.5 text-xs">
             <button
               onClick={() => onSelectWorld('all')}
               id="world-filter-all"
               className={`px-3 py-1 rounded-full transition-all cursor-pointer ${
                 activeWorld === 'all'
-                  ? 'bg-[#51424A] text-[#E8DCC7] shadow-xs font-medium'
+                  ? 'bg-[var(--surface-raised)] text-[var(--text-primary)] shadow-xs font-medium'
                   : 'text-[#BDB3AA] hover:text-[#E8DCC7]'
               }`}
             >
@@ -130,11 +130,11 @@ export const Navigation: React.FC<NavigationProps> = ({
               id="world-filter-personal"
               className={`flex items-center gap-1.5 px-3 py-1 rounded-full transition-all cursor-pointer ${
                 activeWorld === 'personal'
-                  ? 'bg-[#245047] text-[#E8DCC7] shadow-xs font-medium border border-[#39776D]'
+                  ? 'bg-[#24443D] text-[#E5F0E9] shadow-xs font-medium border border-[#52786B]'
                   : 'text-[#BDB3AA] hover:text-[#E8DCC7]'
               }`}
             >
-              <span className="w-1.5 h-1.5 rounded-full bg-[#A2A36B]"></span>
+              <span className="w-1.5 h-1.5 rounded-full bg-[#9A9B72]"></span>
               {isNl ? 'Persoonlijk Domein' : 'Personal Sanctuary'}
             </button>
             <button
@@ -142,11 +142,11 @@ export const Navigation: React.FC<NavigationProps> = ({
               id="world-filter-mariluna"
               className={`flex items-center gap-1.5 px-3 py-1 rounded-full transition-all cursor-pointer ${
                 activeWorld === 'mariluna'
-                  ? 'bg-[#873F5B] text-[#E8DCC7] shadow-xs font-medium'
+                  ? 'bg-[#563044] text-[#F3E5E9] shadow-xs font-medium border border-[#805269]'
                   : 'text-[#BDB3AA] hover:text-[#E8DCC7]'
               }`}
             >
-              <span className="w-1.5 h-1.5 rounded-full bg-[#D6C69B]"></span>
+              <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-secondary)]"></span>
               {isNl ? 'Mariluna Studio' : 'Mariluna Studio'}
             </button>
           </div>
@@ -166,15 +166,15 @@ export const Navigation: React.FC<NavigationProps> = ({
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
                   isActive
                     ? isMariluna
-                      ? 'bg-[#D1A9B9] text-[#321F32] shadow-xs font-semibold'
+                      ? 'bg-[#563044] text-[#F3E5E9] border border-[#805269] shadow-xs font-semibold'
                       : isPrive
-                      ? 'bg-[#245047] text-[#E8DCC7] shadow-xs font-semibold'
-                      : 'bg-[#302B33] text-[#E8DCC7] shadow-xs font-semibold'
+                      ? 'bg-[#24443D] text-[#E5F0E9] border border-[#52786B] shadow-xs font-semibold'
+                      : 'bg-[var(--surface-raised)] text-[var(--text-primary)] shadow-xs font-semibold'
                     : isMariluna
-                    ? 'text-[#E8DCC7] bg-[#59324F] hover:bg-[#873F5B]'
+                    ? 'text-[#D7B9C5] bg-[#30232C] hover:bg-[#563044]'
                     : isPrive
-                    ? 'text-[#E8DCC7] bg-[#172F2B] hover:bg-[#245047] hover:text-[#E8DCC7]'
-                    : 'text-[#BDB3AA] hover:text-[#E8DCC7] hover:bg-[#302B33]'
+                    ? 'text-[#B8D1C7] bg-[#202D29] hover:bg-[#24443D] hover:text-[#E5F0E9]'
+                    : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-raised)]'
                 }`}
               >
                 {isMariluna && <span className="w-1.5 h-1.5 rounded-full bg-[#D6C69B]" />}
@@ -184,7 +184,7 @@ export const Navigation: React.FC<NavigationProps> = ({
             );
           })}
 
-          <div className="h-4 w-px bg-[#3D443B] mx-1"></div>
+          <div className="h-4 w-px bg-[var(--border-strong)] mx-1"></div>
 
           {/* Retained direct access modules: Taken, Cyclus, Welzijn, Agenda */}
           <div className="flex items-center gap-0.5">
@@ -197,7 +197,7 @@ export const Navigation: React.FC<NavigationProps> = ({
                   id={`nav-tab-${item.id}`}
                   className={`px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
                     isActive
-                      ? 'bg-[#302B33] text-[#E8DCC7] font-semibold'
+                      ? 'bg-[var(--surface-raised)] text-[var(--text-primary)] font-semibold'
                       : 'text-[#BDB3AA] hover:text-[#E8DCC7] hover:bg-[#302B33]'
                   }`}
                 >
@@ -257,13 +257,13 @@ export const Navigation: React.FC<NavigationProps> = ({
       </div>
 
       {/* Sub-bar on mobile for World Switcher */}
-      <div className="md:hidden px-4 py-2 border-t border-[#493542] flex items-center justify-between bg-[#211A22]">
+      <div className="md:hidden px-4 py-2 border-t border-[var(--border-subtle)] flex items-center justify-between bg-[#1C191E]">
         <div className="flex items-center gap-1 w-full justify-center">
           <button
             onClick={() => onSelectWorld('all')}
             className={`px-3 py-1 rounded-full text-[11px] transition ${
               activeWorld === 'all'
-                ? 'bg-[#51424A] text-[#E8DCC7] shadow-xs font-medium'
+                ? 'bg-[var(--surface-raised)] text-[var(--text-primary)] shadow-xs font-medium'
                 : 'text-[#BDB3AA]'
             }`}
           >
@@ -273,7 +273,7 @@ export const Navigation: React.FC<NavigationProps> = ({
             onClick={() => onSelectWorld('personal')}
             className={`flex items-center gap-1 px-3 py-1 rounded-full text-[11px] transition ${
               activeWorld === 'personal'
-                ? 'bg-[#302B33] text-[#E8DCC7] shadow-xs font-medium border border-[#555A50]'
+                ? 'bg-[#24443D] text-[#E5F0E9] shadow-xs font-medium border border-[#52786B]'
                 : 'text-[#BDB3AA]'
             }`}
           >
@@ -284,7 +284,7 @@ export const Navigation: React.FC<NavigationProps> = ({
             onClick={() => onSelectWorld('mariluna')}
             className={`flex items-center gap-1 px-3 py-1 rounded-full text-[11px] transition ${
               activeWorld === 'mariluna'
-                ? 'bg-[#59324F] text-[#E8DCC7] font-medium'
+                ? 'bg-[#563044] text-[#F3E5E9] font-medium border border-[#805269]'
                 : 'text-[#BDB3AA]'
             }`}
           >
@@ -295,7 +295,7 @@ export const Navigation: React.FC<NavigationProps> = ({
       </div>
 
       {/* Mobile Bottom Navigation Bar */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#211A22]/96 backdrop-blur-md border-t border-[#493542] px-2 py-1.5 flex items-center justify-around shadow-lg">
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#1C191E]/96 backdrop-blur-md border-t border-[var(--border-subtle)] px-2 py-1.5 flex items-center justify-around shadow-lg">
         {mobileNavItems.map((item) => {
           const isActive = currentTab === item.id;
           const Icon = item.icon;
@@ -304,10 +304,10 @@ export const Navigation: React.FC<NavigationProps> = ({
               key={item.id}
               onClick={() => onSelectTab(item.id)}
               className={`flex flex-col items-center justify-center py-1 px-2 rounded-lg text-[10px] font-medium transition cursor-pointer ${
-                isActive ? 'text-[#F0E4E3] font-semibold' : 'text-[#A99AA4] hover:text-[#F0E4E3]'
+                isActive ? 'text-[#F0E4E3] font-semibold' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
               }`}
             >
-              <Icon className={`w-4 h-4 mb-0.5 ${isActive ? 'text-[#D8759B]' : 'text-[#A99AA4]'}`} />
+              <Icon className={`w-4 h-4 mb-0.5 ${isActive ? 'text-[var(--accent-rose)]' : 'text-[var(--text-muted)]'}`} />
               <span>{item.label}</span>
             </button>
           );
