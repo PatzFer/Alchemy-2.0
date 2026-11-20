@@ -99,7 +99,9 @@ export function parseExplicitMemoryStatement(input: string): {
 export function confirmLearnedMemory(memories: MemoryItem[], memoryId: string): MemoryItem[] {
   const now = new Date().toISOString();
   return memories.map((m) => {
-    if (m.id === memoryId) {
+    // Only an explicitly pending learned suggestion may be promoted.
+    // A stale UI action must never reactivate or rewrite an archived memory.
+    if (m.id === memoryId && m.type === 'learned' && m.status === 'pending_confirmation') {
       return {
         ...m,
         type: 'confirmed',
@@ -117,7 +119,11 @@ export function confirmLearnedMemory(memories: MemoryItem[], memoryId: string): 
  * Dismisses/rejects a learned memory suggestion.
  */
 export function dismissLearnedMemory(memories: MemoryItem[], memoryId: string): MemoryItem[] {
-  return memories.filter((m) => m.id !== memoryId);
+  // Dismissal is only for pending AI suggestions. It must not become a
+  // general-purpose delete path for explicit or already-confirmed memories.
+  return memories.filter((m) =>
+    m.id !== memoryId || m.type !== 'learned' || m.status !== 'pending_confirmation'
+  );
 }
 
 /**
@@ -129,12 +135,16 @@ export function updateMemoryContent(
   newContent: string,
   newCategory?: string
 ): MemoryItem[] {
+  const normalizedContent = newContent.trim();
+  // Empty edits must not erase a useful memory or create a blank AI context item.
+  if (!normalizedContent) return memories;
+
   const now = new Date().toISOString();
   return memories.map((m) => {
-    if (m.id === memoryId) {
+    if (m.id === memoryId && m.status !== 'archived') {
       return {
         ...m,
-        content: newContent.trim(),
+        content: normalizedContent,
         category: newCategory || m.category,
         updatedAt: now,
       };

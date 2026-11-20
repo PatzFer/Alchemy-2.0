@@ -1,7 +1,7 @@
 # Alchemy 1.0 — Deployment and Preview Gate
 
 Status: preparation only; no hosting provider or Supabase project is connected.
-Branch: `design/phase-1`
+Branch: `build/phase-2-planner`
 Last reviewed: 18 November 2026
 
 ## Current application shape
@@ -19,6 +19,14 @@ Last reviewed: 18 November 2026
 A public deployment at this stage would create a misleading impression of security. In-memory authentication state can disappear on restart or differ between multiple server instances. Browser localStorage is not encrypted and does not synchronize between devices. Do not expose real private, health, cycle, financial or Mariluna client data to this build.
 
 A local developer preview is suitable only with synthetic/test data and a private device/network.
+
+## Preview authentication for local testing
+
+- The client checks the server session before showing any workspace.
+- In local development only, setting `ENABLE_PREVIEW_AUTH=true` enables the existing server-side preview-unlock route.
+- The route explicitly returns 404 when the flag is absent or when `NODE_ENV=production`.
+- This is a convenience for synthetic-data testing, not real account authentication. The session vault is in-memory and may reset when the server restarts.
+- Never use preview mode with real personal, health, cycle, financial or Mariluna client data. Production requires real passkey/TOTP/recovery authentication and durable identity storage.
 
 ## Environment variables
 

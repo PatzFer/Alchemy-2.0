@@ -3,6 +3,7 @@ import path from "path";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import { GoogleGenAI } from "@google/genai";
+import { requestOpenAIResponse } from "./server/openaiProvider";
 import { createServer as createViteServer } from "vite";
 import securityRouter from "./server/securityRoutes";
 import integrationsRouter from "./server/integrationsRoutes";
@@ -352,7 +353,7 @@ app.post("/api/ai/chat", requireAppAuth, requireAiRateLimit, async (req: Request
     const intentObj = classifyIntent(lastUserMsg, messages, sanitizedContext);
 
     // The workspace privacy switches are enforced here, not trusted to the browser.
-    if (permissions.activeAiProvider !== "gemini-server" || !hasAiWorkspaceConsent(world, permissions)) {
+    if (permissions.activeAiProvider === "local-rules" || !hasAiWorkspaceConsent(world, permissions)) {
       const localResp = buildIntentAwareResponse(intentObj, lastUserMsg, sanitizedContext, world);
       return res.json({
         role: "assistant",
@@ -367,7 +368,7 @@ app.post("/api/ai/chat", requireAppAuth, requireAiRateLimit, async (req: Request
       const fallbackResponse = buildIntentAwareResponse(intentObj, lastUserMsg, sanitizedContext, world);
       return res.json({
         role: "assistant",
-        content: fallbackResponse,
+        content: `[${isDutch ? 'Lokale modus — Gemini API-sleutel ontbreekt' : 'Local mode — Gemini API key is not configured'}] ${fallbackResponse}`,
       });
     }
 
@@ -387,6 +388,17 @@ PERSONALITY & TONE:
 - Direct & factual: when asked a concrete question about schedule, calendar, tasks, goals, or prices, answer directly with facts using ONLY the provided real data. Do NOT replace factual answers with unsolicited generic coaching.
 - If the requested data (e.g. appointments for Friday) is empty in the provided context, state clearly in ${isDutch ? "Dutch" : "English"}: "${isDutch ? "Er staan momenteel geen afspraken of taken op je planning voor " + (intentObj.resolvedTargetDay || "deze dag") + "." : "There are currently no events or tasks scheduled for " + (intentObj.resolvedTargetDay || "this day") + "."}"
 - NEVER invent or fabricate appointments, tasks, goals, products, or prices.
+
+USER-CONTROLLED ACTIONS:
+- You may suggest a structured action only when Patricia explicitly asks to turn an idea into something actionable, or clearly accepts that next step. Never create or change data automatically.
+- A suggested action must be returned after the normal reply in a separate action block. The first line must contain three backtick characters immediately followed by the word action; the next line must be one valid JSON object; the final line must contain three backtick characters. Example JSON: {"type":"CREATE_PROJECT","label":"Maak project aan","data":{"title":"...","description":"...","ideaId":"...","priority":"normal"}}
+- Use CREATE_PROJECT only in the Mariluna realm for an explicitly chosen ritual, circle, service or other business project. Set ideaId only when the active context item is that idea. For Privé, use SUGGEST_TASK when she explicitly wants a concrete next action.
+- Use CREATE_CONTENT only in the Mariluna realm, when Patricia explicitly chooses content. Use platform "Nog te bepalen" and status "idea" by default. Do not assume she wants social media or choose a platform without her say-so. Example data: {"title":"...","description":"...","pillar":"...","ideaId":"...","platform":"Nog te bepalen"}.
+- Use SUGGEST_TASK only when she asks to turn something into a task. The action is only applied after she presses its confirmation button.
+- Use RESCHEDULE_TASK only when she explicitly asks to move an existing task. Include its exact taskId and a valid newDate (YYYY-MM-DD); never guess which task to move. The change is only applied after she confirms.
+- Use ADD_MEMORY only after an explicit request to remember something. The action is only applied after she confirms it.
+- Keep the action's realm aligned with Active Realm. Never move personal ideas into Mariluna or Mariluna ideas into Privé.
+- During open-ended brainstorming, explore and reflect first. Do not force a project, post, task, or business outcome.
 - If the query is a simple greeting like "Hallo", reply with a warm, natural 1-2 sentence greeting. Do NOT give a long strategic coaching speech.
 
 MEMORY HANDLING:
@@ -404,6 +416,9 @@ DOMAINS & PRIVACY BOUNDARIES:
 REAL SYSTEM CONTEXT PROVIDED:
 - Active Realm: ${world}
 - Current Date: ${sanitizedContext?.currentDate || new Date().toISOString().split('T')[0]}
+- Menstrual Cycle Context (only present when the user has explicitly authorized cycle data): ${sanitizedContext?.cyclePhase ? `${sanitizedContext.cyclePhase}, day ${sanitizedContext.cycleDay || 'unknown'} (${sanitizedContext.cyclePhaseConfidence || 'estimated'})` : 'Not shared'}
+- Astronomical Moon: ${sanitizedContext?.moonPhase || 'Not available'} (${sanitizedContext?.moonIlluminationPct ?? 'unknown'}% illumination). Northern season: ${sanitizedContext?.season || 'Not available'}.
+- Treat cycle phase as an estimate, not a diagnosis or a fixed prediction of mood, energy or ability. Ask the user to check in with their lived experience. Moon phase and season may be used as optional reflective/nature context, never as scientific proof that they cause a person's mood, energy or behaviour.
 - Active Context Item: ${JSON.stringify(sanitizedContext?.activeContextItem || null)}
 - Calendar Events: ${JSON.stringify(sanitizedContext?.calendarEvents || [])}
 - Active Tasks: ${JSON.stringify(sanitizedContext?.tasks || [])}
@@ -413,6 +428,31 @@ REAL SYSTEM CONTEXT PROVIDED:
 - Working Hours: ${sanitizedContext?.workingHours || "09:00 - 17:00"}
 - Confirmed Memories: ${JSON.stringify(sanitizedContext?.memoryItems || [])}
 `;
+
+    // OpenAI is an optional, explicitly selected server-side provider.
+    // Missing configuration or provider failure falls back locally without losing the request.
+    if (permissions.activeAiProvider === "openai-server") {
+      const openAiResult = await requestOpenAIResponse([
+        { role: "system", content: systemPrompt },
+        ...messages,
+      ], {
+        apiKey: process.env.OPENAI_API_KEY,
+        model: process.env.OPENAI_MODEL,
+      });
+      if (openAiResult.available && openAiResult.text) {
+        return res.json({
+          role: "assistant",
+          content: openAiResult.text,
+          provider: "openai",
+        });
+      }
+      const fallbackResponse = buildIntentAwareResponse(intentObj, lastUserMsg, sanitizedContext, world);
+      return res.json({
+        role: "assistant",
+        content: `[${isDutch ? 'Lokale modus — OpenAI niet geconfigureerd of tijdelijk niet beschikbaar' : 'Local mode — OpenAI is not configured or temporarily unavailable'}] ${fallbackResponse}`,
+        provider: "local",
+      });
+    }
 
     // Format conversation history for Gemini 3.8 Flash
     const formattedContents = messages.map((m: { role: string; content: string }) => ({
@@ -443,7 +483,7 @@ REAL SYSTEM CONTEXT PROVIDED:
     const intentObj = classifyIntent(lastUserMsg, safeMessages, sanitizedContext);
     res.json({
       role: "assistant",
-      content: buildIntentAwareResponse(intentObj, lastUserMsg, sanitizedContext, safeWorld),
+      content: `[${isDutchMessage(lastUserMsg) ? 'Lokale modus — Gemini tijdelijk niet beschikbaar' : 'Local mode — Gemini temporarily unavailable'}] ${buildIntentAwareResponse(intentObj, lastUserMsg, sanitizedContext, safeWorld)}`,
     });
   }
 });

@@ -52,6 +52,7 @@ import {
 } from '../../lib/mealPlanningData';
 import { RecipeDetailModal } from './RecipeDetailModal';
 import { ThursdayPlanningModal } from './ThursdayPlanningModal';
+import { getMissingPantryStaples, hasCookedMealForDate } from '../../lib/mealPlanningSafety';
 
 interface MealsAndMenuPlanningViewProps {
   nutrition: NutritionState;
@@ -73,12 +74,14 @@ export const MealsAndMenuPlanningView: React.FC<MealsAndMenuPlanningViewProps> =
   lang = 'nl',
 }) => {
   const isNl = lang === 'nl';
-  const [activeTab, setActiveTab] = useState<MealsSubTab>('menu');
+  const [activeTab, setActiveTab] = useState<MealsSubTab>('recipes');
+  const [dislikeDraft, setDislikeDraft] = useState('');
 
   // Modal States
   const [isThursdayModalOpen, setIsThursdayModalOpen] = useState(false);
   const [selectedRecipeForModal, setSelectedRecipeForModal] = useState<Recipe | null>(null);
-  const [modalPortions, setModalPortions] = useState<1 | 2>(2);
+  const [modalPortions, setModalPortions] = useState<number>(2);
+  const [quickRecipeRequest, setQuickRecipeRequest] = useState('');
 
   // Meal Replacement Modal
   const [replacementDayIndex, setReplacementDayIndex] = useState<number | null>(null);
@@ -138,7 +141,7 @@ export const MealsAndMenuPlanningView: React.FC<MealsAndMenuPlanningViewProps> =
 
     // If marked as cooked, record in meal history
     let updatedHistory = [...(nutrition.mealHistory || [])];
-    if (status === 'cooked' && targetDay.recipeId) {
+    if (status === 'cooked' && targetDay.recipeId && !hasCookedMealForDate(updatedHistory, targetDay.date, targetDay.recipeId)) {
       const recipe = getRecipeById(targetDay.recipeId);
       if (recipe) {
         updatedHistory.unshift({
@@ -256,11 +259,15 @@ export const MealsAndMenuPlanningView: React.FC<MealsAndMenuPlanningViewProps> =
   };
 
   const handleLoadDefaultPantry = () => {
-    const starterItems: KitchenInventoryItem[] = DEFAULT_PANTRY_STAPLES.map((item, idx) => ({
-      ...item,
-      id: 'inv-def-' + idx + '-' + Date.now(),
-      addedDate: new Date().toISOString(),
-    }));
+    const starterItems: KitchenInventoryItem[] = getMissingPantryStaples(
+      nutrition.inventory || [],
+      DEFAULT_PANTRY_STAPLES.map((item, idx) => ({
+        ...item,
+        id: 'inv-def-' + idx + '-' + Date.now(),
+        addedDate: new Date().toISOString(),
+      })),
+    );
+    if (starterItems.length === 0) return;
 
     onUpdateNutrition({
       ...nutrition,
@@ -342,11 +349,7 @@ export const MealsAndMenuPlanningView: React.FC<MealsAndMenuPlanningViewProps> =
   }, [nutrition.inventory, inventoryLocationFilter]);
 
   const subNavItems: { id: MealsSubTab; label: string; icon: React.FC<{ className?: string }> }[] = [
-    { id: 'menu', label: isNl ? 'Weekmenu' : 'Weekly Menu', icon: Calendar },
-    { id: 'recipes', label: isNl ? 'Receptenboek' : 'Recipe Book', icon: BookOpen },
-    { id: 'inventory', label: isNl ? 'Voorraad & Koelkast' : 'Inventory', icon: Package },
-    { id: 'shopping', label: isNl ? 'Boodschappenlijst' : 'Shopping List', icon: ShoppingCart },
-    { id: 'learning', label: isNl ? 'Culinair Leren' : 'Learned Taste', icon: Sparkles },
+    { id: 'recipes', label: isNl ? 'Recepten & inspiratie' : 'Recipes & inspiration', icon: BookOpen },
   ];
 
   return (
@@ -704,6 +707,92 @@ export const MealsAndMenuPlanningView: React.FC<MealsAndMenuPlanningViewProps> =
       {/* ============================================================ */}
       {activeTab === 'recipes' && (
         <div className="space-y-6">
+          {/* Quick recipe request: ingredients or craving, with Jarvis doing the thinking */}
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (!quickRecipeRequest.trim() || !onOpenAssistantWithPrompt) return;
+              const dislikes = (nutrition.dislikes || []).filter(Boolean);
+              const prompt = [
+                'Help me choose a few practical dinner recipes.',
+                `My request: ${quickRecipeRequest.trim()}`,
+                'First suggest 3 distinct dishes with a short description so I can choose.',
+                'Only after I choose, ask how many people and provide scaled ingredients, steps and a shopping list for missing items.',
+                'Respect my saved food dislikes and preferences.',
+                dislikes.length ? `Foods I dislike/avoid: ${dislikes.join(', ')}.` : '',
+                nutrition.dietaryNotes ? `Other food preferences: ${nutrition.dietaryNotes}.` : '',
+                'Use cooked vegetables or blended/finely hidden vegetables where possible; avoid suggesting smoothies.',
+              ].filter(Boolean).join(' ');
+              onOpenAssistantWithPrompt(prompt);
+            }}
+            className="rounded-2xl border border-[#DCD3C4] bg-[#F7F3EA] p-4 sm:p-5 space-y-3"
+          >
+            <div>
+              <h3 className="font-serif text-lg text-[#2C2825]">{isNl ? 'Wat ligt er in je koelkast?' : 'What do you have in your fridge?'}</h3>
+              <p className="text-xs text-[#70665A]">{isNl ? 'Of waar heb je vandaag zin in? Jarvis zoekt enkele gerechten om uit te kiezen.' : 'Or what are you craving? Jarvis will suggest a few dishes to choose from.'}</p>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <input
+                type="text"
+                value={quickRecipeRequest}
+                onChange={(e) => setQuickRecipeRequest(e.target.value)}
+                placeholder={isNl ? 'Bijv. kip, champignons en room… of pasta' : 'E.g. chicken, mushrooms and cream… or pasta'}
+                className="flex-1 min-w-0 px-4 py-3 rounded-xl bg-white border border-[#DDD4C5] text-sm text-[#2C2825] focus:outline-none focus:border-[#8C7654]"
+              />
+              <button
+                type="submit"
+                disabled={!quickRecipeRequest.trim() || !onOpenAssistantWithPrompt}
+                className="px-5 py-3 rounded-xl bg-[#2C2825] text-[#FAF8F5] text-xs font-medium disabled:opacity-40"
+              >
+                {isNl ? 'Vind gerechten' : 'Find recipes'}
+              </button>
+            </div>
+          </form>
+
+          <section className="rounded-2xl border border-[#E5DDD0] bg-[#FCFAF6] p-4 space-y-3">
+            <div>
+              <h4 className="text-sm font-medium text-[#2C2825]">{isNl ? 'Waar houden we rekening mee?' : 'Your food preferences'}</h4>
+              <p className="text-xs text-[#7A7167]">{isNl ? 'Beheer zelf ingrediënten die je niet lust of liever vermijdt. Jarvis gebruikt deze lijst bij suggesties.' : 'Manage foods you dislike or avoid. Jarvis will use this list when suggesting recipes.'}</p>
+            </div>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                const value = dislikeDraft.trim();
+                if (!value) return;
+                const current = nutrition.dislikes || [];
+                if (!current.some((item) => item.toLocaleLowerCase() === value.toLocaleLowerCase())) {
+                  onUpdateNutrition({ ...nutrition, dislikes: [...current, value] });
+                }
+                setDislikeDraft('');
+              }}
+              className="flex gap-2"
+            >
+              <input
+                value={dislikeDraft}
+                onChange={(e) => setDislikeDraft(e.target.value)}
+                placeholder={isNl ? 'Bijv. komkommer, yoghurt…' : 'E.g. cucumber, yoghurt…'}
+                className="flex-1 min-w-0 px-3 py-2 rounded-xl bg-white border border-[#DDD4C5] text-xs text-[#2C2825]"
+              />
+              <button type="submit" disabled={!dislikeDraft.trim()} className="px-3 py-2 rounded-xl bg-[#2C2825] text-white text-xs disabled:opacity-40">
+                {isNl ? 'Toevoegen' : 'Add'}
+              </button>
+            </form>
+            <div className="flex flex-wrap gap-2">
+              {(nutrition.dislikes || []).map((item) => (
+                <span key={item} className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#F0EBE1] text-[#554C42] text-xs">
+                  {item}
+                  <button
+                    type="button"
+                    aria-label={`Verwijder ${item}`}
+                    onClick={() => onUpdateNutrition({ ...nutrition, dislikes: (nutrition.dislikes || []).filter((entry) => entry !== item) })}
+                    className="font-semibold hover:text-red-700"
+                  >×</button>
+                </span>
+              ))}
+              {(nutrition.dislikes || []).length === 0 && <span className="text-xs text-[#8A8175] italic">{isNl ? 'Nog geen voorkeuren ingevuld.' : 'No preferences added yet.'}</span>}
+            </div>
+          </section>
+
           {/* Header & Search */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>

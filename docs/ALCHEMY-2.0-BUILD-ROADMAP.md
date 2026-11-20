@@ -1,7 +1,7 @@
 # Alchemy 2.0 — Build Roadmap to Version 1.0
 
 Status: Active delivery plan — user-approved direction
-Branch: design/phase-1
+Branch: build/phase-2-planner
 
 ## Delivery decision
 
@@ -14,7 +14,7 @@ GitHub remains the canonical source of truth throughout implementation. Work sta
 - Continue through implementation phases without asking for approval of every visual detail.
 - Use considered design defaults and preserve the user's confirmed decisions.
 - Stop and ask only when a product decision materially affects privacy, data ownership, irreversible behavior, costs, or the user experience in a way that cannot be safely inferred.
-- At the end of each meaningful phase, report what was completed, what was tested, what remains, and ask whether to start the next phase.
+- Continue through all non-blocked implementation phases without waiting for confirmation. Report only at meaningful checkpoints; ask only when a decision materially affects privacy, data ownership, irreversible behavior, costs, or requires user action.
 - Do not describe work as complete or tested unless the relevant checks actually ran.
 - Preserve existing user data and feature behavior. Prefer gradual migration and compatibility over destructive replacement.
 
@@ -30,6 +30,7 @@ GitHub remains the canonical source of truth throughout implementation. Work sta
 - Privé identity: Earthbound — espresso #39312B, copper #B49A7A, muted taupe and soft cream.
 - Preserve existing modules and stored data; evolve rather than rebuild from scratch.
 - Keep Gemini as the current AI provider and target no additional AI spend.
+- Gmail/email integration is not required and is excluded from the product roadmap.
 - Integrations requested for Version 1.0: calendar/agenda, health data and Renpho smart-scale data, subject to supported APIs and explicit user consent.
 - AI Studio transition happens only after the Version 1.0 build and verification.
 
@@ -115,6 +116,8 @@ The user wants Alchemy to synchronize with three existing apps/services:
 1. **Agenda / calendar** — connect the calendar app/account the user uses and bring events into the shared Alchemy planner. Confirm the exact provider during integration setup; Google Calendar support already exists in the repository but its current sync behavior needs review.
 2. **Health** — connect the user's health app/data source. On Android, evaluate Health Connect as the preferred interoperability layer and identify whether the actual source is Samsung Health, Google Fit/Fitbit or another app. Do not equate a connected status with successful data access.
 3. **Renpho** — import smart-scale measurements if a supported export/API/Health Connect route is available. First verify the available pathway and which measurements can be read. Do not scrape private endpoints or store Renpho credentials directly.
+
+**Explicit exclusion:** Gmail and email synchronization are not part of Alchemy's planned integrations.
 
 Integration principles:
 - Read-only import by default; writing back to external apps requires a separate explicit decision.
@@ -522,3 +525,685 @@ Incremental implementation commits on `design/phase-1`:
 - Excess requests receive HTTP 429 with a retry interval; the limiter is isolated per session and prunes expired windows while bounding its own memory use.
 - Added regression tests for the limit, reset behavior and session isolation.
 - This is an in-process abuse-control layer, not a substitute for a shared distributed rate limiter when the app runs across multiple server instances. The broader security vault and session store also remain process-local pending durable identity storage.
+
+
+## Progress log — 19 November 2026 (Phase 2 navigation and daily workflow)
+
+- Separated the Start launcher from the Today destination. Start remains the neutral world selector; Today now has its own daily dashboard.
+- Added a focused daily dashboard that surfaces due and overdue tasks, sorts by priority and due date, shows today's calendar events chronologically, and provides direct routes to Tasks, Calendar and Jarvis.
+- Kept the global Quick Capture available from Today as well as the working areas. Quick Capture continues to create realm-tagged tasks, reminders, ideas, notes and calendar events.
+- Updated Quick Capture realm selection to use the Mariluna berry/plum and Private botanical-green palette tokens.
+- Harmonized navigation shell colors with The Enchanted Atelier palette and kept the five-item mobile navigation: Start, Today, Mariluna, Private and Tasks.
+- CI passed TypeScript, Supabase migration safety, privacy regression tests and production build on the phase-2 branch before the final navigation palette-only follow-up. The follow-up has a new CI run queued/in progress and must pass before this phase is considered verified.
+- This phase remains on `build/phase-2-planner`; it has not been merged to `main` or pulled into AI Studio.
+
+- Fixed task creation/edit defaults to use the user's local calendar date rather than UTC date slicing, preventing date drift around midnight and timezone boundaries. Verified by TypeScript, Supabase migration safety, privacy regression tests and production build (CI run 44521709662, success).
+
+
+## Progress log — 19 November 2026 (integration scope refinement)
+
+- Removed the Mariluna Gmail integration card from the Integrations hub at the user's request. Email synchronization is explicitly out of scope; Calendar, Android Health Connect and Renpho remain planned integrations.
+- No Gmail data model or historical data is deleted by hiding/removing this integration UI. Existing stored state is preserved for non-destructive compatibility.
+- Next integration work remains provider verification and native Android Health Connect feasibility, followed by Renpho import-path validation and calendar sync reliability.
+
+
+## Product scope reset — 19 November 2026 (user-confirmed Alchemy 1.0 MVP)
+
+The earlier broad business-suite scope is superseded for Version 1.0 by this lean, personal-first brief. The goal is a reliable second brain that reduces mental clutter, helps the user organize ideas and life, and supports sustainable wellbeing. Prioritize working end-to-end flows over breadth. Defer non-essential modules until the core app is stable and genuinely useful.
+
+### Product promise
+Alchemy is one personal operating system with two clearly separated spaces:
+- **Mariluna:** a low-pressure idea studio and organizer, not a full business-management suite.
+- **Privé:** a practical personal-life and wellbeing companion.
+- **Jarvis:** the central thinking partner that helps structure information, find connections, suggest next steps and support follow-through, while respecting the two spaces' privacy boundaries.
+
+### Mariluna — MVP scope
+1. **Brain Dump / Idea Studio (highest priority)**
+   - Fast capture of a raw idea with optional theme/category and free-form context.
+   - Open a conversational Jarvis sparring session around that idea; preserve the original idea and the discussion/decisions.
+   - Allow the user to explicitly classify/convert an idea into Content or Project with a clear action; Jarvis may suggest a destination, but must ask before moving/creating anything automatically.
+   - Content destination is intentionally lightweight: an idea/post entry, its source idea, notes and optional next step. No elaborate publishing calendar or social analytics.
+   - Project destination supports practical initiatives such as a ritual or women's circle, with a simple description, checklist/tasks and optional date.
+   - Jarvis should surface possible links to older ideas, duplicates, themes and combinations; suggestions must be explainable and dismissible, not silently merge records.
+   - Gentle resurfacing: ask whether the user wants to revisit an older idea, with snooze/dismiss/convert options and configurable frequency. Avoid nagging.
+2. **Services catalogue (simple personal reference)**
+   - User manually creates, edits, reorders and deletes service entries.
+   - Keep it as a flexible working list for experimenting with wording, structure, inclusions and prices/notes if desired.
+   - No CRM, client pipeline, bookings or invoicing in MVP.
+3. **Mariluna values & pillars**
+   - Provide a user-editable place to define values, boundaries, principles and content/brand pillars when ready.
+   - Jarvis should use only the values/pillars the user has actually entered and confirmed when reviewing ideas, service concepts or content. Until configured, it must say the framework is not yet defined rather than inventing values.
+4. **Social media support**
+   - No large social-media management suite. Offer optional hands-on assistance when the user chooses to make content: develop a raw idea into a post, suggest a format/caption and a manageable next action. Publishing/scheduling integrations are deferred.
+5. **Remove from MVP:** business metrics/financial dashboard, client management, elaborate content calendar and advanced marketing analytics.
+
+### Privé — MVP scope
+1. **Cycle, moon & natural rhythm (high priority)**
+   - Cycle tracking and phase overview remain central.
+   - Offer optional planning/reflection prompts that combine cycle phase, lunar cycle and seasonal/nature context in a practical, non-prescriptive way that can fit modern work and life.
+   - Distinguish astronomical/calendar facts from symbolic or traditional interpretations. Never present moon phases or cycle-based assumptions as medical facts or deterministic rules.
+   - User remains in control; no pressure to organize every day around a cycle phase.
+2. **Health, measurements & movement**
+   - Prioritize importing/recording measurements and a reliable Health Connect pathway over a large health dashboard.
+   - Show source, unit, timestamp and last successful sync. Do not fabricate connection/sync state.
+   - Support realistic movement goals and gentle encouragement, focusing on mobility, strength, consistency and healthy ageing as well as weight-related goals.
+   - Movement suggestions should be adaptable to available time, energy and user-selected goals; avoid shame, streak pressure or overclaiming health outcomes.
+3. **Meals & recipes — simple chooser workflow**
+   - One simple entry point: user can enter ingredients currently available, or a craving/category (e.g. pasta).
+   - Suggest a small set of recipes to choose from, respecting the user's configurable dislikes/preferences.
+   - After selection, ask how many people will eat; then show the scaled recipe and a shopping list for missing ingredients.
+   - Let the user edit/tweak recipes and save preferred versions. A user-editable "I don't like / avoid" list lives in settings.
+   - No complex calorie/macronutrient tracker required for MVP.
+4. **Goals & progress**
+   - Keep personal goals with clear progress bars/percentages, milestones and regular check-ins/reminders.
+   - Follow-through and visible progress are more important than adding more goal frameworks.
+5. **Remove from MVP:** Personal Styling, routines/habit module and other lifestyle modules that do not support the core promise. Revisit later only after the core app is stable.
+
+### Shared core — MVP scope
+- Neutral Start screen with two entry points: Mariluna and Privé.
+- A simple Today view showing relevant tasks, appointments and gentle priorities.
+- Shared planner with clear domain separation, tasks, appointments and recurring task support.
+- Global Quick Capture for task, idea, note, appointment and reminder, with explicit domain selection.
+- One Jarvis assistant with separate domain memory/context. It helps organize, connect, summarize, suggest and remind; it does not silently reclassify, merge, publish or delete data.
+- A small, useful notification/reminder system with user-controlled frequency and snooze.
+- Integrations: calendar, Android Health Connect and Renpho only if a supported route is verified. Gmail/email is explicitly excluded.
+- Durable data storage, backup/export and recovery are core reliability requirements, not optional polish.
+
+### Security and privacy — revised user experience
+- Remove the mandatory app-opening security lock / startup authentication screen from the MVP user experience.
+- Keep sound engineering safeguards: server-side secrets, least-privilege provider scopes, secure transport, data isolation between Mariluna and Privé, safe session handling where applicable, backups and user-controlled data export/deletion.
+- No prominent security-management product area is needed in the initial navigation. Put essential account/privacy controls in Settings and keep advanced security options deferred.
+- Never interpret the user's relaxed preference about a startup lock as permission to weaken server security, expose secrets or allow cross-domain data leakage.
+
+### MVP delivery priorities
+1. Make Start, Mariluna Brain Dump, Jarvis sparring, idea-to-content/project conversion, services list and Privé cycle/health/meals/goals work reliably.
+2. Make the shared planner and Quick Capture dependable and easy to use on mobile.
+3. Connect calendar and health/scale data only through verified, supportable integrations.
+4. Implement durable persistence, backup/recovery and privacy boundaries.
+5. Test core flows end-to-end on mobile and desktop before expanding scope.
+
+**Explicitly deferred:** full CRM, business financial reporting, advanced social publishing/analytics, personal styling, routines, complex nutrition tracking, elaborate automation, and Google AI Studio portability until the lean MVP is stable.
+
+
+## Product scope reset — user-confirmed Alchemy 1.0 direction (19 November 2026)
+
+This section supersedes any earlier roadmap ambition that conflicts with it. The immediate goal is a small, reliable, genuinely useful personal operating system — not a comprehensive business platform. Preserve useful existing modules and data, but simplify the product surface and defer nonessential features.
+
+### Product promise
+Alchemy is Patricia's second brain: it captures mental clutter, helps her think, organizes information, connects related ideas, follows up on intentions, and supports healthier, more intentional living. Jarvis is the central assistant across both domains, with strict context boundaries.
+
+### Mariluna — deliberately lightweight
+Mariluna is currently low-activity and exploratory. Do not build a full business-management suite in v1.
+
+1. **Braindump & Sparring (primary module)**
+   - Fast, low-friction capture of raw thoughts, ideas, themes, questions and possibilities.
+   - Conversational AI sparring: clarify, explore, challenge constructively and help develop ideas.
+   - Keep the original brain-dump intact; preserve conversation and provenance.
+   - Jarvis organizes ideas with useful metadata and can surface old ideas, reminders to revisit, similarities, duplicates/near-duplicates and possible combinations.
+   - Support explicit user actions to turn an idea into a content idea, project (e.g. ritual or women's circle), task, or keep it as a brainstorm.
+   - Jarvis may recommend a destination, but moving/creating structured records should be transparent and confirmed by the user. Maintain links to the source idea.
+   - Proactive resurfacing should be gentle, relevant, snoozable and controllable; no noisy notifications.
+
+2. **Services & Offerings (private reference catalogue)**
+   - Simple editable list for Patricia's own reference, not a sales or client system.
+   - Add, edit, tweak, archive and delete entries; user controls all content and pricing.
+   - No customer management, revenue dashboards, sales pipeline or booking functionality in v1.
+
+3. **Lightweight content assistance**
+   - No elaborate editorial calendar or social-media management suite.
+   - When requested, help turn a brain-dump/idea into a post, caption or content outline, and provide practical support because the user finds social media difficult and does not particularly enjoy it.
+   - Content may be linked back to its originating idea.
+
+4. **Values and pillars**
+   - Create an extensible place to define Mariluna's values, boundaries, principles and pillars later; they are not yet written.
+   - Once provided, Jarvis should use them as a review lens when discussing or developing Mariluna ideas. Do not invent the user's values.
+
+Remove/defer for v1: business metrics, client CRM, extensive strategy dashboards, complex content planning, sales/admin modules.
+
+### Privé — practical personal life support
+1. **Cycle, nature and rhythms (important)**
+   - Cycle tracking and phase-aware planning are core, not optional extras.
+   - Help the user live more in tune with her cycle and, where useful, lunar and seasonal/natural rhythms, in a realistic way compatible with work and modern life.
+   - Distinguish evidence-based cycle information from traditional, symbolic or reflective practices. Do not present lunar phase effects on physiology as established science.
+   - User remains in control of cycle dates, interpretations, reminders and recommendations.
+
+2. **Health, measurements and movement**
+   - Prioritize importing/synchronizing measurements and health/activity data through supported integrations, especially Android Health Connect.
+   - Renpho data route must be verified; do not promise a direct API. Offer supported export/import if needed.
+   - Focus on trends and meaningful measurements, not an overbuilt medical record.
+   - Help build sustainable movement and mobility habits for long-term health, healthy ageing, strength and weight management.
+   - Motivation should be empathetic and practical, not guilt-based. Adapt suggestions to real schedule, energy and preferences.
+   - Health data stays private and is never included in Mariluna context by default.
+
+3. **Meals & recipes (simple cooking helper)**
+   - One simple input: ingredients on hand (e.g. "I have X and Y") or a craving/category (e.g. pasta).
+   - Return a small set of recipe choices.
+   - After the user chooses, ask how many people; then provide adjusted quantities, method and a shopping list for missing ingredients.
+   - Allow recipes to be edited/tweaked and saved.
+   - Add a user-editable "foods I dislike / avoid" list in settings and use it in suggestions.
+   - No calorie tracker, complex nutrition database or mandatory meal logging in v1.
+
+4. **Goals and progress**
+   - Keep goals with clear milestones and simple progress bars/percentages.
+   - Make follow-up and progress visibility motivating and easy to maintain.
+   - Avoid turning goals into a burdensome project-management system.
+
+Remove/defer for v1: personal styling, wardrobe/body-shape tools, routines module, elaborate habit systems and unrelated lifestyle modules.
+
+### Global planner and capture
+- Keep a simple shared planner for appointments and tasks, with clear Private/Mariluna ownership.
+- Quick Capture should be easy to reach and default to the active domain.
+- Prioritize low-friction capture and reliable reminders over complex planning features.
+- Shared records remain deferred until explicit privacy and ownership semantics are safely designed.
+
+### Jarvis — central second brain
+- Available from both domains and aware of the active context.
+- Assemble context server-side and enforce domain boundaries before any AI-provider call.
+- Help capture, clarify, organize, compare, connect, retrieve and resurface ideas and commitments.
+- Offer suggested actions with previews; user confirmation before creating, moving, deleting or materially changing records.
+- Do not claim proactive monitoring or memory behavior unless implemented and tested.
+- Keep user control over what is saved, surfaced, and used as context.
+
+### Security and access
+- No mandatory login/security interstitial at app launch for the current personal-use v1. Do not add a startup PIN/password screen.
+- This does not mean weakening data security: use secure server-side authorization, protected secrets, least-privilege database access, safe session handling where applicable, encrypted transport and reliable backups.
+- Keep sensitive health/cycle data isolated from Mariluna and from AI contexts unless explicitly permitted.
+- Explain any remaining local-device exposure and backup limitations honestly.
+
+### Delivery priorities
+P0: working app shell, no startup security gate, dependable data persistence/recovery, safe domain boundaries, quick capture, core planner, Braindump & Sparring, editable service catalogue, basic goals/progress, cycle tracking, simple recipe flow.
+P1: Jarvis idea linking/resurfacing, content assistance, health/Health Connect sync, movement support, lunar/seasonal reflective layer.
+Later: Mariluna values/pillars authoring and review, richer integrations, styling, CRM, metrics, elaborate content calendar and broader automation.
+
+### Definition of a useful v1
+A user can reliably open Alchemy without a startup security interstitial; capture and find thoughts; spar with Jarvis; turn selected ideas into linked projects/content/tasks; maintain an editable personal service catalogue; manage basic tasks and appointments; track cycle and goals; request recipes and shopping lists; and retain data safely across sessions/devices to the extent supported by the implemented sync. Core flows must be tested on mobile. Do not call a feature complete unless its behavior is implemented and verified.
+
+## Progress log — 19 November 2026 (Jarvis workspace boundary and persistent Mariluna sparring)
+
+- Jarvis now requires an explicit Privé or Mariluna selection when opened from the neutral Home context. The composer and quick prompts stay unavailable until a workspace is selected; the assistant history and requests are scoped to that selection rather than the neutral `all` context.
+- Corrected assistant-message routing so replies are saved to the same selected workspace as the user message. This prevents replies from being filed under the neutral Home context and disappearing from the selected thread.
+- Mariluna idea sparring now persists the full conversation (user and assistant messages with timestamps) on the originating idea after each exchange and restores it when the idea is reopened. The original brain-dump remains intact.
+- Updated the Mariluna sparring prompts and offline fallback to explore the thought first rather than automatically pushing it toward marketing, content or business strategy. Content remains an option when Patricia chooses it.
+- Verified on commit `4bf59ebeaa780efbecc68530e04f430cea736ce7`: TypeScript check, Supabase migration safety checks, privacy regression tests and production build all passed in GitHub Actions.
+- This does not yet implement semantic idea matching/resurfacing or durable cloud persistence. The new conversation is retained in the current app state/local storage; cross-device persistence remains blocked on Supabase Auth configuration, a confirmed restore/migration choice and a real deployment test.
+
+## Progress log — 19 November 2026 (local data transparency)
+
+- Added a visible storage-status panel to Settings → Data & Backups.
+- The panel shows the last local save timestamp for the current app session and the last successfully generated JSON backup timestamp, retained locally across reloads.
+- The UI explicitly distinguishes local storage/export from cloud persistence and reminds the owner to keep a backup outside the device.
+- This is observability only: it does not encrypt localStorage, create scheduled backups, or enable cloud sync. Cloud migration remains gated on a real Supabase project, Auth, and a verified restore drill.
+- TypeScript, migration safety, privacy and production-build CI checks are running for this change; do not call it verified until they finish successfully.
+
+## Progress log — 19 November 2026 (MVP usability and data-status polish)
+
+- The storage status now remembers the last successful local-save timestamp across reloads, rather than showing only the current session's timestamp.
+- New goals default to the Privé realm, matching the current personal-first use case; the suggested target date is now one month from the day the goal is created instead of a stale hard-coded date.
+- Idea capture defaults to Mariluna only when the Mariluna workspace is active; otherwise it defaults to Privé to reduce accidental cross-domain filing.
+- The idea revisit card now accurately describes its three-week threshold and only claims to surface ideas when the user returns to the ideas view; no background monitoring is implied.
+- Cycle tracking now uses the device's local calendar date rather than UTC, preventing late-evening date shifts in Belgium and other time zones.
+- These are usability and correctness improvements; they do not change the deferred cloud persistence, Health Connect native bridge, or production deployment requirements.
+
+### Additional usability checkpoint — 19 November 2026
+
+- Local date handling is now consistent in the initial state, cycle view, private dashboard and Jarvis context assembler. This avoids UTC-midnight shifts in date-based records and daily context.
+- Existing food-preference capture and recipe request flow was reviewed; it already sends the user's saved dislikes and dietary notes with a recipe request. No duplicate parallel recipe feature was added.
+- The Mariluna offering editor now supports editable deliverables and draft/active/archived status; its list is the default landing section inside Mariluna.
+- New goal and idea capture defaults follow the active workspace more safely.
+- Latest verified workflow at this checkpoint: TypeScript check, Supabase migration safety checks, privacy regression tests and production build all passed on the preceding source snapshot. Changes after that snapshot still require a fresh run.
+- Still intentionally not represented as complete: Supabase project provisioning and live durable sync, production authentication/session persistence, Android Health Connect bridge, verified Renpho import, and full device QA/release.
+
+## Progress log — 19 November 2026 (Privé and Mariluna MVP polish)
+
+- Added editable goal details and status. Goals can now be reopened from their cards, changed and saved without losing their existing milestones; goals without milestones support direct manual progress updates.
+- Hardened older goal records that may not contain a milestone array so the planner remains usable after earlier schema versions.
+- Meal history now records a cooked recipe only once for the same planned date and recipe, preventing duplicate history entries when a meal status is toggled repeatedly.
+- Pantry starter loading now skips ingredients already present (case- and accent-insensitive) and avoids adding the same staple twice. Used-up stock can be added again.
+- Added automated tests for meal-history idempotency and pantry deduplication.
+- Cycle phase confidence is now labeled honestly: a logged period date anchors an estimate but does not confirm today's phase. Only a manual user-selected phase is shown as user-confirmed.
+- Period logging validates start/end dates, rejects future dates and duplicate period start entries, and explains validation errors before saving.
+- Added automated tests for cycle phase confidence semantics.
+- Verified on commit `330da8f`: TypeScript, Supabase migration safety, privacy regression tests and production build passed in GitHub Actions. The goal progress slider follow-up is committed separately as `cd3f38b` and has its own validation run pending.
+- These improvements do not enable live Supabase sync, native Health Connect, Renpho import or production deployment. Those remain gated on real project credentials, platform bridge work and end-to-end testing.
+
+## Progress log — 19 November 2026 (MVP editing and cycle-data correctness)
+
+- Added direct editing for saved ideas: title, original thought, theme/pillar, category and tags can be changed without replacing the idea record or losing its linked Jarvis sparring history.
+- Added one shared cycle-anchor validator. Cycle screens and Jarvis now require a real, non-future calendar date before showing or using phase estimates; impossible dates such as 31 February are rejected.
+- The cycle view no longer displays a fabricated phase/day or phase-specific weekly guidance before a valid period start date is recorded. The daily energy check-in remains available on its own.
+- Saving cycle settings with a valid period start date enables tracking; logging a period also enables tracking automatically.
+- Added regression tests for missing, malformed, impossible and future cycle start dates.
+- Verified on commit `b5ac52c`: TypeScript check, Supabase migration safety checks, privacy regression tests and production build all passed in GitHub Actions (run 44547946020).
+- The idea editor, goal editor/progress, meal history idempotency, pantry deduplication and cycle validation are implemented on the feature branch. No changes have been merged to `main` or deployed to a live app.
+- Live cloud sync remains blocked on provisioning and configuring the actual Supabase project, owner Auth and a verified migration/restore test. Health Connect still needs the native Android bridge; Renpho import remains unverified.
+
+
+## Progress log — 19 November 2026 (goal preservation and backup hardening)
+
+- Goal editing now preserves existing task, project and content links, notes, priority, measurable targets and start/end metadata instead of silently clearing them when the title or other editable fields change.
+- Goal view labels and key form copy were localized for Dutch use.
+- Period history now remains sorted newest-first. Logging an older period no longer moves the active cycle anchor backwards; the latest valid recorded start remains the anchor.
+- Cycle settings now reject invalid cycle lengths, period lengths and future/missing anchor dates before saving.
+- Backup verification now rejects files created with a newer app schema, as well as malformed SHA-256 checksum strings, before restore can proceed.
+- Added regression tests for newer-schema and malformed-checksum rejection.
+- CI TypeScript, migration safety, privacy and production build passed on commit `181b1fa`. A separate duplicate workflow for the same commit was still running at the time of this log.
+- No cloud sync, live deployment, Health Connect bridge or Renpho integration is claimed. The current backup remains a user-triggered local JSON export/import with explicit restore confirmation.
+
+
+## Progress log — 19 November 2026 (cycle date arithmetic)
+
+- Cycle day and predicted next-period calculations now use explicit date-only UTC arithmetic. This keeps calendar-date calculations independent of the device's local timezone and daylight-saving transitions.
+- Added regression coverage for spring and autumn daylight-saving boundary dates.
+- Validation is running on the latest commits; no phase completion is claimed until the full workflow is green.
+- Existing data, privacy boundaries and integration scope remain unchanged.
+
+
+## Progress log — 19 November 2026 (integration scope cleanup)
+
+- Removed the unused Gmail OAuth/connect/sync/disconnect implementation from the integrations screen code. Gmail remains excluded from the approved Version 1.0 scope.
+- Retained the legacy Gmail data shape in stored integration state for backward compatibility; this change does not delete any existing stored data.
+- Calendar OAuth helpers remain in place. Health Connect and Renpho are still not represented as connected until their real platform/data pathways are implemented and verified.
+- Fresh CI validation is pending for the latest commits.
+
+
+## Progress log — 19 November 2026 (notification date correctness)
+
+- Smart notifications now derive their daily grouping key from the device's local calendar date instead of UTC date slicing. This avoids notifications being counted against the wrong day around midnight in Belgium and other timezones.
+- Existing notification timestamps are parsed as instants and converted to the local date before daily caps and duplicate-digest checks.
+- Cycle-phase context is omitted from smart notifications until a valid, non-future cycle anchor exists.
+- Added regression tests for local date keys, timestamp conversion and malformed timestamps.
+- Gmail OAuth handlers were removed from the integrations screen as the integration is outside the agreed Version 1.0 scope; stored legacy integration data remains untouched.
+- Latest changes are on the feature branch; full CI validation is pending.
+
+
+## Progress log — 19 November 2026 (calendar entry safety)
+
+- Added reusable calendar validation for strict 24-hour time values and same-day appointment ranges. End times must be later than start times.
+- Calendar event creation now displays a clear inline validation message instead of silently accepting an invalid time range.
+- Exact duplicate appointments are detected only when title, date, time range and realm all match. Intentional overlaps and same-time events in the other workspace remain allowed.
+- Added regression tests for valid/invalid time ranges and realm-aware duplicate detection.
+- Existing calendar event data is not rewritten, and no external Google Calendar writes are enabled by this change.
+- Latest automated validation is pending.
+
+
+## Progress log — 19 November 2026 (Jarvis sensitive-context default deny)
+
+- Jarvis AI payload construction now omits reproductive/cycle details by default. The drawer accepts an explicit permission prop, but defaults it to false; no UI permission toggle is claimed as complete yet.
+- Daily check-in notes and wellbeing fields are now included only when the dedicated wellbeing-to-AI permission is enabled. A general personal-data permission no longer implicitly grants access to wellbeing check-ins.
+- The central context assembler now counts only Mariluna projects in Mariluna scope, preventing private project activity from influencing business-context summaries.
+- Calendar appointment validation is connected to the create flow, with inline errors for invalid time ranges and exact duplicates scoped to the same realm.
+- Existing calendar entries and stored data are unchanged. Google Calendar writes remain disabled; local appointment creation remains local.
+- Latest validation is running for the Jarvis privacy changes. Do not update AI Studio until this workflow is green and the current feature branch is reviewed.
+
+
+## Progress log — 19 November 2026 (server-side wellbeing privacy)
+
+- Extended the server-side wellbeing consent firewall to remove daily check-in payloads, including free-text notes, whenever wellbeing-to-AI consent is disabled.
+- Added a server security regression test proving daily check-in notes and wellbeing fields are absent from the sanitized personal AI context without the explicit wellbeing permission.
+- This complements the client-side default-deny behavior; the server remains authoritative even if a client sends fields manually.
+- The Jarvis privacy changes and calendar validation from the previous build checkpoint passed CI. This newest server-side regression is awaiting its own workflow result.
+- AI Studio handoff remains on hold until the current complete feature-branch checkpoint is green and reviewed.
+
+
+## Progress log — 19 November 2026 (privacy regression follow-up)
+
+- The first CI run for the daily-check-in server firewall exposed a missed insertion: the test correctly showed that the server-side sanitizer still retained the `dailyCheckIns` key.
+- Fixed the actual Rule 5 sanitizer to delete `dailyCheckIns` when wellbeing-to-AI consent is off. The earlier edit had not landed in the effective firewall block.
+- TypeScript and migration checks had passed on the preceding commit; privacy regression failed as expected and production build was skipped. A fresh full workflow is required after this correction.
+
+
+## Progress log — 19 November 2026 (Jarvis memory expiry hardening)
+
+- Jarvis now rejects memory records that supply an invalid expiry timestamp instead of treating malformed expiry metadata as if the memory never expires.
+- Expired records continue to be excluded; valid future expirations and memories without an expiry remain supported.
+- Added regression coverage for permanent, future-expiring, expired, malformed and non-string expiry values.
+- This is a server-side context-filtering hardening change; it does not change stored memory records or automatically delete anything.
+- CI validation is pending for this change.
+
+
+## Progress log — 19 November 2026 (Jarvis local memory context)
+
+- The local six-layer Jarvis context now excludes unconfirmed suggestions, archived memories, expired memories, malformed expiry timestamps and records without a valid realm.
+- Personal and Mariluna memories are restricted to their own workspace; the explicitly balanced context can include both realms.
+- Added regression tests for memory lifecycle filtering and realm isolation, and included the tests in the standard CI test command.
+- This changes only what is assembled for Jarvis context; it does not delete or rewrite stored memories.
+- Full validation is pending on the latest feature-branch commit.
+
+
+## Progress log — 19 November 2026 (Jarvis memory controls)
+
+- Added archive and restore actions to the Jarvis Memory Manager. Archived records are hidden from the normal active-memory filters and can be reviewed and restored from a dedicated archive tab.
+- Archiving preserves the memory record and its metadata; it does not permanently delete it. Permanent deletion remains a separate explicit action.
+- The local context assembler now excludes archived, pending-confirmation, expired, malformed-expiry and unscoped records before they can influence Jarvis.
+- Added lifecycle and workspace-isolation regression tests to the normal test command.
+- Validation of the latest combined change is still pending. No production or cloud-persistence claim is made.
+
+
+## Progress log — 19 November 2026 (local storage failure visibility)
+
+- Added a persistent in-app warning when browser localStorage rejects an autosave, including quota and storage-access failures.
+- The warning does not claim data was saved; it offers an explicit retry action and clears only after a confirmed successful write.
+- The informational last-saved timestamp is updated only after a successful state write.
+- No data is automatically deleted, reset, or moved to cloud storage.
+- This improves local-use safety but does not replace cloud persistence or a verified backup strategy.
+- Full CI validation is pending for this change.
+
+
+## Progress log — 19 November 2026 (local persistence regression coverage)
+
+- Added automated tests for successful local saves and explicit failure when browser storage rejects a write.
+- Added a recovery test proving malformed stored JSON is copied to a timestamped recovery key before defaults are returned.
+- Added a backward-compatibility test proving legacy storage remains readable and its original key is not deleted.
+- Registered the tests in the standard CI test command.
+- These tests cover local browser persistence behavior only; they do not represent cloud backup or multi-device synchronization.
+- CI validation is pending for the latest commits.
+
+
+## Progress log — 20 November 2026 (legacy reset resurrection fix)
+
+- Fixed an edge case in explicit reset: the app now clears both the current storage key and the legacy compatibility key.
+- Previously, a reset could remove the current key while leaving the legacy key behind; the next load could then fall back to that legacy payload and resurrect old data.
+- Added a regression test that seeds both keys, performs reset, and verifies that neither key remains.
+- This affects only the explicit reset action. Normal legacy loading and migration compatibility remain intact.
+- CI validation is pending for the latest changes.
+
+
+## Progress log — 20 November 2026 (planner and Mariluna workflow hardening)
+
+- Task cards now tolerate legacy records without a subtasks array instead of crashing while rendering.
+- Individual task subtasks can be checked off and saved without replacing the parent task or its metadata.
+- Task duration input is constrained to a sensible positive range before saving.
+- Jarvis subtask generation now handles non-success API responses explicitly and avoids creating duplicate fallback subtask IDs.
+- Mariluna's due-task overview now checks the canonical task status instead of a non-existent legacy `completed` flag.
+- Mariluna due-task filtering uses the browser's local calendar date instead of UTC date serialization, avoiding day-boundary drift.
+- Mariluna offering prices now reject negative and non-finite values, with inline validation and cent precision.
+- These changes preserve existing stored records; CI validation is pending for the latest combined commit.
+
+- Follow-up: Jarvis subtask generation no longer inserts generic placeholder tasks when the AI endpoint fails or returns empty content; the editor now shows an actionable error instead.
+
+- Recurring task scheduling now uses a validated local-date helper. Invalid legacy due dates no longer generate malformed future tasks; daily, weekly, month-end, leap-year and year-boundary behavior is covered by automated tests.
+
+## Progress log — 20 November 2026 (Jarvis memory lifecycle guard)
+
+- Memory confirmation now promotes only records that are explicitly marked as learned and pending confirmation.
+- Dismissal now removes only pending learned suggestions; stale UI actions cannot delete explicit or already-confirmed memories.
+- Archived memories cannot be reactivated by a stale confirmation action.
+- Added regression tests for both guarded operations.
+- The change preserves existing records and metadata; validation is pending on the combined branch checkpoint.
+- The Memory Manager now asks for explicit confirmation before permanently deleting a memory; archive remains the reversible first choice.
+
+## Progress log — 20 November 2026 (calendar month navigation)
+
+- Month navigation now clamps dates to the last valid day in the target month rather than overflowing into the following month (for example, January 31 to February 28/29).
+- Day/week/year boundary navigation remains based on local calendar dates.
+- Invalid date inputs and non-integer shifts are rejected without manufacturing a new date.
+- Added regression tests for month ends, leap years, reverse navigation and year boundaries.
+- Full CI validation is pending for the latest combined branch state.
+
+
+## Progress log — 20 November 2026 (Jarvis memory edit safety)
+
+- Memory edits now ignore blank/whitespace-only content, preventing accidental erasure of a useful saved memory.
+- Archived memories are immutable through the ordinary edit path; restore remains an explicit separate action.
+- Added regression coverage for blank edits, archived records and normal active-memory edits.
+- Existing stored memories are not rewritten by this change.
+
+
+## Progress log — 20 November 2026 (migration data inventory)
+
+- The local/cloud migration planner now counts Jarvis chat history, content-plan posts and pillars, saved quarter/month themes, and active Jarvis suggestions/briefs.
+- This closes a data-loss risk where a workspace containing only these records could previously be misclassified as empty and bypass the explicit migration choice.
+- Added regression tests for chat-only and content-planning/Jarvis-only local data.
+- The planner remains read-only: no upload, restore, merge or overwrite is performed automatically.
+
+
+## Progress log — 20 November 2026 (migration inventory hardening)
+
+- Extended migration inventory counts to include content-plan platform metadata and Jarvis accepted/dismissed suggestion IDs, in addition to chat history, content posts/pillars/themes, active suggestions, recent task splits and the latest brief.
+- Fixed strict TypeScript types in the new migration regression fixtures so the CI type-check can validate the tests.
+- The migration planner remains read-only and still requires explicit user choice whenever local or remote data exists.
+
+
+## Progress log — 20 November 2026 (local persistence write guard)
+
+- Added a runtime schema guard to `saveState`: incomplete or malformed Alchemy payloads are refused before localStorage is touched.
+- The guard requires the core collections, module objects, setup flags, foundation identity object and calendar/Gmail integration records needed by the current app contract.
+- Added a regression test proving an incomplete write returns false and leaves the last known-good local payload unchanged.
+- This is a local write-safety improvement only; it does not activate cloud sync or change the current storage provider.
+
+
+## Progress log — 20 November 2026 (authentication lockout regression coverage)
+
+- Added regression tests for the existing failed-authentication lockout: the fifth failed attempt blocks the client key, a verified-login clear resets it, and lockout state is isolated between client keys.
+- This change adds test coverage only; it does not change authentication policy or claim persistence of lockout state across server restarts.
+- Durable sessions, passkey/TOTP configuration and security-vault persistence remain unresolved release blockers; no in-memory security state has been represented as production durable.
+
+
+## Progress log — 20 November 2026 (authentication credential hardening)
+
+- Passkey credential writes now validate the credential ID, base64url public-key encoding, non-negative safe counter, bounded nickname and supported WebAuthn transports.
+- Passkey getters return defensive copies, so callers cannot mutate vault-held transport arrays or credential metadata by editing a returned object.
+- TOTP setup verification and login verification reject malformed non-six-digit codes before invoking the authenticator verifier.
+- Recovery-code verification validates the exact generated code format, bounds input length, hashes the normalized value and uses constant-time digest comparison before consuming a code once.
+- WebAuthn challenge storage rejects empty and oversized keys/values; existing one-time consume and expiry behavior remains.
+- Added regression tests for malformed TOTP, recovery-code replay, passkey validation/defensive copies and malformed challenge inputs.
+- These are in-memory credential-boundary safeguards. They do not make credentials durable across server restarts; the security vault still requires owner-scoped Supabase persistence and envelope encryption before production readiness.
+
+
+- Follow-up: passkey signature counters now reject invalid values and counter rollback instead of replacing a newer stored counter; regression coverage added. This is an in-memory anti-rollback guard and does not replace durable credential storage.
+
+
+## Progress log — 20 November 2026 (secret-encryption primitive)
+
+- Added a server-only AES-256-GCM envelope encryption utility for small persisted secrets, with random 96-bit nonces, authentication tags, owner-and-purpose AAD binding, bounded inputs and explicit key-version matching.
+- Added regression tests for round-trip decryption, owner/purpose isolation, nonce uniqueness, tampering, missing/malformed keys and key-version mismatch.
+- Registered the tests in the standard CI test command.
+- This is a reusable cryptographic primitive only. It is not yet wired into TOTP or integration-token persistence, no live APP_ENCRYPTION_KEY has been provisioned, and no key rotation/recovery drill has been performed. Durable security storage remains blocked.
+- GitHub Actions run 44787152240 completed successfully on commit 258444ca (20 November 2026): dependency installation, TypeScript check, Supabase migration safety checks, privacy regression tests and production build all passed.
+
+
+## Progress log — 20 November 2026 (snapshot concurrency protection)
+
+- Added a forward-only Supabase migration that extends the owner-scoped snapshot RPC with an optional expected-revision precondition.
+- A stale writer can now be rejected with a database conflict instead of silently writing on top of a newer revision when it supplies the revision it last read.
+- The API returns HTTP 409 for a snapshot revision conflict and validates malformed revision values before contacting Supabase.
+- The browser persistence adapter can send the expected revision; it never receives a service-role credential.
+- Added unit coverage for expected-revision propagation and invalid client/server inputs.
+- Extended the migration CI guard to require the revision-aware RPC, conflict branch and service-role-only execution grants.
+- This does not yet activate autosave or cloud sync. The database migration is not applied to a live Supabase project; the real concurrent-write and restore drill remain outstanding.
+
+
+## Progress log — 20 November 2026 (revision-aware persistence CI)
+
+- Added the forward-only compare-and-swap migration and wired its expected revision through the server persistence API and browser adapter.
+- Added server/client validation and regression tests for invalid or stale revision inputs.
+- CI static migration checks now require the revision-aware RPC to validate the expected revision and restrict execution to service_role.
+- GitHub Actions run 44787152240 passed on commit 258444ca: dependency install, TypeScript, migration checks, regression tests and production build.
+- A second duplicate workflow run for the same commit was still running at the last check; one complete successful run is confirmed.
+- No live Supabase project was provisioned or migrated, so concurrency, restore and owner-isolation behavior still require staging verification.
+
+
+## Progress log — 20 November 2026 (1.0 testability and Renpho bridge)
+
+- Replaced the client-only authentication preview bypass with a server-gated preview session. The preview endpoint remains unavailable in production and requires the explicit local `ENABLE_PREVIEW_AUTH=true` flag.
+- Made the First-Time Setup wizard reachable from Settings and synchronized the Settings subtab with the selected navigation destination.
+- Improved Jarvis response handling: invalid/unsupported action blocks are rejected, raw action JSON is not shown, and unavailable/empty API responses are explained without pretending that an operation succeeded.
+- Added automated tests for valid Jarvis actions, rejected action types, empty responses and server unavailability.
+- Added an in-browser Renpho CSV import in Wellbeing → Progress. It supports kg/lb, comma/semicolon separators and decimal commas, maps weight/body-fat/skeletal-muscle/body-water data, and merges readings by date without discarding manual notes or measurements.
+- Added a private 1.0 testing guide documenting preview setup, core test flows and honest integration/persistence boundaries.
+- GitHub Actions run 44788487737 passed on commit 8076b40c: TypeScript, Supabase migration checks, regression tests and production build.
+- Remaining: manual browser/Android acceptance, live Google OAuth test, live Supabase staging/restore, durable identity and native Health Connect. The app remains an internal test candidate, not a production-secure release.
+
+
+## Progress log — 20 November 2026 (privacy-first Jarvis and preview hardening)
+
+- Changed the default Jarvis provider to local privacy mode. Personal, Mariluna, financial, wellbeing and cycle AI scopes remain off until explicitly enabled.
+- Added a visible warning in the Security & Privacy Center: Google's free Gemini API tier may use submitted content to improve Google products; paid-tier content is not used for product improvement but may incur costs. The UI links to Google's current pricing/data-use page.
+- Added a visible synthetic-data warning whenever the server confirms a preview/test session.
+- First-launch Foundation onboarding now opens automatically for a fresh profile and can be reopened from Settings.
+- Validated Renpho date parsing for ISO, European and US formats and rejects impossible dates before importing.
+- GitHub Actions run 44789482370 passed on commit 11b95192: locked dependency installation, TypeScript, Supabase migration checks, all regression tests and production build.
+- Current delivery target is a usable internal test candidate. Production release still requires durable identity/session storage, live Supabase provisioning and isolation/restore tests, and native Android Health Connect.
+
+
+## Progress log — 20 November 2026 (confirmed Jarvis action safety)
+
+- Jarvis suggested actions are restricted to action types that the app actually implements. The unsupported goal-breakdown action contract was removed instead of silently accepting a no-op.
+- Reschedule suggestions now require an existing task in the active workspace and a strictly valid local calendar date before the app applies the change.
+- Added reusable date validation and regression coverage for leap years, impossible dates and non-ISO strings.
+- Added explicit Jarvis system-prompt guidance: never guess which task to reschedule; include the exact task ID and date, and wait for user confirmation.
+- GitHub Actions run 44789834222 passed on commit cb2056db: dependency install, TypeScript, Supabase migration safety checks, regression tests and production build.
+- The branch remains separate from `main`; no merge or deployment has been performed.
+
+
+## Progress log — 20 November 2026 (1.0 beta identity)
+
+- Updated the package identity from the starter-project placeholder to `p-and-m-alchemy`.
+- Set the current internal test candidate version to `1.0.0-beta.1` and aligned the Bun workspace lockfile.
+- GitHub Actions run 44790064626 passed on commit f41e29de, including frozen dependency installation, TypeScript, migration checks, regression tests and production build.
+- The next checkpoint is manual Android/desktop acceptance and an AI Studio private-preview smoke test. No main-branch merge or production deployment has occurred.
+
+## Progress log — 20 November 2026 (Google integration lifecycle hardening)
+
+- Google OAuth access tokens remain in memory only, now carry a bounded expiry and are treated as expired one minute before provider expiry.
+- Calendar disconnect now clears the local token and requests provider-side revocation through Google Identity Services when available.
+- Added regression tests for expiry, explicit clearing, expiry bounds and disconnect behavior; included them in the standard test command.
+- Live OAuth consent, refresh behavior on a real account, and provider-side revocation still require manual browser acceptance; automated checks do not prove those external flows.
+- Work remains on `build/phase-2-planner`; `main` has not been changed or merged.
+
+## Progress log — 20 November 2026 (daily dashboard task accuracy)
+
+- Extracted daily task grouping into a reusable, tested model: overdue work and work due today are now separate groups in the dashboard data.
+- Dashboard grouping validates local ISO dates, excludes completed tasks and respects the active Privé/Mariluna workspace filter.
+- Sorting is deterministic: priority first, then deadline, then title. Invalid legacy dates are ignored instead of being treated as urgent work.
+- Added four regression tests and included them in the standard CI test command.
+- Next: continue tightening the day-planning experience and close manual device/integration acceptance gaps. No cloud persistence or native Android capability is claimed by this change.
+
+## Progress log — 20 November 2026 (daily workflow and notification safeguards)
+
+- The Today dashboard now displays overdue tasks and tasks due today as distinct sections, with accessible completion labels and a clear six-item display limit.
+- Quiet-hours logic now uses validated 24-hour clock values, handles both overnight and same-day windows, treats the end time as exclusive, and safely ignores malformed/equal endpoints.
+- Daily notification frequency now respects an explicit zero limit and clamps malformed/out-of-range values instead of silently turning zero into the default of three.
+- Added regression tests for quiet-hour boundaries, malformed settings and zero/negative notification limits.
+- Automated checks are running for the latest changes. Device-level notification delivery and real browser permission flows still need manual acceptance.
+
+- Verification note: the first quiet-hours CI run exposed an over-escaped clock-validation regex; this was corrected, and GitHub Actions run 44792717642 passed TypeScript, Supabase migration safety, privacy regression tests and the production build on commit 17fed248.
+
+## Progress log — 20 November 2026 (recurring tasks and notification delivery)
+
+- Completing a recurring task late now skips missed occurrences and creates the next future instance, instead of immediately adding another overdue task.
+- Monthly recurrence remains anchored to the original day-of-month, including month-end and leap-year cases.
+- Notification generation no longer performs browser push side effects inside a React state updater. This avoids duplicate external effects when React replays updater logic.
+- Added an in-memory delivery guard for Strict Mode effect replays and centralized the browser-push gate so disabled settings, disabled integration, and quiet hours suppress delivery.
+- Added regression tests for late daily/weekly/monthly recurrence and push eligibility at quiet-hour boundaries.
+- The change still requires hands-on mobile/PWA permission and notification acceptance; browser delivery cannot be proven by unit tests alone.
+
+- Verification: GitHub Actions run 44793351195 passed on commit `e7027bf0`, including TypeScript, Supabase migration safety, privacy regression tests and the production build.
+
+## Progress log — 20 November 2026 (calendar capacity and idea review accuracy)
+
+- Jarvis now calculates occupied time as the union of valid calendar intervals. Overlapping or nested appointments no longer get counted twice when estimating remaining capacity.
+- Added regression tests for independent, overlapping, nested, touching, malformed and zero-length appointments.
+- The Ideas view now uses local calendar-day arithmetic for its three-week review prompt, avoiding UTC date-only parsing shifts near the review threshold.
+- Invalid and impossible ISO date-only values are ignored rather than normalized into a different date.
+- Added automated tests for the 21-day threshold, last-revisited precedence, future/invalid dates and invalid review thresholds.
+- Browser/device acceptance remains separate from automated checks.
+
+
+## Progress log — 20 November 2026 (Mariluna offering editor validation)
+
+- Added a dedicated, pure validation helper for Mariluna services and offerings.
+- The editor now validates required names, name length, non-negative finite prices, description length, number of included deliverables and individual deliverable length.
+- Validation errors are shown in Dutch or English, depending on the active language.
+- Added browser-side field length limits to prevent oversized input before save.
+- Added automated regression tests for valid input and each validation boundary.
+- This improves the reliability of the user-managed service catalogue without expanding Mariluna into unnecessary content-management scope.
+
+- Extended the Mariluna offering catalogue with independent type and status filters (active, draft and archived), while preserving search across names, descriptions and included deliverables.
+- Extracted catalogue filtering into a pure helper and added tests for combined filters, legacy records without status and non-mutating result order.
+
+
+## Progress log — 20 November 2026 (task list search)
+
+- Added a search field to the shared Focus & Taken list for both Privé and Mariluna workspaces.
+- Search covers task titles, descriptions, notes, categories, due dates and subtask titles.
+- Search combines with workspace, active/completed and priority filters without mutating task records or changing their source order.
+- Extracted the filtering behavior into a pure helper and added automated tests for search fields, combined filters, whitespace and case handling.
+- This is a lightweight daily-use improvement; no external AI or paid service is required.
+
+
+## Progress log — 20 November 2026 (task and goal editor reliability)
+
+- Added reusable task validation for required/trimmed titles, bounded descriptions, valid local due dates, realistic durations and bounded subtask input.
+- The task editor now presents actionable Dutch validation messages and applies matching browser-side input limits.
+- Added reusable goal validation for title, description, optional target date and milestone limits.
+- The goal editor now supports adding and removing milestones manually, in addition to Jarvis suggestions.
+- AI-generated milestones are treated as untrusted input: invalid/oversized titles are discarded, suggested labels are bounded, durations are clamped, existing manual milestones are preserved and the total remains capped at 50.
+- Added automated boundary tests for task and goal validation.
+
+- Added goal search across names, descriptions, notes and milestone titles; it combines with workspace and timeframe filters and preserves source order.
+- Extracted goal filtering into a pure helper with regression tests.
+
+- Bounded both manually entered and Jarvis-generated task subtasks to the same title and count limits; opening an edit form clears stale validation feedback.
+- Goal editor now clears stale validation feedback and milestone-entry text when switching records or closing after save.
+
+
+## Progress log — 20 November 2026 (project workflow and cross-linking)
+
+- Added reusable Mariluna project filtering across project title, description and notes, preserving the existing status-filter behavior and keeping archived projects hidden by default.
+- Added project editor validation for required/limited names, bounded descriptions and notes, valid start/deadline dates, and chronological date order.
+- Added visible Dutch/English project form errors and input length limits.
+- Added task-editor selectors to connect a task to an active project and goal in the same workspace. Existing links are restored when editing; changing workspace clears stale links. Linked project/goal names now appear on task cards.
+- Fixed quick task creation from a Mariluna project to use the local calendar date rather than a UTC date conversion.
+- Added automated project search, status-filter and validation boundary tests; included them in CI.
+
+- Goal cards now surface their linked tasks and projects, including completion state and due dates for connected tasks.
+- Tasks created directly inside a project inherit that project's linked goal, keeping the project → goal → task relationship intact.
+- Goal progress now derives from completed linked tasks when a goal has no manual milestones; milestone completion remains the primary progress source when milestones exist.
+- Extracted goal progress precedence into a pure tested helper: milestones first, linked task completion second, manual progress as the fallback.
+- Task search now also finds linked project and goal names, so users can retrieve actions by the larger outcome they belong to.
+- Goal search now also matches names of tasks and projects linked to that goal, completing two-way retrieval across the goal/project/task workflow.
+
+
+## Progress log — 20 November 2026 (calendar and task integration)
+
+- Calendar day, week and month cells now include tasks due on those dates, scoped to the selected workspace.
+- Calendar task ordering puts open high-priority work first and completed tasks last.
+- The selected day view and month selected-date panel allow completing/reopening tasks through the same application handler used by the task list.
+- Extracted calendar task filtering into a pure helper with workspace, date and ordering regression tests.
+- Calendar occupied-time totals now use the overlap-safe interval union helper so overlapping appointments are not counted twice.
+- Added calendar task regression tests to the automated CI suite.
+- Week-view task previews are interactive: tasks can be completed or reopened without leaving the calendar, and the click does not change the selected calendar day.
+
+
+## Progress log — 20 November 2026 (Jarvis capacity and task planning)
+
+- Jarvis capacity now uses the shared overlap-safe calendar interval calculation.
+- Task-fit recommendations now compare estimated duration with both remaining free minutes and the energy/capacity limit; oversized tasks can be split or deferred with a concrete explanation.
+- Daily planning now counts overlapping appointments once and parses date-only values as local calendar dates rather than UTC timestamps.
+- Added automated coverage for Jarvis capacity, task fit, deterministic task splitting and local daily planning.
+- Task lists now sort open work by earliest due date, then priority, while completed work is grouped last and ordered by completion date.
+- Added regression tests for task ordering and completed-task grouping.
+- The Today dashboard now shows estimated task workload and appointment time separately; appointment time uses overlap-safe interval totals.
+- Task cards now show localized deadline dates and visibly flag overdue items; malformed legacy dates are not incorrectly marked overdue.
+- Daily free-time estimates now merge work-hour blocks and calendar appointments into one occupied-time timeline, avoiding double-counting meetings that take place during work hours.
+
+
+## Progress log — 20 November 2026 (integration sync truthfulness hardening)
+
+- Removed the integration sync route's ability to return a successful timestamp when no provider fetch or import actually happened.
+- Added a fail-closed decision helper: unknown services return 400, disconnected services return 409, and connected-but-unimplemented provider syncs return 501 with an explicit no-data-fetched message.
+- Added automated regression tests for calendar, Health Connect, Gmail and Instagram placeholder sync paths, and included the tests in the standard test command.
+- This is a correctness/security improvement, not completion of provider integrations. Google OAuth still uses a browser-side short-lived token flow, server-side token exchange and durable token storage are not implemented, and Health Connect still needs a native Android bridge.
+- CI for this new commit is pending; no test result is claimed until GitHub Actions reports it.
+
+
+## Progress log — 20 November 2026 (optional OpenAI Jarvis provider)
+
+- Added a server-only OpenAI Responses API adapter with bounded request validation, explicit API-key and model configuration, safe response extraction, and generic failure handling that does not leak provider response bodies.
+- Added an explicit OpenAI provider option to the server-side AI permission allowlist and Security & Privacy provider selector. Workspace/data consent remains independently enforced; selecting OpenAI alone does not authorize personal or Mariluna context.
+- Wired the central Jarvis chat endpoint to use OpenAI only when selected and when the relevant workspace consent is enabled. Missing configuration or provider failure returns the deterministic local response with a clear local-mode label.
+- OpenAI credentials are read only from server environment variables OPENAI_API_KEY and OPENAI_MODEL; neither is exposed to the browser. No API key has been provisioned and no paid provider call has been made by this change.
+- Added adapter and permission allowlist regression tests to the standard CI test command.
+- Scope limitation: this provider adapter currently covers the central Jarvis chat endpoint only. Day planning, goal breakdown, idea analysis and other specialized AI endpoints remain on their existing local/Gemini paths until separately migrated and tested. Provider selection and security permissions remain in-memory and reset on server restart; durable owner-scoped settings and live credentials are still release blockers.
+- CI result for this change is pending; no automated pass is claimed until GitHub Actions completes.

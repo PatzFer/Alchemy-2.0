@@ -1,4 +1,5 @@
 import { AppState } from '../storage';
+import { calculateBusyMinutes } from '../scheduleCapacity';
 import {
   ContextPrivacyScope,
   AssembledBrainContext,
@@ -11,6 +12,13 @@ import {
   MemoryItem,
 } from './types';
 
+const getLocalDateString = (date = new Date()): string => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 /**
  * CONTEXT ENGINE
  * 
@@ -22,7 +30,7 @@ import {
 export function buildBrainContext(
   state: AppState,
   scope: ContextPrivacyScope = 'balanced',
-  targetDate: string = new Date().toISOString().split('T')[0]
+  targetDate: string = getLocalDateString()
 ): AssembledBrainContext {
   const isPersonalScope = scope === 'personal' || scope === 'meals' || scope === 'styling' || scope === 'movement';
   const isMarilunaScope = scope === 'mariluna';
@@ -84,16 +92,8 @@ export function buildBrainContext(
     return true;
   });
 
-  // Calculate busy minutes
-  let busyMinutes = 0;
-  relevantEvents.forEach((ev) => {
-    if (ev.startTime && ev.endTime) {
-      const [sh, sm] = ev.startTime.split(':').map(Number);
-      const [eh, em] = ev.endTime.split(':').map(Number);
-      const dur = (eh * 60 + em) - (sh * 60 + sm);
-      if (dur > 0) busyMinutes += dur;
-    }
-  });
+  // Calculate the union of occupied intervals so overlapping appointments count once.
+  const busyMinutes = calculateBusyMinutes(relevantEvents);
   const freeMinutes = Math.max(0, 480 - busyMinutes); // 8-hour nominal container
 
   // Today's Check-In
@@ -129,7 +129,9 @@ export function buildBrainContext(
   }
 
   // Mariluna business state (only if mariluna or balanced scope)
-  const activeProjectsCount = isPersonalScope ? 0 : (state.projects || []).filter((p) => p.status === 'active').length;
+  const activeProjectsCount = isPersonalScope ? 0 : (state.projects || []).filter((p) =>
+    p.status === 'active' && (!isMarilunaScope || p.realm === 'mariluna')
+  ).length;
   const urgentDeadlinesCount = isPersonalScope
     ? 0
     : (state.marilunaAdmin?.deadlines || []).filter((d) => !d.completed).length;
@@ -215,11 +217,22 @@ export function buildBrainContext(
   // -------------------------------------------------------------
   // RELEVANT MEMORIES (Filtered by Scope & Privacy)
   // -------------------------------------------------------------
+  const now = Date.now();
   const relevantMemories = (state.memories || []).filter((m) => {
-    if (m.status === 'archived') return false;
+    // Pending suggestions are not user-approved memories. Archived, expired,
+    // malformed-expiry and unscoped records must never enter Jarvis context.
+    if (m.status === 'archived' || m.status === 'pending_confirmation') return false;
+    // Legacy learned suggestions may predate the explicit pending status. They
+    // remain suggestions until confirmLearnedMemory converts them to "confirmed".
+    if (m.type === 'learned') return false;
+    if (m.expiresAt) {
+      const expiry = Date.parse(m.expiresAt);
+      if (!Number.isFinite(expiry) || expiry <= now) return false;
+    }
+    if (m.realm !== 'personal' && m.realm !== 'mariluna') return false;
     if (isMarilunaScope) return m.realm === 'mariluna';
     if (isPersonalScope) return m.realm === 'personal';
-    return true;
+    return m.realm === 'personal' || m.realm === 'mariluna';
   });
 
   return {

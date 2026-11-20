@@ -28,10 +28,26 @@ import {
 } from '../../types';
 import {
   calculateCycleStatus,
+  hasValidCycleAnchor,
   getWeeklyCycleInsight,
   PHASE_DETAILS,
   synthesizeEnergyAndCycleGuidance,
 } from '../../lib/cycleUtils';
+
+const getMoonPhase = (date: Date) => {
+  // Approximate astronomical phase using the known January 2000 new moon.
+  const synodicMonth = 29.530588853;
+  const knownNewMoon = Date.UTC(2000, 0, 6, 18, 14);
+  const daysSince = (date.getTime() - knownNewMoon) / 86400000;
+  const phase = ((daysSince % synodicMonth) + synodicMonth) % synodicMonth / synodicMonth;
+  const illumination = (1 - Math.cos(2 * Math.PI * phase)) / 2;
+  const names = [
+    'Nieuwe maan', 'Wassende sikkel', 'Eerste kwartier', 'Wassende maan',
+    'Volle maan', 'Afnemende maan', 'Laatste kwartier', 'Afnemende sikkel',
+  ];
+  const index = Math.round(phase * 8) % 8;
+  return { name: names[index], illumination: Math.round(illumination * 100), phase };
+};
 
 interface CycleViewProps {
   cycleProfile: CycleProfile;
@@ -48,8 +64,16 @@ export const CycleView: React.FC<CycleViewProps> = ({
   onSaveDailyCheckIn,
   onOpenAssistantWithPrompt,
 }) => {
-  const todayStr = new Date().toISOString().split('T')[0];
-  const cycleStatus = calculateCycleStatus(cycleProfile, todayStr);
+  const now = new Date();
+  const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  const moon = getMoonPhase(new Date());
+  const hasCycleAnchor = cycleProfile.trackingEnabled && hasValidCycleAnchor(cycleProfile, todayStr);
+  // Keep calculations finite before the owner has logged a first period date.
+  const cycleStatus = calculateCycleStatus({
+    ...cycleProfile,
+    lastPeriodStartDate: hasCycleAnchor ? cycleProfile.lastPeriodStartDate : todayStr,
+    overridePhase: hasCycleAnchor ? cycleProfile.overridePhase : undefined,
+  }, todayStr);
   const weeklyInsight = getWeeklyCycleInsight(cycleStatus);
   const activePhaseDetails = PHASE_DETAILS[cycleStatus.activePhase];
 
@@ -73,6 +97,7 @@ export const CycleView: React.FC<CycleViewProps> = ({
   const [newLogStartDate, setNewLogStartDate] = useState(todayStr);
   const [newLogEndDate, setNewLogEndDate] = useState('');
   const [newLogNotes, setNewLogNotes] = useState('');
+  const [periodLogError, setPeriodLogError] = useState<string | null>(null);
 
   // Daily energy check-in state
   const [energyLevel, setEnergyLevel] = useState<EnergyLevel>(todayCheckIn?.energy || 'normal');
@@ -100,11 +125,15 @@ export const CycleView: React.FC<CycleViewProps> = ({
 
   const handleSaveSettings = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!Number.isInteger(cycleLengthInput) || cycleLengthInput < 21 || cycleLengthInput > 45) return;
+    if (!Number.isInteger(periodLengthInput) || periodLengthInput < 2 || periodLengthInput > 10) return;
+    if (!lastStartInput || lastStartInput > todayStr) return;
     const updated: CycleProfile = {
       ...cycleProfile,
       averageCycleLength: Number(cycleLengthInput),
       averagePeriodLength: Number(periodLengthInput),
       lastPeriodStartDate: lastStartInput,
+      trackingEnabled: Boolean(lastStartInput),
       overridePhase: overridePhaseInput === 'auto' ? undefined : overridePhaseInput,
       lastUpdated: todayStr,
     };
@@ -114,6 +143,19 @@ export const CycleView: React.FC<CycleViewProps> = ({
 
   const handleLogNewPeriod = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!newLogStartDate || newLogStartDate > todayStr) {
+      setPeriodLogError('Kies een geldige startdatum die vandaag of eerder valt.');
+      return;
+    }
+    if (newLogEndDate && (newLogEndDate < newLogStartDate || newLogEndDate > todayStr)) {
+      setPeriodLogError('De einddatum moet op of na de startdatum liggen en mag niet in de toekomst vallen.');
+      return;
+    }
+    if (cycleProfile.history.some((entry) => entry.startDate === newLogStartDate)) {
+      setPeriodLogError('Deze startdatum staat al in je cyclusgeschiedenis.');
+      return;
+    }
+    setPeriodLogError(null);
     const newEntry: CycleEntry = {
       id: `ce-${Date.now()}`,
       startDate: newLogStartDate,
@@ -122,10 +164,14 @@ export const CycleView: React.FC<CycleViewProps> = ({
       confirmedByUser: true,
     };
 
-    const updatedHistory = [newEntry, ...cycleProfile.history];
+    const updatedHistory = [...cycleProfile.history, newEntry].sort((a, b) => b.startDate.localeCompare(a.startDate));
+    const latestKnownStart = [cycleProfile.lastPeriodStartDate, ...updatedHistory.map((entry) => entry.startDate)]
+      .filter((date) => Boolean(date) && date <= todayStr)
+      .sort((a, b) => b.localeCompare(a))[0] || newLogStartDate;
     const updated: CycleProfile = {
       ...cycleProfile,
-      lastPeriodStartDate: newLogStartDate,
+      lastPeriodStartDate: latestKnownStart,
+      trackingEnabled: true,
       history: updatedHistory,
       overridePhase: undefined, // Clear override upon logging actual date
       lastUpdated: todayStr,
@@ -134,6 +180,8 @@ export const CycleView: React.FC<CycleViewProps> = ({
     onUpdateCycleProfile(updated);
     setShowLogPeriodModal(false);
     setNewLogNotes('');
+    setNewLogEndDate('');
+    setPeriodLogError(null);
   };
 
   return (
@@ -162,7 +210,7 @@ export const CycleView: React.FC<CycleViewProps> = ({
         {/* Action buttons: Settings & Log Period */}
         <div className="flex items-center gap-2.5">
           <button
-            onClick={() => setShowLogPeriodModal(true)}
+            onClick={() => { setPeriodLogError(null); setShowLogPeriodModal(true); }}
             id="log-period-btn"
             className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[var(--text-primary)] text-[var(--text-primary)] text-xs font-medium hover:bg-[var(--text-primary)] transition shadow-xs cursor-pointer"
           >
@@ -172,13 +220,29 @@ export const CycleView: React.FC<CycleViewProps> = ({
           <button
             onClick={() => setIsEditingSettings(!isEditingSettings)}
             id="cycle-settings-btn"
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-2)] text-xs text-[var(--text-secondary)] hover:bg-[#EBE5D9] transition cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-2)] text-xs text-[var(--text-secondary)] hover:bg-[var(--surface-raised)] transition cursor-pointer"
           >
             <Sliders className="w-3.5 h-3.5 text-[var(--text-secondary)]" />
             <span>Settings</span>
           </button>
         </div>
       </div>
+
+      <section className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-1)] p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center gap-4">
+        <div className="w-12 h-12 rounded-full bg-[var(--surface-2)] flex items-center justify-center text-2xl" aria-hidden="true">
+          {moon.phase < 0.03 || moon.phase > 0.97 ? '🌑' : moon.phase < 0.25 ? '🌒' : moon.phase < 0.28 ? '🌓' : moon.phase < 0.48 ? '🌔' : moon.phase < 0.53 ? '🌕' : moon.phase < 0.75 ? '🌖' : moon.phase < 0.78 ? '🌗' : '🌘'}
+        </div>
+        <div className="flex-1">
+          <div className="text-[10px] uppercase tracking-widest text-[var(--accent-secondary)] font-semibold">Natuurlijk ritme · Maanfase</div>
+          <h3 className="font-serif text-lg text-[var(--text-primary)]">{moon.name}</h3>
+          <p className="text-xs text-[var(--text-secondary)]">{moon.illumination}% verlicht · Een astronomische indicatie als reflectie- en natuurkader, geen medische of bewezen cyclusvoorspelling.</p>
+        </div>
+        <button
+          type="button"
+          onClick={() => onOpenAssistantWithPrompt?.(`Help me op een nuchtere, reflectieve manier mijn huidige cyclusfase (${activePhaseDetails.title}) en de huidige maanstand (${moon.name}) naast elkaar te bekijken. Maak duidelijk onderscheid tussen fysiologische kennis en symbolische reflectie. Geef me enkele haalbare suggesties voor vandaag.`)}
+          className="px-4 py-2 rounded-xl border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] hover:bg-[var(--surface-2)]"
+        >Reflecteer met Jarvis</button>
+      </section>
 
       {/* Edit Profile / Override Accordion */}
       {isEditingSettings && (
@@ -262,7 +326,7 @@ export const CycleView: React.FC<CycleViewProps> = ({
             </button>
             <button
               type="submit"
-              className="px-4 py-1.5 rounded-lg bg-[var(--text-primary)] text-[var(--text-primary)] text-xs font-medium hover:bg-[#453E37] transition"
+              className="px-4 py-1.5 rounded-lg bg-[var(--text-primary)] text-[var(--text-primary)] text-xs font-medium hover:bg-[var(--surface-raised)] transition"
             >
               Update Parameters
             </button>
@@ -270,8 +334,9 @@ export const CycleView: React.FC<CycleViewProps> = ({
         </form>
       )}
 
+      {hasCycleAnchor ? <>
       {/* Main Cycle Status Dashboard Hero */}
-      <div className="rounded-3xl border border-[#E4DCCF] bg-radial from-[var(--surface-1)] to-[var(--surface-2)] p-6 sm:p-8 shadow-xs relative overflow-hidden">
+      <div className="rounded-3xl border border-[var(--border-subtle)] bg-radial from-[var(--surface-1)] to-[var(--surface-2)] p-6 sm:p-8 shadow-xs relative overflow-hidden">
         {/* Subtle decorative motif */}
         <div className="absolute top-0 right-0 w-80 h-80 rounded-full bg-[#E8DEC8]/25 blur-3xl -mr-20 -mt-20 pointer-events-none"></div>
 
@@ -297,12 +362,12 @@ export const CycleView: React.FC<CycleViewProps> = ({
               <h2 className="font-serif text-3xl sm:text-4xl text-[var(--text-primary)] font-normal tracking-tight">
                 {activePhaseDetails.title}
               </h2>
-              <p className="mt-1 text-xs sm:text-sm text-[#7A6E5F] font-light">
+              <p className="mt-1 text-xs sm:text-sm text-[var(--text-secondary)] font-light">
                 {activePhaseDetails.subheading}
               </p>
             </div>
 
-            <p className="text-sm text-[#4E463D] leading-relaxed max-w-lg font-normal">
+            <p className="text-sm text-[var(--text-primary)] leading-relaxed max-w-lg font-normal">
               {activePhaseDetails.generalExperiences[0]}
             </p>
 
@@ -310,7 +375,7 @@ export const CycleView: React.FC<CycleViewProps> = ({
             <div className="space-y-1.5 pt-2">
               <div className="flex items-center justify-between text-xs text-[var(--text-secondary)]">
                 <span>Cycle Rhythm Progress</span>
-                <span className="font-mono text-[11px] text-[#4E463D]">{cycleStatus.cycleProgressPercent}%</span>
+                <span className="font-mono text-[11px] text-[var(--text-primary)]">{cycleStatus.cycleProgressPercent}%</span>
               </div>
               <div className="h-2 w-full rounded-full bg-[#E5DDCF] overflow-hidden p-0.5">
                 <div
@@ -380,9 +445,18 @@ export const CycleView: React.FC<CycleViewProps> = ({
         </div>
       </div>
 
+      </> : (
+        <div className="rounded-3xl border border-[var(--border-subtle)] bg-[var(--surface-1)] p-6 sm:p-8 space-y-3">
+          <div className="text-[10px] uppercase tracking-widest text-[var(--accent-secondary)] font-semibold">Cyclusregistratie</div>
+          <h2 className="font-serif text-2xl text-[var(--text-primary)]">Begin met jouw eigen cyclusgegevens</h2>
+          <p className="text-sm text-[var(--text-secondary)] leading-relaxed max-w-xl">Log een menstruatiestartdatum om een persoonlijke cyclusinschatting te zien. Zonder die datum tonen we geen fase of volgende menstruatie alsof we die kennen.</p>
+          <button type="button" onClick={() => { setPeriodLogError(null); setShowLogPeriodModal(true); }} className="px-4 py-2 rounded-xl bg-[var(--text-primary)] text-[var(--surface-1)] text-xs font-medium">Eerste menstruatiedatum toevoegen</button>
+        </div>
+      )}
+
       {/* Daily User-Reported Energy Check-in */}
-      <div className="rounded-2xl border border-[#E2DDD2] bg-[var(--surface-1)] p-6 shadow-xs space-y-5">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#EAE4D8] pb-4">
+      <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-1)] p-6 shadow-xs space-y-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[var(--border-subtle)] pb-4">
           <div>
             <div className="flex items-center gap-2">
               <Activity className="w-4 h-4 text-[var(--accent-secondary)]" />
@@ -440,7 +514,7 @@ export const CycleView: React.FC<CycleViewProps> = ({
           {/* Optional Mood & Physical Comfort Nuances */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-1">
             <div>
-              <label className="block text-[11px] font-medium text-[#5A524A] mb-1">
+              <label className="block text-[11px] font-medium text-[var(--text-secondary)] mb-1">
                 Mood Nuance (Optional)
               </label>
               <select
@@ -459,7 +533,7 @@ export const CycleView: React.FC<CycleViewProps> = ({
             </div>
 
             <div>
-              <label className="block text-[11px] font-medium text-[#5A524A] mb-1">
+              <label className="block text-[11px] font-medium text-[var(--text-secondary)] mb-1">
                 Appetite & Satiety (Optional)
               </label>
               <select
@@ -475,7 +549,7 @@ export const CycleView: React.FC<CycleViewProps> = ({
             </div>
 
             <div>
-              <label className="block text-[11px] font-medium text-[#5A524A] mb-1">
+              <label className="block text-[11px] font-medium text-[var(--text-secondary)] mb-1">
                 Physical Comfort (Optional)
               </label>
               <select
@@ -494,7 +568,7 @@ export const CycleView: React.FC<CycleViewProps> = ({
 
           {/* Quick reflection note */}
           <div>
-            <label className="block text-[11px] font-medium text-[#5A524A] mb-1">
+            <label className="block text-[11px] font-medium text-[var(--text-secondary)] mb-1">
               Personal Reflection or Physical Notes
             </label>
             <input
@@ -508,13 +582,13 @@ export const CycleView: React.FC<CycleViewProps> = ({
 
           <div className="flex items-center justify-between pt-1">
             <div className="text-[11px] text-[var(--text-secondary)]">
-              Synthesis: <strong className="font-medium text-[var(--text-primary)]">{energyGuidance.headline}</strong>
+              Synthesis: <strong className="font-medium text-[var(--text-primary)]">{hasCycleAnchor ? energyGuidance.headline : 'Je eigen energie-inschatting staat centraal. Voeg een menstruatiestartdatum toe voor cycluscontext.'}</strong>
             </div>
             <button
               type="button"
               onClick={handleSaveCheckIn}
               id="save-daily-checkin-btn"
-              className="px-4 py-2 rounded-xl bg-[var(--text-primary)] text-[var(--text-primary)] text-xs font-medium hover:bg-[#3E3831] transition shadow-xs cursor-pointer"
+              className="px-4 py-2 rounded-xl bg-[var(--text-primary)] text-[var(--text-primary)] text-xs font-medium hover:bg-[var(--surface-raised)] transition shadow-xs cursor-pointer"
             >
               Record Today’s Check-In
             </button>
@@ -522,9 +596,10 @@ export const CycleView: React.FC<CycleViewProps> = ({
         </div>
       </div>
 
+      {hasCycleAnchor && <>
       {/* Weekly Cycle Insight Section: "Your Week" */}
-      <div className="rounded-2xl border border-[#E0D9CB] bg-[var(--surface-2)] p-6 shadow-xs space-y-4">
-        <div className="flex items-center justify-between border-b border-[#E8E2D4] pb-3">
+      <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-2)] p-6 shadow-xs space-y-4">
+        <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-3">
           <div className="flex items-center gap-2">
             <Compass className="w-4 h-4 text-[var(--accent-secondary)]" />
             <h3 className="font-serif text-lg font-medium text-[var(--text-primary)]">
@@ -541,18 +616,18 @@ export const CycleView: React.FC<CycleViewProps> = ({
         </p>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-          <div className="p-4 rounded-xl bg-[var(--surface-2)] border border-[#E2DDD2] space-y-2">
+          <div className="p-4 rounded-xl bg-[var(--surface-2)] border border-[var(--border-subtle)] space-y-2">
             <span className="font-medium text-[var(--text-primary)] block text-xs">What you might notice</span>
-            <p className="text-[#645C52] leading-relaxed">{weeklyInsight.whatYouMightNotice}</p>
+            <p className="text-[var(--text-secondary)] leading-relaxed">{weeklyInsight.whatYouMightNotice}</p>
             <span className="font-medium text-[var(--text-primary)] block text-xs pt-2">What could be useful</span>
-            <p className="text-[#645C52] leading-relaxed">{weeklyInsight.whatCouldBeUseful}</p>
+            <p className="text-[var(--text-secondary)] leading-relaxed">{weeklyInsight.whatCouldBeUseful}</p>
           </div>
 
-          <div className="p-4 rounded-xl bg-[var(--surface-2)] border border-[#E2DDD2] space-y-2">
+          <div className="p-4 rounded-xl bg-[var(--surface-2)] border border-[var(--border-subtle)] space-y-2">
             <span className="font-medium text-[var(--text-primary)] block text-xs">Recommended Priorities</span>
-            <p className="text-[#645C52] leading-relaxed">{weeklyInsight.whatToPrioritize}</p>
+            <p className="text-[var(--text-secondary)] leading-relaxed">{weeklyInsight.whatToPrioritize}</p>
             <span className="font-medium text-[var(--text-primary)] block text-xs pt-2">What to avoid overloading</span>
-            <p className="text-[#645C52] leading-relaxed">{weeklyInsight.whatToAvoid}</p>
+            <p className="text-[var(--text-secondary)] leading-relaxed">{weeklyInsight.whatToAvoid}</p>
           </div>
         </div>
 
@@ -589,6 +664,9 @@ export const CycleView: React.FC<CycleViewProps> = ({
         )}
       </div>
 
+      </>}
+
+      {hasCycleAnchor && <>
       {/* Cycle Education & Context */}
       <div className="rounded-2xl border border-[#E4DCCE] bg-[var(--surface-1)] p-6 shadow-xs space-y-4">
         <div className="flex items-center gap-2 pb-2 border-b border-[#EAE4D7]">
@@ -620,10 +698,12 @@ export const CycleView: React.FC<CycleViewProps> = ({
         </div>
       </div>
 
+      </>}
+
       {/* Cycle History & Privacy Safeguards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Cycle History card */}
-        <div className="rounded-2xl border border-[#E2DDD2] bg-[var(--surface-1)] p-5 shadow-xs space-y-3">
+        <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-1)] p-5 shadow-xs space-y-3">
           <div className="flex items-center justify-between">
             <h4 className="font-serif text-sm font-medium text-[var(--text-primary)]">
               Recorded Cycle History
@@ -682,7 +762,7 @@ export const CycleView: React.FC<CycleViewProps> = ({
       {showLogPeriodModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#1A1816]/40 backdrop-blur-xs p-4">
           <div className="w-full max-w-md rounded-2xl bg-[var(--surface-1)] border border-[var(--border-subtle)] p-6 shadow-2xl space-y-4 text-[var(--text-primary)]">
-            <div className="flex items-center justify-between pb-3 border-b border-[#EAE4D8]">
+            <div className="flex items-center justify-between pb-3 border-b border-[var(--border-subtle)]">
               <h3 className="font-serif text-lg font-medium">Record Period Onset</h3>
               <button
                 onClick={() => setShowLogPeriodModal(false)}
@@ -698,7 +778,8 @@ export const CycleView: React.FC<CycleViewProps> = ({
                 <input
                   type="date"
                   value={newLogStartDate}
-                  onChange={(e) => setNewLogStartDate(e.target.value)}
+                  onChange={(e) => { setNewLogStartDate(e.target.value); setPeriodLogError(null); }}
+                  max={todayStr}
                   required
                   className="w-full px-3 py-2 rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-2)] text-xs text-[var(--text-primary)]"
                 />
@@ -709,7 +790,9 @@ export const CycleView: React.FC<CycleViewProps> = ({
                 <input
                   type="date"
                   value={newLogEndDate}
-                  onChange={(e) => setNewLogEndDate(e.target.value)}
+                  onChange={(e) => { setNewLogEndDate(e.target.value); setPeriodLogError(null); }}
+                  min={newLogStartDate}
+                  max={todayStr}
                   className="w-full px-3 py-2 rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-2)] text-xs text-[var(--text-primary)]"
                 />
               </div>
@@ -724,6 +807,12 @@ export const CycleView: React.FC<CycleViewProps> = ({
                   className="w-full px-3 py-2 rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-2)] text-xs text-[var(--text-primary)]"
                 />
               </div>
+
+              {periodLogError && (
+                <div role="alert" className="rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-800">
+                  {periodLogError}
+                </div>
+              )}
 
               <div className="flex items-center justify-end gap-3 pt-2">
                 <button

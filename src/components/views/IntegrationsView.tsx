@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import {
   Calendar,
-  Mail,
   Activity,
   Instagram,
   Bell,
@@ -29,11 +28,10 @@ import {
 import { IntegrationsService } from '../../lib/integrationsService';
 import {
   googleSignInForService,
-  fetchRealGmailMessagesFromApi,
   fetchRealCalendarEventsFromApi,
   fetchRealInstagramPostsFromApi,
   getCachedAccessToken,
-  setCachedAccessToken,
+  revokeGoogleAccessToken,
 } from '../../lib/googleAuthService';
 
 interface IntegrationsViewProps {
@@ -185,7 +183,7 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
 
   const handleDisconnectCalendar = async () => {
     setSyncingService('calendar');
-    setCachedAccessToken('calendar', null);
+    await revokeGoogleAccessToken('calendar');
     if (onSyncCalendarEvents) {
       onSyncCalendarEvents([]);
     }
@@ -248,142 +246,6 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
           error: err?.message || 'Fout bij synchroniseren.',
         },
       }));
-    } finally {
-      setSyncingService(null);
-    }
-  };
-
-  const handleConnectGmail = async () => {
-    setAuthError(null);
-    setSyncingService('gmail');
-    try {
-      onUpdateIntegrations((prev) => ({
-        ...prev,
-        gmail: { ...prev.gmail, status: 'connecting' },
-      }));
-
-      const authRes = await googleSignInForService([
-        'https://www.googleapis.com/auth/gmail.readonly',
-      ], 'gmail');
-
-      if (!authRes || !authRes.accessToken) {
-        throw new Error('Geen OAuth toegang gekregen.');
-      }
-
-      onUpdateIntegrations((prev) => ({
-        ...prev,
-        gmail: { ...prev.gmail, status: 'syncing' },
-      }));
-
-      const { messages, accountEmail } = await fetchRealGmailMessagesFromApi(authRes.accessToken);
-      const now = new Date().toISOString();
-
-      onUpdateIntegrations((prev) => ({
-        ...prev,
-        gmail: {
-          ...prev.gmail,
-          status: 'connected',
-          accountEmail: accountEmail || authRes.email,
-          lastSync: now,
-          readOnly: true,
-          businessOnly: true,
-          syncedThreadsCount: messages.length,
-          messages: messages,
-          error: undefined,
-        },
-      }));
-
-    } catch (err: any) {
-      console.warn('Gmail OAuth error:', err);
-      const isAuthClosed = err?.message?.includes('geannuleerd') || err?.message?.includes('closed');
-      const isAuthExpired = err?.message === 'AUTHENTICATION_EXPIRED';
-
-      const userFacingErr = isAuthClosed
-        ? 'Inlogvenster geannuleerd.'
-        : isAuthExpired
-        ? 'Authenticatie verlopen.'
-        : err?.message || 'Inloggen bij Google Gmail mislukt.';
-
-      setAuthError(userFacingErr);
-
-      onUpdateIntegrations((prev) => ({
-        ...prev,
-        gmail: {
-          ...prev.gmail,
-          status: isAuthExpired ? 'authentication_expired' : 'not_connected',
-          error: userFacingErr,
-        },
-      }));
-    } finally {
-      setSyncingService(null);
-      setConnectModalService(null);
-    }
-  };
-
-  const handleDisconnectGmail = async () => {
-    setSyncingService('gmail');
-    setCachedAccessToken('gmail', null);
-    onUpdateIntegrations((prev) => ({
-      ...prev,
-      gmail: {
-        status: 'not_connected',
-        accountEmail: undefined,
-        lastSync: undefined,
-        readOnly: true,
-        businessOnly: true,
-        syncedThreadsCount: 0,
-        messages: [],
-        error: undefined,
-      },
-    }));
-    setSyncingService(null);
-  };
-
-  const handleSyncGmail = async () => {
-    setAuthError(null);
-    setSyncingService('gmail');
-    try {
-      onUpdateIntegrations((prev) => ({
-        ...prev,
-        gmail: { ...prev.gmail, status: 'syncing' },
-      }));
-
-      let token = getCachedAccessToken('gmail');
-      if (!token) {
-        const authRes = await googleSignInForService([
-          'https://www.googleapis.com/auth/gmail.readonly',
-        ], 'gmail');
-        token = authRes.accessToken;
-      }
-
-      const { messages, accountEmail } = await fetchRealGmailMessagesFromApi(token);
-      const now = new Date().toISOString();
-
-      onUpdateIntegrations((prev) => ({
-        ...prev,
-        gmail: {
-          ...prev.gmail,
-          status: 'connected',
-          accountEmail: accountEmail || prev.gmail.accountEmail,
-          lastSync: now,
-          syncedThreadsCount: messages.length,
-          messages: messages,
-          error: undefined,
-        },
-      }));
-
-    } catch (err: any) {
-      console.warn('Gmail sync error:', err);
-      const isAuthExpired = err?.message === 'AUTHENTICATION_EXPIRED';
-      onUpdateIntegrations((prev) => ({
-        ...prev,
-        gmail: {
-          ...prev.gmail,
-          status: isAuthExpired ? 'authentication_expired' : 'sync_error',
-          error: err?.message || 'Fout bij synchroniseren.',
-        },
-      }));
-      setAuthError('Synchronisatie mislukt. Log opnieuw in bij Google om de verbinding te herstellen.');
     } finally {
       setSyncingService(null);
     }
@@ -676,148 +538,7 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
         </div>
 
         {/* ============================================================ */}
-        {/* 2. MARILUNA GMAIL                                            */}
-        {/* ============================================================ */}
-        <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-1)] p-5 sm:p-6 space-y-4 shadow-xs">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="flex items-start gap-3.5">
-              <div className="w-10 h-10 rounded-xl bg-[var(--surface-2)] border border-[var(--border-subtle)] flex items-center justify-center shrink-0 text-[var(--text-primary)] shadow-xs">
-                <Mail className="w-5 h-5 text-[var(--accent-secondary)]" />
-              </div>
-              <div>
-                <div className="flex items-center gap-3">
-                  <h3 className="font-serif text-lg font-medium text-[var(--text-primary)]">
-                    Mariluna Gmail
-                  </h3>
-                  {getStatusBadge(
-                    integrations.gmail.status,
-                    integrations.gmail.status === 'connected'
-                      ? (isNl ? 'Verbonden (Zakelijk alleen-lezen)' : 'Connected (Business read-only)')
-                      : undefined
-                  )}
-                </div>
-                <p className="text-xs text-[var(--text-secondary)] mt-0.5">
-                  {isNl
-                    ? 'Zakelijke e-mail communicatie voor Mariluna cliëntcontext en studio-aanvragen.'
-                    : 'Business email communication for Mariluna client context and studio requests.'}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
-              {integrations.gmail.status === 'connected' || integrations.gmail.status === 'synced' ? (
-                <>
-                  <button
-                    type="button"
-                    onClick={handleSyncGmail}
-                    disabled={syncingService === 'gmail'}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[var(--surface-2)] border border-[var(--border-subtle)] text-xs font-medium text-[var(--text-secondary)] hover:bg-[var(--surface-raised)] transition cursor-pointer"
-                  >
-                    <RefreshCw className={`w-3.5 h-3.5 ${syncingService === 'gmail' ? 'animate-spin' : ''}`} />
-                    <span>{isNl ? 'Synchroniseren' : 'Sync'}</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleDisconnectGmail}
-                    className="px-3 py-1.5 rounded-xl text-xs font-medium text-[#A64A38] hover:bg-[var(--surface-2)] transition cursor-pointer"
-                  >
-                    {isNl ? 'Verbreken' : 'Disconnect'}
-                  </button>
-                </>
-              ) : (
-                <button
-                  type="button"
-                  onClick={handleConnectGmail}
-                  disabled={syncingService === 'gmail'}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[var(--text-primary)] text-[var(--surface-1)] text-xs font-medium hover:bg-[var(--surface-raised)] transition cursor-pointer shadow-xs disabled:opacity-50"
-                >
-                  <ExternalLink className="w-3.5 h-3.5" />
-                  <span>{isNl ? 'Inloggen met Mariluna Gmail' : 'Connect Mariluna Gmail'}</span>
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* Business Realm Boundary Note */}
-          <div className="rounded-xl bg-[var(--surface-2)] border border-[var(--surface-2)] p-3.5 flex items-start gap-2.5 text-xs text-[var(--text-secondary)] leading-relaxed">
-            <Lock className="w-4 h-4 text-[var(--accent-secondary)] shrink-0 mt-0.5" />
-            <div>
-              <span className="font-medium text-[var(--text-primary)]">
-                {isNl ? 'Strikte Zakelijke Scheiding:' : 'Strict Business Realm Isolation:'}{' '}
-              </span>
-              {isNl
-                ? 'Uitsluitend Patricia\'s Mariluna zakelijke e-mail. Patricia\'s persoonlijke e-mail wordt NOOIT gekoppeld. Gmail-context blijft strikt binnen het Mariluna-domein.'
-                : 'Exclusively Patricia\'s Mariluna business email. Personal email is NEVER connected. Gmail context remains strictly inside Mariluna.'}
-            </div>
-          </div>
-
-          {(integrations.gmail.status === 'connected' || integrations.gmail.status === 'synced') && (
-            <div className="space-y-3 pt-3 border-t border-[var(--border-subtle)]">
-              <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-[var(--text-secondary)]">
-                <div>
-                  <span className="text-[var(--text-muted)]">{isNl ? 'Zakelijk adres:' : 'Business email:'} </span>
-                  <span className="font-mono text-[var(--text-primary)] font-medium">{integrations.gmail.accountEmail}</span>
-                </div>
-                <div>
-                  <span className="text-[var(--text-muted)]">{isNl ? 'Gesynchroniseerde e-mails:' : 'Synced emails:'} </span>
-                  <span className="font-medium text-[var(--text-primary)]">{integrations.gmail.messages.length}</span>
-                </div>
-                {integrations.gmail.lastSync && (
-                  <div>
-                    <span className="text-[var(--text-muted)]">{isNl ? 'Laatst bijgewerkt:' : 'Last sync:'} </span>
-                    <span>{new Date(integrations.gmail.lastSync).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                  </div>
-                )}
-              </div>
-
-              {/* Real Email Display List */}
-              <div className="space-y-2 pt-2">
-                <h4 className="text-xs font-serif font-medium text-[var(--text-primary)] flex items-center gap-1.5">
-                  <MessageSquare className="w-3.5 h-3.5 text-[var(--accent-secondary)]" />
-                  <span>{isNl ? 'Gesynchroniseerde Berichten' : 'Synced Messages'}</span>
-                </h4>
-
-                {integrations.gmail.messages.length === 0 ? (
-                  <div className="p-4 rounded-xl border border-dashed border-[var(--border-subtle)] bg-[var(--surface-2)] text-xs text-[var(--text-secondary)] text-center space-y-1">
-                    <p className="font-medium text-[var(--text-primary)]">
-                      {isNl ? 'Geen e-mails gevonden in Mariluna Gmail' : 'No messages found in Mariluna Gmail'}
-                    </p>
-                    <p className="text-[11px] text-[var(--text-muted)]">
-                      {isNl
-                        ? 'Geen recente berichten aangetroffen. Klik op "Synchroniseren" om opnieuw te controleren.'
-                        : 'No recent messages retrieved. Click "Sync" to check again.'}
-                    </p>
-                  </div>
-                ) : (
-                  <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
-                    {integrations.gmail.messages.map((msg) => (
-                      <div
-                        key={msg.id}
-                        className="p-3.5 rounded-xl bg-[var(--surface-2)] border border-[var(--border-subtle)] shadow-2xs space-y-1 text-xs"
-                      >
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="font-semibold text-[var(--text-primary)] truncate">
-                            {msg.sender} <span className="text-[var(--text-muted)] font-normal">({msg.senderEmail})</span>
-                          </span>
-                          <span className="text-[10px] text-[var(--text-muted)] shrink-0 font-mono">{msg.date}</span>
-                        </div>
-                        <div className="font-medium text-[var(--accent-secondary)] text-xs truncate">
-                          {msg.subject}
-                        </div>
-                        <p className="text-[11px] text-[var(--text-secondary)] line-clamp-2 leading-relaxed">
-                          {msg.snippet}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* ============================================================ */}
-        {/* 3. GOOGLE HEALTH CONNECT                                    */}
+        {/* 2. GOOGLE HEALTH CONNECT                                    */}
         {/* ============================================================ */}
         <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-1)] p-5 sm:p-6 space-y-4 shadow-xs">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -834,15 +555,15 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
                 </div>
                 <p className="text-xs text-[var(--text-secondary)] mt-0.5">
                   {isNl
-                    ? 'De native Android Health Connect-koppeling is nog in ontwikkeling. Er worden pas gegevens getoond nadat echte Android-toestemming en synchronisatie beschikbaar zijn.'
-                    : 'The native Android Health Connect connection is still in development. Data will appear only after real Android permissions and synchronization are available.'}
+                    ? 'De native Android Health Connect-koppeling is nog in ontwikkeling. Renpho-metingen kun je voorlopig via CSV importeren in Welzijn → Voortgang.'
+                    : 'The native Android Health Connect connection is still in development. Renpho readings can currently be imported from CSV in Wellbeing → Progress.'}
                 </p>
               </div>
             </div>
 
             <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
               <span className="text-xs text-[var(--text-muted)] italic">
-                {isNl ? 'Binnenkort beschikbaar via de Android-app' : 'Coming soon through the Android app'}
+                {isNl ? 'Native Android-koppeling in ontwikkeling' : 'Native Android connection in development'}
               </span>
             </div>
           </div>

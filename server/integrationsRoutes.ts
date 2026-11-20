@@ -1,5 +1,6 @@
 import express, { Request, Response } from "express";
 import { requireAppAuth } from "./security";
+import { resolveIntegrationSync } from "./integrationSync";
 
 const router = express.Router();
 
@@ -235,27 +236,18 @@ router.post("/disconnect/:service", requireAppAuth, (req: Request, res: Response
 // POST /api/integrations/sync/:service
 router.post("/sync/:service", requireAppAuth, (req: Request, res: Response) => {
   const { service } = req.params;
-  const now = new Date().toISOString();
+  const status = service === "calendar" || service === "google_calendar"
+    ? serverState.calendar.status
+    : service === "gmail" || service === "mariluna_gmail"
+      ? serverState.gmail.status
+      : service === "health_connect"
+        ? serverState.healthConnect.status
+        : service === "instagram" || service === "mariluna_instagram"
+          ? serverState.instagram.status
+          : undefined;
 
-  if (service === "calendar" || service === "google_calendar") {
-    if (serverState.calendar.status === "connected") {
-      serverState.calendar.lastSync = now;
-    }
-  } else if (service === "gmail" || service === "mariluna_gmail") {
-    if (serverState.gmail.status === "connected") {
-      serverState.gmail.lastSync = now;
-    }
-  } else if (service === "health_connect") {
-    if (serverState.healthConnect.status === "connected") {
-      serverState.healthConnect.lastSync = now;
-    }
-  } else if (service === "instagram" || service === "mariluna_instagram") {
-    if (serverState.instagram.status === "connected") {
-      serverState.instagram.lastSync = now;
-    }
-  }
-
-  res.json({ success: true, service, lastSync: now });
+  const decision = resolveIntegrationSync(service, status);
+  return res.status(decision.statusCode).json(decision.body);
 });
 
 // POST /api/integrations/test-push

@@ -21,6 +21,49 @@ import {
   Check,
 } from 'lucide-react';
 import { Idea, ContentPlan, Project, Task, IdeaStatus } from '../../types';
+const IDEA_STOP_WORDS = new Set([
+  'de', 'het', 'een', 'en', 'of', 'in', 'op', 'van', 'voor', 'met', 'aan', 'naar',
+  'bij', 'dat', 'dit', 'die', 'wat', 'waar', 'hoe', 'ik', 'mijn', 'je', 'jij', 'we',
+  'ons', 'zijn', 'is', 'was', 'worden', 'kan', 'kunnen', 'wil', 'willen', 'the', 'and',
+  'for', 'with', 'from', 'that', 'this', 'your', 'you', 'are', 'into',
+]);
+
+function getIdeaTerms(idea: Idea): Set<string> {
+  const source = [idea.title, idea.content, ...(idea.tags || [])].join(' ').toLocaleLowerCase('nl-BE');
+  return new Set(
+    source
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .split(/[^a-z0-9]+/)
+      .map((word) => word.trim())
+      .filter((word) => word.length >= 4 && !IDEA_STOP_WORDS.has(word))
+  );
+}
+
+function findRelatedIdeas(current: Idea, allIdeas: Idea[]): { idea: Idea; reason: string; score: number }[] {
+  const currentTerms = getIdeaTerms(current);
+  const currentTags = new Set((current.tags || []).map((tag) => tag.trim().toLocaleLowerCase('nl-BE')).filter(Boolean));
+
+  return allIdeas
+    .filter((candidate) => candidate.id !== current.id && candidate.realm === 'mariluna' && candidate.status !== 'archived')
+    .map((candidate) => {
+      const candidateTerms = getIdeaTerms(candidate);
+      const sharedTerms = [...currentTerms].filter((term) => candidateTerms.has(term));
+      const sharedTags = (candidate.tags || []).filter((tag) => currentTags.has(tag.trim().toLocaleLowerCase('nl-BE')));
+      const score = sharedTags.length * 3 + sharedTerms.length;
+      return {
+        idea: candidate,
+        reason: sharedTags.length > 0
+          ? `Gedeelde tags: ${sharedTags.join(', ')}`
+          : `Gedeelde woorden: ${sharedTerms.slice(0, 3).join(', ')}`,
+        score,
+      };
+    })
+    .filter((match) => match.score >= 2)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 2);
+}
+
 import {
   normalizePillars,
   getPillarName,
@@ -132,8 +175,9 @@ export const MarilunaIdeaSanctuary: React.FC<MarilunaIdeaSanctuaryProps> = ({
 
   const handleCreateIdea = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim()) return;
+    if (!title.trim() && !content.trim()) return;
 
+    const ideaTitle = title.trim() || content.trim().split(/\s+/).slice(0, 8).join(' ').slice(0, 64) || 'Nieuw idee';
     const parsedTags = tagsInput
       .split(',')
       .map((t) => t.trim())
@@ -141,7 +185,7 @@ export const MarilunaIdeaSanctuary: React.FC<MarilunaIdeaSanctuaryProps> = ({
 
     const newIdea: Partial<Idea> = {
       id: 'idea-' + Date.now(),
-      title: title.trim(),
+      title: ideaTitle,
       content: content.trim(),
       realm: 'mariluna',
       category: category || 'creative',
@@ -156,6 +200,8 @@ export const MarilunaIdeaSanctuary: React.FC<MarilunaIdeaSanctuaryProps> = ({
     };
 
     onSaveIdea(newIdea);
+    // Open the sparring space immediately so a raw thought can naturally become a conversation.
+    onOpenSparring(newIdea as Idea);
 
     // Reset capture form
     setTitle('');
@@ -208,8 +254,7 @@ export const MarilunaIdeaSanctuary: React.FC<MarilunaIdeaSanctuaryProps> = ({
         <form onSubmit={handleCreateIdea} className="space-y-3">
           <input
             type="text"
-            required
-            placeholder={isNl ? 'Titel van je idee of vonk...' : 'Spark or idea title...'}
+            placeholder={isNl ? 'Titel of thema (mag leeg blijven)...' : 'Idea title or theme (optional)...'}
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             className="w-full px-4 py-2.5 rounded-2xl bg-[#FFFFFF] border border-[#DDD4C5] text-xs sm:text-sm text-[#2C2825] focus:outline-none focus:border-[#8C7654] shadow-2xs font-medium"
@@ -336,14 +381,14 @@ export const MarilunaIdeaSanctuary: React.FC<MarilunaIdeaSanctuaryProps> = ({
 
           <div className="flex justify-between items-center pt-1 border-t border-[#EDE4D5]">
             <span className="text-[11px] text-[#7A7167]">
-              {isNl ? 'Wordt bewaard in Mariluna domein.' : 'Stored in Mariluna domain.'}
+              {isNl ? 'Dump je gedachte. Daarna kun je meteen verder sparren.' : 'Drop your thought. Then start sparring right away.'}
             </span>
             <button
               type="submit"
-              disabled={!title.trim()}
+              disabled={!title.trim() && !content.trim()}
               className="px-5 py-2 rounded-full bg-[#2C2825] text-[#FAF8F3] text-xs font-medium hover:bg-[#433D37] transition shadow-xs cursor-pointer disabled:opacity-40"
             >
-              {isNl ? '+ Idee Vastleggen' : '+ Save Spark'}
+              {isNl ? 'Bewaar & sparren met Jarvis' : 'Save & think with Jarvis'}
             </button>
           </div>
         </form>
@@ -440,6 +485,7 @@ export const MarilunaIdeaSanctuary: React.FC<MarilunaIdeaSanctuaryProps> = ({
             const connectedProj = projects.find((p) => p.id === idea.connectedProjectId);
             const connectedTask = tasks.find((t) => t.id === idea.assignedTaskId);
             const relatedContentCount = (idea.relatedContentIds || []).length;
+            const relatedIdeas = findRelatedIdeas(idea, ideas);
 
             return (
               <div
@@ -509,6 +555,26 @@ export const MarilunaIdeaSanctuary: React.FC<MarilunaIdeaSanctuaryProps> = ({
                     </div>
                   )}
 
+                  {relatedIdeas.length > 0 && (
+                    <div className="pt-2 space-y-1.5">
+                      <div className="text-[10px] uppercase tracking-wider text-[#8C7654] font-semibold">Mogelijke verbanden</div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {relatedIdeas.map((match) => (
+                          <button
+                            key={match.idea.id}
+                            type="button"
+                            title={match.reason}
+                            onClick={() => onOpenSparring(match.idea)}
+                            className="text-[10px] px-2 py-1 rounded-lg border border-[#DDD4C5] bg-[#F7F3EA] text-[#554C42] hover:border-[#8C7654] transition"
+                          >
+                            ↗ {match.idea.title}
+                          </button>
+                        ))}
+                      </div>
+                      <p className="text-[9px] text-[#8A8175]">Automatische suggestie op basis van gedeelde woorden en tags; geen inhoudelijke beoordeling.</p>
+                    </div>
+                  )}
+
                   {/* Relationships to resulting content / project / task */}
                   {(connectedProj || connectedTask || relatedContentCount > 0 || idea.sparringNotes) && (
                     <div className="pt-2 border-t border-[#ECE3D4] space-y-1 text-[11px]">
@@ -549,7 +615,7 @@ export const MarilunaIdeaSanctuary: React.FC<MarilunaIdeaSanctuaryProps> = ({
                     className="w-full flex items-center justify-center gap-2 py-2 rounded-xl bg-[#2C2825] text-[#FAF8F3] text-xs font-medium hover:bg-[#433D37] transition shadow-2xs cursor-pointer"
                   >
                     <Sparkles className="w-3.5 h-3.5 text-[#C5A880]" />
-                    <span>{isNl ? '✨ Bespreek met Alchemy' : '✨ Spar with Alchemy'}</span>
+                    <span>{idea.sparringMessages && idea.sparringMessages.length > 1 ? (isNl ? 'Sparring hervatten' : 'Resume sparring') : (isNl ? 'Start sparring met Jarvis' : 'Start sparring with Jarvis')}</span>
                     <ArrowRight className="w-3 h-3 text-[#C5A880]" />
                   </button>
 

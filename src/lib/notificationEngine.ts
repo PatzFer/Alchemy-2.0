@@ -9,7 +9,17 @@ import {
   CycleProfile,
   DailyCheckIn,
 } from '../types';
-import { calculateCycleStatus } from './cycleUtils';
+import { calculateCycleStatus, hasValidCycleAnchor } from './cycleUtils';
+
+/** Calendar-day keys must use the device's local timezone, not UTC midnight. */
+export function getNotificationLocalDateKey(date: Date = new Date()): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+}
+
+export function getNotificationTimestampLocalDateKey(timestamp: string): string | null {
+  const parsed = new Date(timestamp);
+  return Number.isNaN(parsed.getTime()) ? null : getNotificationLocalDateKey(parsed);
+}
 
 export const DEFAULT_NOTIFICATION_SETTINGS: NotificationSettings = {
   enabled: true,
@@ -57,25 +67,45 @@ export const DEFAULT_NOTIFICATION_SETTINGS: NotificationSettings = {
 /**
  * Checks if current time is inside user-configured Quiet Hours.
  */
-export function isCurrentlyQuietHours(settings?: NotificationSettings): boolean {
-  if (!settings || !settings.enabled) return false;
+function parseClockMinutes(value: string): number | null {
+  if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(value)) return null;
+  const [hours, minutes] = value.split(':').map(Number);
+  return hours * 60 + minutes;
+}
 
-  const now = new Date();
-  const currentMinutes = now.getHours() * 60 + now.getMinutes();
-
-  const [startH, startM] = (settings.quietHoursStart || '21:00').split(':').map(Number);
-  const [endH, endM] = (settings.quietHoursEnd || '08:30').split(':').map(Number);
-
-  const startMinutes = (startH || 0) * 60 + (startM || 0);
-  const endMinutes = (endH || 0) * 60 + (endM || 0);
+/** Pure quiet-hours check; the end boundary is exclusive and equal endpoints disable the window. */
+export function isWithinQuietHours(currentMinutes: number, start: string, end: string): boolean {
+  if (!Number.isInteger(currentMinutes) || currentMinutes < 0 || currentMinutes >= 1440) return false;
+  const startMinutes = parseClockMinutes(start);
+  const endMinutes = parseClockMinutes(end);
+  if (startMinutes === null || endMinutes === null || startMinutes === endMinutes) return false;
 
   if (startMinutes > endMinutes) {
-    // Spans overnight (e.g. 21:00 to 08:30)
     return currentMinutes >= startMinutes || currentMinutes < endMinutes;
-  } else {
-    // Same day window
-    return currentMinutes >= startMinutes && currentMinutes < endMinutes;
   }
+  return currentMinutes >= startMinutes && currentMinutes < endMinutes;
+}
+
+export function isCurrentlyQuietHours(settings?: NotificationSettings): boolean {
+  if (!settings || !settings.enabled) return false;
+  const now = new Date();
+  const currentMinutes = now.getHours() * 60 + now.getMinutes();
+  const start = settings.quietHoursStart || DEFAULT_NOTIFICATION_SETTINGS.quietHoursStart;
+  const end = settings.quietHoursEnd || DEFAULT_NOTIFICATION_SETTINGS.quietHoursEnd;
+  return isWithinQuietHours(currentMinutes, start, end);
+}
+
+/** Central gate for native push: both the app setting and quiet-hours policy must allow it. */
+export function shouldDispatchBrowserPush(
+  settings: NotificationSettings | undefined,
+  integrationEnabled: boolean,
+  now: Date = new Date(),
+): boolean {
+  if (!settings?.enabled || !integrationEnabled) return false;
+  const currentMinutes = now.getHours() * 60 + now.getMinutes();
+  const start = settings.quietHoursStart || DEFAULT_NOTIFICATION_SETTINGS.quietHoursStart;
+  const end = settings.quietHoursEnd || DEFAULT_NOTIFICATION_SETTINGS.quietHoursEnd;
+  return !isWithinQuietHours(currentMinutes, start, end);
 }
 
 /**
@@ -107,15 +137,18 @@ export function evaluateSmartNotifications(params: {
 
   if (!settings || !settings.enabled) return existingNotifications;
 
-  const maxFrequency = settings.maxDailyFrequency || 3;
+  const configuredFrequency = settings.maxDailyFrequency;
+  const maxFrequency = Number.isFinite(configuredFrequency)
+    ? Math.max(0, Math.min(20, Math.floor(configuredFrequency)))
+    : DEFAULT_NOTIFICATION_SETTINGS.maxDailyFrequency;
   const categories = settings.categories || DEFAULT_NOTIFICATION_SETTINGS.categories;
 
-  const todayStr = new Date().toISOString().split('T')[0];
+  const todayStr = getNotificationLocalDateKey();
   const newItems: SmartNotification[] = [];
 
   // Check how many notifications have been added today
   const notificationsToday = existingNotifications.filter(
-    (n) => n.timestamp && n.timestamp.split('T')[0] === todayStr
+    (n) => getNotificationTimestampLocalDateKey(n.timestamp) === todayStr
   );
 
   if (notificationsToday.length >= maxFrequency) {
@@ -125,7 +158,7 @@ export function evaluateSmartNotifications(params: {
 
   // 1. Daily Thoughtful Morning Synthesis (combines tasks + calendar + cycle)
   const hasDailyDigest = existingNotifications.some(
-    (n) => n.category === 'upcoming_task' && n.timestamp && n.timestamp.split('T')[0] === todayStr
+    (n) => n.category === 'upcoming_task' && getNotificationTimestampLocalDateKey(n.timestamp) === todayStr
   );
 
   if (!hasDailyDigest && categories.upcoming_task) {
@@ -143,7 +176,7 @@ export function evaluateSmartNotifications(params: {
     }
 
     // Add gentle cycle context if available and enabled
-    if (cycleProfile?.trackingEnabled && categories.cycle_insight) {
+    if (cycleProfile?.trackingEnabled && categories.cycle_insight && hasValidCycleAnchor(cycleProfile, todayStr)) {
       const cycleStatus = calculateCycleStatus(cycleProfile, todayStr);
       digestBody += ` (Rhythm: ${cycleStatus.activePhase} phase, Day ${cycleStatus.cycleDay}).`;
     }
@@ -193,7 +226,7 @@ export function evaluateSmartNotifications(params: {
   ) {
     const missedTasks = tasks.filter((t) => t.missed && t.status !== 'completed');
     const hasMissedNotice = existingNotifications.some(
-      (n) => n.category === 'rescheduling_suggestion' && n.timestamp && n.timestamp.split('T')[0] === todayStr
+      (n) => n.category === 'rescheduling_suggestion' && getNotificationTimestampLocalDateKey(n.timestamp) === todayStr
     );
 
     if (!hasMissedNotice && missedTasks.length > 0) {

@@ -48,6 +48,8 @@ interface SettingsViewProps {
   isSampleData: boolean;
   onToggleSampleData: () => void;
   onExportData: () => void;
+  lastSavedAt?: string | null;
+  lastBackupAt?: string | null;
   onImportData: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onResetData: () => void;
   notificationSettings?: NotificationSettings;
@@ -60,6 +62,7 @@ interface SettingsViewProps {
   integrations?: IntegrationsState;
   onUpdateIntegrations?: (updater: (prev: IntegrationsState) => IntegrationsState) => void;
   onSyncCalendarEvents?: (events: CalendarEvent[]) => void;
+  onOpenSetupWizard?: () => void;
 }
 
 export const SettingsView: React.FC<SettingsViewProps> = ({
@@ -70,6 +73,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   isSampleData,
   onToggleSampleData,
   onExportData,
+  lastSavedAt = null,
+  lastBackupAt = null,
   onImportData,
   onResetData,
   notificationSettings,
@@ -82,8 +87,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   integrations,
   onUpdateIntegrations,
   onSyncCalendarEvents,
+  onOpenSetupWizard,
 }) => {
   const [activeTab, setActiveTab] = useState<'foundation' | 'memory' | 'notifications' | 'integrations' | 'security' | 'data'>(initialTab);
+
+  useEffect(() => {
+    setActiveTab(initialTab);
+  }, [initialTab]);
   const [newMemoryContent, setNewMemoryContent] = useState('');
   const [newMemoryCategory, setNewMemoryCategory] = useState('Lifestyle & Energy');
   const [newMemoryRealm, setNewMemoryRealm] = useState<Realm>('personal');
@@ -127,7 +137,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       category: newMemoryCategory,
       content: newMemoryContent.trim(),
       realm: newMemoryRealm,
-      dateAdded: new Date().toISOString().split('T')[0],
+      dateAdded: (() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; })(),
       importance: 'high',
       source: 'user_stated',
     });
@@ -140,11 +150,25 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       {/* Header */}
       <div className="border-b border-[var(--border-subtle)] pb-5">
         <h1 className="font-serif text-3xl font-normal text-[var(--text-primary)]">
-          P & M Alchemy Sovereignty & Settings
+          {isNl ? 'P & M Alchemy — Instellingen' : 'P & M Alchemy — Settings'}
         </h1>
         <p className="text-xs text-[var(--text-secondary)] mt-1 font-light">
-          Inspect and govern what your JARVIS knows, calibrate thoughtful quiet hours, and configure data privacy.
+          {isNl ? 'Beheer wat Jarvis mag weten, stel meldingen en stille uren af en bepaal je privacy.' : 'Inspect what Jarvis knows, calibrate quiet hours, and configure data privacy.'}
         </p>
+        <p className="mt-2 text-[10px] font-medium tracking-wide text-[var(--text-muted)]">
+          Alchemy 1.0.0-beta.1 · {isNl ? 'interne testversie' : 'internal test build'}
+        </p>
+
+        {onOpenSetupWizard && (
+          <button
+            type="button"
+            onClick={onOpenSetupWizard}
+            className="mt-4 inline-flex items-center gap-2 rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-2)] px-4 py-2.5 text-xs font-medium text-[var(--text-primary)] transition hover:border-[var(--accent-secondary)]"
+          >
+            <Sparkles className="h-4 w-4" />
+            {isNl ? 'Start persoonlijke Alchemy-inrichting' : 'Open personal Alchemy setup'}
+          </button>
+        )}
 
         {/* Tab switch */}
         <div className="mt-5 flex items-center gap-2 text-xs flex-wrap">
@@ -153,7 +177,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             id="settings-tab-foundation"
             className={`px-3.5 py-1.5 rounded-full transition cursor-pointer flex items-center gap-1.5 ${
               activeTab === 'foundation'
-                ? 'bg-[var(--text-primary)] text-[var(--text-primary)] font-medium shadow-xs'
+                ? 'bg-[var(--surface-raised)] text-[var(--text-primary)] border border-[var(--border-strong)] font-medium shadow-xs'
                 : 'bg-[var(--surface-2)] border border-[var(--border-subtle)] text-[var(--text-secondary)] hover:bg-[var(--surface-2)]'
             }`}
           >
@@ -164,7 +188,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             onClick={() => setActiveTab('memory')}
             className={`px-3.5 py-1.5 rounded-full transition cursor-pointer ${
               activeTab === 'memory'
-                ? 'bg-[var(--text-primary)] text-[var(--text-primary)] font-medium shadow-xs'
+                ? 'bg-[var(--surface-raised)] text-[var(--text-primary)] border border-[var(--border-strong)] font-medium shadow-xs'
                 : 'bg-[var(--surface-2)] border border-[var(--border-subtle)] text-[var(--text-secondary)] hover:bg-[var(--surface-2)]'
             }`}
           >
@@ -174,7 +198,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             onClick={() => setActiveTab('notifications')}
             className={`px-3.5 py-1.5 rounded-full transition cursor-pointer flex items-center gap-1.5 ${
               activeTab === 'notifications'
-                ? 'bg-[var(--text-primary)] text-[var(--text-primary)] font-medium shadow-xs'
+                ? 'bg-[var(--surface-raised)] text-[var(--text-primary)] border border-[var(--border-strong)] font-medium shadow-xs'
                 : 'bg-[var(--surface-2)] border border-[var(--border-subtle)] text-[var(--text-secondary)] hover:bg-[var(--surface-2)]'
             }`}
           >
@@ -186,7 +210,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             id="settings-tab-integrations"
             className={`px-3.5 py-1.5 rounded-full transition cursor-pointer flex items-center gap-1.5 ${
               activeTab === 'integrations'
-                ? 'bg-[var(--text-primary)] text-[var(--text-primary)] font-medium shadow-xs'
+                ? 'bg-[var(--surface-raised)] text-[var(--text-primary)] border border-[var(--border-strong)] font-medium shadow-xs'
                 : 'bg-[var(--surface-2)] border border-[var(--border-subtle)] text-[var(--text-secondary)] hover:bg-[var(--surface-2)]'
             }`}
           >
@@ -197,7 +221,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             onClick={() => setActiveTab('security')}
             className={`px-3.5 py-1.5 rounded-full transition cursor-pointer ${
               activeTab === 'security'
-                ? 'bg-[var(--text-primary)] text-[var(--text-primary)] font-medium shadow-xs'
+                ? 'bg-[var(--surface-raised)] text-[var(--text-primary)] border border-[var(--border-strong)] font-medium shadow-xs'
                 : 'bg-[var(--surface-2)] border border-[var(--border-subtle)] text-[var(--text-secondary)] hover:bg-[var(--surface-2)]'
             }`}
           >
@@ -207,7 +231,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             onClick={() => setActiveTab('data')}
             className={`px-3.5 py-1.5 rounded-full transition cursor-pointer ${
               activeTab === 'data'
-                ? 'bg-[var(--text-primary)] text-[var(--text-primary)] font-medium shadow-xs'
+                ? 'bg-[var(--surface-raised)] text-[var(--text-primary)] border border-[var(--border-strong)] font-medium shadow-xs'
                 : 'bg-[var(--surface-2)] border border-[var(--border-subtle)] text-[var(--text-secondary)] hover:bg-[var(--surface-2)]'
             }`}
           >
@@ -262,7 +286,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   }
                   className={`px-4 py-1.5 rounded-full text-xs font-medium transition cursor-pointer ${
                     notificationSettings.enabled
-                      ? 'bg-[var(--text-primary)] text-[var(--text-primary)]'
+                      ? 'bg-[var(--surface-raised)] text-[var(--text-primary)] border border-[var(--border-strong)]'
                       : 'bg-[var(--surface-2)] text-[var(--text-secondary)]'
                   }`}
                 >
@@ -494,7 +518,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                       key={item.key}
                       className="flex items-center justify-between p-3 rounded-xl bg-[var(--surface-1)] border border-[var(--border-subtle)] cursor-pointer hover:bg-[var(--surface-2)] transition"
                     >
-                      <span className="text-xs text-[#3E372E] pr-2">{item.label}</span>
+                      <span className="text-xs text-[var(--text-primary)] pr-2">{item.label}</span>
                       <input
                         type="checkbox"
                         checked={isChecked}
@@ -542,6 +566,30 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       {/* Tab 3: Data Management & Export */}
       {activeTab === 'data' && (
         <div className="space-y-6">
+          <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-2)] p-5 space-y-4">
+            <div>
+              <h3 className="font-serif text-lg font-medium text-[var(--text-primary)]">
+                {isNl ? 'Opslagstatus' : 'Storage status'}
+              </h3>
+              <p className="text-xs text-[var(--text-secondary)] mt-1">
+                {isNl ? 'Controleer wanneer Alchemy je gegevens lokaal heeft bewaard en wanneer je laatste reservekopie werd gemaakt.' : 'Check when Alchemy last saved your data locally and when your latest backup was created.'}
+              </p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="rounded-xl bg-[var(--surface-1)] border border-[var(--border-subtle)] p-4">
+                <div className="flex items-center gap-2 text-xs font-medium text-[var(--text-secondary)]"><Database className="w-4 h-4 text-[#8C7654]" />{isNl ? 'Laatst lokaal bewaard' : 'Last local save'}</div>
+                <p className="mt-2 text-sm font-semibold text-[var(--text-primary)]">{lastSavedAt ? new Date(lastSavedAt).toLocaleString(isNl ? 'nl-BE' : 'en-GB') : (isNl ? 'Nog geen wijziging sinds openen' : 'No changes since opening')}</p>
+              </div>
+              <div className="rounded-xl bg-[var(--surface-1)] border border-[var(--border-subtle)] p-4">
+                <div className="flex items-center gap-2 text-xs font-medium text-[var(--text-secondary)]"><Download className="w-4 h-4 text-[#8C7654]" />{isNl ? 'Laatste reservekopie' : 'Last backup'}</div>
+                <p className="mt-2 text-sm font-semibold text-[var(--text-primary)]">{lastBackupAt ? new Date(lastBackupAt).toLocaleString(isNl ? 'nl-BE' : 'en-GB') : (isNl ? 'Nog geen reservekopie geregistreerd' : 'No backup recorded yet')}</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-2 text-[11px] text-[var(--text-secondary)]">
+              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-[#A17B43]" />
+              <p>{isNl ? 'Dit zijn lokale opslag- en exportmomenten. Cloudopslag en synchronisatie zijn nog niet gekoppeld. Bewaar je JSON-reservekopie ook buiten dit toestel.' : 'These are local save and export timestamps. Cloud storage and sync are not connected yet. Keep your JSON backup outside this device too.'}</p>
+            </div>
+          </div>
           <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-2)] p-6 shadow-xs space-y-6">
             <div>
               <h3 className="font-serif text-lg font-medium text-[var(--text-primary)]">
@@ -553,7 +601,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             </div>
 
             {/* Sample Data Toggle */}
-            <div className="flex items-center justify-between p-4 rounded-xl bg-[var(--surface-1)] border border-[#E2DBD0]">
+            <div className="flex items-center justify-between p-4 rounded-xl bg-[var(--surface-1)] border border-[var(--border-subtle)]">
               <div>
                 <span className="text-xs font-semibold text-[var(--text-primary)] block">
                   Sample Data Mode
@@ -566,7 +614,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               </div>
               <button
                 onClick={onToggleSampleData}
-                className="px-3.5 py-1.5 rounded-lg border border-[var(--border-subtle)] text-xs font-medium text-[var(--text-primary)] hover:bg-[#EFE9DE] transition cursor-pointer"
+                className="px-3.5 py-1.5 rounded-lg border border-[var(--border-subtle)] text-xs font-medium text-[var(--text-primary)] hover:bg-[var(--surface-raised)] transition cursor-pointer"
               >
                 {isSampleData ? 'Clear Sample Data' : 'Reload Sample Data'}
               </button>
@@ -595,9 +643,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             </div>
 
             {/* Danger Zone: Reset */}
-            <div className="pt-4 border-t border-[#F0EBE1] flex items-center justify-between">
+            <div className="pt-4 border-t border-[var(--border-subtle)] flex items-center justify-between">
               <div>
-                <span className="text-xs font-medium text-[#733] block">
+                <span className="text-xs font-medium text-[var(--status-danger)] block">
                   Reset Environment
                 </span>
                 <span className="text-[11px] text-[var(--text-muted)]">
@@ -606,7 +654,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               </div>
               <button
                 onClick={onResetData}
-                className="px-4 py-1.5 rounded-lg border border-[#6B3B37] bg-[#332321] text-xs font-medium text-[#842] hover:bg-[#49302E] transition cursor-pointer"
+                className="px-4 py-1.5 rounded-lg border border-[#6B3B37] bg-[#332321] text-xs font-medium text-[var(--status-danger)] hover:bg-[var(--surface-raised)] transition cursor-pointer"
               >
                 Reset to Default
               </button>

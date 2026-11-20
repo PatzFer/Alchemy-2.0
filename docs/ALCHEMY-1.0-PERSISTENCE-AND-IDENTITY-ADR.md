@@ -99,3 +99,27 @@ Do not commit real values. Do not use the service-role key in the browser. Rotat
 - Session timeout and revocation survive server restart.
 - A backup restores all modules, both realms and historical records with matching counts/checksum.
 - Jarvis cannot read personal/cycle/wellbeing/nutrition records without explicit permission, even if a client sends them in its context payload.
+
+
+## Feature-branch security hardening checkpoint — 20 November 2026
+
+The current in-memory security vault has received additional input validation and defensive-copy protections for passkeys, strict six-digit TOTP input validation, format-bounded one-time recovery-code verification with constant-time digest comparison, and bounded WebAuthn challenge input validation. Regression tests cover these boundaries. This does **not** change the ADR's deployment decision: credentials, sessions, rate-limit state and TOTP encryption remain unpersisted/unconfigured in the live app. The feature branch must not be treated as production-ready until durable owner-scoped storage, external encryption key management, staging restore, RLS and restart/revocation tests are implemented and verified.
+
+
+## Feature-branch encryption primitive — 20 November 2026
+
+A server-only AES-256-GCM envelope encryption helper now exists on the feature branch. It uses a fresh 96-bit nonce per encryption, an authentication tag, and additional authenticated data binding the ciphertext to the owner UUID and secret purpose. The helper requires a 32-byte base64 APP_ENCRYPTION_KEY and an explicit key version; it rejects missing or mismatched key versions and malformed envelopes. Unit tests are included in the standard CI test command.
+
+This helper is not yet integrated into TOTP or provider-token storage. No live encryption key is provisioned, no key rotation/recovery procedure is verified, and the in-memory security vault remains unchanged. It must not be interpreted as completion of durable encrypted credential storage.
+
+
+## Snapshot concurrency and stale-write protection — 20 November 2026
+
+A forward-only migration adds an expected-revision precondition to the server-only snapshot RPC. The API and browser adapter can supply the revision last observed by the client. The database serializes writes per owner and rejects a mismatch with a conflict rather than silently accepting a stale overwrite. The HTTP layer maps that conflict to 409. CI statically checks that the revision-aware function remains inaccessible to anon/authenticated and executable only by service_role.
+
+The precondition is optional for compatibility; clients that omit it do not receive stale-write protection. The application has not yet enabled automatic cloud writes. The migration must be applied and tested in staging, including simultaneous writers, before cloud sync can be enabled.
+
+
+## Feature-branch provider update — 20 November 2026
+
+The Security & Privacy provider selector now supports an optional openai-server mode in addition to local rules and the existing Gemini mode. The central Jarvis chat route uses the server-only OpenAI Responses adapter when OpenAI is explicitly selected and the existing workspace consent check passes. Configuration is supplied through server-only OPENAI_API_KEY and OPENAI_MODEL environment variables. Missing configuration/provider errors fall back to deterministic local responses. This is not a claim that OpenAI is configured or that every specialized AI route has migrated: planning, goal breakdown and idea analysis remain on their prior paths. Provider selection/permissions are still in-memory pending durable identity/settings storage. No live provider request has been made or billed as part of this implementation.

@@ -55,6 +55,9 @@ import {
   ConvertToTaskModal,
 } from '../mariluna/IdeaConversionModals';
 import { MarilunaClientsManager } from '../mariluna/MarilunaClientsManager';
+import { getLocalCalendarDateString } from '../../lib/calendarDate';
+import { validateOfferingInput } from '../../lib/offeringValidation';
+import { filterMarilunaOfferings } from '../../lib/offeringFilters';
 
 export type MarilunaSubTab =
   | 'overview'
@@ -126,13 +129,18 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
   integrations,
 }) => {
   const isNl = lang === 'nl';
-  const [activeSubTab, setActiveSubTab] = useState<MarilunaSubTab>('overview');
+  const [activeSubTab, setActiveSubTab] = useState<MarilunaSubTab>('brainstorm');
 
-  const todayStr = new Date().toISOString().split('T')[0];
+  // Use the browser's local calendar date; ISO/UTC can roll over a day
+  // early or late for users outside UTC.
+  const now = new Date();
+  const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
   // Domain filtered data
   const marilunaTasks = tasks.filter((t) => t.realm === 'mariluna');
-  const todayMarilunaTasks = marilunaTasks.filter((t) => !t.completed && (!t.dueDate || t.dueDate <= todayStr));
+  const todayMarilunaTasks = marilunaTasks.filter(
+    (t) => t.status !== 'completed' && (!t.dueDate || t.dueDate <= todayStr)
+  );
   const marilunaProjects = projects.filter((p) => p.realm === 'mariluna');
   const marilunaIdeas = ideas.filter((i) => i.realm === 'mariluna' && i.status !== 'archived');
   const marilunaGoals = goals.filter((g) => g.realm === 'mariluna');
@@ -159,15 +167,13 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
     !!attentionContent;
 
   // Subsections definition
+  // Keep Mariluna intentionally lightweight: idea work first, with only the
+  // practical destinations needed to develop an idea.
   const subTabs: { id: MarilunaSubTab; label: string; icon: React.FC<{ className?: string }> }[] = [
-    { id: 'overview', label: isNl ? 'Overzicht' : 'Overview', icon: LayoutDashboard },
-    { id: 'content', label: isNl ? 'Content' : 'Content', icon: FileText },
+    { id: 'brainstorm', label: isNl ? 'Braindump & Sparring' : 'Brain dump & Sparring', icon: Lightbulb },
     { id: 'projects', label: isNl ? 'Projecten' : 'Projects', icon: Briefcase },
-    { id: 'metrics', label: isNl ? 'Cijfers' : 'Metrics', icon: TrendingUp },
-    { id: 'brainstorm', label: isNl ? 'Brainstorm & Sparring' : 'Brainstorm & Sparring', icon: Lightbulb },
-    { id: 'strategy', label: isNl ? 'Doelen & Strategie' : 'Goals & Strategy', icon: Target },
-    { id: 'offerings', label: isNl ? 'Producten & Diensten' : 'Products & Services', icon: Package },
-    { id: 'clients', label: isNl ? 'Klanten' : 'Clients', icon: Users },
+    { id: 'content', label: isNl ? 'Content' : 'Content', icon: FileText },
+    { id: 'offerings', label: isNl ? 'Dienstenlijst' : 'Services list', icon: Package }
   ];
 
   // Content post modal state
@@ -203,11 +209,15 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
   const [isOfferingModalOpen, setIsOfferingModalOpen] = useState(false);
   const [editingOfferingId, setEditingOfferingId] = useState<string | null>(null);
   const [offeringSearchQuery, setOfferingSearchQuery] = useState('');
-  const [offeringTypeFilter, setOfferingTypeFilter] = useState<string>('all');
+  const [offeringTypeFilter, setOfferingTypeFilter] = useState<'all' | MarilunaOffering['type']>('all');
+  const [offeringStatusFilter, setOfferingStatusFilter] = useState<'all' | MarilunaOffering['status']>('all');
   const [offeringTitle, setOfferingTitle] = useState('');
   const [offeringType, setOfferingType] = useState<MarilunaOffering['type']>('service');
   const [offeringPrice, setOfferingPrice] = useState<number | ''>('');
   const [offeringDesc, setOfferingDesc] = useState('');
+  const [offeringDeliverables, setOfferingDeliverables] = useState('');
+  const [offeringStatus, setOfferingStatus] = useState<MarilunaOffering['status']>('draft');
+  const [offeringFormError, setOfferingFormError] = useState<string | null>(null);
 
   const handleOpenNewOffering = () => {
     setEditingOfferingId(null);
@@ -215,6 +225,9 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
     setOfferingType('service');
     setOfferingPrice('');
     setOfferingDesc('');
+    setOfferingDeliverables('');
+    setOfferingStatus('draft');
+    setOfferingFormError(null);
     setIsOfferingModalOpen(true);
   };
 
@@ -224,6 +237,9 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
     setOfferingType(off.type);
     setOfferingPrice(off.price !== undefined && off.price !== null ? off.price : '');
     setOfferingDesc(off.description || '');
+    setOfferingDeliverables((off.deliverables || []).join('\n'));
+    setOfferingStatus(off.status || 'draft');
+    setOfferingFormError(null);
     setIsOfferingModalOpen(true);
   };
 
@@ -239,6 +255,17 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
     setIsSparringOpen(true);
   };
 
+  const handleSaveSparringMessages = (ideaId: string, sparringMessages: { id: string; role: 'user' | 'assistant'; content: string; timestamp: string }[]) => {
+    if (!onSaveIdea) return;
+    const target = ideas.find((item) => item.id === ideaId);
+    if (!target) return;
+    onSaveIdea({
+      ...target,
+      sparringMessages,
+      lastRevisitedAt: getLocalCalendarDateString(),
+    });
+  };
+
   const handleSaveIdeaNotes = (ideaId: string, sparringNotes: string) => {
     if (!onSaveIdea) return;
     const target = ideas.find((i) => i.id === ideaId);
@@ -246,7 +273,7 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
       onSaveIdea({
         ...target,
         sparringNotes,
-        lastRevisitedAt: new Date().toISOString().split('T')[0],
+        lastRevisitedAt: getLocalCalendarDateString(),
       });
     }
   };
@@ -258,7 +285,7 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
       onSaveIdea({
         ...target,
         status: 'parked',
-        lastRevisitedAt: new Date().toISOString().split('T')[0],
+        lastRevisitedAt: getLocalCalendarDateString(),
       });
     }
   };
@@ -278,7 +305,7 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
           status: 'converted',
           convertedToType: 'content',
           relatedContentIds: [...prevRelated, post.id],
-          lastRevisitedAt: new Date().toISOString().split('T')[0],
+          lastRevisitedAt: getLocalCalendarDateString(),
         });
       }
     }
@@ -302,7 +329,7 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
           status: 'converted',
           convertedToType: 'project',
           connectedProjectId: proj.id,
-          lastRevisitedAt: new Date().toISOString().split('T')[0],
+          lastRevisitedAt: getLocalCalendarDateString(),
         });
       }
     }
@@ -326,7 +353,7 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
           status: 'converted',
           convertedToType: 'task',
           assignedTaskId: task.id,
-          lastRevisitedAt: new Date().toISOString().split('T')[0],
+          lastRevisitedAt: getLocalCalendarDateString(),
         });
       }
     }
@@ -415,12 +442,29 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
 
   const handleSaveOffering = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!offeringTitle.trim() || !onUpdateOfferings) return;
+    if (!onUpdateOfferings) return;
 
-    const parsedPrice =
-      offeringPrice === '' || offeringPrice === undefined || offeringPrice === null
-        ? undefined
-        : Number(offeringPrice);
+    const validationError = validateOfferingInput({
+      title: offeringTitle,
+      price: offeringPrice,
+      description: offeringDesc,
+      deliverables: offeringDeliverables,
+    });
+    if (validationError) {
+      const messages: Record<typeof validationError, string> = {
+        title_required: isNl ? 'Geef je dienst of aanbod een naam.' : 'Enter a name for this offering.',
+        title_too_long: isNl ? 'De naam mag maximaal 120 tekens bevatten.' : 'The name can contain up to 120 characters.',
+        price_invalid: isNl ? 'Vul een geldige, niet-negatieve prijs in.' : 'Enter a valid non-negative price.',
+        description_too_long: isNl ? 'De beschrijving mag maximaal 3000 tekens bevatten.' : 'The description can contain up to 3000 characters.',
+        too_many_deliverables: isNl ? 'Je kunt maximaal 30 inbegrepen onderdelen toevoegen.' : 'You can add up to 30 deliverables.',
+        deliverable_too_long: isNl ? 'Elk inbegrepen onderdeel mag maximaal 160 tekens bevatten.' : 'Each deliverable can contain up to 160 characters.',
+      };
+      setOfferingFormError(messages[validationError]);
+      return;
+    }
+
+    const parsedPrice = offeringPrice === '' ? undefined : offeringPrice;
+    setOfferingFormError(null);
 
     if (editingOfferingId) {
       const updated = offerings.map((o) =>
@@ -431,6 +475,8 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
               type: offeringType,
               price: parsedPrice,
               description: offeringDesc.trim(),
+              deliverables: offeringDeliverables.split('\n').map((item) => item.trim()).filter(Boolean),
+              status: offeringStatus,
             }
           : o
       );
@@ -442,7 +488,8 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
         type: offeringType,
         price: parsedPrice,
         description: offeringDesc.trim(),
-        status: 'active',
+        deliverables: offeringDeliverables.split('\n').map((item) => item.trim()).filter(Boolean),
+        status: offeringStatus,
       };
       onUpdateOfferings([...offerings, newOff]);
     }
@@ -451,6 +498,8 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
     setOfferingTitle('');
     setOfferingPrice('');
     setOfferingDesc('');
+    setOfferingDeliverables('');
+    setOfferingStatus('draft');
     setIsOfferingModalOpen(false);
   };
 
@@ -485,8 +534,8 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
             </h1>
             <p className="text-xs sm:text-sm text-[var(--text-secondary)] mt-2 max-w-xl font-light leading-relaxed">
               {isNl
-                ? 'Strategisch overzicht, contentplanning, projecten en administratie voor Mariluna. Volledig gescheiden van je persoonlijke levenssfeer.'
-                : 'Strategic command center, editorial pipelines, client projects, and bookkeeping for Mariluna.'}
+                ? 'Een rustige creatieve ruimte om ideeën te vangen, ermee te sparren en ze stap voor stap vorm te geven.'
+                : 'A calm creative space to capture ideas, explore them and gradually shape them.'}
             </p>
           </div>
 
@@ -496,14 +545,14 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
               onClick={() =>
                 onOpenAssistantWithPrompt(
                   isNl
-                    ? 'Treed op als mijn strategische Mariluna sparringpartner. Bekijk mijn projecten, contentpijplijn en prioriteiten met rustig zakelijk inzicht.'
-                    : 'Act as my strategic Mariluna business partner. Review my projects, editorial pipeline, and focus with calm clarity.'
+                    ? 'Wees mijn creatieve Mariluna-sparringpartner. Help me een ruwe gedachte onderzoeken, verbanden leggen met eerdere ideeën, vragen stellen en er samen structuur in brengen. Forceer geen zakelijke strategie; begin bij wat ik vertel.'
+                    : 'Be my creative Mariluna thinking partner. Help explore a raw thought, connect it to earlier ideas, ask useful questions and organize it together. Do not force business strategy; start with what I share.'
                 )
               }
               className="flex items-center gap-2 px-4 py-2 rounded-full border border-[var(--accent-secondary)] bg-[var(--accent-secondary)]/15 text-[var(--surface-1)] text-xs font-medium hover:bg-[var(--accent-secondary)]/25 transition cursor-pointer"
             >
               <Sparkles className="w-3.5 h-3.5 text-[var(--accent-secondary)]" />
-              <span>{isNl ? 'Strategische Sparring' : 'Strategic Sparring'}</span>
+              <span>{isNl ? 'Sparren met Jarvis' : 'Think with Jarvis'}</span>
             </button>
           </div>
         </div>
@@ -829,7 +878,7 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
                         className="text-[11px] text-[var(--accent-secondary)] hover:text-[var(--text-primary)] font-medium flex items-center gap-1 cursor-pointer transition"
                       >
                         <Sparkles className="w-3 h-3 text-[var(--accent-secondary)]" />
-                        <span>{isNl ? 'Bespreek met Alchemy' : 'Spar with Alchemy'}</span>
+                        <span>{idea.sparringMessages && idea.sparringMessages.length > 1 ? (isNl ? 'Hervat sparring' : 'Resume sparring') : (isNl ? 'Spar met Jarvis' : 'Think with Jarvis')}</span>
                       </button>
                       <button
                         type="button"
@@ -946,10 +995,10 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <h2 className="font-serif text-xl font-normal text-[var(--text-primary)]">
-                {isNl ? 'Producten & Diensten' : 'Offerings & Atelier Services'}
+                {isNl ? 'Jouw diensten & aanbod' : 'Your services & offerings'}
               </h2>
               <p className="text-xs text-[var(--text-secondary)] mt-0.5">
-                {isNl ? 'Je aanbodcatalogus, pakketten en maatwerkdiensten.' : 'Services, packages, and bespoke offerings.'}
+                {isNl ? 'Voeg je aanbod toe, pas het aan en experimenteer met prijzen en inhoud.' : 'Add, edit and experiment with your services, prices and packages.'}
               </p>
             </div>
             <button
@@ -972,7 +1021,7 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
                   placeholder={isNl ? 'Zoek op titel of beschrijving...' : 'Search by title or description...'}
                   value={offeringSearchQuery}
                   onChange={(e) => setOfferingSearchQuery(e.target.value)}
-                  className="w-full pl-8 pr-3 py-1.5 rounded-xl bg-white border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-secondary)]"
+                  className="w-full pl-8 pr-3 py-1.5 rounded-xl bg-[var(--surface-1)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-secondary)]"
                 />
               </div>
               <div className="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0">
@@ -1003,29 +1052,49 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
               </div>
             </div>
           )}
+          {offerings.length > 0 && (
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-[10px] uppercase tracking-wider text-[var(--text-muted)]">{isNl ? 'Status' : 'Status'}</span>
+              {(['all', 'active', 'draft', 'archived'] as const).map((status) => (
+                <button
+                  key={status}
+                  type="button"
+                  onClick={() => setOfferingStatusFilter(status)}
+                  aria-pressed={offeringStatusFilter === status}
+                  className={`px-2.5 py-1 rounded-full border text-[11px] transition cursor-pointer ${
+                    offeringStatusFilter === status
+                      ? 'border-[var(--accent-secondary)] bg-[var(--accent-secondary)]/15 text-[var(--text-primary)]'
+                      : 'border-[var(--border-subtle)] text-[var(--text-secondary)] hover:bg-[var(--surface-2)]'
+                  }`}
+                >
+                  {status === 'all' ? (isNl ? 'Alle statussen' : 'All statuses')
+                    : status === 'active' ? (isNl ? 'Actief' : 'Active')
+                    : status === 'draft' ? (isNl ? 'Concept' : 'Draft')
+                    : (isNl ? 'Archief' : 'Archived')}
+                </button>
+              ))}
+            </div>
+          )}
 
           {offerings.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-[#DCD3C4] p-10 text-center space-y-2">
+            <div className="rounded-2xl border border-dashed border-[var(--border-subtle)] p-10 text-center space-y-2">
               <p className="text-xs text-[var(--text-secondary)] italic">
-                {isNl ? 'Nog geen producten of diensten toegevoegd.' : 'No offerings added yet.'}
+                {isNl ? 'Je aanbod is nog leeg. Voeg je eerste dienst toe wanneer je er klaar voor bent.' : 'Your catalogue is empty. Add your first service whenever you are ready.'}
               </p>
               <button
                 type="button"
                 onClick={handleOpenNewOffering}
                 className="text-xs text-[var(--accent-secondary)] font-medium hover:underline cursor-pointer"
               >
-                {isNl ? '+ Voeg je eerste dienst of product toe' : '+ Add your first service or product'}
+                {isNl ? '+ Eerste dienst toevoegen' : '+ Add your first service'}
               </button>
             </div>
           ) : (
             (() => {
-              const filteredOfferings = offerings.filter((off) => {
-                const matchesSearch =
-                  !offeringSearchQuery.trim() ||
-                  off.title.toLowerCase().includes(offeringSearchQuery.toLowerCase()) ||
-                  (off.description && off.description.toLowerCase().includes(offeringSearchQuery.toLowerCase()));
-                const matchesType = offeringTypeFilter === 'all' || off.type === offeringTypeFilter;
-                return matchesSearch && matchesType;
+              const filteredOfferings = filterMarilunaOfferings(offerings, {
+                query: offeringSearchQuery,
+                type: offeringTypeFilter,
+                status: offeringStatusFilter,
               });
 
               if (filteredOfferings.length === 0) {
@@ -1046,12 +1115,25 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
                       <div className="space-y-2">
                         <div className="flex items-start justify-between gap-2">
                           <h4 className="font-serif text-base font-medium text-[var(--text-primary)] line-clamp-1">{off.title}</h4>
-                          <span className="text-[10px] uppercase font-semibold px-2 py-0.5 rounded-md bg-[#EAE2D3] text-[#554C42] shrink-0">
+                          <span className="text-[10px] uppercase font-semibold px-2 py-0.5 rounded-md bg-[var(--surface-1)] text-[var(--text-secondary)] border border-[var(--border-subtle)] shrink-0">
                             {off.type}
+                          </span>
+                          <span className={`text-[9px] uppercase font-semibold px-2 py-0.5 rounded-md shrink-0 ${off.status === 'active' ? 'bg-emerald-900/30 text-emerald-300' : off.status === 'archived' ? 'bg-[var(--surface-2)] text-[var(--text-muted)]' : 'bg-amber-900/25 text-amber-200'}`}>
+                            {off.status === 'active' ? (isNl ? 'Actief' : 'Active') : off.status === 'archived' ? (isNl ? 'Archief' : 'Archived') : (isNl ? 'Concept' : 'Draft')}
                           </span>
                         </div>
                         {off.description && (
                           <p className="text-xs text-[var(--text-secondary)] leading-relaxed line-clamp-3">{off.description}</p>
+                        )}
+                        {off.deliverables && off.deliverables.length > 0 && (
+                          <ul className="space-y-1 pt-1">
+                            {off.deliverables.slice(0, 4).map((item, index) => (
+                              <li key={index} className="flex items-start gap-2 text-[11px] text-[var(--text-secondary)]">
+                                <CheckCircle2 className="w-3 h-3 mt-0.5 shrink-0 text-[var(--accent-secondary)]" />
+                                <span>{item}</span>
+                              </li>
+                            ))}
+                          </ul>
                         )}
                       </div>
 
@@ -1112,10 +1194,11 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
                 <form onSubmit={handleSaveOffering} className="space-y-3">
                   <div>
                     <label className="block text-[11px] font-medium text-[var(--text-secondary)] mb-1">
-                      {isNl ? 'Naam product / dienst *' : 'Name of offering *'}
+                      {isNl ? 'Naam van je dienst of aanbod *' : 'Service or offering name *'}
                     </label>
                     <input
                       type="text"
+                      maxLength={120}
                       placeholder={isNl ? 'bijv. Lenormand Reading' : 'e.g. Lenormand Reading'}
                       value={offeringTitle}
                       onChange={(e) => setOfferingTitle(e.target.value)}
@@ -1146,6 +1229,8 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
                       </label>
                       <input
                         type="number"
+                        min="0"
+                        step="0.01"
                         placeholder={isNl ? 'bijv. 50' : 'e.g. 50'}
                         value={offeringPrice}
                         onChange={(e) => setOfferingPrice(e.target.value === '' ? '' : Number(e.target.value))}
@@ -1159,12 +1244,43 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
                     </label>
                     <textarea
                       rows={3}
-                      placeholder={isNl ? 'Beschrijving of deliverables...' : 'Description...'}
+                      maxLength={3000}
+                      placeholder={isNl ? 'Wat houdt de dienst in? Voor wie is ze bedoeld?' : 'What does this offering include? Who is it for?'}
                       value={offeringDesc}
                       onChange={(e) => setOfferingDesc(e.target.value)}
                       className="w-full px-3 py-2 rounded-xl bg-[var(--surface-2)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-secondary)]"
                     />
                   </div>
+                  <div>
+                    <label className="block text-[11px] font-medium text-[var(--text-secondary)] mb-1">
+                      {isNl ? 'Wat is inbegrepen? (één item per regel)' : 'What is included? (one item per line)'}
+                    </label>
+                    <textarea
+                      rows={3}
+                      maxLength={5000}
+                      placeholder={isNl ? 'Bijv. intakegesprek\\nPersoonlijke reading\\nNabespreking' : 'e.g. Intake\\nPersonal reading\\nFollow-up'}
+                      value={offeringDeliverables}
+                      onChange={(e) => setOfferingDeliverables(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl bg-[var(--surface-2)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-secondary)]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-medium text-[var(--text-secondary)] mb-1">
+                      {isNl ? 'Status' : 'Status'}
+                    </label>
+                    <select
+                      value={offeringStatus}
+                      onChange={(e) => setOfferingStatus(e.target.value as MarilunaOffering['status'])}
+                      className="w-full px-3 py-2 rounded-xl bg-[var(--surface-2)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-secondary)]"
+                    >
+                      <option value="draft">{isNl ? 'In ontwikkeling' : 'In development'}</option>
+                      <option value="active">{isNl ? 'Actief' : 'Active'}</option>
+                      <option value="archived">{isNl ? 'Gearchiveerd' : 'Archived'}</option>
+                    </select>
+                  </div>
+                  {offeringFormError && (
+                    <p role="alert" className="text-xs text-[var(--status-danger)]">{offeringFormError}</p>
+                  )}
                   <div className="flex justify-end gap-2 pt-2">
                     <button
                       type="button"
@@ -1210,7 +1326,8 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
         idea={sparringIdea}
         contentPlan={contentPlan}
         projects={projects}
-        onSaveNotes={handleSaveIdeaNotes}
+        onSaveIdeaNotes={handleSaveIdeaNotes}
+        onSaveSparringMessages={handleSaveSparringMessages}
         onParkIdea={handleParkIdea}
         onConvertToContent={handleStartConvertToContent}
         onConvertToProject={handleStartConvertToProject}

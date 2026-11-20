@@ -1,6 +1,8 @@
 import React from 'react';
 import { CalendarDays, CheckCircle2, Circle, Clock, ArrowRight, Sparkles } from 'lucide-react';
 import { Task, CalendarEvent, ActiveWorldFilter } from '../../types';
+import { groupTasksForToday } from '../../lib/todayDashboardModel';
+import { calculateBusyMinutes } from '../../lib/scheduleCapacity';
 
 interface TodayDashboardViewProps {
   tasks: Task[];
@@ -24,8 +26,22 @@ export const TodayDashboardView: React.FC<TodayDashboardViewProps> = ({
   const nl = lang === 'nl';
   const today = localDate();
   const visible = (realm?: string) => activeWorld === 'all' || realm === activeWorld;
-  const todayTasks = tasks.filter(t => !t.completed && (!t.dueDate || t.dueDate <= today) && visible(t.realm));
+  const taskGroups = groupTasksForToday(tasks, today, activeWorld);
+  const todayTasks = [...taskGroups.overdue, ...taskGroups.dueToday];
+  const overdueCount = taskGroups.overdue.length;
   const todayEvents = events.filter(e => e.date === today && visible(e.realm)).sort((a,b) => a.startTime.localeCompare(b.startTime));
+  const estimatedTaskMinutes = taskGroups.dueToday.reduce((total, task) => total + (task.estimatedDuration || 30), 0);
+  const scheduledMinutes = calculateBusyMinutes(todayEvents);
+  const formatDuration = (minutes: number) => {
+    const hours = Math.floor(minutes / 60);
+    const remainder = minutes % 60;
+    if (hours && remainder) return `${hours}u ${remainder}m`;
+    if (hours) return `${hours}u`;
+    return `${minutes}m`;
+  };
+  const priorityLabel = (priority: Task['priority']) => nl
+    ? priority === 'high' ? 'Hoog' : priority === 'medium' ? 'Gemiddeld' : 'Laag'
+    : priority;
   const dateLabel = new Intl.DateTimeFormat(nl ? 'nl-BE' : 'en-GB', { weekday:'long', day:'numeric', month:'long' }).format(new Date());
 
   return <div className="mx-auto max-w-5xl space-y-6 pb-10">
@@ -46,11 +62,34 @@ export const TodayDashboardView: React.FC<TodayDashboardViewProps> = ({
           <div className="flex items-center gap-2 text-sm font-semibold text-[var(--accent-secondary)]"><CheckCircle2 size={17}/>{nl ? 'Aandacht vandaag' : 'Today’s focus'}</div>
           <span className="rounded-full bg-[var(--surface-2)] px-3 py-1 text-xs">{todayTasks.length}</span>
         </div>
-        <div className="mt-4 space-y-3">
-          {todayTasks.length ? todayTasks.slice(0,6).map(task => <button key={task.id} onClick={() => onToggleTask(task.id)} className="flex w-full items-start gap-3 text-left text-sm">
-            <Circle size={17} className="mt-0.5 shrink-0 text-[var(--text-muted)]"/>
-            <span>{task.title}</span>
-          </button>) : <p className="py-3 text-sm text-[var(--text-muted)]">{nl ? 'Geen dringende taken. Ademruimte.' : 'No urgent tasks. Room to breathe.'}</p>}
+        <div className="mt-4 space-y-4">
+          {overdueCount > 0 && <div>
+            <h3 className="mb-1 px-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--text-muted)]">{nl ? 'Eerst aandacht' : 'Needs attention first'} · {overdueCount}</h3>
+            <div className="space-y-1">
+              {taskGroups.overdue.slice(0, 6).map(task => <button key={task.id} onClick={() => onToggleTask(task.id)} aria-label={nl ? `Voltooi achterstallige taak: ${task.title}` : `Complete overdue task: ${task.title}`} className="flex w-full items-start gap-3 rounded-xl border-l-2 border-amber-500/70 px-2 py-2 text-left text-sm transition hover:bg-[var(--surface-2)]">
+                <Circle size={17} className="mt-0.5 shrink-0 text-[var(--text-muted)]"/>
+                <span className="min-w-0 flex-1">
+                  <span className="block">{task.title}</span>
+                  <span className="mt-1 block text-[11px] text-[var(--text-muted)]">{nl ? 'Achterstallig' : 'Overdue'} · {priorityLabel(task.priority)}</span>
+                </span>
+              </button>)}
+            </div>
+          </div>}
+          {taskGroups.dueToday.length > 0 && <div>
+            <h3 className="mb-1 px-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--text-muted)]">{nl ? 'Voor vandaag' : 'Due today'} · {taskGroups.dueToday.length}</h3>
+            <div className="space-y-1">
+              {taskGroups.dueToday.slice(0, Math.max(0, 6 - Math.min(overdueCount, 6))).map(task => <button key={task.id} onClick={() => onToggleTask(task.id)} aria-label={nl ? `Voltooi taak: ${task.title}` : `Complete task: ${task.title}`} className="flex w-full items-start gap-3 rounded-xl px-2 py-2 text-left text-sm transition hover:bg-[var(--surface-2)]">
+                <Circle size={17} className="mt-0.5 shrink-0 text-[var(--text-muted)]"/>
+                <span className="min-w-0 flex-1">
+                  <span className="block">{task.title}</span>
+                  <span className="mt-1 block text-[11px] text-[var(--text-muted)]">{priorityLabel(task.priority)}</span>
+                </span>
+              </button>)}
+            </div>
+          </div>}
+          {todayTasks.length === 0 && <p className="py-3 text-sm text-[var(--text-muted)]">{nl ? 'Geen dringende taken. Ademruimte.' : 'No urgent tasks. Room to breathe.'}</p>}
+          {todayTasks.length > 6 && <p className="px-2 text-[11px] text-[var(--text-muted)]">{nl ? `En nog ${todayTasks.length - 6} taken in je takenlijst.` : `And ${todayTasks.length - 6} more in your task list.`}</p>}
+          {taskGroups.dueToday.length > 0 && <p className="px-2 pt-2 text-[11px] text-[var(--text-muted)]">{nl ? `Geschatte taakduur: ${formatDuration(estimatedTaskMinutes)}` : `Estimated task time: ${formatDuration(estimatedTaskMinutes)}`}</p>}
         </div>
         <button onClick={onOpenTasks} className="mt-5 inline-flex items-center gap-2 text-xs font-semibold text-[var(--accent-secondary)]">{nl ? 'Alle taken' : 'All tasks'} <ArrowRight size={14}/></button>
       </section>
@@ -65,6 +104,7 @@ export const TodayDashboardView: React.FC<TodayDashboardViewProps> = ({
             <span className="flex items-center gap-1 text-xs tabular-nums text-[var(--text-muted)]"><Clock size={13}/>{event.startTime}</span>
             <span>{event.title}</span>
           </div>) : <p className="py-3 text-sm text-[var(--text-muted)]">{nl ? 'Nog niets gepland voor vandaag.' : 'Nothing scheduled yet today.'}</p>}
+          {scheduledMinutes > 0 && <p className="pt-2 text-[11px] text-[var(--text-muted)]">{nl ? `Ingeplande tijd: ${formatDuration(scheduledMinutes)}` : `Scheduled time: ${formatDuration(scheduledMinutes)}`}</p>}
         </div>
         <button onClick={onOpenCalendar} className="mt-5 inline-flex items-center gap-2 text-xs font-semibold text-[var(--accent-secondary)]">{nl ? 'Open agenda' : 'Open calendar'} <ArrowRight size={14}/></button>
       </section>

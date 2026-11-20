@@ -25,6 +25,7 @@ import {
   ArrowDownRight,
   Minus,
   Scale,
+  FileSpreadsheet,
 } from 'lucide-react';
 import {
   WellbeingState,
@@ -42,6 +43,7 @@ import {
 import { BodyMeasurementsModal } from '../health/BodyMeasurementsModal';
 import { WeeklyReminderBanner } from '../health/WeeklyReminderBanner';
 import { BodyShapeCard } from '../health/BodyShapeCard';
+import { mergeRenphoProgressLogs, parseRenphoCsv } from '../../lib/renphoCsv';
 
 type TimeRange = '4w' | '3m' | '6m' | '1y' | 'all';
 
@@ -65,6 +67,8 @@ export const WellbeingProgressSection: React.FC<WellbeingProgressSectionProps> =
   const [isAddingMeasurementModal, setIsAddingMeasurementModal] = useState(false);
   const [isAddingGoal, setIsAddingGoal] = useState(false);
   const [isAddingMilestone, setIsAddingMilestone] = useState(false);
+  const [renphoImportMessage, setRenphoImportMessage] = useState<string | null>(null);
+  const [isImportingRenpho, setIsImportingRenpho] = useState(false);
 
   // Form states for new goal
   const [goalTitle, setGoalTitle] = useState('');
@@ -172,6 +176,29 @@ export const WellbeingProgressSection: React.FC<WellbeingProgressSectionProps> =
     });
   };
 
+  const handleRenphoImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setIsImportingRenpho(true);
+    setRenphoImportMessage(null);
+    try {
+      if (file.size > 5 * 1024 * 1024) {
+        throw new Error('Het CSV-bestand is groter dan 5 MB.');
+      }
+      const imported = parseRenphoCsv(await file.text());
+      onUpdateWellbeing((prev) => ({
+        ...prev,
+        progressLogs: mergeRenphoProgressLogs(prev.progressLogs, imported),
+      }));
+      setRenphoImportMessage(`${imported.length} Renpho-meetingen geïmporteerd. Bestaande handmatige metingen zijn behouden.`);
+    } catch (error) {
+      setRenphoImportMessage(error instanceof Error ? error.message : 'Importeren is mislukt.');
+    } finally {
+      setIsImportingRenpho(false);
+      event.target.value = '';
+    }
+  };
+
   const handleSaveGoal = (e: React.FormEvent) => {
     e.preventDefault();
     if (!goalTitle.trim()) return;
@@ -250,6 +277,11 @@ export const WellbeingProgressSection: React.FC<WellbeingProgressSectionProps> =
 
         {/* Action Buttons: Mobile First easy access */}
         <div className="flex flex-wrap items-center gap-2">
+          <label className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-[#DCD3C4] bg-[#FFFFFF] text-xs font-medium text-[#4A433A] hover:border-[#8C7654] transition cursor-pointer min-h-[44px]">
+            <FileSpreadsheet className="w-3.5 h-3.5 text-[#8C7654]" />
+            <span>{isImportingRenpho ? 'Importeren...' : 'Renpho CSV'}</span>
+            <input type="file" accept=".csv,text/csv" className="sr-only" onChange={handleRenphoImport} disabled={isImportingRenpho} />
+          </label>
           <button
             type="button"
             id="btn-add-weight"
@@ -270,6 +302,12 @@ export const WellbeingProgressSection: React.FC<WellbeingProgressSectionProps> =
             <span>+ Metingen</span>
           </button>
         </div>
+        <p className="mt-2 text-[11px] text-[#8A8074]">
+          Exporteer je meetgeschiedenis als CSV in Renpho en importeer die hier. Bestaande handmatige notities blijven behouden.
+        </p>
+        {renphoImportMessage && (
+          <p role="status" aria-live="polite" className="mt-2 text-xs text-[#6D6255]">{renphoImportMessage}</p>
+        )}
       </div>
 
       {/* Weekly Body Check Sunday Reminder */}

@@ -3,6 +3,16 @@ import assert from 'node:assert/strict';
 import { securityVault, requireAppAuth } from './security';
 import { buildIntentAwareResponse } from './brainEngine';
 
+test('Jarvis defaults to local privacy mode with all sensitive AI scopes disabled', () => {
+  const permissions = securityVault.getPermissions();
+  assert.equal(permissions.activeAiProvider, 'local-rules');
+  assert.equal(permissions.allowPersonalDataToAI, false);
+  assert.equal(permissions.allowMarilunaDataToAI, false);
+  assert.equal(permissions.allowFinancialDataToAI, false);
+  assert.equal(permissions.allowWellbeingDataToAI, false);
+  assert.equal(permissions.allowCycleDataToAI, false);
+});
+
 test('Mariluna AI context excludes personal events, projects, memories and private preferences', () => {
   securityVault.updatePermissions({ allowPersonalDataToAI: true, allowMarilunaDataToAI: true });
   const result = securityVault.sanitizeContextForAi({
@@ -252,6 +262,22 @@ test('default AI privacy firewall removes both private and business records', ()
   assert.equal('nutrition' in businessResult, false);
 });
 
+
+test('daily check-in notes are removed server-side without explicit wellbeing consent', () => {
+  securityVault.updatePermissions({
+    allowPersonalDataToAI: true,
+    allowWellbeingDataToAI: false,
+    allowMarilunaDataToAI: false,
+  });
+  const result = securityVault.sanitizeContextForAi({
+    currentDate: '2026-11-19',
+    dailyCheckIns: [{ date: '2026-11-19', notes: 'sensitive private note', mood: 'low' }],
+    wellbeing: { focusTheme: 'movement' },
+  }, 'personal');
+  assert.equal('dailyCheckIns' in result, false);
+  assert.equal('wellbeing' in result, false);
+  securityVault.updatePermissions({ allowPersonalDataToAI: false });
+});
 
 test('WebAuthn challenges are one-time and cannot be replayed', () => {
   securityVault.setChallenge('test-one-time-challenge', 'nonce-value');
@@ -503,4 +529,167 @@ test('Jarvis AI quota is isolated between sessions', () => {
   assert.equal(second.allowed, true);
   assert.equal(first.remaining, 19);
   assert.equal(second.remaining, 19);
+});
+
+test('cycle phase context stays out of Jarvis prompts without explicit cycle consent', () => {
+  securityVault.updatePermissions({
+    allowPersonalDataToAI: true,
+    allowCycleDataToAI: false,
+  });
+  const result = securityVault.sanitizeContextForAi({
+    cyclePhase: 'luteal',
+    cycleDay: 23,
+    cyclePhaseConfidence: 'Estimated Model',
+  }, 'personal');
+  assert.equal('cyclePhase' in result, false);
+  assert.equal('cycleDay' in result, false);
+  assert.equal('cyclePhaseConfidence' in result, false);
+  securityVault.updatePermissions({
+    allowPersonalDataToAI: false,
+    allowCycleDataToAI: false,
+  });
+});
+
+test('cycle consent alone cannot bypass the personal-data AI permission', () => {
+  securityVault.updatePermissions({
+    allowPersonalDataToAI: false,
+    allowCycleDataToAI: true,
+  });
+  const result = securityVault.sanitizeContextForAi({
+    cyclePhase: 'follicular',
+    cycleDay: 8,
+  }, 'personal');
+  assert.equal('cyclePhase' in result, false);
+  assert.equal('cycleDay' in result, false);
+  securityVault.updatePermissions({
+    allowPersonalDataToAI: false,
+    allowCycleDataToAI: false,
+  });
+});
+
+
+test('Jarvis rejects memories with malformed expiry timestamps and expired memories', () => {
+  securityVault.updatePermissions({
+    allowPersonalDataToAI: true,
+    allowMarilunaDataToAI: true,
+    allowWellbeingDataToAI: true,
+    allowCycleDataToAI: true,
+    allowFinancialDataToAI: true,
+  });
+
+  const result = securityVault.sanitizeContextForAi({
+    memoryItems: [
+      { content: 'Permanent memory', category: 'Planning', realm: 'personal', type: 'explicit', status: 'active' },
+      { content: 'Future expiry memory', category: 'Planning', realm: 'personal', type: 'confirmed', status: 'active', expiresAt: new Date(Date.now() + 60_000).toISOString() },
+      { content: 'Expired memory', category: 'Planning', realm: 'personal', type: 'confirmed', status: 'active', expiresAt: new Date(Date.now() - 60_000).toISOString() },
+      { content: 'Malformed expiry memory', category: 'Planning', realm: 'personal', type: 'confirmed', status: 'active', expiresAt: 'not-a-date' },
+      { content: 'Numeric expiry memory', category: 'Planning', realm: 'personal', type: 'confirmed', status: 'active', expiresAt: 1_900_000_000_000 },
+    ],
+  }, 'personal');
+
+  assert.deepEqual(result.memoryItems.map((item: any) => item.content), [
+    'Permanent memory',
+    'Future expiry memory',
+  ]);
+
+  securityVault.updatePermissions({
+    allowPersonalDataToAI: false,
+    allowMarilunaDataToAI: false,
+    allowWellbeingDataToAI: false,
+    allowCycleDataToAI: false,
+    allowFinancialDataToAI: false,
+  });
+});
+
+test('authentication lockout starts after five failed attempts and can be cleared after verified login', () => {
+  const key = 'auth-lockout-regression-test';
+  for (let attempt = 0; attempt < 4; attempt += 1) {
+    securityVault.recordFailedAttempt(key);
+    assert.equal(securityVault.checkRateLimit(key).allowed, true);
+  }
+
+  securityVault.recordFailedAttempt(key);
+  const locked = securityVault.checkRateLimit(key);
+  assert.equal(locked.allowed, false);
+  assert.ok((locked.remainingLockoutSeconds ?? 0) > 0);
+
+  securityVault.clearFailedAttempts(key);
+  assert.equal(securityVault.checkRateLimit(key).allowed, true);
+});
+
+test('authentication lockout state is isolated between client keys', () => {
+  const lockedKey = 'auth-lockout-isolation-locked';
+  const cleanKey = 'auth-lockout-isolation-clean';
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    securityVault.recordFailedAttempt(lockedKey);
+  }
+
+  assert.equal(securityVault.checkRateLimit(lockedKey).allowed, false);
+  assert.equal(securityVault.checkRateLimit(cleanKey).allowed, true);
+  securityVault.clearFailedAttempts(lockedKey);
+});
+
+test('TOTP verification rejects malformed codes before attempting verification', () => {
+  securityVault.disableTotp();
+  const setup = securityVault.generateTotpSetup();
+  assert.ok(setup.secret.length >= 16);
+  assert.equal(securityVault.verifyAndEnableTotp('12345'), false);
+  assert.equal(securityVault.isTotpEnabled(), false);
+  securityVault.disableTotp();
+});
+
+test('recovery codes are format-checked, one-time and reject replay', () => {
+  const codes = securityVault.regenerateRecoveryCodesInternal();
+  assert.equal(codes.length, 8);
+  assert.equal(securityVault.verifyAndConsumeRecoveryCode('not-a-code'), false);
+  assert.equal(securityVault.verifyAndConsumeRecoveryCode('PMAL-XXXX-YYYY'), false);
+  assert.equal(securityVault.verifyAndConsumeRecoveryCode(codes[0]), true);
+  assert.equal(securityVault.verifyAndConsumeRecoveryCode(codes[0]), false);
+  const status = securityVault.getRecoveryCodesStatus();
+  assert.equal(status.total, 8);
+  assert.equal(status.remaining, 7);
+});
+
+test('passkey storage validates credentials and returns defensive copies', () => {
+  const credential = {
+    id: 'test-passkey-credential',
+    publicKey: Buffer.from('public-key').toString('base64url'),
+    counter: 0,
+    transports: ['internal'],
+    nickname: 'Test device',
+    createdAt: new Date().toISOString(),
+    lastUsedAt: new Date().toISOString(),
+  };
+  securityVault.savePasskey(credential);
+  const fetched = securityVault.getPasskey(credential.id)!;
+  fetched.nickname = 'Tampered outside vault';
+  fetched.transports?.push('usb');
+  assert.equal(securityVault.getPasskey(credential.id)?.nickname, 'Test device');
+  assert.deepEqual(securityVault.getPasskey(credential.id)?.transports, ['internal']);
+  securityVault.updatePasskeyUsage(credential.id, 4);
+  securityVault.updatePasskeyUsage(credential.id, 2);
+  assert.equal(securityVault.getPasskey(credential.id)?.counter, 4);
+  securityVault.updatePasskeyUsage(credential.id, Number.NaN);
+  assert.equal(securityVault.getPasskey(credential.id)?.counter, 4);
+  assert.throws(() => securityVault.savePasskey({ ...credential, counter: -1 }), /invalid/i);
+  assert.throws(() => securityVault.savePasskey({ ...credential, publicKey: 'not base64!' }), /invalid/i);
+  assert.throws(() => securityVault.savePasskey({ ...credential, transports: ['unknown'] }), /invalid/i);
+  assert.equal(securityVault.deletePasskey(credential.id), true);
+  assert.equal(securityVault.getPasskey(credential.id), undefined);
+});
+
+test('WebAuthn challenge storage rejects invalid oversized keys and values', () => {
+  assert.throws(() => securityVault.setChallenge('', 'nonce'), /valid WebAuthn challenge/i);
+  assert.throws(() => securityVault.setChallenge('key', ''), /valid WebAuthn challenge/i);
+  assert.throws(() => securityVault.setChallenge('x'.repeat(257), 'nonce'), /valid WebAuthn challenge/i);
+  assert.throws(() => securityVault.setChallenge('key', 'x'.repeat(1025)), /valid WebAuthn challenge/i);
+});
+
+
+test('OpenAI is an explicitly allowlisted provider and unknown provider values are ignored', () => {
+  const selected = securityVault.updatePermissions({ activeAiProvider: 'openai-server' });
+  assert.equal(selected.activeAiProvider, 'openai-server');
+  const unchanged = securityVault.updatePermissions({ activeAiProvider: 'unexpected-provider' as any });
+  assert.equal(unchanged.activeAiProvider, 'openai-server');
+  securityVault.updatePermissions({ activeAiProvider: 'local-rules' });
 });

@@ -10,10 +10,16 @@ import {
   Globe,
   Info,
 } from 'lucide-react';
-import { CalendarEvent, ActiveWorldFilter, Realm, LifeProfile, IntegrationsState } from '../../types';
+import { CalendarEvent, ActiveWorldFilter, Realm, LifeProfile, IntegrationsState, Task } from '../../types';
+import { findDuplicateCalendarEvent, validateCalendarEventInput } from '../../lib/calendarValidation';
+import { shiftCalendarDate } from '../../lib/calendarDate';
+import { getCalendarTasksForDate } from '../../lib/calendarTasks';
+import { calculateBusyMinutes } from '../../lib/scheduleCapacity';
 
 interface CalendarViewProps {
   events: CalendarEvent[];
+  tasks: Task[];
+  onToggleTask: (taskId: string) => void;
   lifeProfile: LifeProfile;
   activeWorld: ActiveWorldFilter;
   onAddEvent: (event: Partial<CalendarEvent>) => void;
@@ -38,6 +44,8 @@ const formatLocalDate = (date: Date): string => {
 
 export const CalendarView: React.FC<CalendarViewProps> = ({
   events,
+  tasks,
+  onToggleTask,
   lifeProfile,
   activeWorld,
   onAddEvent,
@@ -57,6 +65,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   const [newRealm, setNewRealm] = useState<Realm>('personal');
   const [newType, setNewType] = useState<CalendarEvent['type']>('appointment');
   const [newLocation, setNewLocation] = useState('');
+  const [formError, setFormError] = useState<string | null>(null);
 
   const todayStr = formatLocalDate(new Date());
   const dateObj = parseLocalDate(currentDateStr);
@@ -67,6 +76,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
     setNewRealm(activeWorld === 'mariluna' ? 'mariluna' : 'personal');
     setNewTitle('');
     setNewLocation('');
+    setFormError(null);
     setNewStartTime('10:00');
     setNewEndTime('11:00');
     setIsModalOpen(true);
@@ -75,7 +85,21 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   // Create Event Handler
   const handleCreateEvent = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newTitle.trim()) return;
+    const inputError = validateCalendarEventInput({
+      title: newTitle,
+      date: newDate,
+      startTime: newStartTime,
+      endTime: newEndTime,
+    });
+    if (inputError) {
+      setFormError(inputError);
+      return;
+    }
+    if (findDuplicateCalendarEvent(events, { title: newTitle, date: newDate, startTime: newStartTime, endTime: newEndTime, realm: newRealm })) {
+      setFormError('Deze afspraak staat al op dit tijdstip in dezelfde agenda.');
+      return;
+    }
+    setFormError(null);
 
     onAddEvent({
       id: 'e-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4),
@@ -92,20 +116,13 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
 
     setNewTitle('');
     setNewLocation('');
+    setFormError(null);
     setIsModalOpen(false);
   };
 
   // Date shifting according to active view mode
   const shiftDate = (delta: number) => {
-    const d = parseLocalDate(currentDateStr);
-    if (viewMode === 'day') {
-      d.setDate(d.getDate() + delta);
-    } else if (viewMode === 'week') {
-      d.setDate(d.getDate() + delta * 7);
-    } else if (viewMode === 'month') {
-      d.setMonth(d.getMonth() + delta);
-    }
-    setCurrentDateStr(formatLocalDate(d));
+    setCurrentDateStr(shiftCalendarDate(currentDateStr, viewMode, delta));
   };
 
   // Filter events by realm if applicable
@@ -114,16 +131,15 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
     return evtList.filter((e) => e.realm === activeWorld);
   };
 
-  // Day View events
+  // Tasks appear in the calendar on their due date, using the same workspace filter.
+  const filterTasksForDate = (dateStr: string) => getCalendarTasksForDate(tasks, dateStr, activeWorld);
+
+  // Day View events and due tasks
   const dayEvents = filterByRealm(events.filter((e) => e.date === currentDateStr));
+  const dayTasks = filterTasksForDate(currentDateStr);
 
   // Calculate total committed hours for day
-  const totalEventMinutes = dayEvents.reduce((acc, evt) => {
-    if (!evt.startTime || !evt.endTime) return acc;
-    const [sH, sM] = evt.startTime.split(':').map(Number);
-    const [eH, eM] = evt.endTime.split(':').map(Number);
-    return acc + Math.max(0, (eH * 60 + (eM || 0)) - (sH * 60 + (sM || 0)));
-  }, 0);
+  const totalEventMinutes = calculateBusyMinutes(dayEvents);
 
   // Format Header Label depending on view mode
   const getHeaderLabel = () => {
@@ -173,6 +189,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
         isToday: ds === todayStr,
         isSelected: ds === currentDateStr,
         dayEvents: filterByRealm(events.filter((e) => e.date === ds)),
+        dayTasks: filterTasksForDate(ds),
       });
     }
     return result;
@@ -195,6 +212,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
       isToday?: boolean;
       isSelected?: boolean;
       dayEvents?: CalendarEvent[];
+      dayTasks?: Task[];
     }> = [];
 
     // Blank cells before first day
@@ -212,6 +230,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
         isToday: ds === todayStr,
         isSelected: ds === currentDateStr,
         dayEvents: filterByRealm(events.filter((e) => e.date === ds)),
+        dayTasks: filterTasksForDate(ds),
       });
     }
 
@@ -235,12 +254,12 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
         <div className="flex items-center gap-3">
           {/* Connection status badge */}
           {integrations?.calendar?.status === 'connected' ? (
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#D0E2D4] bg-[#E8EFE9] text-[11px] text-[#2D5A3C]">
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[var(--status-success)]/30 bg-[var(--surface-1)] text-[11px] text-[var(--status-success)]">
               <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-primary)] animate-pulse" />
               <span>Google Agenda gekoppeld • {integrations?.calendar?.readOnly ? 'Alleen-lezen' : 'Lezen & Schrijven'}</span>
             </div>
           ) : (
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#DCD3C4] bg-[var(--surface-2)] text-[11px] text-[#695B49]">
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#DCD3C4] bg-[var(--surface-2)] text-[11px] text-[var(--text-secondary)]">
               <ShieldCheck className="w-3.5 h-3.5 text-[var(--accent-secondary)]" />
               <span>Lokale Agenda • Directe opslag</span>
             </div>
@@ -340,7 +359,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
             <span>{dayEvents.length} {dayEvents.length === 1 ? 'afspraak' : 'afspraken'}</span>
           </div>
 
-          {dayEvents.length === 0 ? (
+          {dayEvents.length === 0 && dayTasks.length === 0 ? (
             <div className="py-16 text-center">
               <CalendarIcon className="w-8 h-8 text-[var(--text-muted)] mx-auto mb-2" />
               <p className="text-sm font-medium text-[var(--text-primary)]">
@@ -379,7 +398,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                             {evt.realm}
                           </span>
                           {evt.isExternalSync || evt.source === 'google' ? (
-                            <span className="text-[9px] px-2 py-0.5 rounded-full bg-[#E8EFE9] text-[#2D5A3C] font-medium border border-[#D0E2D4]">
+                            <span className="text-[9px] px-2 py-0.5 rounded-full bg-[var(--surface-1)] text-[var(--status-success)] font-medium border border-[var(--status-success)]/30">
                               Google Agenda
                             </span>
                           ) : (
@@ -405,6 +424,19 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                     </div>
                   </div>
                 </div>
+              ))}
+            </div>
+          )}
+
+          {dayTasks.length > 0 && (
+            <div className="border-t border-[var(--border-subtle)] pt-4 space-y-2">
+              <h3 className="text-xs font-semibold text-[var(--text-secondary)]">Taken met deadline · {dayTasks.length}</h3>
+              {dayTasks.map((task) => (
+                <button key={task.id} type="button" onClick={() => onToggleTask(task.id)} className="flex w-full items-start gap-3 rounded-xl px-3 py-2 text-left hover:bg-[var(--surface-2)]">
+                  <span className="mt-0.5">{task.status === 'completed' ? '✓' : '○'}</span>
+                  <span className={task.status === 'completed' ? 'flex-1 text-sm line-through text-[var(--text-muted)]' : 'flex-1 text-sm text-[var(--text-primary)]'}>{task.title}</span>
+                  <span className="text-[10px] text-[var(--text-muted)]">{task.status === 'completed' ? 'Afgerond' : 'Open'}</span>
+                </button>
               ))}
             </div>
           )}
@@ -445,7 +477,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                 </div>
 
                 <div className="mt-2 space-y-1.5">
-                  {day.dayEvents.length === 0 ? (
+                  {day.dayEvents.length === 0 && day.dayTasks.length === 0 ? (
                     <p className="text-[11px] text-[var(--text-muted)] italic pt-2">
                       Geen afspraken
                     </p>
@@ -464,6 +496,22 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                         </div>
                       </div>
                     ))
+                  )}
+                  {day.dayTasks.length > 0 && (
+                    <div className="pt-1 space-y-1">
+                      {day.dayTasks.slice(0, 3).map((task) => (
+                        <button
+                          key={task.id}
+                          type="button"
+                          onClick={(event) => { event.stopPropagation(); onToggleTask(task.id); }}
+                          aria-label={task.status === 'completed' ? `Heropen taak: ${task.title}` : `Voltooi taak: ${task.title}`}
+                          className={`block w-full rounded-md px-2 py-1 text-left text-[10px] truncate transition hover:ring-1 hover:ring-[var(--accent-secondary)] ${task.status === 'completed' ? 'bg-[var(--surface-2)] text-[var(--text-muted)] line-through' : 'bg-[var(--surface-raised)] text-[var(--text-primary)]'}`}
+                        >
+                          {task.status === 'completed' ? '✓' : '○'} {task.title}
+                        </button>
+                      ))}
+                      {day.dayTasks.length > 3 && <p className="px-1 text-[10px] text-[var(--text-muted)]">+{day.dayTasks.length - 3} taken</p>}
+                    </div>
                   )}
                 </div>
               </div>
@@ -504,6 +552,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                   return <div key={`blank-${idx}`} className="h-16 p-1 bg-transparent" />;
                 }
                 const hasEvents = (cell.dayEvents?.length || 0) > 0;
+                const hasTasks = (cell.dayTasks?.length || 0) > 0;
                 return (
                   <button
                     key={cell.dateStr}
@@ -518,7 +567,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                     }`}
                   >
                     <span className="text-xs font-semibold">{cell.dayNum}</span>
-                    {hasEvents && (
+                    {(hasEvents || hasTasks) && (
                       <div className="flex items-center gap-1">
                         <span
                           className={`w-2 h-2 rounded-full ${
@@ -530,7 +579,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                             cell.isSelected ? 'text-[var(--text-secondary)]' : 'text-[var(--text-secondary)]'
                           }`}
                         >
-                          {cell.dayEvents?.length} {cell.dayEvents?.length === 1 ? 'item' : 'items'}
+                          {(cell.dayEvents?.length || 0) + (cell.dayTasks?.length || 0)} {(cell.dayEvents?.length || 0) + (cell.dayTasks?.length || 0) === 1 ? 'item' : 'items'}
                         </span>
                       </div>
                     )}
@@ -556,7 +605,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
               </button>
             </div>
 
-            {dayEvents.length === 0 ? (
+            {dayEvents.length === 0 && dayTasks.length === 0 ? (
               <p className="text-xs text-[var(--text-muted)] py-2">
                 Geen afspraken gepland op deze datum.
               </p>
@@ -582,6 +631,18 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                 ))}
               </div>
             )}
+            {dayTasks.length > 0 && (
+              <div className="space-y-2 border-t border-[var(--border-subtle)] pt-3">
+                <h4 className="text-[11px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">Taken met deadline</h4>
+                {dayTasks.map((task) => (
+                  <button key={task.id} type="button" onClick={() => onToggleTask(task.id)} className="flex w-full items-center gap-3 rounded-xl bg-[var(--surface-2)] px-3 py-2 text-left text-xs">
+                    <span className={task.status === 'completed' ? 'text-[var(--accent-secondary)]' : 'text-[var(--text-muted)]'}>{task.status === 'completed' ? '✓' : '○'}</span>
+                    <span className={task.status === 'completed' ? 'flex-1 line-through text-[var(--text-muted)]' : 'flex-1 text-[var(--text-primary)]'}>{task.title}</span>
+                    <span className="text-[10px] text-[var(--text-muted)]">{task.status === 'completed' ? 'Afgerond' : 'Open'}</span>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -601,7 +662,8 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
               </span>
             </div>
 
-            <form onSubmit={handleCreateEvent} className="space-y-4">
+            <form onSubmit={handleCreateEvent} className="space-y-4" noValidate>
+              {formError && <div role="alert" className="rounded-xl border border-[var(--status-danger)]/40 bg-[var(--surface-1)] px-3 py-2 text-xs text-[var(--status-danger)]">{formError}</div>}
               <div>
                 <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">
                   Titel
@@ -640,7 +702,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                     type="time"
                     required
                     value={newStartTime}
-                    onChange={(e) => setNewStartTime(e.target.value)}
+                    onChange={(e) => { setNewStartTime(e.target.value); setFormError(null); }}
                     className="w-full bg-[var(--surface-1)] border border-[var(--border-subtle)] rounded-xl px-3 py-2 text-xs text-[var(--text-primary)]"
                   />
                 </div>
@@ -652,7 +714,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                     type="time"
                     required
                     value={newEndTime}
-                    onChange={(e) => setNewEndTime(e.target.value)}
+                    onChange={(e) => { setNewEndTime(e.target.value); setFormError(null); }}
                     className="w-full bg-[var(--surface-1)] border border-[var(--border-subtle)] rounded-xl px-3 py-2 text-xs text-[var(--text-primary)]"
                   />
                 </div>

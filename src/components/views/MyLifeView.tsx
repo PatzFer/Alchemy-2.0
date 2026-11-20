@@ -170,7 +170,7 @@ export const MyLifeView: React.FC<MyLifeViewProps> = ({
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
               <div>
-                <label className="block text-xs font-medium text-[#5A524A] mb-1">
+                <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">
                   Daily Workday Start
                 </label>
                 <input
@@ -182,7 +182,7 @@ export const MyLifeView: React.FC<MyLifeViewProps> = ({
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-[#5A524A] mb-1">
+                <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">
                   Daily Workday End (Strict Threshold)
                 </label>
                 <input
@@ -197,7 +197,7 @@ export const MyLifeView: React.FC<MyLifeViewProps> = ({
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-[#5A524A] mb-1">
+                <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">
                   Buffer Between Tasks (Minutes)
                 </label>
                 <input
@@ -209,7 +209,7 @@ export const MyLifeView: React.FC<MyLifeViewProps> = ({
               </div>
             </div>
 
-            <div className="mt-5 pt-4 border-t border-[#F0EBE1] flex justify-end">
+            <div className="mt-5 pt-4 border-t border-[var(--border-subtle)] flex justify-end">
               <button
                 onClick={handleSaveHours}
                 className="px-5 py-2 rounded-xl bg-[var(--text-primary)] text-[var(--text-primary)] text-xs font-medium hover:bg-[var(--text-primary)] transition cursor-pointer"
@@ -409,7 +409,7 @@ export const MyLifeView: React.FC<MyLifeViewProps> = ({
       {activeTab === 'style' && (
         <div className="space-y-6">
           <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-2)] p-6 shadow-xs">
-            <div className="flex items-center justify-between pb-3 border-b border-[#F0EBE1] mb-4">
+            <div className="flex items-center justify-between pb-3 border-b border-[var(--border-subtle)] mb-4">
               <div>
                 <h3 className="font-serif text-lg font-medium text-[var(--text-primary)]">
                   Personal Style & Capsule Architecture
@@ -425,7 +425,7 @@ export const MyLifeView: React.FC<MyLifeViewProps> = ({
 
             {/* Color Palette */}
             <div>
-              <label className="text-xs font-semibold text-[#5A524A] uppercase tracking-wider block mb-2">
+              <label className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider block mb-2">
                 Seasonal Color Palette
               </label>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -451,7 +451,7 @@ export const MyLifeView: React.FC<MyLifeViewProps> = ({
 
             {/* Silhouettes */}
             <div className="mt-6">
-              <label className="text-xs font-semibold text-[#5A524A] uppercase tracking-wider block mb-2">
+              <label className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider block mb-2">
                 Signature Silhouettes
               </label>
               <div className="flex flex-wrap gap-2">
@@ -468,7 +468,7 @@ export const MyLifeView: React.FC<MyLifeViewProps> = ({
 
             {/* Wardrobe Notes */}
             <div className="mt-6">
-              <label className="text-xs font-semibold text-[#5A524A] uppercase tracking-wider block mb-1">
+              <label className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider block mb-1">
                 Measurements & Tailoring Notes
               </label>
               <p className="text-xs text-[var(--text-secondary)] bg-[var(--surface-1)] p-3 rounded-xl border border-[var(--border-subtle)]">
@@ -483,7 +483,7 @@ export const MyLifeView: React.FC<MyLifeViewProps> = ({
       {activeTab === 'nutrition' && (
         <div className="space-y-6">
           <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-2)] p-6 shadow-xs">
-            <div className="flex items-center justify-between pb-3 border-b border-[#F0EBE1] mb-4">
+            <div className="flex items-center justify-between pb-3 border-b border-[var(--border-subtle)] mb-4">
               <div>
                 <h3 className="font-serif text-lg font-medium text-[var(--text-primary)]">
                   Nourishment & Dining Philosophy

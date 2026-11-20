@@ -100,7 +100,8 @@ export interface AppState {
   brain?: BrainState;
 }
 
-const todayStr = new Date().toISOString().split('T')[0];
+const localToday = new Date();
+const todayStr = `${localToday.getFullYear()}-${String(localToday.getMonth() + 1).padStart(2, '0')}-${String(localToday.getDate()).padStart(2, '0')}`;
 
 export const INITIAL_STATE: AppState = {
   isSampleData: false,
@@ -947,18 +948,62 @@ export function loadState(): AppState {
   }
 }
 
-export function saveState(state: AppState): void {
-  if (typeof window === 'undefined') return;
+function isPersistableAlchemyState(value: unknown): value is AppState {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  const state = value as Record<string, unknown>;
+  const requiredArrays = [
+    'tasks', 'goals', 'ideas', 'projects', 'calendarEvents', 'memories',
+    'dailyCheckIns', 'notifications', 'proactiveSuggestions', 'chatHistory',
+  ];
+  const requiredObjects = [
+    'lifeProfile', 'contentPlan', 'personalStyle', 'nutrition', 'cycleProfile',
+    'wellbeing', 'notificationSettings', 'foundation', 'integrations',
+  ];
+  if (!requiredArrays.every((key) => Array.isArray(state[key]))) return false;
+  if (!requiredObjects.every((key) =>
+    state[key] !== null && typeof state[key] === 'object' && !Array.isArray(state[key])
+  )) return false;
+  if (typeof state.isSampleData !== 'boolean' ||
+      !['not_started', 'in_progress', 'skipped', 'completed'].includes(String(state.setupStatus))) return false;
+
+  const foundation = state.foundation as Record<string, unknown>;
+  const integrations = state.integrations as Record<string, unknown>;
+  return foundation.aboutYou !== null && typeof foundation.aboutYou === 'object' &&
+    !Array.isArray(foundation.aboutYou) &&
+    integrations.calendar !== null && typeof integrations.calendar === 'object' &&
+    !Array.isArray(integrations.calendar) &&
+    integrations.gmail !== null && typeof integrations.gmail === 'object' &&
+    !Array.isArray(integrations.gmail);
+}
+
+export function saveState(state: AppState): boolean {
+  if (typeof window === 'undefined') return false;
+  if (!isPersistableAlchemyState(state)) {
+    console.error('Refusing to overwrite Alchemy storage with an incomplete state payload.');
+    return false;
+  }
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    return true;
   } catch (err) {
     console.error('Failed to save state to localStorage:', err);
+    return false;
   }
 }
 
 export function resetState(): AppState {
   if (typeof window !== 'undefined') {
-    localStorage.removeItem(STORAGE_KEY);
+    // Clear both current and legacy keys. Otherwise loadState() can fall back
+    // to the legacy payload after a reset and silently resurrect old data.
+    // Storage can be unavailable in restricted/private browser contexts; the
+    // in-memory reset should still complete and the normal save path will
+    // surface whether the new state could be persisted.
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(LEGACY_STORAGE_KEY);
+    } catch {
+      // Do not let a browser storage exception prevent the in-memory reset.
+    }
   }
   return { ...INITIAL_STATE };
 }

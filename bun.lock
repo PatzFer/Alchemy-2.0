@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "react-example",
+      "name": "p-and-m-alchemy",
       "dependencies": {
         "@google/genai": "^2.4.0",
         "@simplewebauthn/browser": "^14.0.0",

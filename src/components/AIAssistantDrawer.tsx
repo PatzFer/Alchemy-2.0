@@ -12,8 +12,10 @@ import {
   MessageSquare,
   ShieldCheck,
 } from 'lucide-react';
-import { AssistantMessage, Task, Goal, Idea, LifeProfile, MemoryItem, Realm, WellbeingState, Project, CalendarEvent, ContentPlan, MarilunaOffering, DailyCheckIn, DailyIntention } from '../types';
+import { AssistantMessage, Task, Goal, Idea, LifeProfile, MemoryItem, Realm, WellbeingState, Project, CalendarEvent, ContentPlan, MarilunaOffering, DailyCheckIn, DailyIntention, CycleProfile } from '../types';
 import { sendChatMessage } from '../lib/aiService';
+import { calculateCycleStatus, hasValidCycleAnchor } from '../lib/cycleUtils';
+import { getAstronomicalMoonPhase } from '../lib/celestialUtils';
 
 interface AIAssistantDrawerProps {
   isOpen: boolean;
@@ -33,6 +35,9 @@ interface AIAssistantDrawerProps {
   onExecuteAction: (action: any) => void;
   wellbeing?: WellbeingState;
   dailyCheckIns?: DailyCheckIn[];
+  cycleProfile?: CycleProfile;
+  /** Explicit permission for sensitive cycle details to be sent to the AI provider. Defaults to denied. */
+  allowCycleDataToAI?: boolean;
   intentions?: DailyIntention[];
   activeContextItem?: any;
 }
@@ -55,11 +60,19 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
   onExecuteAction,
   wellbeing,
   dailyCheckIns = [],
+  cycleProfile,
+  allowCycleDataToAI = false,
   intentions = [],
   activeContextItem,
 }) => {
   const [inputText, setInputText] = useState('');
   const [isThinking, setIsThinking] = useState(false);
+  const [chosenWorld, setChosenWorld] = useState<'personal' | 'mariluna' | null>(activeWorld === 'all' ? null : activeWorld);
+  const assistantWorld = activeWorld === 'all' ? chosenWorld || 'all' : activeWorld;
+
+  useEffect(() => {
+    setChosenWorld(activeWorld === 'all' ? null : activeWorld);
+  }, [activeWorld]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const lastProcessedMsgIdRef = useRef<string | null>(null);
 
@@ -87,117 +100,104 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
   ];
 
   const buildContextPayload = (customContextItem?: any) => {
+    // Jarvis receives only the active workspace. The neutral Home context is
+    // deliberately not a data scope and must never become a mixed-data prompt.
+    const scope = assistantWorld;
+    const isPersonal = scope === 'personal';
+    const isMariluna = scope === 'mariluna';
+    const inScope = (item: { realm?: string }) => item.realm === scope;
+    const now = new Date();
+    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    // Reproductive-health context is sensitive and denied to the AI provider by default.
+    // A future explicit permission control may pass allowCycleDataToAI=true.
+    const cycleStatus = isPersonal && allowCycleDataToAI && cycleProfile?.trackingEnabled && hasValidCycleAnchor(cycleProfile, todayStr)
+      ? calculateCycleStatus(cycleProfile, todayStr)
+      : undefined;
+    const lunarStatus = getAstronomicalMoonPhase(now);
+    const month = now.getMonth() + 1;
+    const northernSeason = month >= 3 && month <= 5 ? 'Lente'
+      : month >= 6 && month <= 8 ? 'Zomer'
+      : month >= 9 && month <= 11 ? 'Herfst' : 'Winter';
+    const rawContextItem = customContextItem || activeContextItem;
+    const contextRealm = rawContextItem?.realm || rawContextItem?.world || rawContextItem?.details?.realm;
+    const safeContextItem = rawContextItem && contextRealm === scope ? rawContextItem : undefined;
+
     return {
-      currentDate: new Date().toISOString().split('T')[0],
-      currentDayOfWeek: new Date().toLocaleDateString('nl-NL', { weekday: 'long' }),
-      activeWorld,
-      activeContextItem: customContextItem || activeContextItem,
-      calendarEvents: (calendarEvents || []).map((e) => ({
-        id: e.id,
-        title: e.title,
-        date: e.date,
-        startTime: e.startTime,
-        endTime: e.endTime,
-        category: e.category,
-        realm: e.realm,
+      currentDate: todayStr,
+      currentDayOfWeek: now.toLocaleDateString('nl-NL', { weekday: 'long' }),
+      cyclePhase: cycleStatus?.activePhase,
+      cycleDay: cycleStatus?.cycleDay,
+      cyclePhaseConfidence: cycleStatus?.phaseConfidence,
+      moonPhase: lunarStatus.phaseNameNl,
+      moonIlluminationPct: lunarStatus.illuminationPct,
+      season: northernSeason,
+      activeWorld: scope,
+      activeContextItem: safeContextItem,
+      calendarEvents: (calendarEvents || []).filter(inScope).map((e) => ({
+        id: e.id, title: e.title, date: e.date, startTime: e.startTime,
+        endTime: e.endTime, category: e.category, realm: e.realm,
       })),
-      tasks: (tasks || []).map((t) => ({
-        id: t.id,
-        title: t.title,
-        dueDate: t.dueDate,
-        status: t.status,
-        priority: t.priority,
-        realm: t.realm,
-        goalId: t.goalId,
-        projectId: t.projectId,
-        estimatedDuration: t.estimatedDuration,
+      tasks: (tasks || []).filter(inScope).map((t) => ({
+        id: t.id, title: t.title, dueDate: t.dueDate, status: t.status,
+        priority: t.priority, realm: t.realm, goalId: t.goalId,
+        projectId: t.projectId, estimatedDuration: t.estimatedDuration,
       })),
-      projects: (projects || []).map((p) => ({
-        id: p.id,
-        title: p.title,
-        status: p.status,
-        realm: p.realm,
-        goalId: p.goalId,
-        taskIds: p.taskIds || [],
-        targetDate: p.targetDate,
+      projects: (projects || []).filter(inScope).map((p) => ({
+        id: p.id, title: p.title, status: p.status, realm: p.realm,
+        goalId: p.goalId, taskIds: p.taskIds || [], targetDate: p.targetDate,
         description: p.description,
       })),
-      ideas: (ideas || []).map((i) => ({
-        id: i.id,
-        title: i.title,
-        content: i.content,
-        pillar: i.contentPillar,
-        status: i.status,
-        realm: i.realm,
+      ideas: (ideas || []).filter(inScope).map((i) => ({
+        id: i.id, title: i.title, content: i.content, pillar: i.contentPillar,
+        status: i.status, realm: i.realm,
       })),
-      goals: (goals || []).map((g) => ({
-        id: g.id,
-        title: g.title,
-        description: g.description,
-        progress: g.progress,
-        timeframe: g.timeframe,
-        startDate: g.startDate,
-        endDate: g.endDate,
-        targetDate: g.targetDate,
-        realm: g.realm,
-        status: g.status,
+      goals: (goals || []).filter(inScope).map((g) => ({
+        id: g.id, title: g.title, description: g.description, progress: g.progress,
+        timeframe: g.timeframe, startDate: g.startDate, endDate: g.endDate,
+        targetDate: g.targetDate, realm: g.realm, status: g.status,
         connectedProjectIds: g.connectedProjectIds || [],
         connectedTaskIds: g.connectedTaskIds || [],
       })),
-      intentions: (intentions || [])
-        .filter((i) => activeWorld === 'all' || i.realm === activeWorld)
-        .map((i) => ({
-          id: i.id,
-          title: i.title,
-          date: i.date,
-          realm: i.realm,
-          status: i.status,
-          completed: i.completed,
-        })),
-      todayIntention: (() => {
-        const todayStr = new Date().toISOString().split('T')[0];
-        const found = (intentions || []).find(
-          (i) => i.date === todayStr && (activeWorld === 'all' || i.realm === activeWorld)
-        );
-        return found ? { id: found.id, title: found.title, realm: found.realm, status: found.status, completed: found.completed } : undefined;
-      })(),
-      contentPlan: contentPlan ? {
+      intentions: (intentions || []).filter(inScope).map((i) => ({
+        id: i.id, title: i.title, date: i.date, realm: i.realm,
+        status: i.status, completed: i.completed,
+      })),
+      todayIntention: (intentions || []).find((i) => i.date === todayStr && inScope(i))
+        ? (() => {
+            const found = (intentions || []).find((i) => i.date === todayStr && inScope(i));
+            return found ? { id: found.id, title: found.title, realm: found.realm, status: found.status, completed: found.completed } : undefined;
+          })()
+        : undefined,
+      contentPlan: isMariluna && contentPlan ? {
         quarterTheme: contentPlan.quarterTheme,
         monthlyTheme: contentPlan.monthlyTheme,
         pillars: contentPlan.pillars,
         recentPosts: contentPlan.posts?.slice(-5).map((p) => ({ title: p.title, status: p.status, pillar: p.pillar })),
       } : undefined,
-      offerings: (offerings || []).map((o) => ({
-        id: o.id,
-        title: o.title,
-        type: o.type,
-        price: o.price,
-        description: o.description,
-        status: o.status,
+      offerings: isMariluna ? (offerings || []).map((o) => ({
+        id: o.id, title: o.title, type: o.type, price: o.price,
+        description: o.description, status: o.status,
+      })) : [],
+      workingHours: isPersonal ? `${lifeProfile.workingHoursStart} - ${lifeProfile.workingHoursEnd}` : undefined,
+      preferences: isPersonal ? lifeProfile.preferences : undefined,
+      memoryItems: (memories || []).filter(inScope).map((m) => ({
+        content: m.content, category: m.category, realm: m.realm,
+        type: m.type, status: m.status, confidence: m.confidence, expiresAt: m.expiresAt,
       })),
-      workingHours: `${lifeProfile.workingHoursStart} - ${lifeProfile.workingHoursEnd}`,
-      preferences: lifeProfile.preferences,
-      memoryItems: (memories || []).map((m) => ({ content: m.content, category: m.category, realm: m.realm, type: m.type, status: m.status, confidence: m.confidence, expiresAt: m.expiresAt })),
-      wellbeing:
-        wellbeing && wellbeing.preferences?.allowWellbeingDataToAI
-          ? {
-              focusTheme: wellbeing.currentWeeklyMovement?.focusTheme,
-              todaySession: wellbeing.currentWeeklyMovement?.sessions?.[0]?.title,
-              dietaryStyle: wellbeing.preferences?.foodPreferences?.dietaryStyle,
-              allowedToAI: true,
-            }
-          : undefined,
-      dailyCheckIns:
-        activeWorld !== 'mariluna' && (wellbeing?.preferences?.allowWellbeingDataToAI || lifeProfile?.preferences?.allowPersonalDataToAI)
-          ? (dailyCheckIns || []).slice(0, 10).map((c) => ({
-              date: c.date,
-              energy: c.energy,
-              mood: c.mood,
-              wakeTime: c.wakeTime,
-              sleepTime: c.sleepTime,
-              notes: c.notes,
-            }))
-          : undefined,
+      wellbeing: isPersonal && wellbeing?.preferences?.allowWellbeingDataToAI
+        ? {
+            focusTheme: wellbeing.currentWeeklyMovement?.focusTheme,
+            todaySession: wellbeing.currentWeeklyMovement?.sessions?.[0]?.title,
+            dietaryStyle: wellbeing.preferences?.foodPreferences?.dietaryStyle,
+            allowedToAI: true,
+          }
+        : undefined,
+      dailyCheckIns: isPersonal && wellbeing?.preferences?.allowWellbeingDataToAI
+        ? (dailyCheckIns || []).slice(0, 10).map((c) => ({
+            date: c.date, energy: c.energy, mood: c.mood,
+            wakeTime: c.wakeTime, sleepTime: c.sleepTime, notes: c.notes,
+          }))
+        : undefined,
     };
   };
 
@@ -209,30 +209,30 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
 
   // Auto-trigger response when opened with a user message that has no assistant reply yet
   useEffect(() => {
-    if (!isOpen || isThinking || messages.length === 0) return;
+    if (!isOpen || isThinking || messages.length === 0 || assistantWorld === 'all') return;
 
     const lastMsg = messages[messages.length - 1];
-    if (lastMsg.role === 'user' && lastMsg.world === activeWorld && lastMsg.id !== lastProcessedMsgIdRef.current) {
+    if (lastMsg.role === 'user' && lastMsg.world === assistantWorld && lastMsg.id !== lastProcessedMsgIdRef.current) {
       lastProcessedMsgIdRef.current = lastMsg.id;
       setIsThinking(true);
 
       const context = buildContextPayload();
-      const historyPayload = messages.filter((m) => m.world === activeWorld).map((m) => ({
+      const historyPayload = messages.filter((m) => m.world === assistantWorld).map((m) => ({
         role: m.role,
         content: m.content,
       }));
 
-      sendChatMessage(historyPayload, context, activeWorld)
+      sendChatMessage(historyPayload, context, assistantWorld)
         .then((response) => {
           setIsThinking(false);
-          onAddMessage({ ...response, world: activeWorld });
+          onAddMessage({ ...response, world: assistantWorld });
         })
         .catch((err) => {
           console.error('Error in assistant auto-response:', err);
           setIsThinking(false);
         });
     }
-  }, [isOpen, messages, isThinking, activeWorld]);
+  }, [isOpen, messages, isThinking, activeWorld, assistantWorld]);
 
   const handleSend = async (customPrompt?: string, customContextItem?: any) => {
     const textToSend = customPrompt || inputText.trim();
@@ -243,7 +243,7 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
       role: 'user',
       content: textToSend,
       timestamp: new Date().toISOString(),
-      world: activeWorld,
+      world: assistantWorld,
     };
 
     onAddMessage(userMessage);
@@ -252,15 +252,15 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
     lastProcessedMsgIdRef.current = userMessage.id;
 
     const context = buildContextPayload(customContextItem);
-    const historyPayload = [...messages.filter((m) => m.world === activeWorld), userMessage].map((m) => ({
+    const historyPayload = [...messages.filter((m) => m.world === assistantWorld), userMessage].map((m) => ({
       role: m.role,
       content: m.content,
     }));
 
     try {
-      const response = await sendChatMessage(historyPayload, context, activeWorld);
+      const response = await sendChatMessage(historyPayload, context, assistantWorld);
       setIsThinking(false);
-      onAddMessage({ ...response, world: activeWorld });
+      onAddMessage({ ...response, world: assistantWorld });
     } catch (err) {
       console.error('Error sending message:', err);
       setIsThinking(false);
@@ -301,9 +301,17 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
           </button>
         </div>
 
-        {/* Quick prompt chips */}
-        <div className="px-4 py-2.5 bg-[#F6F2EB] border-b border-[#EDE7DB] overflow-x-auto scrollbar-none flex gap-2">
-          {quickPrompts.map((item, idx) => (
+        {activeWorld === 'all' && (
+          <div className="px-4 py-4 bg-[#F6F2EB] border-b border-[#EDE7DB] space-y-3">
+            <div><p className="text-sm font-medium text-[#2C2825]">Waar wil je met Jarvis werken?</p><p className="text-xs text-[#7A7167] mt-1">Kies eerst de context. Privé en Mariluna worden niet ongemerkt gecombineerd.</p></div>
+            <div className="grid grid-cols-2 gap-2">
+              <button type="button" onClick={() => setChosenWorld('personal')} className={`rounded-xl border px-3 py-3 text-sm font-medium transition ${chosenWorld === 'personal' ? 'bg-[#24483F] text-white border-[#24483F]' : 'bg-white text-[#2C2825] border-[#DDD5C7]'}`}>Privé<span className="block text-[10px] font-normal opacity-75 mt-0.5">Jouw leven & welzijn</span></button>
+              <button type="button" onClick={() => setChosenWorld('mariluna')} className={`rounded-xl border px-3 py-3 text-sm font-medium transition ${chosenWorld === 'mariluna' ? 'bg-[#5A3548] text-white border-[#5A3548]' : 'bg-white text-[#2C2825] border-[#DDD5C7]'}`}>Mariluna<span className="block text-[10px] font-normal opacity-75 mt-0.5">Ideeën & onderneming</span></button>
+            </div>
+          </div>
+        )}
+        {assistantWorld !== 'all' && <div className="px-4 py-2.5 bg-[#F6F2EB] border-b border-[#EDE7DB] overflow-x-auto scrollbar-none flex gap-2">
+          {quickPrompts.filter((item) => assistantWorld !== 'personal' || item.label !== 'Brainstorm next theme angles').map((item, idx) => (
             <button
               key={idx}
               onClick={() => handleSend(item.prompt)}
@@ -313,11 +321,11 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
               <span>{item.label}</span>
             </button>
           ))}
-        </div>
+        </div>}
 
         {/* Message Thread */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
-          {messages.filter((msg) => msg.world === activeWorld).map((msg) => {
+          {messages.filter((msg) => msg.world === assistantWorld).map((msg) => {
             const isUser = msg.role === 'user';
             return (
               <div
@@ -340,7 +348,7 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
                         Suggested Direction
                       </div>
                       <button
-                        onClick={() => onExecuteAction(msg.suggestedAction)}
+                        onClick={() => onExecuteAction({ ...msg.suggestedAction, workspace: assistantWorld })}
                         className="flex items-center justify-between w-full p-2.5 rounded-xl bg-[#F8F5EE] border border-[#DDD5C7] hover:bg-[#EFE9DD] transition text-left cursor-pointer"
                       >
                         <span className="text-xs font-medium text-[#2C2825]">
@@ -371,7 +379,7 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
         </div>
 
         {/* Input Bar */}
-        <div className="p-4 border-t border-[#E8E2D6] bg-[#FAF8F4]">
+        {assistantWorld !== 'all' ? <div className="p-4 border-t border-[#E8E2D6] bg-[#FAF8F4]">
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -396,10 +404,10 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
             </button>
           </form>
           <div className="flex items-center justify-between mt-2 text-[10px] text-[#9A9084] px-1">
-            <span>Server-Side Gemini 3.8 Flash • Contextual Memory Active</span>
-            <span>Focus: {activeWorld}</span>
+            <span>Jarvis • Privacy-first context • Server-side AI when permitted</span>
+            <span>Focus: {assistantWorld === 'all' ? 'kies een domein' : assistantWorld === 'mariluna' ? 'Mariluna' : 'Privé'}</span>
           </div>
-        </div>
+        </div> : <div className="p-4 border-t border-[#E8E2D6] bg-[#FAF8F4] text-center text-xs text-[#7A7167]">Kies Privé of Mariluna om een gesprek te starten.</div>}
       </div>
     </div>
   );

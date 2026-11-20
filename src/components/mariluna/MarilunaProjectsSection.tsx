@@ -25,6 +25,14 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import { Project, ProjectStatus, Task, Goal, Idea, ContentPost, Realm } from '../../types';
+import { filterProjectList, validateProjectInput } from '../../lib/projectList';
+
+const getLocalDateString = (date = new Date()): string => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
 
 interface MarilunaProjectsSectionProps {
   projects: Project[];
@@ -63,6 +71,8 @@ export const MarilunaProjectsSection: React.FC<MarilunaProjectsSectionProps> = (
 
   // Filter tab state
   const [statusFilter, setStatusFilter] = useState<'all' | ProjectStatus>('all');
+  const [projectSearch, setProjectSearch] = useState('');
+  const [projectFormError, setProjectFormError] = useState<string | null>(null);
   
   // Selected project for detail modal
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
@@ -112,12 +122,9 @@ export const MarilunaProjectsSection: React.FC<MarilunaProjectsSectionProps> = (
     );
   };
 
-  const filteredProjects = marilunaProjects.filter((p) => {
-    if (statusFilter === 'all') {
-      // By default show all except archived unless explicitly filtered to archived
-      return p.status !== 'archived';
-    }
-    return p.status === statusFilter;
+  const filteredProjects = filterProjectList(marilunaProjects, {
+    status: statusFilter,
+    query: projectSearch,
   });
 
   // Action handlers
@@ -135,19 +142,41 @@ export const MarilunaProjectsSection: React.FC<MarilunaProjectsSectionProps> = (
       relatedContentIds: [],
       notes: '',
     });
+    setProjectFormError(null);
     setIsEditModalOpen(true);
   };
 
   const handleOpenEditModal = (proj: Project) => {
     setEditingProject({ ...proj });
+    setProjectFormError(null);
     setIsEditModalOpen(true);
   };
 
   const handleSaveProjectForm = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editingProject || !editingProject.title?.trim()) return;
-
-    onSaveProject(editingProject);
+    if (!editingProject) return;
+    const validationError = validateProjectInput({
+      title: editingProject.title || '',
+      description: editingProject.description || '',
+      notes: editingProject.notes || '',
+      startDate: editingProject.startDate,
+      deadline: editingProject.deadline,
+    });
+    if (validationError) {
+      const messages: Record<typeof validationError, string> = {
+        title_required: isNl ? 'Geef je project een naam.' : 'Enter a project name.',
+        title_too_long: isNl ? 'De projectnaam mag maximaal 160 tekens bevatten.' : 'Project name must be 160 characters or fewer.',
+        description_too_long: isNl ? 'De omschrijving mag maximaal 5000 tekens bevatten.' : 'Description must be 5000 characters or fewer.',
+        notes_too_long: isNl ? 'Notities mogen maximaal 5000 tekens bevatten.' : 'Notes must be 5000 characters or fewer.',
+        invalid_start_date: isNl ? 'Kies een geldige startdatum.' : 'Choose a valid start date.',
+        invalid_deadline: isNl ? 'Kies een geldige deadline.' : 'Choose a valid deadline.',
+        deadline_before_start: isNl ? 'De deadline kan niet vóór de startdatum liggen.' : 'Deadline cannot be before the start date.',
+      };
+      setProjectFormError(messages[validationError]);
+      return;
+    }
+    setProjectFormError(null);
+    onSaveProject({ ...editingProject, title: editingProject.title!.trim() });
     setIsEditModalOpen(false);
     setEditingProject(null);
   };
@@ -160,7 +189,7 @@ export const MarilunaProjectsSection: React.FC<MarilunaProjectsSectionProps> = (
   };
 
   const handleAddTaskToProject = (proj: Project) => {
-    if (!newTaskTitle.trim()) return;
+    if (!newTaskTitle.trim() || newTaskTitle.trim().length > 160) return;
 
     const newTaskId = 't-' + Date.now();
     const newTask: Task = {
@@ -170,13 +199,14 @@ export const MarilunaProjectsSection: React.FC<MarilunaProjectsSectionProps> = (
       realm: 'mariluna',
       category: 'project',
       projectId: proj.id,
+      goalId: proj.goalId,
       priority: newTaskPriority === 'normal' ? 'medium' : newTaskPriority,
-      dueDate: new Date().toISOString().split('T')[0],
+      dueDate: getLocalDateString(),
       estimatedDuration: 30,
       recurring: 'none',
       status: 'todo',
       subtasks: [],
-      createdAt: new Date().toISOString().split('T')[0],
+      createdAt: getLocalDateString(),
     };
 
     onSaveTask(newTask);
@@ -379,6 +409,17 @@ export const MarilunaProjectsSection: React.FC<MarilunaProjectsSectionProps> = (
             </button>
           );
         })}
+      </div>
+
+      <div>
+        <input
+          type="search"
+          value={projectSearch}
+          onChange={(e) => setProjectSearch(e.target.value)}
+          placeholder={isNl ? 'Zoek projecten, omschrijvingen en notities...' : 'Search projects, descriptions and notes...'}
+          aria-label={isNl ? 'Zoek Mariluna-projecten' : 'Search Mariluna projects'}
+          className="w-full rounded-xl border border-[#DCD3C4] bg-[#FAF8F3] px-4 py-3 text-xs text-[#2C2825] placeholder:text-[#8C8174] focus:outline-none focus:border-[#8C7654]"
+        />
       </div>
 
       {/* Project Grid */}
@@ -699,6 +740,7 @@ export const MarilunaProjectsSection: React.FC<MarilunaProjectsSectionProps> = (
               <div className="flex gap-2">
                 <input
                   type="text"
+                  maxLength={160}
                   placeholder={isNl ? 'Nieuwe taak voor dit project toevoegen...' : 'Add new task for this project...'}
                   value={newTaskTitle}
                   onChange={(e) => setNewTaskTitle(e.target.value)}
@@ -722,6 +764,7 @@ export const MarilunaProjectsSection: React.FC<MarilunaProjectsSectionProps> = (
                 <button
                   type="button"
                   onClick={() => handleAddTaskToProject(selectedProject)}
+                  disabled={!newTaskTitle.trim() || newTaskTitle.trim().length > 160}
                   className="px-3 py-2 rounded-xl bg-[#2C2825] text-[#FAF8F3] text-xs font-medium hover:bg-[#433D37] transition cursor-pointer shrink-0"
                 >
                   <Plus className="w-3.5 h-3.5" />
@@ -980,6 +1023,11 @@ export const MarilunaProjectsSection: React.FC<MarilunaProjectsSectionProps> = (
             </div>
 
             <form onSubmit={handleSaveProjectForm} className="space-y-3.5">
+              {projectFormError && (
+                <p role="alert" className="rounded-xl border border-rose-300 bg-rose-50 px-3 py-2 text-xs text-rose-800">
+                  {projectFormError}
+                </p>
+              )}
               <div>
                 <label className="block text-[11px] font-semibold text-[#7A7167] uppercase tracking-wider mb-1">
                   {isNl ? 'Projectnaam *' : 'Project Name *'}
@@ -987,6 +1035,7 @@ export const MarilunaProjectsSection: React.FC<MarilunaProjectsSectionProps> = (
                 <input
                   type="text"
                   required
+                  maxLength={160}
                   placeholder={isNl ? 'Bijv. Lancering Herfstcollectie' : 'E.g. Autumn Collection Launch'}
                   value={editingProject.title || ''}
                   onChange={(e) => setEditingProject({ ...editingProject, title: e.target.value })}
@@ -1004,6 +1053,7 @@ export const MarilunaProjectsSection: React.FC<MarilunaProjectsSectionProps> = (
                   value={editingProject.description || ''}
                   onChange={(e) => setEditingProject({ ...editingProject, description: e.target.value })}
                   rows={2}
+                  maxLength={5000}
                   className="w-full px-3 py-2 rounded-xl bg-[#FFFFFF] border border-[#DDD4C5] text-xs text-[#2C2825] focus:outline-none focus:border-[#8C7654] resize-none"
                 />
               </div>
@@ -1068,6 +1118,7 @@ export const MarilunaProjectsSection: React.FC<MarilunaProjectsSectionProps> = (
                   </label>
                   <input
                     type="date"
+                    max={editingProject.deadline || undefined}
                     value={editingProject.startDate || ''}
                     onChange={(e) => setEditingProject({ ...editingProject, startDate: e.target.value || undefined })}
                     className="w-full px-2.5 py-2 rounded-xl bg-[#FFFFFF] border border-[#DDD4C5] text-xs text-[#2C2825]"
@@ -1080,6 +1131,7 @@ export const MarilunaProjectsSection: React.FC<MarilunaProjectsSectionProps> = (
                   </label>
                   <input
                     type="date"
+                    min={editingProject.startDate || undefined}
                     value={editingProject.deadline || ''}
                     onChange={(e) => setEditingProject({ ...editingProject, deadline: e.target.value || undefined })}
                     className="w-full px-2.5 py-2 rounded-xl bg-[#FFFFFF] border border-[#DDD4C5] text-xs text-[#2C2825]"
@@ -1094,6 +1146,7 @@ export const MarilunaProjectsSection: React.FC<MarilunaProjectsSectionProps> = (
                 <textarea
                   placeholder={isNl ? 'Aantekeningen of ideeën...' : 'Notes or ideas...'}
                   value={editingProject.notes || ''}
+                  maxLength={5000}
                   onChange={(e) => setEditingProject({ ...editingProject, notes: e.target.value })}
                   rows={2}
                   className="w-full px-3 py-2 rounded-xl bg-[#FFFFFF] border border-[#DDD4C5] text-xs text-[#2C2825] focus:outline-none focus:border-[#8C7654] resize-none"

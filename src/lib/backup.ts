@@ -3,6 +3,14 @@ import { saveState } from './storage';
 
 export const ALCHEMY_BACKUP_FORMAT = 'p-m-alchemy-backup';
 export const ALCHEMY_BACKUP_VERSION = 1;
+export const ALCHEMY_APP_SCHEMA_VERSION = 1;
+export const MAX_ALCHEMY_BACKUP_BYTES = 15 * 1024 * 1024;
+
+/** Keep untrusted backup imports bounded before reading them into browser memory. */
+export function isBackupFileSizeAllowed(size: number): boolean {
+  return Number.isSafeInteger(size) && size >= 0 && size <= MAX_ALCHEMY_BACKUP_BYTES;
+}
+
 
 export interface AlchemyBackupEnvelope {
   format: typeof ALCHEMY_BACKUP_FORMAT;
@@ -37,7 +45,7 @@ export async function createAlchemyBackup(payload: AppState): Promise<AlchemyBac
   return {
     format: ALCHEMY_BACKUP_FORMAT,
     backupVersion: ALCHEMY_BACKUP_VERSION,
-    appSchemaVersion: 1,
+    appSchemaVersion: ALCHEMY_APP_SCHEMA_VERSION,
     exportedAt: new Date().toISOString(),
     checksumAlgorithm: 'SHA-256',
     checksum: await sha256(serialized),
@@ -62,6 +70,12 @@ export async function verifyAlchemyBackup(input: unknown): Promise<AlchemyBackup
   if (!Number.isInteger(candidate.appSchemaVersion) || (candidate.appSchemaVersion ?? 0) < 1) {
     throw new Error('De appgegevensversie in deze back-up is ongeldig.');
   }
+  if ((candidate.appSchemaVersion ?? 0) > ALCHEMY_APP_SCHEMA_VERSION) {
+    throw new Error('Deze back-up is gemaakt met een nieuwere Alchemy-versie. Werk Alchemy bij voordat je deze herstelt.');
+  }
+  if (!/^[a-f0-9]{64}$/i.test(candidate.checksum)) {
+    throw new Error('De integriteitscontrole in deze back-up heeft een ongeldig formaat.');
+  }
   if (typeof candidate.exportedAt !== 'string' || Number.isNaN(Date.parse(candidate.exportedAt))) {
     throw new Error('De exportdatum in deze back-up is ongeldig.');
   }
@@ -69,16 +83,35 @@ export async function verifyAlchemyBackup(input: unknown): Promise<AlchemyBackup
   const payload = candidate.payload as AppState;
   const requiredArrays: (keyof AppState)[] = [
     'tasks', 'goals', 'ideas', 'projects', 'calendarEvents', 'memories',
-    'dailyCheckIns', 'notifications', 'proactiveSuggestions',
+    'dailyCheckIns', 'notifications', 'proactiveSuggestions', 'chatHistory',
   ];
   for (const key of requiredArrays) {
     if (!Array.isArray(payload[key])) {
       throw new Error(`De back-up is onvolledig: ${String(key)} ontbreekt of is ongeldig.`);
     }
   }
-  if (!payload.foundation || typeof payload.foundation !== 'object' ||
-      !payload.integrations || typeof payload.integrations !== 'object') {
-    throw new Error('De basisgegevens van de back-up ontbreken.');
+
+  const requiredObjects: (keyof AppState)[] = [
+    'lifeProfile', 'contentPlan', 'personalStyle', 'nutrition', 'cycleProfile',
+    'wellbeing', 'notificationSettings', 'foundation', 'integrations',
+  ];
+  for (const key of requiredObjects) {
+    const value = payload[key];
+    if (!value || typeof value !== 'object' || Array.isArray(value)) {
+      throw new Error(`De back-up is onvolledig: ${String(key)} ontbreekt of is ongeldig.`);
+    }
+  }
+
+  if (typeof payload.isSampleData !== 'boolean' ||
+      !['not_started', 'in_progress', 'skipped', 'completed'].includes(payload.setupStatus)) {
+    throw new Error('De algemene Alchemy-status in de back-up is ongeldig.');
+  }
+  const foundation = payload.foundation as AppState['foundation'];
+  const integrations = payload.integrations as AppState['integrations'];
+  if (!foundation.aboutYou || typeof foundation.aboutYou !== 'object' || Array.isArray(foundation.aboutYou) ||
+      !integrations.calendar || typeof integrations.calendar !== 'object' || Array.isArray(integrations.calendar) ||
+      !integrations.gmail || typeof integrations.gmail !== 'object' || Array.isArray(integrations.gmail)) {
+    throw new Error('De basisgegevens of integraties van de back-up zijn onvolledig.');
   }
 
   const expected = await sha256(stablePayloadString(payload));
@@ -93,7 +126,10 @@ export async function restoreAlchemyBackup(input: unknown): Promise<AppState> {
   const verified = await verifyAlchemyBackup(input);
   // This is an explicit restore operation. Callers must obtain user confirmation
   // before invoking it; no import happens merely by selecting or parsing a file.
-  saveState(verified.payload);
+  const saved = saveState(verified.payload);
+  if (!saved) {
+    throw new Error('De back-up is gecontroleerd, maar kon niet lokaal worden opgeslagen. Maak ruimte vrij of controleer de browseropslag en probeer opnieuw.');
+  }
   return verified.payload;
 }
 

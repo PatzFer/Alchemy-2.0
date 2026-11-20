@@ -128,6 +128,7 @@ export interface Idea {
   tags?: string[];
   notes?: string;
   sparringNotes?: string;
+  sparringMessages?: { id: string; role: 'user' | 'assistant'; content: string; timestamp: string }[];
   convertedToType?: 'content' | 'project' | 'task';
 }
 
@@ -450,7 +451,7 @@ export interface ContentPlan {
 }
 
 export interface AssistantAction {
-  type: 'SUGGEST_TASK' | 'RESCHEDULE_TASK' | 'ADD_MEMORY' | 'BREAKDOWN_GOAL' | 'CREATE_PROJECT';
+  type: 'SUGGEST_TASK' | 'RESCHEDULE_TASK' | 'ADD_MEMORY' | 'CREATE_PROJECT' | 'CREATE_CONTENT';
   label: string;
   payload: any;
 }

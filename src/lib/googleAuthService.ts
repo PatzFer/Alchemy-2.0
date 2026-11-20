@@ -2,15 +2,61 @@ import firebaseConfig from '../../firebase-applet-config.json';
 import { MarilunaGmailMessage, CalendarEvent, InstagramPostItem } from '../types';
 
 type GoogleService = 'calendar' | 'gmail';
-const cachedAccessTokens: Record<GoogleService, string | null> = {
+interface CachedGoogleToken {
+  value: string;
+  expiresAt: number;
+}
+const cachedAccessTokens: Record<GoogleService, CachedGoogleToken | null> = {
   calendar: null,
   gmail: null,
 };
 
-export const getCachedAccessToken = (service: GoogleService) => cachedAccessTokens[service];
+/** Keep short-lived provider tokens in memory only; never write them to browser storage. */
+export const getCachedAccessToken = (service: GoogleService): string | null => {
+  const cached = cachedAccessTokens[service];
+  if (!cached) return null;
+  // Treat tokens as expired one minute early to avoid sending a nearly-expired token.
+  if (cached.expiresAt <= Date.now() + 60_000) {
+    cachedAccessTokens[service] = null;
+    return null;
+  }
+  return cached.value;
+};
 
-export const setCachedAccessToken = (service: GoogleService, token: string | null) => {
-  cachedAccessTokens[service] = token;
+export const setCachedAccessToken = (
+  service: GoogleService,
+  token: string | null,
+  expiresInSeconds = 3500,
+) => {
+  if (!token) {
+    cachedAccessTokens[service] = null;
+    return;
+  }
+  const boundedExpiry = Number.isFinite(expiresInSeconds)
+    ? Math.min(Math.max(expiresInSeconds, 60), 3600)
+    : 3500;
+  cachedAccessTokens[service] = {
+    value: token,
+    expiresAt: Date.now() + boundedExpiry * 1000,
+  };
+};
+
+/** Revoke the current in-memory Google grant when GIS is available, then always clear it locally. */
+export const revokeGoogleAccessToken = async (service: GoogleService): Promise<void> => {
+  const token = cachedAccessTokens[service]?.value;
+  cachedAccessTokens[service] = null;
+  if (!token || typeof window === 'undefined') return;
+  const revoke = window.google?.accounts?.oauth2?.revoke;
+  if (typeof revoke !== 'function') return;
+  await new Promise<void>((resolve) => {
+    try {
+      revoke(token, () => resolve());
+      // Google may not invoke its callback in restricted/offline browser contexts.
+      window.setTimeout(resolve, 2500);
+    } catch {
+      resolve();
+    }
+  });
 };
 
 const CLIENT_ID =
@@ -75,7 +121,7 @@ export const googleSignInForService = async (
               return reject(new Error('Geen OAuth access token ontvangen.'));
             }
 
-            cachedAccessTokens[service] = response.access_token;
+            setCachedAccessToken(service, response.access_token, Number(response.expires_in) || 3500);
             const grantedScopesStr = response.scope || fullScopes.join(' ');
             const grantedScopes = grantedScopesStr.split(' ');
 

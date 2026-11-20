@@ -1,12 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createAlchemyBackup, verifyAlchemyBackup } from './backup';
+import { createAlchemyBackup, verifyAlchemyBackup, restoreAlchemyBackup } from './backup';
+import { INITIAL_STATE } from './storage';
 
-const minimalState: any = {
-  tasks: [], goals: [], ideas: [], projects: [], calendarEvents: [], memories: [],
-  dailyCheckIns: [], notifications: [], proactiveSuggestions: [],
-  foundation: {}, integrations: {},
-};
+const minimalState = structuredClone(INITIAL_STATE);
 
 test('Alchemy backup can be created and verified without changing its payload', async () => {
   const backup = await createAlchemyBackup(minimalState);
@@ -45,4 +42,58 @@ test('Alchemy backup verification rejects invalid schema versions and export dat
     ...backup,
     exportedAt: 'not-a-date',
   }), /exportdatum.*ongeldig/);
+});
+
+
+test('backup restore does not report success when local storage is unavailable', async () => {
+  const backup = await createAlchemyBackup(minimalState);
+  await assert.rejects(
+    () => restoreAlchemyBackup(backup),
+    /kon niet lokaal worden opgeslagen/,
+  );
+});
+
+
+test('backup verification rejects backups from a newer app schema', async () => {
+  const backup = await createAlchemyBackup(minimalState);
+  await assert.rejects(() => verifyAlchemyBackup({
+    ...backup,
+    appSchemaVersion: backup.appSchemaVersion + 1,
+  }), /nieuwere Alchemy-versie/);
+});
+
+test('backup verification rejects malformed integrity hashes before comparing payloads', async () => {
+  const backup = await createAlchemyBackup(minimalState);
+  await assert.rejects(() => verifyAlchemyBackup({
+    ...backup,
+    checksum: 'not-a-sha256-hash',
+  }), /ongeldig formaat/);
+});
+
+test('backup verification requires the full Alchemy state contract', async () => {
+  const backup = await createAlchemyBackup(minimalState);
+  for (const payload of [
+    { ...minimalState, chatHistory: undefined },
+    { ...minimalState, nutrition: undefined },
+    { ...minimalState, foundation: { ...minimalState.foundation, aboutYou: [] } },
+    { ...minimalState, integrations: { ...minimalState.integrations, calendar: null } },
+    { ...minimalState, setupStatus: 'unknown' },
+  ]) {
+    const malformed = { ...backup, payload, checksum: await (async () => {
+      // Recreate a valid checksum so this test exercises schema validation, not tampering.
+      const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify(payload)));
+      return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('');
+    })() };
+    await assert.rejects(() => verifyAlchemyBackup(malformed), /onvolledig|ongeldig/);
+  }
+});
+
+test('backup file size guard accepts normal files and rejects oversized or invalid sizes', async () => {
+  const { isBackupFileSizeAllowed, MAX_ALCHEMY_BACKUP_BYTES } = await import('./backup');
+  assert.equal(isBackupFileSizeAllowed(0), true);
+  assert.equal(isBackupFileSizeAllowed(MAX_ALCHEMY_BACKUP_BYTES), true);
+  assert.equal(isBackupFileSizeAllowed(MAX_ALCHEMY_BACKUP_BYTES + 1), false);
+  assert.equal(isBackupFileSizeAllowed(-1), false);
+  assert.equal(isBackupFileSizeAllowed(Number.NaN), false);
+  assert.equal(isBackupFileSizeAllowed(Number.POSITIVE_INFINITY), false);
 });

@@ -1,5 +1,6 @@
 import { Task, CalendarEvent, DailyCheckIn } from '../../types';
 import { BrainCapacityLevel, BrainCapacityAssessment } from './types';
+import { calculateBusyMinutes } from '../scheduleCapacity';
 
 /**
  * CAPACITY ENGINE
@@ -16,16 +17,8 @@ export function assessCapacity(
   checkIn?: DailyCheckIn,
   tasks: Task[] = []
 ): BrainCapacityAssessment {
-  // 1. Calculate busy minutes from scheduled events
-  let busyMinutes = 0;
-  events.forEach((ev) => {
-    if (ev.startTime && ev.endTime) {
-      const [sh, sm] = ev.startTime.split(':').map(Number);
-      const [eh, em] = ev.endTime.split(':').map(Number);
-      const dur = (eh * 60 + em) - (sh * 60 + sm);
-      if (dur > 0) busyMinutes += dur;
-    }
-  });
+  // Count the union of scheduled intervals so overlapping appointments are not double-counted.
+  const busyMinutes = calculateBusyMinutes(events);
 
   // Standard daily waking available window: nominal 8 hours (480 mins)
   const freeMinutes = Math.max(0, 480 - busyMinutes);
@@ -95,6 +88,14 @@ export function evaluateTaskFit(
       fits: false,
       recommendation: 'reschedule_later',
       reason: 'Je voelt je niet fit. Stel deze taak uit naar een dag met meer herstelde energie.',
+    };
+  }
+
+  if (duration > capacity.freeMinutes) {
+    return {
+      fits: false,
+      recommendation: duration >= 90 ? 'split_task' : 'reschedule_later',
+      reason: `Er is nog ${capacity.freeMinutes} minuten vrije tijd, maar deze taak vraagt ongeveer ${duration} minuten.`,
     };
   }
 

@@ -25,6 +25,7 @@ interface MarilunaIdeaSparringModalProps {
   projects: Project[];
   goals: Goal[];
   onSaveIdeaNotes: (ideaId: string, notes: string) => void;
+  onSaveSparringMessages: (ideaId: string, messages: SparringMessage[]) => void;
   onConvertToContent: (idea: Idea, initialTitle?: string, initialNotes?: string) => void;
   onConvertToProject: (idea: Idea, initialTitle?: string, initialDescription?: string) => void;
   onConvertToTask: (idea: Idea, initialTitle?: string) => void;
@@ -39,15 +40,15 @@ interface SparringMessage {
 }
 
 const STRATEGIC_PROMPTS = [
-  'Werk dit idee verder uit.',
-  'Is hier een goede contentreeks van te maken?',
-  'Welke invalshoeken zie je?',
-  'Maak hier 5 mogelijke posts van.',
-  'Wat ontbreekt er nog?',
-  'Challenge mijn idee.',
-  'Maak dit concreter.',
-  'Hoe zou jij dit positioneren?',
-  'Kan dit een groter project worden?',
+  'Help me dit verder te verkennen.',
+  'Wat zit hier volgens jou precies achter?',
+  'Welke verbanden of mogelijkheden zie je?',
+  'Wat is nog onduidelijk of ontbreekt?',
+  'Challenge mijn gedachte eens.',
+  'Welke verschillende vormen zou dit kunnen krijgen?',
+  'Help me de kern hiervan te vinden.',
+  'Wat zou een kleine eerste stap kunnen zijn?',
+  'Laten we dit voorlopig gewoon onderzoeken.',
 ];
 
 export const MarilunaIdeaSparringModal: React.FC<MarilunaIdeaSparringModalProps> = ({
@@ -58,6 +59,7 @@ export const MarilunaIdeaSparringModal: React.FC<MarilunaIdeaSparringModalProps>
   projects,
   goals,
   onSaveIdeaNotes,
+  onSaveSparringMessages,
   onConvertToContent,
   onConvertToProject,
   onConvertToTask,
@@ -76,16 +78,19 @@ export const MarilunaIdeaSparringModal: React.FC<MarilunaIdeaSparringModalProps>
 ${idea.content ? `\n> *${idea.content}*\n` : ''}
 ${idea.contentPillar ? `Pijler: **${idea.contentPillar}**` : ''}
 
-Als strategisch klankbord denk ik kritisch mee over de diepgang, positionering en hefboomwerking. Waar wil je de focus op leggen?`;
+Ik ben hier om met je mee te denken, verbanden te zoeken en ook eerlijk tegen te spreken waar dat helpt. We hoeven dit nog nergens naartoe te sturen. Wat houdt je op dit moment het meest bezig?`;
 
-      setMessages([
-        {
-          id: 'sparring-init',
-          role: 'assistant',
-          content: initialGreeting,
-          timestamp: new Date().toISOString(),
-        },
-      ]);
+      setMessages(
+        idea.sparringMessages && idea.sparringMessages.length > 0
+          ? idea.sparringMessages
+          : [{
+              id: 'sparring-init',
+              role: 'assistant',
+              content: initialGreeting,
+              timestamp: new Date().toISOString(),
+            }]
+      );
+      setInputText('');
     } else {
       setMessages([]);
       setInputText('');
@@ -112,6 +117,7 @@ Als strategisch klankbord denk ik kritisch mee over de diepgang, positionering e
 
     const newThread = [...messages, userMsg];
     setMessages(newThread);
+    onSaveSparringMessages(idea.id, newThread);
     setInputText('');
     setIsThinking(true);
 
@@ -134,11 +140,14 @@ Als strategisch klankbord denk ik kritisch mee over de diepgang, positionering e
       marilunaGoals: goals
         .filter((g) => g.realm === 'mariluna')
         .map((g) => ({ title: g.title, progress: g.progress })),
-      sparringRoleInstruction: `You are acting as senior strategic brand & editorial sparring partner in Mariluna Atelier.
-CRITICAL MANDATE:
-- Do NOT simply agree with or flatter the user.
-- Constructively challenge assumptions: is this too generic? Is it aligned with high-end sovereignty and quiet luxury? Is the scope too broad or too shallow?
-- Proactively suggest concrete hooks, contrasting angles, or formats.
+      sparringRoleInstruction: `You are Patricia's thoughtful creative sparring partner and idea archivist for Mariluna.
+- Start with the thought she actually shares. It may be unfinished, playful, personal, intuitive or exploratory; do not force it into a business strategy.
+- Ask one useful question at a time when clarification would help. Help her explore, challenge assumptions kindly and distinguish a promising idea from one that needs more thought.
+- Notice possible links to existing Mariluna ideas, projects and content. Suggest combinations or a gentle reminder to revisit an older idea when relevant.
+- Offer possible next forms (keep as brainstorm, project, ritual/event, content, task) without assuming every idea must become social media content.
+- Social media is not the default destination. Only help prepare posts or formats when Patricia asks or clearly chooses that route.
+- Do not invent Mariluna values or pillars. They have not yet been fully defined; ask rather than assume.
+- Be honest, warm, imaginative and grounded. Avoid generic marketing jargon and empty praise.
 - NEVER mention or leak personal domain data (cycle, personal health, measurements, personal style).`,
     };
 
@@ -150,28 +159,28 @@ CRITICAL MANDATE:
     try {
       const response = await sendChatMessage(historyPayload, context, 'mariluna');
       setIsThinking(false);
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: response.id || 'ast-' + Date.now(),
-          role: 'assistant',
-          content: response.content,
-          timestamp: response.timestamp || new Date().toISOString(),
-        },
-      ]);
+      const assistantMessage: SparringMessage = {
+        id: response.id || 'ast-' + Date.now(),
+        role: 'assistant',
+        content: response.content,
+        timestamp: response.timestamp || new Date().toISOString(),
+      };
+      const completedThread = [...newThread, assistantMessage];
+      setMessages(completedThread);
+      onSaveSparringMessages(idea.id, completedThread);
     } catch (err) {
       console.error('Sparring error:', err);
       setIsThinking(false);
       // Fallback response with genuine strategic insight
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: 'ast-' + Date.now(),
-          role: 'assistant',
-          content: generateLocalSparringResponse(idea, promptToSend),
-          timestamp: new Date().toISOString(),
-        },
-      ]);
+      const fallbackMessage: SparringMessage = {
+        id: 'ast-' + Date.now(),
+        role: 'assistant',
+        content: generateLocalSparringResponse(idea, promptToSend),
+        timestamp: new Date().toISOString(),
+      };
+      const completedThread = [...newThread, fallbackMessage];
+      setMessages(completedThread);
+      onSaveSparringMessages(idea.id, completedThread);
     }
   };
 
@@ -200,10 +209,11 @@ In plaats van eenmalige content kun je dit structureren als:
 - Een diepgaand redactioneel dossier (whitepaper / journal serie)
 Wil je dat we hier een formeel **Project** van maken zodat je er taken en deliverables aan kunt koppelen?`;
     }
-    return `Reflectie op **"${title}"**:
-Als we dit scherper positioneren binnen Mariluna, wil je focussen op de hefboomwerking. Zorg dat je niet alleen beschrijft wát het is, maar waarom het voor de doelgroep van Mariluna een onmisbaar referentiepunt wordt.
+    return `Laten we **"${title}"** eerst rustig onderzoeken.
 
-Kies hieronder een vervolgstap: wil je dit vertalen naar content, een project opzetten, of een concrete taak inplannen?`;
+Wat ik er voorlopig in zie, is een gedachte die nog ruimte mag krijgen. We hoeven er niet meteen een aanbod, project of contentstuk van te maken.
+
+Misschien helpt deze vraag om een laag dieper te gaan: wat maakt dit idee voor jou interessant — het gevoel erachter, de mogelijkheid die je erin ziet, of iets wat je nog niet helemaal kunt benoemen?`;
   };
 
   // Save conversation insights into idea notes
@@ -234,14 +244,14 @@ Kies hieronder een vervolgstap: wil je dit vertalen naar content, een project op
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="font-serif text-base sm:text-lg font-semibold text-[#2C2825]">
-                  Bespreek met Alchemy
+                  Bespreek met Jarvis
                 </h2>
                 <span className="text-[10px] tracking-wider uppercase px-2 py-0.5 rounded-full bg-[#E5DCCF] text-[#60564C] font-medium">
                   Studio Sparring
                 </span>
               </div>
               <p className="text-xs text-[#7A7167]">
-                Strategisch klankbord & kritische verfijning voor je ideeën
+                Creatief klankbord voor gedachten, ideeën en mogelijkheden
               </p>
             </div>
           </div>

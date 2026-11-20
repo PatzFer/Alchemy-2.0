@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Navigation,
   NavTab,
@@ -22,6 +22,7 @@ import { SettingsView } from './components/views/SettingsView';
 import { SecurityPrivacyCenter } from './components/views/SecurityPrivacyCenter';
 import { AppAuthLockScreen } from './components/AppAuthLockScreen';
 import { FirstTimeSetup } from './components/onboarding/FirstTimeSetup';
+import { getNextRecurringTaskDate } from './lib/taskRecurrence';
 import {
   loadState,
   saveState,
@@ -52,12 +53,13 @@ import {
   ProactiveSuggestion,
   FoundationData,
 } from './types';
-import { evaluateSmartNotifications } from './lib/notificationEngine';
+import { evaluateSmartNotifications, shouldDispatchBrowserPush } from './lib/notificationEngine';
 import { applyFoundationToAppState } from './lib/foundationDefaults';
 import { Sparkles } from 'lucide-react';
 import { MorningCheckInModal } from './components/MorningCheckInModal';
 import { purgeExpiredDailyCheckIns } from './lib/healthUtils';
-import { createAlchemyBackup, downloadAlchemyBackupFile, verifyAlchemyBackup } from './lib/backup';
+import { createAlchemyBackup, downloadAlchemyBackupFile, verifyAlchemyBackup, isBackupFileSizeAllowed } from './lib/backup';
+import { isValidCalendarDate } from './lib/calendarDate';
 
 const getLocalDateString = (date = new Date()): string => {
   const year = date.getFullYear();
@@ -68,79 +70,62 @@ const getLocalDateString = (date = new Date()): string => {
 
 export default function App() {
   const [state, setState] = useState<AppState>(() => loadState());
+  const [lastSavedAt, setLastSavedAt] = useState<string | null>(() => {
+    try { return localStorage.getItem('alchemy_last_saved_at'); } catch { return null; }
+  });
+  const [lastBackupAt, setLastBackupAt] = useState<string | null>(() => {
+    try { return localStorage.getItem('alchemy_last_backup_at'); } catch { return null; }
+  });
+  const [storageSaveError, setStorageSaveError] = useState<string | null>(null);
   const [currentTab, setCurrentTab] = useState<NavTab>('home');
   const [activeWorld, setActiveWorld] = useState<ActiveWorldFilter>('all');
   const [isAssistantOpen, setIsAssistantOpen] = useState(false);
   const [isNotificationCenterOpen, setIsNotificationCenterOpen] = useState(false);
 
   // FINAL SECURITY ARCHITECTURE: Perimeter Lock & Session Management
-  const [isAppAuthenticated, setIsAppAuthenticated] = useState<boolean | null>(true);
+  const [isAppAuthenticated, setIsAppAuthenticated] = useState<boolean | null>(null);
+  const [isPreviewMode, setIsPreviewMode] = useState(false);
   const [inactivityLocked, setInactivityLocked] = useState<boolean>(false);
   const [securityLevel, setSecurityLevel] = useState<1 | 2 | 3>(2);
   const [isSensitiveUnlocked, setIsSensitiveUnlocked] = useState<boolean>(true);
   const [inactivityTimeoutMins, setInactivityTimeoutMins] = useState<number>(15);
-  const [isSetupWizardOpen, setIsSetupWizardOpen] = useState<boolean>(false);
+  const [isSetupWizardOpen, setIsSetupWizardOpen] = useState<boolean>(() => state.setupStatus === 'not_started');
 
   const checkAuthStatus = async () => {
     try {
-      const res = await fetch('/api/auth/status');
-      if (res.ok) {
-        const data = await res.json();
-        setIsAppAuthenticated(!!data.isAppAuthenticated);
-        if (data.currentSecurityLevel) setSecurityLevel(data.currentSecurityLevel);
-        if (data.isSensitiveUnlocked !== undefined) setIsSensitiveUnlocked(data.isSensitiveUnlocked);
-        if (data.inactivityTimeoutMinutes) setInactivityTimeoutMins(data.inactivityTimeoutMinutes);
-      } else {
-        // Fail closed: an unavailable auth endpoint must never unlock private data.
-        setIsAppAuthenticated(false);
+      let res = await fetch('/api/auth/status');
+      if (!res.ok) throw new Error('Authentication status unavailable.');
+      let data = await res.json();
+
+      // The server permits this one-click preview session only when
+      // ENABLE_PREVIEW_AUTH=true and NODE_ENV is not production.
+      // Production never accepts this route; all normal credentials remain required.
+      if (!data.isAppAuthenticated) {
+        const preview = await fetch('/api/auth/preview-unlock', { method: 'POST' });
+        if (preview.ok) {
+          res = await fetch('/api/auth/status');
+          if (!res.ok) throw new Error('Authentication status unavailable after preview unlock.');
+          data = await res.json();
+        }
       }
+
+      setIsAppAuthenticated(!!data.isAppAuthenticated);
+      setIsPreviewMode(!!data.isPreviewMode);
+      if (data.currentSecurityLevel) setSecurityLevel(data.currentSecurityLevel);
+      if (data.isSensitiveUnlocked !== undefined) setIsSensitiveUnlocked(data.isSensitiveUnlocked);
+      if (data.inactivityTimeoutMinutes) setInactivityTimeoutMins(data.inactivityTimeoutMinutes);
     } catch {
-      // Fail closed when the auth service cannot be reached.
+      // Fail closed: a missing API, disabled preview or auth outage never unlocks private data.
       setIsAppAuthenticated(false);
     }
   };
 
   useEffect(() => {
-    // TEMPORARY PREVIEW BYPASS: start directly in the app while the
-    // perimeter authentication flow is being tested and configured.
-    // Restore checkAuthStatus() here before production release.
-    setIsAppAuthenticated(true);
+    void checkAuthStatus();
   }, []);
 
-  // Inactivity timeout & background activity heartbeat
-  useEffect(() => {
-    if (!isAppAuthenticated) return;
-
-    let timeoutId: NodeJS.Timeout;
-    let lastPing = Date.now();
-
-    const resetInactivityTimer = () => {
-      clearTimeout(timeoutId);
-
-      const now = Date.now();
-      if (now - lastPing > 30000) {
-        lastPing = now;
-        fetch('/api/auth/activity', { method: 'POST' }).catch(() => {});
-      }
-
-      const timeoutMs = (inactivityTimeoutMins || 15) * 60 * 1000;
-      timeoutId = setTimeout(() => {
-        fetch('/api/auth/lock-app', { method: 'POST' }).catch(() => {});
-        setIsAppAuthenticated(false);
-        setInactivityLocked(true);
-      }, timeoutMs);
-    };
-
-    const events = ['mousemove', 'keydown', 'click', 'touchstart', 'scroll'];
-    events.forEach((evt) => window.addEventListener(evt, resetInactivityTimer, { passive: true }));
-
-    resetInactivityTimer();
-
-    return () => {
-      clearTimeout(timeoutId);
-      events.forEach((evt) => window.removeEventListener(evt, resetInactivityTimer));
-    };
-  }, [isAppAuthenticated, inactivityTimeoutMins]);
+  // No automatic startup or inactivity lock in this personal-use v1.
+  // Keep the explicit manual lock action available from Settings if desired.
 
   const handleLockApp = async () => {
     try {
@@ -183,14 +168,27 @@ export default function App() {
 
   // Automatically persist changes to local storage
   useEffect(() => {
-    saveState(state);
+    // Never report a successful save when the browser rejected the write (e.g. quota exceeded).
+    if (!saveState(state)) {
+      setStorageSaveError('Je laatste wijzigingen konden niet op dit toestel worden opgeslagen. Maak eerst een back-up en controleer de beschikbare browseropslag.');
+      return;
+    }
+    setStorageSaveError(null);
+    const savedAt = new Date().toISOString();
+    setLastSavedAt(savedAt);
+    try { localStorage.setItem('alchemy_last_saved_at', savedAt); } catch { /* Timestamp is informational; state save already succeeded. */ }
   }, [state]);
 
-  // Periodic evaluation of smart notifications
+  // Prevent duplicate external pushes when React replays effects in development Strict Mode.
+  const dispatchedPushIds = useRef(new Set<string>());
+
+  // Evaluate the notification digest whenever its source data changes.
   useEffect(() => {
-    if (!state.notificationSettings?.enabled) return;
+    const settings = state.notificationSettings;
+    if (!settings?.enabled) return;
+
     const generated = evaluateSmartNotifications({
-      settings: state.notificationSettings,
+      settings,
       existingNotifications: state.notifications || [],
       tasks: state.tasks || [],
       calendarEvents: state.calendarEvents || [],
@@ -198,31 +196,44 @@ export default function App() {
       goals: state.goals || [],
       cycleProfile: state.cycleProfile,
       todayCheckIn: (state.dailyCheckIns || []).find(
-        (c) => c.date === getLocalDateString()
+        (checkIn) => checkIn.date === getLocalDateString()
       ),
     });
-    if (generated && generated.length > 0) {
-      setState((prev) => {
-        const existingIds = new Set((prev.notifications || []).map((n) => n.id));
-        const newOnes = generated.filter((n) => !existingIds.has(n.id));
-        if (newOnes.length === 0) return prev;
+    if (!generated.length) return;
 
-        // Trigger native system push notification if allowed & enabled
-        if (prev.integrations?.pushNotifications?.enabled) {
-          for (const item of newOnes) {
-            IntegrationsService.sendBrowserPush(item.title, {
-              body: item.body,
-            });
-          }
-        }
+    const existingIds = new Set((state.notifications || []).map((item) => item.id));
+    const newOnes = generated.filter((item) => !existingIds.has(item.id));
+    if (!newOnes.length) return;
 
-        return {
-          ...prev,
-          notifications: [...newOnes, ...(prev.notifications || [])].slice(0, 30),
-        };
-      });
+    // External side effects stay outside the React state updater.
+    if (shouldDispatchBrowserPush(settings, !!state.integrations?.pushNotifications?.enabled)) {
+      for (const item of newOnes) {
+        if (dispatchedPushIds.current.has(item.id)) continue;
+        dispatchedPushIds.current.add(item.id);
+        void IntegrationsService.sendBrowserPush(item.title, { body: item.body });
+      }
     }
-  }, [state.tasks, state.ideas, state.goals, state.dailyCheckIns, state.notificationSettings?.enabled]);
+
+    setState((previous) => {
+      const previousIds = new Set((previous.notifications || []).map((item) => item.id));
+      const additions = newOnes.filter((item) => !previousIds.has(item.id));
+      if (!additions.length) return previous;
+      return {
+        ...previous,
+        notifications: [...additions, ...(previous.notifications || [])].slice(0, 30),
+      };
+    });
+  }, [
+    state.tasks,
+    state.calendarEvents,
+    state.ideas,
+    state.goals,
+    state.dailyCheckIns,
+    state.cycleProfile,
+    state.notificationSettings,
+    state.notifications,
+    state.integrations?.pushNotifications?.enabled,
+  ]);
 
   const unreadNotificationCount = (state.notifications || []).filter(
     (n) => !n.read && !n.isRead
@@ -230,19 +241,48 @@ export default function App() {
 
   // Tasks handlers
   const handleToggleTask = (taskId: string) => {
-    setState((prev) => ({
-      ...prev,
-      tasks: prev.tasks.map((t) => {
-        if (t.id !== taskId) return t;
-        const newStatus = t.status === 'completed' ? 'todo' : 'completed';
-        return {
-          ...t,
-          status: newStatus,
-          missed: false,
-          completedAt: newStatus === 'completed' ? new Date().toISOString() : undefined,
-        };
-      }),
-    }));
+    setState((prev) => {
+      const current = prev.tasks.find((task) => task.id === taskId);
+      if (!current) return prev;
+
+      const completing = current.status !== 'completed';
+      const updatedTasks = prev.tasks.map((task) =>
+        task.id === taskId
+          ? {
+              ...task,
+              status: completing ? 'completed' as const : 'todo' as const,
+              missed: false,
+              completedAt: completing ? new Date().toISOString() : undefined,
+            }
+          : task
+      );
+
+      // A recurring task creates its next occurrence only when completed.
+      // Keep the original occurrence in history and reset subtasks on the new one.
+      if (completing && current.recurring !== 'none' && current.dueDate) {
+        const nextDueDate = getNextRecurringTaskDate(current.dueDate, current.recurring, getLocalDateString());
+        // Invalid legacy dates must never create malformed "NaN-NaN-NaN" tasks.
+        if (nextDueDate) {
+          const nextOccurrence: Task = {
+            ...current,
+            id: `${current.id}-${nextDueDate}-${Date.now()}`,
+            dueDate: nextDueDate,
+            status: 'todo',
+            missed: false,
+            completedAt: undefined,
+            subtasks: (current.subtasks || []).map((subtask) => ({
+              ...subtask,
+              id: `${subtask.id}-${nextDueDate}`,
+              completed: false,
+            })),
+            createdAt: nextDueDate,
+          };
+          updatedTasks.unshift(nextOccurrence);
+        }
+      }
+
+      return { ...prev, tasks: updatedTasks };
+    });
   };
 
   const handleSaveTask = (taskPayload: Partial<Task>) => {
@@ -402,11 +442,11 @@ export default function App() {
       ...prev,
       goals: prev.goals.map((g) => {
         if (g.id !== goalId) return g;
-        const updatedMilestones = g.milestones.map((m) =>
+        const updatedMilestones = (g.milestones || []).map((m) =>
           m.id === milestoneId ? { ...m, completed: !m.completed } : m
         );
         const completedCount = updatedMilestones.filter((m) => m.completed).length;
-        const progress = Math.round((completedCount / updatedMilestones.length) * 100);
+        const progress = updatedMilestones.length > 0 ? Math.round((completedCount / updatedMilestones.length) * 100) : g.progress;
         return {
           ...g,
           milestones: updatedMilestones,
@@ -527,7 +567,7 @@ export default function App() {
         id: targetId || 'i-' + Date.now() + '-' + Math.random().toString(36).substring(2, 7),
         title: ideaPayload.title || 'Untitled Idea',
         content: ideaPayload.content || '',
-        realm: ideaPayload.realm || 'mariluna',
+        realm: ideaPayload.realm || (activeWorld === 'mariluna' ? 'mariluna' : 'personal'),
         category: ideaPayload.category,
         status: ideaPayload.status || 'raw',
         createdAt: ideaPayload.createdAt || getLocalDateString(),
@@ -544,7 +584,7 @@ export default function App() {
 
   const handleConvertToProject = (ideaId: string) => {
     const idea = state.ideas.find((i) => i.id === ideaId);
-    if (!idea) return;
+    if (!idea || idea.realm !== 'mariluna') return;
 
     const newProject: Project = {
       id: 'p-' + Date.now(),
@@ -563,11 +603,12 @@ export default function App() {
       ...prev,
       projects: [...prev.projects, newProject],
       ideas: prev.ideas.map((i) =>
-        i.id === ideaId ? { ...i, status: 'converted_to_project' as const } : i
+        i.id === ideaId ? { ...i, status: 'converted_to_project' as const, convertedToType: 'project' as const } : i
       ),
     }));
 
-    setCurrentTab('mariluna');
+    setActiveWorld(idea.realm);
+    setCurrentTab(idea.realm === 'mariluna' ? 'mariluna' : 'prive');
   };
 
   const handleSaveProject = (projectData: Partial<Project>) => {
@@ -738,46 +779,96 @@ export default function App() {
 
   const handleExecuteAssistantAction = (action: any) => {
     if (!action) return;
+    const payload = action.payload || {};
+    // The action card carries the workspace selected in Jarvis. Never let a
+    // model-suggested payload silently file a task or memory in the other realm.
+    const workspace: Realm = action.workspace === 'mariluna' || action.workspace === 'personal'
+      ? action.workspace
+      : activeWorld === 'mariluna' ? 'mariluna' : 'personal';
+
     if (action.type === 'SUGGEST_TASK' || action.type === 'ADD_TASK') {
-      const payload = action.payload || {};
       handleSaveTask({
         id: 't-' + Date.now(),
-        title: payload.title || 'Recommended Action',
+        title: payload.title || 'Aanbevolen actie',
         description: payload.description || '',
-        realm: payload.realm || 'mariluna',
-        category: payload.category || 'strategy',
-        priority: 'high',
-        dueDate: getLocalDateString(),
+        realm: workspace,
+        category: payload.category || (workspace === 'mariluna' ? 'strategy' : 'self-care'),
+        priority: payload.priority === 'low' || payload.priority === 'medium' ? payload.priority : 'high',
+        dueDate: payload.dueDate || getLocalDateString(),
         estimatedDuration: payload.duration || 30,
         recurring: 'none',
         status: 'todo',
         subtasks: [],
         createdAt: getLocalDateString(),
       });
+      setActiveWorld(workspace);
       setIsAssistantOpen(false);
       setCurrentTab('tasks');
     } else if (action.type === 'RESCHEDULE_TASK') {
-      if (action.payload?.taskId) {
-        handleRescheduleTask(action.payload.taskId, action.payload.newDate);
+      const taskId = typeof payload.taskId === 'string' ? payload.taskId : '';
+      const newDate = typeof payload.newDate === 'string' ? payload.newDate : '';
+      const taskExistsInWorkspace = state.tasks.some((task) => task.id === taskId && task.realm === workspace);
+      if (taskExistsInWorkspace && isValidCalendarDate(newDate)) {
+        handleRescheduleTask(taskId, newDate);
       }
     } else if (action.type === 'ADD_MEMORY') {
       handleAddMemory({
-        content: action.payload?.content || '',
-        category: action.payload?.category || 'Insight',
-        realm: action.payload?.realm || 'mariluna',
+        content: payload.content || '',
+        category: payload.category || 'Insight',
+        realm: workspace,
       });
+    } else if (action.type === 'CREATE_PROJECT' && workspace === 'mariluna') {
+      const sourceIdeaId = typeof payload.ideaId === 'string' && state.ideas.some((idea) => idea.id === payload.ideaId)
+        ? payload.ideaId
+        : undefined;
+      handleSaveProject({
+        id: 'p-' + Date.now(),
+        title: payload.title || 'Nieuw project',
+        description: payload.description || '',
+        realm: workspace,
+        status: 'planning',
+        progress: 0,
+        taskIds: [],
+        ideaIds: sourceIdeaId ? [sourceIdeaId] : [],
+        priority: payload.priority === 'high' || payload.priority === 'low' ? payload.priority : 'normal',
+      });
+      if (sourceIdeaId) {
+        handleSaveIdea({ id: sourceIdeaId, status: 'converted_to_project', convertedToType: 'project' });
+      }
+      setActiveWorld(workspace);
+      setIsAssistantOpen(false);
+      setCurrentTab(workspace === 'mariluna' ? 'mariluna' : 'prive');
+    } else if (action.type === 'CREATE_CONTENT' && workspace === 'mariluna') {
+      const sourceIdeaId = typeof payload.ideaId === 'string' && state.ideas.some((idea) => idea.id === payload.ideaId)
+        ? payload.ideaId
+        : undefined;
+      handleAddContentPost({
+        id: 'post-' + Date.now(),
+        title: payload.title || 'Nieuw contentidee',
+        description: payload.description || '',
+        platform: payload.platform || 'Nog te bepalen',
+        status: 'idea',
+        pillar: payload.pillar || payload.theme || 'Nog te bepalen',
+        relatedIdeaId: sourceIdeaId,
+        notes: payload.notes || '',
+        createdAt: new Date().toISOString(),
+      });
+      if (sourceIdeaId) {
+        handleSaveIdea({ id: sourceIdeaId, status: 'converted', convertedToType: 'content' });
+      }
+      setActiveWorld('mariluna');
+      setIsAssistantOpen(false);
+      setCurrentTab('mariluna');
     }
   };
 
   // Sample data & backup handlers
   const handleToggleSampleData = () => {
     if (state.isSampleData) {
-      setState((prev) => ({
-        ...prev,
-        isSampleData: false,
-        tasks: [],
-        ideas: [],
-      }));
+      // Sample data spans every module. Reset the complete sample state rather
+      // than clearing only tasks and ideas, which left demo goals, events,
+      // projects and profile data mixed into a real workspace.
+      setState(resetState());
     } else {
       setState(INITIAL_STATE);
     }
@@ -787,6 +878,9 @@ export default function App() {
     try {
       const backup = await createAlchemyBackup(state);
       downloadAlchemyBackupFile(backup);
+      const exportedAt = new Date().toISOString();
+      setLastBackupAt(exportedAt);
+      try { localStorage.setItem('alchemy_last_backup_at', exportedAt); } catch { /* Backup still downloaded; status can be re-established next time. */ }
     } catch (error) {
       console.error('Alchemy backup export failed:', error);
       alert('De back-up kon niet veilig worden aangemaakt. Probeer een recente browser.');
@@ -797,6 +891,14 @@ export default function App() {
     const file = e.target.files?.[0];
     if (!file) return;
     const input = e.target;
+    // Refuse oversized imports before FileReader allocates the full file and
+    // JSON.parse duplicates it in memory. Normal Alchemy backups are far below
+    // this ceiling; the limit protects mobile browsers from accidental huge files.
+    if (!isBackupFileSizeAllowed(file.size)) {
+      alert('Dit back-upbestand is groter dan 15 MB en kan niet veilig worden geïmporteerd. Controleer of je het juiste Alchemy-bestand hebt geselecteerd.');
+      input.value = '';
+      return;
+    }
     const reader = new FileReader();
     reader.onload = async (event) => {
       try {
@@ -827,6 +929,11 @@ export default function App() {
         if (!window.confirm('Deze actie vervangt de huidige Alchemy-gegevens. Alchemy downloadt eerst automatisch een herstelkopie van je huidige gegevens. Wil je doorgaan?')) return;
         const rollbackBackup = await createAlchemyBackup(state);
         downloadAlchemyBackupFile(rollbackBackup);
+        // Persist the verified restore before changing the in-memory UI state.
+        // A quota/storage failure must never be presented as a successful restore.
+        if (!saveState(restored)) {
+          throw new Error('De back-up is geldig, maar kon niet op dit toestel worden opgeslagen. Je huidige gegevens zijn niet vervangen. Controleer de browseropslag en probeer opnieuw.');
+        }
         setState(restored);
         alert('Alchemy-back-up gecontroleerd en hersteld. Er is eerst een herstelkopie van de vorige gegevens gedownload.');
       } catch (error) {
@@ -985,6 +1092,37 @@ export default function App() {
     <div className="min-h-screen bg-[var(--app-bg)] text-[var(--text-primary)] font-sans antialiased selection:bg-[#52634A] selection:text-[#F0EBDD]">
       {/* Offline Status Badge */}
       <OfflineIndicator />
+      {isPreviewMode && (
+        <div role="status" className="mx-auto mt-3 w-[calc(100%-2rem)] max-w-7xl rounded-xl border border-amber-500/30 bg-amber-50 px-4 py-2 text-center text-xs font-medium text-amber-900">
+          Preview / Test Mode — gebruik uitsluitend testgegevens
+        </div>
+      )}
+
+      {storageSaveError && (
+        <div
+          role="alert"
+          aria-live="assertive"
+          className="sticky top-0 z-[90] mx-3 mt-3 rounded-xl border border-[#B45309]/40 bg-[#FFF7ED] px-4 py-3 text-sm text-[#9A3412] shadow-sm"
+        >
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="font-medium">{storageSaveError}</p>
+            <button
+              type="button"
+              onClick={() => {
+                if (saveState(state)) {
+                  setStorageSaveError(null);
+                  const savedAt = new Date().toISOString();
+                  setLastSavedAt(savedAt);
+                  try { localStorage.setItem('alchemy_last_saved_at', savedAt); } catch { /* Informational only. */ }
+                }
+              }}
+              className="shrink-0 rounded-lg border border-[#9A3412]/30 px-3 py-1.5 text-xs font-semibold hover:bg-[#FFEDD5]"
+            >
+              Opnieuw proberen
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Global navigation remains available inside each domain. Home is the neutral launcher. */}
       {currentTab !== 'home' && (
@@ -1052,6 +1190,8 @@ export default function App() {
         {currentTab === 'calendar' && (
           <CalendarView
             events={state.calendarEvents}
+            tasks={state.tasks}
+            onToggleTask={handleToggleTask}
             lifeProfile={state.lifeProfile}
             activeWorld={activeWorld}
             onAddEvent={handleAddCalendarEvent}
@@ -1062,6 +1202,8 @@ export default function App() {
         {currentTab === 'goals' && (
           <GoalsView
             goals={state.goals}
+            tasks={state.tasks}
+            projects={state.projects}
             activeWorld={activeWorld}
             onSaveGoal={handleSaveGoal}
             onToggleMilestone={handleToggleMilestone}
@@ -1113,7 +1255,7 @@ export default function App() {
 
         {(currentTab === 'prive' || currentTab === 'mylife' || currentTab === 'meals' || currentTab === 'nutrition') && (
           <PriveDomainView
-            initialSubTab={currentTab === 'meals' || currentTab === 'nutrition' ? 'nutrition' : 'overview'}
+            initialSubTab={currentTab === 'meals' || currentTab === 'nutrition' ? 'nutrition' : currentTab === 'prive' ? 'cycle' : 'overview'}
             lifeProfile={state.lifeProfile}
             onUpdateProfile={handleUpdateProfile}
             personalStyle={state.personalStyle}
@@ -1236,7 +1378,11 @@ export default function App() {
 
         {(currentTab === 'settings' || currentTab === 'integrations') && (
           <SettingsView
+            initialTab={currentTab === 'integrations' ? 'integrations' : 'foundation'}
+            onOpenSetupWizard={() => setIsSetupWizardOpen(true)}
             memories={state.memories}
+            lastSavedAt={lastSavedAt}
+            lastBackupAt={lastBackupAt}
             onAddMemory={handleAddMemory}
             onDeleteMemory={handleDeleteMemory}
             onUpdateMemories={handleUpdateMemories}
@@ -1297,7 +1443,7 @@ export default function App() {
       />
 
       {/* Global Quick Capture: available from every working area */}
-      {currentTab !== 'today' && (
+      {currentTab !== 'home' && (
         <button
           type="button"
           onClick={() => {
@@ -1345,6 +1491,7 @@ export default function App() {
         onExecuteAction={handleExecuteAssistantAction}
         wellbeing={state.wellbeing}
         dailyCheckIns={state.dailyCheckIns}
+        cycleProfile={state.cycleProfile}
         intentions={state.intentions}
         activeContextItem={activeContextItem}
       />
@@ -1354,7 +1501,7 @@ export default function App() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/65 backdrop-blur-sm p-4">
           <div className="w-full max-w-md rounded-2xl border border-[var(--border-strong)] bg-[var(--surface-1)] p-5 shadow-2xl">
             <div className="mb-4">
-              <p className="text-[10px] uppercase tracking-[0.2em] text-[var(--accent-secondary)]">Alchemy · Quick Capture</p>
+              <p className={`text-[10px] uppercase tracking-[0.2em] ${quickRealm === 'mariluna' ? 'text-[#D1A9B9]' : 'text-[#A2A36B]'}`}>Alchemy · Quick Capture</p>
               <h3 className="mt-1 font-serif text-2xl text-[var(--text-primary)]">Leg het even vast</h3>
               <p className="mt-1 text-xs text-[var(--text-secondary)]">Eerst bewaren, later verfijnen.</p>
             </div>
@@ -1452,14 +1599,14 @@ export default function App() {
               )}
               <div className="flex items-center gap-2">
                 <button type="button" onClick={() => setQuickRealm('personal')}
-                  className={`flex-1 rounded-lg border py-2 text-xs ${quickRealm === 'personal' ? 'border-[#B49A7A] bg-[#39312B] text-[#F0EBDD]' : 'border-[var(--border-subtle)] text-[var(--text-secondary)]'}`}>Privé</button>
+                  className={`flex-1 rounded-lg border py-2 text-xs transition ${quickRealm === 'personal' ? 'border-[#39776D] bg-[#172F2B] text-[#E8DCC7]' : 'border-[var(--border-subtle)] text-[var(--text-secondary)]'}`}>Privé</button>
                 <button type="button" onClick={() => setQuickRealm('mariluna')}
-                  className={`flex-1 rounded-lg border py-2 text-xs ${quickRealm === 'mariluna' ? 'border-[#A9B88A] bg-[#263D35] text-[#F0EBDD]' : 'border-[var(--border-subtle)] text-[var(--text-secondary)]'}`}>Mariluna</button>
+                  className={`flex-1 rounded-lg border py-2 text-xs transition ${quickRealm === 'mariluna' ? 'border-[#873F5B] bg-[#321F32] text-[#E8DCC7]' : 'border-[var(--border-subtle)] text-[var(--text-secondary)]'}`}>Mariluna</button>
               </div>
               <div className="flex justify-end gap-2 pt-1">
                 <button type="button" onClick={() => setIsQuickTaskModalOpen(false)}
                   className="rounded-lg px-3 py-2 text-xs text-[var(--text-secondary)] hover:bg-[var(--surface-2)]">Annuleren</button>
-                <button type="submit" className="rounded-lg bg-[var(--accent-primary)] px-4 py-2 text-xs font-semibold text-[#171916] hover:brightness-110">Bewaren</button>
+                <button type="submit" className={`rounded-lg px-4 py-2 text-xs font-semibold text-[#E8DCC7] hover:brightness-110 ${quickRealm === 'mariluna' ? 'bg-[#873F5B]' : 'bg-[#245047]'}`}>Bewaren</button>
               </div>
             </form>
           </div>
