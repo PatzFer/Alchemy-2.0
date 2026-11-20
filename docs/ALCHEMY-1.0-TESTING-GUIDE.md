@@ -1,6 +1,6 @@
 # Alchemy 1.0 — Private Test Guide
 
-Status: internal test build, not production-ready.
+Status: internal test build, not production-ready.\nPackage version: `1.0.0-beta.1`.
 Branch: `build/phase-2-planner`
 Last updated: 20 November 2026
 
