@@ -104,3 +104,13 @@ Do not mark a test as passed based only on source inspection or a successful com
 - [x] Browser push delivery is gated by notification settings, integration state and quiet hours; push side effects are outside React state updaters.
 - [ ] Verify the First-Time Setup wizard manually on Android and desktop.
 - [ ] Import a real Renpho CSV export and compare the imported values against the Renpho app.
+
+
+## 9. Mariluna offering editor
+
+- [x] Required offering title is validated and trimmed before save.
+- [x] Offering title, description and price limits are enforced.
+- [x] Deliverable count and per-item length are bounded.
+- [x] Validation messages follow the selected Dutch/English language.
+- [x] Pure validation helper has automated boundary tests.
+- [ ] Manually create, edit, filter, archive and delete an offering on Android and desktop.
