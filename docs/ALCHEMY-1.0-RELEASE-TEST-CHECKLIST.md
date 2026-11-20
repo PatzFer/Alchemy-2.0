@@ -6,11 +6,13 @@ This checklist separates a usable test candidate from a production release. A ch
 
 ## 1. Automated quality gates
 
-- [x] GitHub Actions TypeScript check (`bun run lint`) passes on commit `a625ef7`.
-- [x] Production client and server build (`bun run build`) passes on commit `a625ef7`.
+- [x] Locked dependency installation passed in GitHub Actions run 44787152240 on commit `258444ca`.
+- [x] TypeScript check (`bun run lint`) passed on commit `258444ca`.
+- [x] Supabase migration safety checks passed on commit `258444ca`.
+- [x] Privacy and persistence regression tests (`bun run test`) passed on commit `258444ca`.
+- [x] Production client and server build (`bun run build`) passed on commit `258444ca`.
 - [ ] No unreviewed dependency or lockfile drift.
-- [x] Supabase migration naming, unique versions, required tables, RLS and server-only grants pass static CI checks (commit `3482929`).
-- [x] CI result is visible on tested commit `a625ef7`.
+- [ ] Live Supabase staging migration, read/write and restore tests completed.
 
 ## 2. First-launch and navigation
 
