@@ -1174,3 +1174,13 @@ A user can reliably open Alchemy without a startup security interstitial; captur
 - Calendar occupied-time totals now use the overlap-safe interval union helper so overlapping appointments are not counted twice.
 - Added calendar task regression tests to the automated CI suite.
 - Week-view task previews are interactive: tasks can be completed or reopened without leaving the calendar, and the click does not change the selected calendar day.
+
+
+## Progress log — 20 November 2026 (Jarvis capacity and task planning)
+
+- Jarvis capacity now uses the shared overlap-safe calendar interval calculation.
+- Task-fit recommendations now compare estimated duration with both remaining free minutes and the energy/capacity limit; oversized tasks can be split or deferred with a concrete explanation.
+- Daily planning now counts overlapping appointments once and parses date-only values as local calendar dates rather than UTC timestamps.
+- Added automated coverage for Jarvis capacity, task fit, deterministic task splitting and local daily planning.
+- Task lists now sort open work by earliest due date, then priority, while completed work is grouped last and ordered by completion date.
+- Added regression tests for task ordering and completed-task grouping.
