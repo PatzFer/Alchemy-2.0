@@ -1121,3 +1121,12 @@ A user can reliably open Alchemy without a startup security interstitial; captur
 
 - Extended the Mariluna offering catalogue with independent type and status filters (active, draft and archived), while preserving search across names, descriptions and included deliverables.
 - Extracted catalogue filtering into a pure helper and added tests for combined filters, legacy records without status and non-mutating result order.
+
+
+## Progress log — 20 November 2026 (task list search)
+
+- Added a search field to the shared Focus & Taken list for both Privé and Mariluna workspaces.
+- Search covers task titles, descriptions, notes, categories, due dates and subtask titles.
+- Search combines with workspace, active/completed and priority filters without mutating task records or changing their source order.
+- Extracted the filtering behavior into a pure helper and added automated tests for search fields, combined filters, whitespace and case handling.
+- This is a lightweight daily-use improvement; no external AI or paid service is required.
