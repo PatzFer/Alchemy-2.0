@@ -27,6 +27,13 @@ import {
 import { Project, ProjectStatus, Task, Goal, Idea, ContentPost, Realm } from '../../types';
 import { filterProjectList, validateProjectInput } from '../../lib/projectList';
 
+const getLocalDateString = (date = new Date()): string => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 interface MarilunaProjectsSectionProps {
   projects: Project[];
   tasks: Task[];
@@ -182,7 +189,7 @@ export const MarilunaProjectsSection: React.FC<MarilunaProjectsSectionProps> = (
   };
 
   const handleAddTaskToProject = (proj: Project) => {
-    if (!newTaskTitle.trim()) return;
+    if (!newTaskTitle.trim() || newTaskTitle.trim().length > 160) return;
 
     const newTaskId = 't-' + Date.now();
     const newTask: Task = {
@@ -193,12 +200,12 @@ export const MarilunaProjectsSection: React.FC<MarilunaProjectsSectionProps> = (
       category: 'project',
       projectId: proj.id,
       priority: newTaskPriority === 'normal' ? 'medium' : newTaskPriority,
-      dueDate: new Date().toISOString().split('T')[0],
+      dueDate: getLocalDateString(),
       estimatedDuration: 30,
       recurring: 'none',
       status: 'todo',
       subtasks: [],
-      createdAt: new Date().toISOString().split('T')[0],
+      createdAt: getLocalDateString(),
     };
 
     onSaveTask(newTask);
@@ -1108,6 +1115,7 @@ export const MarilunaProjectsSection: React.FC<MarilunaProjectsSectionProps> = (
                   </label>
                   <input
                     type="date"
+                    max={editingProject.deadline || undefined}
                     value={editingProject.startDate || ''}
                     onChange={(e) => setEditingProject({ ...editingProject, startDate: e.target.value || undefined })}
                     className="w-full px-2.5 py-2 rounded-xl bg-[#FFFFFF] border border-[#DDD4C5] text-xs text-[#2C2825]"
@@ -1120,6 +1128,7 @@ export const MarilunaProjectsSection: React.FC<MarilunaProjectsSectionProps> = (
                   </label>
                   <input
                     type="date"
+                    min={editingProject.startDate || undefined}
                     value={editingProject.deadline || ''}
                     onChange={(e) => setEditingProject({ ...editingProject, deadline: e.target.value || undefined })}
                     className="w-full px-2.5 py-2 rounded-xl bg-[#FFFFFF] border border-[#DDD4C5] text-xs text-[#2C2825]"
@@ -1134,6 +1143,7 @@ export const MarilunaProjectsSection: React.FC<MarilunaProjectsSectionProps> = (
                 <textarea
                   placeholder={isNl ? 'Aantekeningen of ideeën...' : 'Notes or ideas...'}
                   value={editingProject.notes || ''}
+                  maxLength={5000}
                   onChange={(e) => setEditingProject({ ...editingProject, notes: e.target.value })}
                   rows={2}
                   className="w-full px-3 py-2 rounded-xl bg-[#FFFFFF] border border-[#DDD4C5] text-xs text-[#2C2825] focus:outline-none focus:border-[#8C7654] resize-none"
