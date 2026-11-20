@@ -970,3 +970,10 @@ A user can reliably open Alchemy without a startup security interstitial; captur
 - The guard requires the core collections, module objects, setup flags, foundation identity object and calendar/Gmail integration records needed by the current app contract.
 - Added a regression test proving an incomplete write returns false and leaves the last known-good local payload unchanged.
 - This is a local write-safety improvement only; it does not activate cloud sync or change the current storage provider.
+
+
+## Progress log — 20 November 2026 (authentication lockout regression coverage)
+
+- Added regression tests for the existing failed-authentication lockout: the fifth failed attempt blocks the client key, a verified-login clear resets it, and lockout state is isolated between client keys.
+- This change adds test coverage only; it does not change authentication policy or claim persistence of lockout state across server restarts.
+- Durable sessions, passkey/TOTP configuration and security-vault persistence remain unresolved release blockers; no in-memory security state has been represented as production durable.
