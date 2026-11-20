@@ -53,6 +53,8 @@ This checklist separates a usable test candidate from a production release. A ch
 - [ ] Health Connect is clearly unavailable until a native Android bridge is delivered.
 - [ ] Renpho CSV import is available in Wellbeing → Progress; manually verify a real export and duplicate-date merge.
 - [ ] Integration errors are visible and do not create fake successful sync timestamps.
+- [x] Quiet-hours boundaries and malformed clock settings are covered by automated tests.
+- [x] A configured daily notification limit of zero is respected; invalid limits are bounded safely.
 
 - [x] Jarvis action blocks accept only supported action types and malformed/unsupported JSON is not shown to the user.\n- [x] Reschedule actions validate exact task ownership and real calendar dates before applying.\n- [x] Jarvis defaults to local privacy mode; Gemini free-tier data-use warning is visible before opt-in.\n\n## 6. Jarvis
 
