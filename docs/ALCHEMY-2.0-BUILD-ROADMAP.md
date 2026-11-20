@@ -1118,3 +1118,6 @@ A user can reliably open Alchemy without a startup security interstitial; captur
 - Added browser-side field length limits to prevent oversized input before save.
 - Added automated regression tests for valid input and each validation boundary.
 - This improves the reliability of the user-managed service catalogue without expanding Mariluna into unnecessary content-management scope.
+
+- Extended the Mariluna offering catalogue with independent type and status filters (active, draft and archived), while preserving search across names, descriptions and included deliverables.
+- Extracted catalogue filtering into a pure helper and added tests for combined filters, legacy records without status and non-mutating result order.
