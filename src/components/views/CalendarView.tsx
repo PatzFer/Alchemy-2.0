@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { CalendarEvent, ActiveWorldFilter, Realm, LifeProfile, IntegrationsState } from '../../types';
 import { findDuplicateCalendarEvent, validateCalendarTimeRange } from '../../lib/calendarValidation';
+import { shiftCalendarDate } from '../../lib/calendarDate';
 
 interface CalendarViewProps {
   events: CalendarEvent[];
@@ -114,15 +115,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
 
   // Date shifting according to active view mode
   const shiftDate = (delta: number) => {
-    const d = parseLocalDate(currentDateStr);
-    if (viewMode === 'day') {
-      d.setDate(d.getDate() + delta);
-    } else if (viewMode === 'week') {
-      d.setDate(d.getDate() + delta * 7);
-    } else if (viewMode === 'month') {
-      d.setMonth(d.getMonth() + delta);
-    }
-    setCurrentDateStr(formatLocalDate(d));
+    setCurrentDateStr(shiftCalendarDate(currentDateStr, viewMode, delta));
   };
 
   // Filter events by realm if applicable
