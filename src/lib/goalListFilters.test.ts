@@ -6,6 +6,7 @@ import type { Goal } from '../types';
 const goal = (overrides: Partial<Goal> = {}): Goal => ({
   id: 'g1', title: 'Meer rust in mijn week', description: 'Ruimte voor mezelf',
   realm: 'personal', timeframe: 'monthly', status: 'active', progress: 0,
+  connectedTaskIds: [], connectedProjectIds: [],
   targetDate: '2026-12-20', milestones: [{ id: 'm1', title: 'Avonden vrijhouden', completed: false }],
   ...overrides,
 });
