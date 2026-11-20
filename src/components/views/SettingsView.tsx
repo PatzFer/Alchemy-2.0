@@ -155,6 +155,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         <p className="text-xs text-[var(--text-secondary)] mt-1 font-light">
           {isNl ? 'Beheer wat Jarvis mag weten, stel meldingen en stille uren af en bepaal je privacy.' : 'Inspect what Jarvis knows, calibrate quiet hours, and configure data privacy.'}
         </p>
+        <p className="mt-2 text-[10px] font-medium tracking-wide text-[var(--text-muted)]">
+          Alchemy 1.0.0-beta.1 · {isNl ? 'interne testversie' : 'internal test build'}
+        </p>
 
         {onOpenSetupWizard && (
           <button
