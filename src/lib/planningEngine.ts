@@ -103,6 +103,19 @@ export function calculateDayCapacity(
   // 2. Scheduled calendar events for selected date
   const dateEvents = events.filter((e) => e.date === selectedDate);
   const scheduledEventsMinutes = calculateBusyMinutes(dateEvents);
+  const workHoursBlock: CalendarEvent[] = isWorkDay
+    ? [{
+        id: 'capacity-work-hours',
+        title: 'Werkuren',
+        startTime: workStart,
+        endTime: workEnd,
+        date: selectedDate,
+        realm: 'personal',
+        type: 'work',
+      }]
+    : [];
+  // Work hours and appointments can overlap; calculate their union rather than adding both durations.
+  const committedTimeMinutes = calculateBusyMinutes([...dateEvents, ...workHoursBlock]);
 
   // 3. Active tasks due today
   const activeTasks = tasks.filter(
@@ -118,8 +131,8 @@ export function calculateDayCapacity(
 
   // 5. Total waking usable pool (~16 waking hours = 960 min)
   const baseUnavailableMinutes =
-    (isWorkDay ? totalWorkdayMinutes + commuteMinutes : 0) +
-    scheduledEventsMinutes +
+    committedTimeMinutes +
+    (isWorkDay ? commuteMinutes : 0) +
     essentialPersonalMinutes;
 
   const rawAvailableMinutes = Math.max(0, 960 - baseUnavailableMinutes);
