@@ -213,6 +213,7 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
   const [offeringDesc, setOfferingDesc] = useState('');
   const [offeringDeliverables, setOfferingDeliverables] = useState('');
   const [offeringStatus, setOfferingStatus] = useState<MarilunaOffering['status']>('draft');
+  const [offeringFormError, setOfferingFormError] = useState<string | null>(null);
 
   const handleOpenNewOffering = () => {
     setEditingOfferingId(null);
@@ -222,6 +223,7 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
     setOfferingDesc('');
     setOfferingDeliverables('');
     setOfferingStatus('draft');
+    setOfferingFormError(null);
     setIsOfferingModalOpen(true);
   };
 
@@ -233,6 +235,7 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
     setOfferingDesc(off.description || '');
     setOfferingDeliverables((off.deliverables || []).join('\n'));
     setOfferingStatus(off.status || 'draft');
+    setOfferingFormError(null);
     setIsOfferingModalOpen(true);
   };
 
@@ -441,6 +444,12 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
       offeringPrice === '' || offeringPrice === undefined || offeringPrice === null
         ? undefined
         : Number(offeringPrice);
+
+    if (parsedPrice !== undefined && (!Number.isFinite(parsedPrice) || parsedPrice < 0)) {
+      setOfferingFormError(isNl ? 'Vul een geldige, niet-negatieve prijs in.' : 'Enter a valid non-negative price.');
+      return;
+    }
+    setOfferingFormError(null);
 
     if (editingOfferingId) {
       const updated = offerings.map((o) =>
@@ -1184,6 +1193,8 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
                       </label>
                       <input
                         type="number"
+                        min="0"
+                        step="0.01"
                         placeholder={isNl ? 'bijv. 50' : 'e.g. 50'}
                         value={offeringPrice}
                         onChange={(e) => setOfferingPrice(e.target.value === '' ? '' : Number(e.target.value))}
@@ -1229,6 +1240,9 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
                       <option value="archived">{isNl ? 'Gearchiveerd' : 'Archived'}</option>
                     </select>
                   </div>
+                  {offeringFormError && (
+                    <p role="alert" className="text-xs text-[#A33A32]">{offeringFormError}</p>
+                  )}
                   <div className="flex justify-end gap-2 pt-2">
                     <button
                       type="button"
