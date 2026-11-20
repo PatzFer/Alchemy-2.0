@@ -961,7 +961,10 @@ export function saveState(state: AppState): boolean {
 
 export function resetState(): AppState {
   if (typeof window !== 'undefined') {
+    // Clear both current and legacy keys. Otherwise loadState() can fall back
+    // to the legacy payload after a reset and silently resurrect old data.
     localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(LEGACY_STORAGE_KEY);
   }
   return { ...INITIAL_STATE };
 }
