@@ -126,3 +126,30 @@ export function parseRenphoCsv(csv: string): ProgressLog[] {
   if (result.length === 0) throw new Error('Geen geldige Renpho-metingen gevonden. Controleer het datum- en gewichtsformaat.');
   return result;
 }
+
+
+/** Merge imported scale readings without discarding manually entered notes or measurements. */
+export function mergeRenphoProgressLogs(
+  existingLogs: ProgressLog[],
+  importedLogs: ProgressLog[],
+): ProgressLog[] {
+  const byDate = new Map(existingLogs.map((log) => [log.date, log]));
+  for (const incoming of importedLogs) {
+    const existing = byDate.get(incoming.date);
+    byDate.set(incoming.date, {
+      ...existing,
+      ...incoming,
+      id: existing?.id || incoming.id,
+      weightKg: incoming.weightKg ?? existing?.weightKg,
+      measurements: existing?.measurements || incoming.measurements,
+      composition: {
+        ...(existing?.composition || {}),
+        ...(incoming.composition || {}),
+      },
+      recordedFact: existing?.recordedFact || incoming.recordedFact,
+      feelingNotes: existing?.feelingNotes,
+      aiInterpretation: existing?.aiInterpretation,
+    });
+  }
+  return [...byDate.values()].sort((a, b) => a.date.localeCompare(b.date));
+}
