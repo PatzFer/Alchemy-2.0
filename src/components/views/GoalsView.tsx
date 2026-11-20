@@ -12,13 +12,15 @@ import {
   TrendingUp,
   Pencil,
 } from 'lucide-react';
-import { Goal, Milestone, Realm, ActiveWorldFilter, GoalStatus } from '../../types';
+import { Goal, Milestone, Realm, ActiveWorldFilter, GoalStatus, Task, Project } from '../../types';
 import { requestGoalBreakdown } from '../../lib/aiService';
 import { validateGoalInput } from '../../lib/goalValidation';
 import { filterGoalList } from '../../lib/goalListFilters';
 
 interface GoalsViewProps {
   goals: Goal[];
+  tasks: Task[];
+  projects: Project[];
   activeWorld: ActiveWorldFilter;
   onSaveGoal: (goal: Partial<Goal>) => void;
   onToggleMilestone: (goalId: string, milestoneId: string) => void;
@@ -26,6 +28,8 @@ interface GoalsViewProps {
 
 export const GoalsView: React.FC<GoalsViewProps> = ({
   goals,
+  tasks,
+  projects,
   activeWorld,
   onSaveGoal,
   onToggleMilestone,
@@ -247,6 +251,12 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
             milestones.length > 0
               ? Math.round((completedCount / milestones.length) * 100)
               : goal.progress;
+          const linkedTasks = tasks.filter((task) =>
+            task.realm === goal.realm && (task.goalId === goal.id || goal.connectedTaskIds?.includes(task.id))
+          );
+          const linkedProjects = projects.filter((project) =>
+            project.realm === goal.realm && (project.goalId === goal.id || goal.connectedProjectIds?.includes(project.id))
+          );
 
           return (
             <div
@@ -324,6 +334,26 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
                     />
                   </div>
                 </div>
+
+                {(linkedTasks.length > 0 || linkedProjects.length > 0) && (
+                  <div className="mt-4 rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-1)] p-3 space-y-2">
+                    <span className="block text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">Gekoppeld werk</span>
+                    {linkedProjects.map((project) => (
+                      <div key={project.id} className="flex items-center gap-2 text-xs text-[var(--text-secondary)]">
+                        <Layers className="h-3.5 w-3.5 shrink-0" />
+                        <span className="truncate">{project.title}</span>
+                        <span className="ml-auto shrink-0 text-[10px] capitalize">{project.status}</span>
+                      </div>
+                    ))}
+                    {linkedTasks.map((task) => (
+                      <div key={task.id} className="flex items-center gap-2 text-xs text-[var(--text-secondary)]">
+                        {task.status === 'completed' ? <CheckCircle2 className="h-3.5 w-3.5 shrink-0" /> : <Circle className="h-3.5 w-3.5 shrink-0" />}
+                        <span className={task.status === 'completed' ? 'truncate line-through text-[var(--text-muted)]' : 'truncate'}>{task.title}</span>
+                        <span className="ml-auto shrink-0 text-[10px]">{task.dueDate}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
 
                 {/* Milestones / Micro-tasks */}
                 {milestones.length > 0 && (
