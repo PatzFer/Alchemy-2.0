@@ -92,7 +92,7 @@ export const Navigation: React.FC<NavigationProps> = ({
   ];
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-[#51424A]/70 bg-[#191D20]/92 backdrop-blur-md transition-colors">
+    <header className="sticky top-0 z-40 w-full border-b border-[#51424A]/70 bg-[#1D191F]/96 backdrop-blur-md transition-colors">
       {/* Top Header Bar */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         {/* Brand & World Filter */}
@@ -257,7 +257,7 @@ export const Navigation: React.FC<NavigationProps> = ({
       </div>
 
       {/* Sub-bar on mobile for World Switcher */}
-      <div className="md:hidden px-4 py-2 border-t border-[#343a32] flex items-center justify-between bg-[#191D20]">
+      <div className="md:hidden px-4 py-2 border-t border-[#493542] flex items-center justify-between bg-[#211A22]">
         <div className="flex items-center gap-1 w-full justify-center">
           <button
             onClick={() => onSelectWorld('all')}
@@ -295,7 +295,7 @@ export const Navigation: React.FC<NavigationProps> = ({
       </div>
 
       {/* Mobile Bottom Navigation Bar */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#20231f]/95 backdrop-blur-md border-t border-[#343a32] px-2 py-1.5 flex items-center justify-around shadow-lg">
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#211A22]/96 backdrop-blur-md border-t border-[#493542] px-2 py-1.5 flex items-center justify-around shadow-lg">
         {mobileNavItems.map((item) => {
           const isActive = currentTab === item.id;
           const Icon = item.icon;
@@ -304,10 +304,10 @@ export const Navigation: React.FC<NavigationProps> = ({
               key={item.id}
               onClick={() => onSelectTab(item.id)}
               className={`flex flex-col items-center justify-center py-1 px-2 rounded-lg text-[10px] font-medium transition cursor-pointer ${
-                isActive ? 'text-[#E8DCC7] font-semibold' : 'text-[#928A85] hover:text-[#E8DCC7]'
+                isActive ? 'text-[#F0E4E3] font-semibold' : 'text-[#A99AA4] hover:text-[#F0E4E3]'
               }`}
             >
-              <Icon className={`w-4 h-4 mb-0.5 ${isActive ? 'text-[#8C7654]' : 'text-[#928A85]'}`} />
+              <Icon className={`w-4 h-4 mb-0.5 ${isActive ? 'text-[#D8759B]' : 'text-[#A99AA4]'}`} />
               <span>{item.label}</span>
             </button>
           );
