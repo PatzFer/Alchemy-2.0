@@ -1033,3 +1033,14 @@ A user can reliably open Alchemy without a startup security interstitial; captur
 - Added a private 1.0 testing guide documenting preview setup, core test flows and honest integration/persistence boundaries.
 - GitHub Actions run 44788487737 passed on commit 8076b40c: TypeScript, Supabase migration checks, regression tests and production build.
 - Remaining: manual browser/Android acceptance, live Google OAuth test, live Supabase staging/restore, durable identity and native Health Connect. The app remains an internal test candidate, not a production-secure release.
+
+
+## Progress log — 20 November 2026 (privacy-first Jarvis and preview hardening)
+
+- Changed the default Jarvis provider to local privacy mode. Personal, Mariluna, financial, wellbeing and cycle AI scopes remain off until explicitly enabled.
+- Added a visible warning in the Security & Privacy Center: Google's free Gemini API tier may use submitted content to improve Google products; paid-tier content is not used for product improvement but may incur costs. The UI links to Google's current pricing/data-use page.
+- Added a visible synthetic-data warning whenever the server confirms a preview/test session.
+- First-launch Foundation onboarding now opens automatically for a fresh profile and can be reopened from Settings.
+- Validated Renpho date parsing for ISO, European and US formats and rejects impossible dates before importing.
+- GitHub Actions run 44789482370 passed on commit 11b95192: locked dependency installation, TypeScript, Supabase migration checks, all regression tests and production build.
+- Current delivery target is a usable internal test candidate. Production release still requires durable identity/session storage, live Supabase provisioning and isolation/restore tests, and native Android Health Connect.
