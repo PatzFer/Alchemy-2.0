@@ -111,3 +111,10 @@ The current in-memory security vault has received additional input validation an
 A server-only AES-256-GCM envelope encryption helper now exists on the feature branch. It uses a fresh 96-bit nonce per encryption, an authentication tag, and additional authenticated data binding the ciphertext to the owner UUID and secret purpose. The helper requires a 32-byte base64 APP_ENCRYPTION_KEY and an explicit key version; it rejects missing or mismatched key versions and malformed envelopes. Unit tests are included in the standard CI test command.
 
 This helper is not yet integrated into TOTP or provider-token storage. No live encryption key is provisioned, no key rotation/recovery procedure is verified, and the in-memory security vault remains unchanged. It must not be interpreted as completion of durable encrypted credential storage.
+
+
+## Snapshot concurrency and stale-write protection — 20 November 2026
+
+A forward-only migration adds an expected-revision precondition to the server-only snapshot RPC. The API and browser adapter can supply the revision last observed by the client. The database serializes writes per owner and rejects a mismatch with a conflict rather than silently accepting a stale overwrite. The HTTP layer maps that conflict to 409. CI statically checks that the revision-aware function remains inaccessible to anon/authenticated and executable only by service_role.
+
+The precondition is optional for compatibility; clients that omit it do not receive stale-write protection. The application has not yet enabled automatic cloud writes. The migration must be applied and tested in staging, including simultaneous writers, before cloud sync can be enabled.
