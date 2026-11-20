@@ -1186,3 +1186,4 @@ A user can reliably open Alchemy without a startup security interstitial; captur
 - Added regression tests for task ordering and completed-task grouping.
 - The Today dashboard now shows estimated task workload and appointment time separately; appointment time uses overlap-safe interval totals.
 - Task cards now show localized deadline dates and visibly flag overdue items; malformed legacy dates are not incorrectly marked overdue.
+- Daily free-time estimates now merge work-hour blocks and calendar appointments into one occupied-time timeline, avoiding double-counting meetings that take place during work hours.
