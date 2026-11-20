@@ -1140,3 +1140,6 @@ A user can reliably open Alchemy without a startup security interstitial; captur
 - The goal editor now supports adding and removing milestones manually, in addition to Jarvis suggestions.
 - AI-generated milestones are treated as untrusted input: invalid/oversized titles are discarded, suggested labels are bounded, durations are clamped, existing manual milestones are preserved and the total remains capped at 50.
 - Added automated boundary tests for task and goal validation.
+
+- Added goal search across names, descriptions, notes and milestone titles; it combines with workspace and timeframe filters and preserves source order.
+- Extracted goal filtering into a pure helper with regression tests.
