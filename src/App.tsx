@@ -83,6 +83,7 @@ export default function App() {
 
   // FINAL SECURITY ARCHITECTURE: Perimeter Lock & Session Management
   const [isAppAuthenticated, setIsAppAuthenticated] = useState<boolean | null>(null);
+  const [isPreviewMode, setIsPreviewMode] = useState(false);
   const [inactivityLocked, setInactivityLocked] = useState<boolean>(false);
   const [securityLevel, setSecurityLevel] = useState<1 | 2 | 3>(2);
   const [isSensitiveUnlocked, setIsSensitiveUnlocked] = useState<boolean>(true);
@@ -108,6 +109,7 @@ export default function App() {
       }
 
       setIsAppAuthenticated(!!data.isAppAuthenticated);
+      setIsPreviewMode(!!data.isPreviewMode);
       if (data.currentSecurityLevel) setSecurityLevel(data.currentSecurityLevel);
       if (data.isSensitiveUnlocked !== undefined) setIsSensitiveUnlocked(data.isSensitiveUnlocked);
       if (data.inactivityTimeoutMinutes) setInactivityTimeoutMins(data.inactivityTimeoutMinutes);
@@ -1062,6 +1064,11 @@ export default function App() {
     <div className="min-h-screen bg-[var(--app-bg)] text-[var(--text-primary)] font-sans antialiased selection:bg-[#52634A] selection:text-[#F0EBDD]">
       {/* Offline Status Badge */}
       <OfflineIndicator />
+      {isPreviewMode && (
+        <div role="status" className="mx-auto mt-3 w-[calc(100%-2rem)] max-w-7xl rounded-xl border border-amber-500/30 bg-amber-50 px-4 py-2 text-center text-xs font-medium text-amber-900">
+          Preview / Test Mode — gebruik uitsluitend testgegevens
+        </div>
+      )}
 
       {storageSaveError && (
         <div
