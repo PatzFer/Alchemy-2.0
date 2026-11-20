@@ -56,6 +56,17 @@ function parseDate(value: string): string | null {
   const trimmed = value.trim();
   const iso = trimmed.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
   if (iso) return `${iso[1]}-${iso[2].padStart(2, '0')}-${iso[3].padStart(2, '0')}`;
+  const regional = trimmed.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})/);
+  if (regional) {
+    const first = Number(regional[1]);
+    const second = Number(regional[2]);
+    const dayFirst = first > 12 || second <= 12;
+    const day = dayFirst ? first : second;
+    const month = dayFirst ? second : first;
+    if (day >= 1 && day <= 31 && month >= 1 && month <= 12) {
+      return `${regional[3]}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    }
+  }
   const parsed = new Date(trimmed);
   if (!Number.isFinite(parsed.getTime())) return null;
   return `${parsed.getFullYear()}-${String(parsed.getMonth() + 1).padStart(2, '0')}-${String(parsed.getDate()).padStart(2, '0')}`;
