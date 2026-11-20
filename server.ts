@@ -3,6 +3,7 @@ import path from "path";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import { GoogleGenAI } from "@google/genai";
+import { requestOpenAIResponse } from "./server/openaiProvider";
 import { createServer as createViteServer } from "vite";
 import securityRouter from "./server/securityRoutes";
 import integrationsRouter from "./server/integrationsRoutes";
@@ -352,7 +353,7 @@ app.post("/api/ai/chat", requireAppAuth, requireAiRateLimit, async (req: Request
     const intentObj = classifyIntent(lastUserMsg, messages, sanitizedContext);
 
     // The workspace privacy switches are enforced here, not trusted to the browser.
-    if (permissions.activeAiProvider !== "gemini-server" || !hasAiWorkspaceConsent(world, permissions)) {
+    if (permissions.activeAiProvider === "local-rules" || !hasAiWorkspaceConsent(world, permissions)) {
       const localResp = buildIntentAwareResponse(intentObj, lastUserMsg, sanitizedContext, world);
       return res.json({
         role: "assistant",
@@ -427,6 +428,31 @@ REAL SYSTEM CONTEXT PROVIDED:
 - Working Hours: ${sanitizedContext?.workingHours || "09:00 - 17:00"}
 - Confirmed Memories: ${JSON.stringify(sanitizedContext?.memoryItems || [])}
 `;
+
+    // OpenAI is an optional, explicitly selected server-side provider.
+    // Missing configuration or provider failure falls back locally without losing the request.
+    if (permissions.activeAiProvider === "openai-server") {
+      const openAiResult = await requestOpenAIResponse([
+        { role: "system", content: systemPrompt },
+        ...messages,
+      ], {
+        apiKey: process.env.OPENAI_API_KEY,
+        model: process.env.OPENAI_MODEL,
+      });
+      if (openAiResult.available && openAiResult.text) {
+        return res.json({
+          role: "assistant",
+          content: openAiResult.text,
+          provider: "openai",
+        });
+      }
+      const fallbackResponse = buildIntentAwareResponse(intentObj, lastUserMsg, sanitizedContext, world);
+      return res.json({
+        role: "assistant",
+        content: `[${isDutch ? 'Lokale modus — OpenAI niet geconfigureerd of tijdelijk niet beschikbaar' : 'Local mode — OpenAI is not configured or temporarily unavailable'}] ${fallbackResponse}`,
+        provider: "local",
+      });
+    }
 
     // Format conversation history for Gemini 3.8 Flash
     const formattedContents = messages.map((m: { role: string; content: string }) => ({
