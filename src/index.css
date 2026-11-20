@@ -6,27 +6,31 @@
     --font-serif: 'Cormorant Garamond', Georgia, serif;
     --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 
-    --app-bg: #171719;
-    --surface-1: #242127;
-    --surface-2: #302832;
-    --surface-raised: #3C303B;
-    --text-primary: #E9DDE0;
-    --text-secondary: #BDB0B7;
-    --text-muted: #938690;
-    --border-subtle: rgba(191, 157, 176, 0.17);
-    --border-strong: rgba(191, 157, 176, 0.32);
-    --focus-ring: #B98A62;
-    --accent-primary: #9B4565;
-    --accent-secondary: #C5A477;
-    --status-success: #91B58D;
-    --status-warning: #D5B477;
-    --status-danger: #D58B82;
-    --status-info: #91AFC0;
+    --app-bg: #171518;
+    --surface-1: #252027;
+    --surface-2: #332A34;
+    --surface-raised: #443542;
+    --text-primary: #F0E4E3;
+    --text-secondary: #C3B4BD;
+    --text-muted: #9D8D96;
+    --border-subtle: rgba(205, 164, 179, 0.16);
+    --border-strong: rgba(205, 164, 179, 0.30);
+    --focus-ring: #E18449;
+    --accent-primary: #C44F7C;
+    --accent-rose: #D85D91;
+    --accent-orange: #E18449;
+    --accent-teal: #328F91;
+    --accent-petrol: #236B78;
+    --accent-secondary: #D1AD77;
+    --status-success: #A4B77D;
+    --status-warning: #E18449;
+    --status-danger: #D77B75;
+    --status-info: #55A7A8;
 
-    --domain-mariluna: #351A2B;
-    --domain-mariluna-moss: #B77A91;
-    --domain-private: #18372F;
-    --domain-private-copper: #8D986E;
+    --domain-mariluna: #351629;
+    --domain-mariluna-moss: #C77A99;
+    --domain-private: #17372F;
+    --domain-private-copper: #A5A66E;
   }
 
   html, body, #root {
@@ -58,8 +62,9 @@
 .alchemy-home {
   color: var(--text-primary);
   background:
-    radial-gradient(ellipse at 14% 8%, rgba(169, 63, 86, 0.12), transparent 36rem),
-    radial-gradient(ellipse at 90% 80%, rgba(37, 84, 80, 0.12), transparent 32rem),
+    radial-gradient(ellipse at 14% 8%, rgba(216, 93, 145, 0.17), transparent 36rem),
+    radial-gradient(ellipse at 90% 80%, rgba(50, 143, 145, 0.17), transparent 32rem),
+    radial-gradient(ellipse at 78% 12%, rgba(225, 132, 73, 0.10), transparent 24rem),
     var(--app-bg);
 }
 
@@ -135,13 +140,13 @@
 }
 .alchemy-domain-card--mariluna {
   background:
-    radial-gradient(ellipse at 88% 10%, rgba(193, 125, 135, 0.24), transparent 16rem),
-    linear-gradient(145deg, #59324F 0%, #321F32 58%, #211B27 100%);
+    radial-gradient(ellipse at 88% 10%, rgba(216, 93, 145, 0.30), transparent 16rem),
+    linear-gradient(145deg, #63364F 0%, #351629 56%, #211820 100%);
 }
 .alchemy-domain-card--private {
   background:
-    radial-gradient(ellipse at 88% 10%, rgba(162, 163, 107, 0.22), transparent 16rem),
-    linear-gradient(145deg, #245047 0%, #172F2B 58%, #111F1D 100%);
+    radial-gradient(ellipse at 88% 10%, rgba(50, 143, 145, 0.22), transparent 16rem),
+    linear-gradient(145deg, #286D68 0%, #17372F 56%, #111E1A 100%);
 }
 .alchemy-domain-symbol {
   color: #D6C69B;
