@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { Idea, Realm, ActiveWorldFilter } from '../../types';
 import { requestIdeaAnalysis } from '../../lib/aiService';
+import { isIdeaDueForReview } from '../../lib/ideaReview';
 
 interface IdeasViewProps {
   ideas: Idea[];
@@ -66,17 +67,13 @@ export const IdeasView: React.FC<IdeasViewProps> = ({
     setQuickRealm(activeWorld === 'mariluna' ? 'mariluna' : 'personal');
   }, [activeWorld]);
 
-  // Identify ideas untouched for > 3 weeks (e.g. created before 2026-08-25)
-  const today = new Date();
-  const threeWeeksAgo = new Date();
-  threeWeeksAgo.setDate(today.getDate() - 21);
-
+  // Use local calendar-day arithmetic so ISO date strings do not shift at UTC boundaries.
   const untouchedIdeas = ideas.filter(
-    (i) =>
-      (activeWorld === 'all' || i.realm === activeWorld) &&
-      i.status !== 'archived' &&
-      i.status !== 'converted_to_project' &&
-      new Date(i.lastRevisitedAt || i.createdAt) < threeWeeksAgo
+    (idea) =>
+      (activeWorld === 'all' || idea.realm === activeWorld) &&
+      idea.status !== 'archived' &&
+      idea.status !== 'converted_to_project' &&
+      isIdeaDueForReview(idea.lastRevisitedAt, idea.createdAt)
   );
 
   const filteredIdeas = ideas.filter((i) => {
