@@ -146,6 +146,7 @@ Do not mark a test as passed based only on source inspection or a successful com
 - [x] Linked project and goal names are visible on task cards.
 - [x] Goal cards show linked tasks and projects.
 - [x] Goal progress derives from linked task completion when no milestones are defined.
+- [x] Goal progress precedence and fallback behavior are covered by automated tests.
 - [x] Project-created tasks inherit the project's linked goal.
 - [x] Project quick-task creation uses the local calendar date.
 - [x] Automated project search, status and validation tests are included in CI.
