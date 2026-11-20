@@ -53,28 +53,36 @@ export async function sendChatMessage(
 
     let content = data.content;
     let suggestedAction: AssistantAction | undefined;
-    const actionMatch = content.match(/```action\s*([\s\S]*?)\s*```/);
-    if (actionMatch) {
-      try {
-        const actionData = JSON.parse(actionMatch[1]);
-        const validType = ALLOWED_ACTION_TYPES.has(actionData?.type);
-        const validPayload = actionData?.data !== null && typeof actionData?.data === 'object';
-        if (validType && validPayload) {
-          suggestedAction = {
-            type: actionData.type,
-            label: typeof actionData.label === 'string' && actionData.label.trim()
-              ? actionData.label.slice(0, 100)
-              : 'Aanbeveling bekijken',
-            payload: actionData.data,
-          };
-        } else {
-          console.warn('Jarvis action block rejected: unsupported type or invalid payload.');
+    const actionBlockStart = content.indexOf('```action');
+    if (actionBlockStart >= 0) {
+      const actionBlock = content.slice(actionBlockStart);
+      const actionMatch = actionBlock.match(/^```action\s*([\s\S]*?)\s*```/);
+      if (actionMatch) {
+        try {
+          const actionData = JSON.parse(actionMatch[1]);
+          const validType = ALLOWED_ACTION_TYPES.has(actionData?.type);
+          const validPayload = actionData?.data !== null &&
+            typeof actionData?.data === 'object' &&
+            !Array.isArray(actionData.data);
+          if (validType && validPayload) {
+            suggestedAction = {
+              type: actionData.type,
+              label: typeof actionData.label === 'string' && actionData.label.trim()
+                ? actionData.label.slice(0, 100)
+                : 'Aanbeveling bekijken',
+              payload: actionData.data,
+            };
+          } else {
+            console.warn('Jarvis action block rejected: unsupported type or invalid payload.');
+          }
+        } catch (err) {
+          console.warn('Jarvis action block could not be parsed:', err);
         }
-      } catch (err) {
-        console.warn('Jarvis action block could not be parsed:', err);
+      } else {
+        console.warn('Jarvis returned an incomplete action block; it was discarded.');
       }
-      // Never show raw machine instructions or malformed action JSON in the conversation.
-      content = content.replace(/```action[\s\S]*?```/, '').trim();
+      // Remove the entire action tail, even if its closing fence is missing.
+      content = content.slice(0, actionBlockStart).trim();
     }
 
     return createAssistantMessage(content || 'Ik heb je bericht ontvangen, maar geen tekstueel antwoord gekregen.', world, suggestedAction);
