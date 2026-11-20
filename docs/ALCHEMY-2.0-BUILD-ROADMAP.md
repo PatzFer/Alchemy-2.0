@@ -962,3 +962,11 @@ A user can reliably open Alchemy without a startup security interstitial; captur
 - Extended migration inventory counts to include content-plan platform metadata and Jarvis accepted/dismissed suggestion IDs, in addition to chat history, content posts/pillars/themes, active suggestions, recent task splits and the latest brief.
 - Fixed strict TypeScript types in the new migration regression fixtures so the CI type-check can validate the tests.
 - The migration planner remains read-only and still requires explicit user choice whenever local or remote data exists.
+
+
+## Progress log — 20 November 2026 (local persistence write guard)
+
+- Added a runtime schema guard to `saveState`: incomplete or malformed Alchemy payloads are refused before localStorage is touched.
+- The guard requires the core collections, module objects, setup flags, foundation identity object and calendar/Gmail integration records needed by the current app contract.
+- Added a regression test proving an incomplete write returns false and leaves the last known-good local payload unchanged.
+- This is a local write-safety improvement only; it does not activate cloud sync or change the current storage provider.
