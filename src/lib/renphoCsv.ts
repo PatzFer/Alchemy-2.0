@@ -55,10 +55,10 @@ function normalizeHeader(value: string): string {
 function parseDate(value: string): string | null {
   const trimmed = value.trim();
   const iso = trimmed.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
-  if (iso) return \`${iso[1]}-${iso[2].padStart(2, '0')}-${iso[3].padStart(2, '0')}\`;
+  if (iso) return `${iso[1]}-${iso[2].padStart(2, '0')}-${iso[3].padStart(2, '0')}`;
   const parsed = new Date(trimmed);
   if (!Number.isFinite(parsed.getTime())) return null;
-  return \`${parsed.getFullYear()}-${String(parsed.getMonth() + 1).padStart(2, '0')}-${String(parsed.getDate()).padStart(2, '0')}\`;
+  return `${parsed.getFullYear()}-${String(parsed.getMonth() + 1).padStart(2, '0')}-${String(parsed.getDate()).padStart(2, '0')}`;
 }
 
 function parseNumber(value: string | undefined): number | undefined {
@@ -109,7 +109,7 @@ export function parseRenphoCsv(csv: string): ProgressLog[] {
 
     const existing = byDate.get(date);
     byDate.set(date, {
-      id: existing?.id || \`renpho-${date}\`,
+      id: existing?.id || `renpho-${date}`,
       date,
       weightKg: weightKg ?? existing?.weightKg,
       composition: {
