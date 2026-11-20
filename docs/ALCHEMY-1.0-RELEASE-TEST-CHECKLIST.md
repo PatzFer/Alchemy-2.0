@@ -124,3 +124,14 @@ Do not mark a test as passed based only on source inspection or a successful com
 - [x] Combine search with workspace, status and priority filters.
 - [x] Automated tests cover case-insensitive search, whitespace, combined filters and stable ordering.
 - [ ] Manually verify task search and keyboard behavior on Android and desktop.
+
+
+## 11. Task and goal editors
+
+- [x] Task editor validates title, description, due date, duration and subtask bounds.
+- [x] Goal editor validates title, description, optional target date and milestone bounds.
+- [x] Milestones can be added and removed manually.
+- [x] Jarvis milestone suggestions preserve manual entries and are bounded before use.
+- [x] Automated tests cover task and goal validation boundaries.
+- [ ] Manually verify task and goal creation/editing on Android and desktop.
+- [ ] Verify Jarvis milestone suggestions with a configured AI provider.
