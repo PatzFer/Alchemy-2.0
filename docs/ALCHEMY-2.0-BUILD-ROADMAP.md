@@ -1184,3 +1184,4 @@ A user can reliably open Alchemy without a startup security interstitial; captur
 - Added automated coverage for Jarvis capacity, task fit, deterministic task splitting and local daily planning.
 - Task lists now sort open work by earliest due date, then priority, while completed work is grouped last and ordered by completion date.
 - Added regression tests for task ordering and completed-task grouping.
+- The Today dashboard now shows estimated task workload and appointment time separately; appointment time uses overlap-safe interval totals.
