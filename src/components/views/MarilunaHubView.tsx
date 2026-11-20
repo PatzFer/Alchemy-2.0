@@ -56,6 +56,7 @@ import {
 } from '../mariluna/IdeaConversionModals';
 import { MarilunaClientsManager } from '../mariluna/MarilunaClientsManager';
 import { getLocalCalendarDateString } from '../../lib/calendarDate';
+import { validateOfferingInput } from '../../lib/offeringValidation';
 
 export type MarilunaSubTab =
   | 'overview'
@@ -439,17 +440,28 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
 
   const handleSaveOffering = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!offeringTitle.trim() || !onUpdateOfferings) return;
+    if (!onUpdateOfferings) return;
 
-    const parsedPrice =
-      offeringPrice === '' || offeringPrice === undefined || offeringPrice === null
-        ? undefined
-        : Number(offeringPrice);
-
-    if (parsedPrice !== undefined && (!Number.isFinite(parsedPrice) || parsedPrice < 0)) {
-      setOfferingFormError(isNl ? 'Vul een geldige, niet-negatieve prijs in.' : 'Enter a valid non-negative price.');
+    const validationError = validateOfferingInput({
+      title: offeringTitle,
+      price: offeringPrice,
+      description: offeringDesc,
+      deliverables: offeringDeliverables,
+    });
+    if (validationError) {
+      const messages: Record<typeof validationError, string> = {
+        title_required: isNl ? 'Geef je dienst of aanbod een naam.' : 'Enter a name for this offering.',
+        title_too_long: isNl ? 'De naam mag maximaal 120 tekens bevatten.' : 'The name can contain up to 120 characters.',
+        price_invalid: isNl ? 'Vul een geldige, niet-negatieve prijs in.' : 'Enter a valid non-negative price.',
+        description_too_long: isNl ? 'De beschrijving mag maximaal 3000 tekens bevatten.' : 'The description can contain up to 3000 characters.',
+        too_many_deliverables: isNl ? 'Je kunt maximaal 30 inbegrepen onderdelen toevoegen.' : 'You can add up to 30 deliverables.',
+        deliverable_too_long: isNl ? 'Elk inbegrepen onderdeel mag maximaal 160 tekens bevatten.' : 'Each deliverable can contain up to 160 characters.',
+      };
+      setOfferingFormError(messages[validationError]);
       return;
     }
+
+    const parsedPrice = offeringPrice === '' ? undefined : offeringPrice;
     setOfferingFormError(null);
 
     if (editingOfferingId) {
