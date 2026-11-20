@@ -1,6 +1,19 @@
 import type { ProgressLog } from '../types';
 
-function detectDelimiter(input: string): ',' | ';' {\n  const firstLine = input.split(/\\r?\\n/, 1)[0] || '';\n  let quoted = false;\n  let commas = 0;\n  let semicolons = 0;\n  for (let i = 0; i < firstLine.length; i += 1) {\n    if (firstLine[i] === '\"') quoted = !quoted;\n    else if (!quoted && firstLine[i] === ',') commas += 1;\n    else if (!quoted && firstLine[i] === ';') semicolons += 1;\n  }\n  return semicolons > commas ? ';' : ',';\n}\n\nfunction parseCsvRows(input: string, delimiter: ',' | ';'): string[][] {
+function detectDelimiter(input: string): ',' | ';' {
+  const firstLine = input.split(/\r?\n/, 1)[0] || '';
+  let quoted = false;
+  let commas = 0;
+  let semicolons = 0;
+  for (let i = 0; i < firstLine.length; i += 1) {
+    if (firstLine[i] === '"') quoted = !quoted;
+    else if (!quoted && firstLine[i] === ',') commas += 1;
+    else if (!quoted && firstLine[i] === ';') semicolons += 1;
+  }
+  return semicolons > commas ? ';' : ',';
+}
+
+function parseCsvRows(input: string, delimiter: ',' | ';'): string[][] {
   const rows: string[][] = [];
   let row: string[] = [];
   let cell = '';
@@ -42,10 +55,10 @@ function normalizeHeader(value: string): string {
 function parseDate(value: string): string | null {
   const trimmed = value.trim();
   const iso = trimmed.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
-  if (iso) return `${iso[1]}-${iso[2].padStart(2, '0')}-${iso[3].padStart(2, '0')}`;
+  if (iso) return \`\${iso[1]}-\${iso[2].padStart(2, '0')}-\${iso[3].padStart(2, '0')}\`;
   const parsed = new Date(trimmed);
   if (!Number.isFinite(parsed.getTime())) return null;
-  return `${parsed.getFullYear()}-${String(parsed.getMonth() + 1).padStart(2, '0')}-${String(parsed.getDate()).padStart(2, '0')}`;
+  return \`\${parsed.getFullYear()}-\${String(parsed.getMonth() + 1).padStart(2, '0')}-\${String(parsed.getDate()).padStart(2, '0')}\`;
 }
 
 function parseNumber(value: string | undefined): number | undefined {
@@ -64,7 +77,8 @@ export function parseRenphoCsv(csv: string): ProgressLog[] {
     throw new Error('Het CSV-bestand is leeg.');
   }
 
-  const rows = parseCsvRows(csv.replace(/^\uFEFF/, ''));
+  const normalizedCsv = csv.replace(/^\uFEFF/, '');
+  const rows = parseCsvRows(normalizedCsv, detectDelimiter(normalizedCsv));
   if (rows.length < 2) throw new Error('Geen meetgegevens gevonden in het CSV-bestand.');
 
   const headers = rows[0].map(normalizeHeader);
@@ -94,8 +108,8 @@ export function parseRenphoCsv(csv: string): ProgressLog[] {
     if (weightKg === undefined && bodyFatPercentage === undefined && muscleMassPercentage === undefined && hydrationPercentage === undefined) continue;
 
     const existing = byDate.get(date);
-    const next: ProgressLog = {
-      id: existing?.id || `renpho-${date}`,
+    byDate.set(date, {
+      id: existing?.id || \`renpho-\${date}\`,
       date,
       weightKg: weightKg ?? existing?.weightKg,
       composition: {
@@ -105,8 +119,7 @@ export function parseRenphoCsv(csv: string): ProgressLog[] {
         ...(hydrationPercentage !== undefined ? { hydrationPercentage } : {}),
       },
       recordedFact: 'Geïmporteerd uit Renpho CSV',
-    };
-    byDate.set(date, next);
+    });
   }
 
   const result = [...byDate.values()].sort((a, b) => a.date.localeCompare(b.date));
