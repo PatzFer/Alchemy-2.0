@@ -87,7 +87,7 @@ export default function App() {
   const [securityLevel, setSecurityLevel] = useState<1 | 2 | 3>(2);
   const [isSensitiveUnlocked, setIsSensitiveUnlocked] = useState<boolean>(true);
   const [inactivityTimeoutMins, setInactivityTimeoutMins] = useState<number>(15);
-  const [isSetupWizardOpen, setIsSetupWizardOpen] = useState<boolean>(false);
+  const [isSetupWizardOpen, setIsSetupWizardOpen] = useState<boolean>(() => state.setupStatus === 'not_started');
 
   const checkAuthStatus = async () => {
     try {
