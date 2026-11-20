@@ -1,7 +1,7 @@
 # Alchemy 1.0 — Private Test Guide
 
 Status: internal test build, not production-ready.\nPackage version: `1.0.0-beta.1`.
-Branch: `build/phase-2-planner`
+Branch: `main`
 Last updated: 20 November 2026
 
 ## What this build is for
@@ -12,7 +12,7 @@ Use synthetic or non-sensitive test data only. Do not enter real cycle, health, 
 
 ## Local preview
 
-1. Check out `build/phase-2-planner`; do not merge it into `main`.
+1. Use the `main` branch, which is the current update source of truth.
 2. Install the locked dependencies with `bun install --frozen-lockfile`.
 3. Copy `.env.example` to a local `.env`.
 4. For a local-only preview, keep `ENABLE_PREVIEW_AUTH=true`.
@@ -28,10 +28,10 @@ To test live Gemini, first review the data-use warning in Settings → Security 
 
 ## Google AI Studio handoff
 
-The GitHub branch is the source of truth. For the visual preview, update/import the latest code from `build/phase-2-planner`, not `main`.
+The `main` branch is the source of truth. For the visual preview, update/import the latest code from `main`.
 
 1. Confirm the latest GitHub Actions quality-gate run for the branch has completed successfully.
-2. In AI Studio, use the existing GitHub-connected project and pull/update from `build/phase-2-planner`. If the import flow asks for a branch, select that exact branch.
+2. In AI Studio, use the existing GitHub-connected project and pull/update from `main`. If the import flow asks for a branch, select `main`.
 3. Confirm the imported commit matches the latest branch head shown in GitHub.
 4. Run the app in AI Studio's full-stack preview. Alchemy requires both the Vite/React client and its Express server; a client-only preview is insufficient.
 5. For a private synthetic-data preview only, set `ENABLE_PREVIEW_AUTH=true` as a server-side environment variable. Do not use preview authentication when `NODE_ENV=production`.
