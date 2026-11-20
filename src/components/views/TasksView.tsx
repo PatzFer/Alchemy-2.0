@@ -325,19 +325,26 @@ export const TasksView: React.FC<TasksViewProps> = ({
                       {(task.subtasks || []).length > 0 && (
                         <div className="mt-3 pt-2.5 border-t border-[var(--border-subtle)] space-y-1.5">
                           {(task.subtasks || []).map((st) => (
-                            <div
+                            <label
                               key={st.id}
-                              className="flex items-center gap-2 text-xs text-[var(--text-secondary)]"
+                              className="flex items-center gap-2 text-xs text-[var(--text-secondary)] cursor-pointer"
                             >
-                              <span
-                                className={`w-1.5 h-1.5 rounded-full ${
-                                  st.completed ? 'bg-[var(--accent-secondary)]' : 'bg-[var(--border-subtle)]'
-                                }`}
+                              <input
+                                type="checkbox"
+                                checked={!!st.completed}
+                                onChange={() => onSaveTask({
+                                  id: task.id,
+                                  subtasks: (task.subtasks || []).map((item) =>
+                                    item.id === st.id ? { ...item, completed: !item.completed } : item
+                                  ),
+                                })}
+                                aria-label={`Subtaak ${st.title} afgerond`}
+                                className="accent-[var(--accent-secondary)]"
                               />
                               <span className={st.completed ? 'line-through text-[var(--text-muted)]' : ''}>
                                 {st.title}
                               </span>
-                            </div>
+                            </label>
                           ))}
                         </div>
                       )}
