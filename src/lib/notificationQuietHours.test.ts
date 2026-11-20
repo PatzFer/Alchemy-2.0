@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { isWithinQuietHours } from './notificationEngine';
+import { DEFAULT_NOTIFICATION_SETTINGS, evaluateSmartNotifications, isWithinQuietHours } from './notificationEngine';
 
 test('overnight quiet hours include the start and exclude the end boundary', () => {
   assert.equal(isWithinQuietHours(21 * 60, '21:00', '08:30'), true);
@@ -28,4 +28,16 @@ test('invalid minute values are rejected', () => {
   assert.equal(isWithinQuietHours(-1, '21:00', '08:00'), false);
   assert.equal(isWithinQuietHours(1440, '21:00', '08:00'), false);
   assert.equal(isWithinQuietHours(1.5, '21:00', '08:00'), false);
+});
+
+test('a daily notification limit of zero is respected instead of defaulting to three', () => {
+  const settings = { ...DEFAULT_NOTIFICATION_SETTINGS, maxDailyFrequency: 0 };
+  const existing = [];
+  assert.deepEqual(evaluateSmartNotifications({ settings, existingNotifications: existing }), existing);
+});
+
+test('negative daily notification limits are safely treated as zero', () => {
+  const settings = { ...DEFAULT_NOTIFICATION_SETTINGS, maxDailyFrequency: -4 };
+  const existing = [];
+  assert.deepEqual(evaluateSmartNotifications({ settings, existingNotifications: existing }), existing);
 });
