@@ -2,6 +2,7 @@ import React from 'react';
 import { CalendarDays, CheckCircle2, Circle, Clock, ArrowRight, Sparkles } from 'lucide-react';
 import { Task, CalendarEvent, ActiveWorldFilter } from '../../types';
 import { groupTasksForToday } from '../../lib/todayDashboardModel';
+import { calculateBusyMinutes } from '../../lib/scheduleCapacity';
 
 interface TodayDashboardViewProps {
   tasks: Task[];
@@ -29,6 +30,15 @@ export const TodayDashboardView: React.FC<TodayDashboardViewProps> = ({
   const todayTasks = [...taskGroups.overdue, ...taskGroups.dueToday];
   const overdueCount = taskGroups.overdue.length;
   const todayEvents = events.filter(e => e.date === today && visible(e.realm)).sort((a,b) => a.startTime.localeCompare(b.startTime));
+  const estimatedTaskMinutes = taskGroups.dueToday.reduce((total, task) => total + (task.estimatedDuration || 30), 0);
+  const scheduledMinutes = calculateBusyMinutes(todayEvents);
+  const formatDuration = (minutes: number) => {
+    const hours = Math.floor(minutes / 60);
+    const remainder = minutes % 60;
+    if (hours && remainder) return `${hours}u ${remainder}m`;
+    if (hours) return `${hours}u`;
+    return `${minutes}m`;
+  };
   const priorityLabel = (priority: Task['priority']) => nl
     ? priority === 'high' ? 'Hoog' : priority === 'medium' ? 'Gemiddeld' : 'Laag'
     : priority;
@@ -79,6 +89,7 @@ export const TodayDashboardView: React.FC<TodayDashboardViewProps> = ({
           </div>}
           {todayTasks.length === 0 && <p className="py-3 text-sm text-[var(--text-muted)]">{nl ? 'Geen dringende taken. Ademruimte.' : 'No urgent tasks. Room to breathe.'}</p>}
           {todayTasks.length > 6 && <p className="px-2 text-[11px] text-[var(--text-muted)]">{nl ? `En nog ${todayTasks.length - 6} taken in je takenlijst.` : `And ${todayTasks.length - 6} more in your task list.`}</p>}
+          {taskGroups.dueToday.length > 0 && <p className="px-2 pt-2 text-[11px] text-[var(--text-muted)]">{nl ? `Geschatte taakduur: ${formatDuration(estimatedTaskMinutes)}` : `Estimated task time: ${formatDuration(estimatedTaskMinutes)}`}</p>}
         </div>
         <button onClick={onOpenTasks} className="mt-5 inline-flex items-center gap-2 text-xs font-semibold text-[var(--accent-secondary)]">{nl ? 'Alle taken' : 'All tasks'} <ArrowRight size={14}/></button>
       </section>
@@ -93,6 +104,7 @@ export const TodayDashboardView: React.FC<TodayDashboardViewProps> = ({
             <span className="flex items-center gap-1 text-xs tabular-nums text-[var(--text-muted)]"><Clock size={13}/>{event.startTime}</span>
             <span>{event.title}</span>
           </div>) : <p className="py-3 text-sm text-[var(--text-muted)]">{nl ? 'Nog niets gepland voor vandaag.' : 'Nothing scheduled yet today.'}</p>}
+          {scheduledMinutes > 0 && <p className="pt-2 text-[11px] text-[var(--text-muted)]">{nl ? `Ingeplande tijd: ${formatDuration(scheduledMinutes)}` : `Scheduled time: ${formatDuration(scheduledMinutes)}`}</p>}
         </div>
         <button onClick={onOpenCalendar} className="mt-5 inline-flex items-center gap-2 text-xs font-semibold text-[var(--accent-secondary)]">{nl ? 'Open agenda' : 'Open calendar'} <ArrowRight size={14}/></button>
       </section>
