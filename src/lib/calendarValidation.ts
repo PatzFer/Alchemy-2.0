@@ -1,4 +1,5 @@
 import type { CalendarEvent, Realm } from '../types';
+import { isValidCalendarDate } from './calendarDate';
 
 const TIME_PATTERN = /^(?:[01]\d|2[0-3]):[0-5]\d$/;
 
@@ -13,6 +14,18 @@ export function validateCalendarTimeRange(startTime: string, endTime: string): s
   const end = endHour * 60 + endMinute;
   if (end <= start) return 'De eindtijd moet later zijn dan de starttijd.';
   return null;
+}
+
+/** Validate user-created event fields before they enter the local calendar. */
+export function validateCalendarEventInput(candidate: {
+  title: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+}): string | null {
+  if (!candidate.title.trim()) return 'Geef je afspraak een titel.';
+  if (!isValidCalendarDate(candidate.date)) return 'Kies een geldige datum.';
+  return validateCalendarTimeRange(candidate.startTime, candidate.endTime);
 }
 
 /** Detects an exact duplicate without blocking intentional overlapping appointments. */
