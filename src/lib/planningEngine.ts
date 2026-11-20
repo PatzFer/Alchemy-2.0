@@ -1,4 +1,19 @@
 import { Task, CalendarEvent, LifeProfile, DailyCheckIn, FoundationData, Language } from '../types';
+import { calculateBusyMinutes } from './scheduleCapacity';
+
+function parseLocalDate(date: string): Date | null {
+  const match = /^(\\d{4})-(\\d{2})-(\\d{2})$/.exec(date);
+  if (!match) return null;
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const parsed = new Date(year, month - 1, day);
+  return parsed.getFullYear() === year && parsed.getMonth() === month - 1 && parsed.getDate() === day ? parsed : null;
+}
+
+function getLocalDateString(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+}
 
 export interface DayCapacity {
   workdayHours: number;
@@ -44,8 +59,8 @@ export function calculateDayCapacity(
   lang: Language = 'nl'
 ): DayCapacity {
   const isNl = lang === 'nl';
-  const dateObj = new Date(selectedDate);
-  const dayOfWeekIndex = dateObj.getDay(); // 0 = Sun, 1 = Mon, ..., 6 = Sat
+  const dateObj = parseLocalDate(selectedDate);
+  const dayOfWeekIndex = dateObj?.getDay() ?? new Date().getDay(); // 0 = Sun, 1 = Mon, ..., 6 = Sat
   const dayNamesEn = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
   const dayOfWeekEn = dayNamesEn[dayOfWeekIndex];
 
@@ -87,12 +102,7 @@ export function calculateDayCapacity(
 
   // 2. Scheduled calendar events for selected date
   const dateEvents = events.filter((e) => e.date === selectedDate);
-  const scheduledEventsMinutes = dateEvents.reduce((acc, evt) => {
-    const [sH, sM] = evt.startTime.split(':').map(Number);
-    const [eH, eM] = evt.endTime.split(':').map(Number);
-    const dur = eH * 60 + eM - (sH * 60 + sM);
-    return acc + Math.max(0, dur);
-  }, 0);
+  const scheduledEventsMinutes = calculateBusyMinutes(dateEvents);
 
   // 3. Active tasks due today
   const activeTasks = tasks.filter(
@@ -222,7 +232,7 @@ export interface GentleTaskAdvice {
 }
 
 export function detectMissedAndOverdueTasks(tasks: Task[]): GentleTaskAdvice[] {
-  const today = new Date().toISOString().split('T')[0];
+  const today = getLocalDateString(new Date());
   const missedTasks = tasks.filter(
     (t) => t.status !== 'completed' && (t.missed || (t.dueDate && t.dueDate < today))
   );
@@ -252,5 +262,5 @@ function getNextDayOfWeek(dayOfWeekIndex: number): string {
   let diff = dayOfWeekIndex - currentDay;
   if (diff <= 0) diff += 7;
   d.setDate(d.getDate() + diff);
-  return d.toISOString().split('T')[0];
+  return getLocalDateString(d);
 }
