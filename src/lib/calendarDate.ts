@@ -26,3 +26,13 @@ export function shiftCalendarDate(dateStr: string, mode: CalendarViewMode, delta
     String(date.getDate()).padStart(2, '0'),
   ].join('-');
 }
+
+
+/** Validate a YYYY-MM-DD calendar date without relying on permissive Date parsing. */
+export function isValidCalendarDate(dateStr: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return false;
+  const [year, month, day] = dateStr.split('-').map(Number);
+  if (year < 1000) return false;
+  const date = new Date(year, month - 1, day);
+  return date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day;
+}
