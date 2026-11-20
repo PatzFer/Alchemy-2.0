@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { Task, Realm, ActiveWorldFilter, Goal, Project } from '../../types';
 import { filterTaskList } from '../../lib/taskListFilters';
+import { validateTaskInput } from '../../lib/taskValidation';
 
 const getLocalDateString = (date = new Date()): string => {
   const year = date.getFullYear();
@@ -61,6 +62,7 @@ export const TasksView: React.FC<TasksViewProps> = ({
   const [subtaskInput, setSubtaskInput] = useState('');
   const [isGeneratingSubtasks, setIsGeneratingSubtasks] = useState(false);
   const [subtaskGenerationError, setSubtaskGenerationError] = useState<string | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
 
   const openNewTaskModal = () => {
     setEditingTask(null);
@@ -74,6 +76,7 @@ export const TasksView: React.FC<TasksViewProps> = ({
     setFormRecurring('none');
     setFormSubtasks([]);
     setSubtaskGenerationError(null);
+    setFormError(null);
     setIsModalOpen(true);
   };
 
@@ -94,7 +97,27 @@ export const TasksView: React.FC<TasksViewProps> = ({
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formTitle.trim()) return;
+    const validationError = validateTaskInput({
+      title: formTitle,
+      description: formDesc,
+      dueDate: formDueDate,
+      estimatedDuration: Number(formDuration),
+      subtasks: formSubtasks,
+    });
+    if (validationError) {
+      const messages: Record<typeof validationError, string> = {
+        title_required: 'Geef je taak een titel.',
+        title_too_long: 'De titel mag maximaal 160 tekens bevatten.',
+        description_too_long: 'De omschrijving mag maximaal 5000 tekens bevatten.',
+        invalid_due_date: 'Kies een geldige deadline.',
+        invalid_duration: 'De geschatte duur moet tussen 5 minuten en 24 uur liggen.',
+        too_many_subtasks: 'Je kunt maximaal 30 subtaken toevoegen.',
+        subtask_title_invalid: 'Elke subtaak moet een naam hebben van maximaal 160 tekens.',
+      };
+      setFormError(messages[validationError]);
+      return;
+    }
+    setFormError(null);
 
     const taskPayload: Partial<Task> = {
       id: editingTask ? editingTask.id : 't-' + Date.now(),
@@ -412,11 +435,17 @@ export const TasksView: React.FC<TasksViewProps> = ({
             </h2>
 
             <form onSubmit={handleSave} className="space-y-4">
+              {formError && (
+                <p role="alert" className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-xs text-rose-300">
+                  {formError}
+                </p>
+              )}
               <div>
                 <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Title</label>
                 <input
                   type="text"
                   required
+                  maxLength={160}
                   value={formTitle}
                   onChange={(e) => setFormTitle(e.target.value)}
                   placeholder="e.g. Curate autumn capsule wardrobe"
@@ -428,6 +457,7 @@ export const TasksView: React.FC<TasksViewProps> = ({
                 <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Description / Notes</label>
                 <textarea
                   rows={2}
+                  maxLength={5000}
                   value={formDesc}
                   onChange={(e) => setFormDesc(e.target.value)}
                   placeholder="Additional context or intentions..."
@@ -503,6 +533,7 @@ export const TasksView: React.FC<TasksViewProps> = ({
                 <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Due Date</label>
                 <input
                   type="date"
+                  required
                   value={formDueDate}
                   onChange={(e) => setFormDueDate(e.target.value)}
                   className="w-full bg-[var(--surface-raised)] border border-[var(--border-subtle)] rounded-xl px-3 py-2 text-xs text-[var(--text-primary)]"
