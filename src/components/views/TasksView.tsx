@@ -98,7 +98,7 @@ export const TasksView: React.FC<TasksViewProps> = ({
       realm: formRealm,
       category: formCategory,
       priority: formPriority,
-      estimatedDuration: Number(formDuration) || 30,
+      estimatedDuration: Math.max(5, Math.min(1440, Math.round(Number(formDuration) || 30))),
       dueDate: formDueDate,
       recurring: formRecurring,
       subtasks: formSubtasks,
@@ -138,16 +138,18 @@ export const TasksView: React.FC<TasksViewProps> = ({
         }),
       });
 
-      if (res.ok) {
+      {
         const data = await res.json();
-        const lines = data.content
+        if (!res.ok) throw new Error(data.error || 'Jarvis kon geen subtaken maken.');
+        const responseText = typeof data.content === 'string' ? data.content : '';
+        const lines = responseText
           .split('\n')
           .map((l: string) => l.replace(/^[-*•\d.]+\s*/, '').trim())
           .filter((l: string) => l.length > 0)
           .slice(0, 4);
 
         const newSubtasks = lines.map((title: string) => ({
-          id: 'st-' + Math.random().toString(36).substr(2, 9),
+          id: 'st-' + Date.now() + '-' + Math.random().toString(36).slice(2, 9),
           title,
           completed: false,
         }));
@@ -158,9 +160,9 @@ export const TasksView: React.FC<TasksViewProps> = ({
       console.warn('Fallback subtasks generation:', err);
       setFormSubtasks([
         ...formSubtasks,
-        { id: 'st-1', title: 'Prepare foundational materials', completed: false },
-        { id: 'st-2', title: 'Core focused implementation', completed: false },
-        { id: 'st-3', title: 'Final review and clean closing', completed: false },
+        { id: 'st-' + Date.now() + '-1', title: 'Prepare foundational materials', completed: false },
+        { id: 'st-' + Date.now() + '-2', title: 'Core focused implementation', completed: false },
+        { id: 'st-' + Date.now() + '-3', title: 'Final review and clean closing', completed: false },
       ]);
     } finally {
       setIsGeneratingSubtasks(false);
@@ -320,9 +322,9 @@ export const TasksView: React.FC<TasksViewProps> = ({
                       )}
 
                       {/* Subtasks listing */}
-                      {task.subtasks.length > 0 && (
+                      {(task.subtasks || []).length > 0 && (
                         <div className="mt-3 pt-2.5 border-t border-[var(--border-subtle)] space-y-1.5">
-                          {task.subtasks.map((st) => (
+                          {(task.subtasks || []).map((st) => (
                             <div
                               key={st.id}
                               className="flex items-center gap-2 text-xs text-[var(--text-secondary)]"
