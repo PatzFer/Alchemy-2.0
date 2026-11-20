@@ -98,5 +98,7 @@ Do not mark a test as passed based only on source inspection or a successful com
 - [x] Server-gated preview authentication is wired to the client; the server rejects it in production.\n- [x] Active preview sessions display a synthetic-data warning.
 - [x] Jarvis response validation and failure messaging are covered by automated tests.
 - [x] Renpho CSV parser, regional date handling, composition bounds and non-destructive merge are covered by automated tests.
+- [x] Automated recurrence tests cover late completion, skipped missed occurrences, month-end anchoring and invalid dates.
+- [x] Browser push delivery is gated by notification settings, integration state and quiet hours; push side effects are outside React state updaters.
 - [ ] Verify the First-Time Setup wizard manually on Android and desktop.
 - [ ] Import a real Renpho CSV export and compare the imported values against the Renpho app.
