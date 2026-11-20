@@ -20,7 +20,6 @@ import { WellbeingView } from './components/views/WellbeingView';
 import { MyLifeView } from './components/views/MyLifeView';
 import { SettingsView } from './components/views/SettingsView';
 import { SecurityPrivacyCenter } from './components/views/SecurityPrivacyCenter';
-import { AppAuthLockScreen } from './components/AppAuthLockScreen';
 import { FirstTimeSetup } from './components/onboarding/FirstTimeSetup';
 import { getNextRecurringTaskDate } from './lib/taskRecurrence';
 import {
@@ -83,7 +82,7 @@ export default function App() {
   const [isNotificationCenterOpen, setIsNotificationCenterOpen] = useState(false);
 
   // FINAL SECURITY ARCHITECTURE: Perimeter Lock & Session Management
-  const [isAppAuthenticated, setIsAppAuthenticated] = useState<boolean | null>(null);
+  const [isAppAuthenticated, setIsAppAuthenticated] = useState<boolean>(true);
   const [isPreviewMode, setIsPreviewMode] = useState(false);
   const [inactivityLocked, setInactivityLocked] = useState<boolean>(false);
   const [securityLevel, setSecurityLevel] = useState<1 | 2 | 3>(2);
@@ -120,9 +119,6 @@ export default function App() {
     }
   };
 
-  useEffect(() => {
-    void checkAuthStatus();
-  }, []);
 
   // No automatic startup or inactivity lock in this personal-use v1.
   // Keep the explicit manual lock action available from Settings if desired.
@@ -1024,31 +1020,6 @@ export default function App() {
       return nextState;
     });
   };
-
-  // Perimeter Authentication Guard
-  if (isAppAuthenticated === null) {
-    return (
-      <div className="min-h-screen bg-[var(--app-bg)] flex flex-col items-center justify-center p-6">
-        <div className="w-10 h-10 rounded-full border border-[var(--border-subtle)] bg-[var(--surface-1)] flex items-center justify-center mb-3 animate-pulse">
-          <span className="font-serif text-xs font-semibold text-[var(--accent-secondary)]">P&M</span>
-        </div>
-        <span className="font-serif text-xs tracking-[0.2em] uppercase text-[var(--text-primary)]">ALCHEMY</span>
-      </div>
-    );
-  }
-
-  if (isAppAuthenticated === false) {
-    return (
-      <AppAuthLockScreen
-        onAuthenticated={() => {
-          setIsAppAuthenticated(true);
-          setInactivityLocked(false);
-          checkAuthStatus();
-        }}
-        inactivityLocked={inactivityLocked}
-      />
-    );
-  }
 
   // Optional First-Time Setup Wizard (launched when requested by user)
   if (isSetupWizardOpen) {
