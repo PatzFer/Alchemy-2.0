@@ -118,3 +118,22 @@ test('snapshot write route rejects incomplete Alchemy state objects', async () =
     assert.deepEqual(await response.json(), { error: 'A valid Alchemy state object is required.' });
   });
 });
+
+
+test('snapshot write route rejects invalid expected revisions before contacting Supabase', async () => {
+  await withPersistenceServer(configured, async (baseUrl) => {
+    const response = await fetch(`${baseUrl}/api/persistence/snapshot`, {
+      method: 'POST',
+      headers: { Authorization: 'Bearer test-token', 'Content-Type': 'application/json' },
+      body: JSON.stringify({ payload: {
+        tasks: [], goals: [], ideas: [], projects: [], calendarEvents: [], memories: [],
+        dailyCheckIns: [], notifications: [], proactiveSuggestions: [], chatHistory: [],
+        lifeProfile: {}, contentPlan: {}, personalStyle: {}, nutrition: {}, cycleProfile: {},
+        wellbeing: {}, notificationSettings: {}, isSampleData: false, setupStatus: 'not_started',
+        foundation: { aboutYou: {} }, integrations: { calendar: {}, gmail: {} },
+      }, expectedRevision: -1 }),
+    });
+    assert.equal(response.status, 400);
+    assert.deepEqual(await response.json(), { error: 'expectedRevision must be a non-negative integer.' });
+  });
+});
