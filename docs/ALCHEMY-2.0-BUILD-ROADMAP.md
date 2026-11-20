@@ -1163,3 +1163,13 @@ A user can reliably open Alchemy without a startup security interstitial; captur
 - Extracted goal progress precedence into a pure tested helper: milestones first, linked task completion second, manual progress as the fallback.
 - Task search now also finds linked project and goal names, so users can retrieve actions by the larger outcome they belong to.
 - Goal search now also matches names of tasks and projects linked to that goal, completing two-way retrieval across the goal/project/task workflow.
+
+
+## Progress log — 20 November 2026 (calendar and task integration)
+
+- Calendar day, week and month cells now include tasks due on those dates, scoped to the selected workspace.
+- Calendar task ordering puts open high-priority work first and completed tasks last.
+- The selected day view and month selected-date panel allow completing/reopening tasks through the same application handler used by the task list.
+- Extracted calendar task filtering into a pure helper with workspace, date and ordering regression tests.
+- Calendar occupied-time totals now use the overlap-safe interval union helper so overlapping appointments are not counted twice.
+- Added calendar task regression tests to the automated CI suite.
