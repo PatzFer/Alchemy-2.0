@@ -1146,3 +1146,13 @@ A user can reliably open Alchemy without a startup security interstitial; captur
 
 - Bounded both manually entered and Jarvis-generated task subtasks to the same title and count limits; opening an edit form clears stale validation feedback.
 - Goal editor now clears stale validation feedback and milestone-entry text when switching records or closing after save.
+
+
+## Progress log — 20 November 2026 (project workflow and cross-linking)
+
+- Added reusable Mariluna project filtering across project title, description and notes, preserving the existing status-filter behavior and keeping archived projects hidden by default.
+- Added project editor validation for required/limited names, bounded descriptions and notes, valid start/deadline dates, and chronological date order.
+- Added visible Dutch/English project form errors and input length limits.
+- Added task-editor selectors to connect a task to an active project and goal in the same workspace. Existing links are restored when editing; changing workspace clears stale links. Linked project/goal names now appear on task cards.
+- Fixed quick task creation from a Mariluna project to use the local calendar date rather than a UTC date conversion.
+- Added automated project search, status-filter and validation boundary tests; included them in CI.
