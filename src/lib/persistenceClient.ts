@@ -80,10 +80,14 @@ export async function saveAlchemySnapshot(
   state: AppState,
   fetcher: PersistenceFetch = fetch,
   source: SnapshotSource = 'migration',
+  expectedRevision?: number,
 ): Promise<AlchemySnapshot> {
   const token = requireAccessToken(accessToken);
   if (!isCompleteAlchemyPayload(state)) {
     throw new Error('De lokale Alchemy-gegevens zijn onvolledig en zijn niet verzonden.');
+  }
+  if (expectedRevision !== undefined && (!Number.isInteger(expectedRevision) || expectedRevision < 0)) {
+    throw new Error('De verwachte cloudversie moet een niet-negatief geheel getal zijn.');
   }
   const response = await fetcher('/api/persistence/snapshot', {
     method: 'POST',
@@ -95,6 +99,7 @@ export async function saveAlchemySnapshot(
       payload: state,
       schemaVersion: 1,
       source,
+      expectedRevision: expectedRevision ?? null,
     }),
   });
   const result = await readResponse<{ snapshot?: AlchemySnapshot }>(response);
