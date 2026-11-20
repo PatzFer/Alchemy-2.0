@@ -74,7 +74,7 @@ interface SecurityStatusResponse {
     allowMarilunaDataToAI: boolean;
     allowFinancialDataToAI: boolean;
     allowWellbeingDataToAI: boolean;
-    activeAiProvider: 'gemini-server' | 'local-rules';
+    activeAiProvider: 'openai-server' | 'gemini-server' | 'local-rules';
   };
 }
 
@@ -1145,14 +1145,15 @@ export const SecurityPrivacyCenter: React.FC<SecurityPrivacyCenterProps> = ({
               onChange={(e) => handleUpdatePermission('activeAiProvider', e.target.value)}
               className="w-full rounded-xl border border-[#DDD4C5] bg-white px-3 py-2 text-xs text-[#2C2825] outline-none focus:border-[#8C7654]"
             >
-              <option value="local-rules">Local privacy mode — no Gemini processing</option>
-              <option value="gemini-server">Gemini AI — only with separate consent</option>
+              <option value="local-rules">Local privacy mode — no external AI processing</option>
+              <option value="openai-server">OpenAI — only with separate consent and server key</option>
+              <option value="gemini-server">Gemini — only with separate consent and server key</option>
             </select>
             <p className="text-[11px] text-[#6E655A] font-light leading-relaxed">
-              Gemini is used only when the relevant workspace and data permissions are also enabled. Local mode keeps Jarvis on deterministic, on-server rules.
+              The selected provider is used only when the relevant workspace and data permissions are also enabled. Local mode keeps Jarvis on deterministic, on-server rules. OpenAI and Gemini require a server-side API key and may incur usage charges.
             </p>
             <div role="note" className="rounded-lg border border-[#E4D6B8] bg-[#F7F1E5] p-3 text-[11px] leading-relaxed text-[#65553F]">
-              <strong>Privacy warning / Privacywaarschuwing:</strong> Google's free Gemini API tier may use submitted content to improve Google products. Keep real client, health, cycle and financial data in Local privacy mode. Google states that Paid-tier content is not used for product improvement, but that tier may incur costs. Check the tier attached to your API key before enabling workspace consent. <a href="https://ai.google.dev/gemini-api/docs/pricing" target="_blank" rel="noreferrer" className="underline font-medium">Gemini API pricing & data use</a>.
+              <strong>Privacy warning / Privacywaarschuwing:</strong> External AI providers receive the prompt and any workspace context permitted by your separate consent settings. Do not send sensitive client, health, cycle or financial data unless you have reviewed the provider's terms and explicitly accepted the risks. API usage may incur costs. <a href="https://openai.com/policies/privacy-policy/" target="_blank" rel="noreferrer" className="underline font-medium">OpenAI privacy policy</a> · <a href="https://ai.google.dev/gemini-api/docs/pricing" target="_blank" rel="noreferrer" className="underline font-medium">Gemini pricing & data use</a>.
             </div>
           </div>
 
