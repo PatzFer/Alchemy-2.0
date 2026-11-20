@@ -1333,6 +1333,8 @@ export default function App() {
 
         {(currentTab === 'settings' || currentTab === 'integrations') && (
           <SettingsView
+            initialTab={currentTab === 'integrations' ? 'integrations' : 'foundation'}
+            onOpenSetupWizard={() => setIsSetupWizardOpen(true)}
             memories={state.memories}
             lastSavedAt={lastSavedAt}
             lastBackupAt={lastBackupAt}
