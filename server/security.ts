@@ -384,6 +384,9 @@ class SecurityVault {
   // Passkey / WebAuthn Operations
   // ----------------------------------------------------
   public setChallenge(key: string, challenge: string, ttlMs: number = this.challengeTtlMs): void {
+    if (!key || key.length > 256 || !challenge || challenge.length > 1024) {
+      throw new Error('A valid WebAuthn challenge key and value are required.');
+    }
     const now = Date.now();
     for (const [pendingKey, pending] of this.currentChallenges) {
       if (pending.expiresAt <= now) this.currentChallenges.delete(pendingKey);
@@ -425,15 +428,34 @@ class SecurityVault {
   }
 
   public getPasskeys(): PasskeyCredential[] {
-    return Array.from(this.passkeys.values());
+    return Array.from(this.passkeys.values(), (credential) => ({
+      ...credential,
+      transports: credential.transports ? [...credential.transports] : undefined,
+    }));
   }
 
   public getPasskey(id: string): PasskeyCredential | undefined {
-    return this.passkeys.get(id);
+    const credential = this.passkeys.get(id);
+    return credential ? {
+      ...credential,
+      transports: credential.transports ? [...credential.transports] : undefined,
+    } : undefined;
   }
 
   public savePasskey(cred: PasskeyCredential): void {
-    this.passkeys.set(cred.id, cred);
+    if (!cred || typeof cred.id !== 'string' || !cred.id || cred.id.length > 2048 ||
+        typeof cred.publicKey !== 'string' || !cred.publicKey || cred.publicKey.length > 8192 ||
+        !Number.isSafeInteger(cred.counter) || cred.counter < 0 ||
+        typeof cred.nickname !== 'string' || !cred.nickname.trim() || cred.nickname.length > 120) {
+      throw new Error('Passkey credential data is invalid.');
+    }
+    this.passkeys.set(cred.id, {
+      ...cred,
+      nickname: cred.nickname.trim(),
+      transports: Array.isArray(cred.transports)
+        ? cred.transports.filter((item) => typeof item === 'string').slice(0, 8)
+        : undefined,
+    });
   }
 
   public updatePasskeyUsage(id: string, counter: number): void {
@@ -467,7 +489,7 @@ class SecurityVault {
   }
 
   public verifyAndEnableTotp(token: string): boolean {
-    if (!this.tempTotpSecret) return false;
+    if (!this.tempTotpSecret || !/^\d{6}$/.test(String(token))) return false;
     const result = verifySync({ secret: this.tempTotpSecret, token });
     if (result.valid) {
       this.totpSecret = this.tempTotpSecret;
@@ -479,7 +501,7 @@ class SecurityVault {
   }
 
   public verifyTotp(token: string): boolean {
-    if (!this.totpEnabled || !this.totpSecret) return false;
+    if (!this.totpEnabled || !this.totpSecret || !/^\d{6}$/.test(String(token))) return false;
     const result = verifySync({ secret: this.totpSecret, token });
     return result.valid;
   }
@@ -516,15 +538,22 @@ class SecurityVault {
   }
 
   public verifyAndConsumeRecoveryCode(plainCode: string): boolean {
+    if (typeof plainCode !== 'string' || plainCode.length > 64) return false;
     const clean = plainCode.trim().toUpperCase();
-    const hash = crypto.createHash('sha256').update(clean).digest('hex');
-    const item = this.recoveryCodes.find((r) => r.codeHash === hash && !r.used);
-    if (item) {
-      item.used = true;
-      item.usedAt = new Date().toISOString();
-      return true;
+    if (!/^PMAL-[A-F0-9]{4}-[A-F0-9]{4}$/.test(clean)) return false;
+    const hash = crypto.createHash('sha256').update(clean).digest();
+    // Compare fixed-length hashes in constant time; never stop at the first
+    // candidate so timing does not reveal which recovery-code slot matched.
+    let matched: RecoveryCodeItem | undefined;
+    for (const item of this.recoveryCodes) {
+      const candidate = Buffer.from(item.codeHash, 'hex');
+      const equal = candidate.length === hash.length && crypto.timingSafeEqual(candidate, hash);
+      if (equal && !item.used) matched = item;
     }
-    return false;
+    if (!matched) return false;
+    matched.used = true;
+    matched.usedAt = new Date().toISOString();
+    return true;
   }
 
   public getRecoveryCodesStatus(): { total: number; remaining: number; items: { preview: string; used: boolean }[] } {
