@@ -1097,3 +1097,5 @@ A user can reliably open Alchemy without a startup security interstitial; captur
 - Added an in-memory delivery guard for Strict Mode effect replays and centralized the browser-push gate so disabled settings, disabled integration, and quiet hours suppress delivery.
 - Added regression tests for late daily/weekly/monthly recurrence and push eligibility at quiet-hour boundaries.
 - The change still requires hands-on mobile/PWA permission and notification acceptance; browser delivery cannot be proven by unit tests alone.
+
+- Verification: GitHub Actions run 44793351195 passed on commit `e7027bf0`, including TypeScript, Supabase migration safety, privacy regression tests and the production build.
