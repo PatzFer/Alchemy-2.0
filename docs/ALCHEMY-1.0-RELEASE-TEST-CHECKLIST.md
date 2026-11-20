@@ -179,6 +179,7 @@ Do not mark a test as passed based only on source inspection or a successful com
 - [x] Daily planning uses local date-only parsing.
 - [x] Task list prioritizes earlier due dates, then task priority.
 - [x] Completed tasks are grouped after active work.
+- [x] Today dashboard shows estimated task workload and overlap-safe appointment time separately.
 - [x] Capacity, task-fit, planning and sorting regression tests run in CI.
 - [ ] Manually verify capacity advice against a realistic workday and personal schedule.
 - [ ] Verify suggestions remain appropriate when many tasks are overdue or have no due date.
