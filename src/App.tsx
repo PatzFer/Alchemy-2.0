@@ -1194,6 +1194,8 @@ export default function App() {
         {currentTab === 'goals' && (
           <GoalsView
             goals={state.goals}
+            tasks={state.tasks}
+            projects={state.projects}
             activeWorld={activeWorld}
             onSaveGoal={handleSaveGoal}
             onToggleMilestone={handleToggleMilestone}
