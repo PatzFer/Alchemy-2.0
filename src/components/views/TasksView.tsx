@@ -213,6 +213,8 @@ export const TasksView: React.FC<TasksViewProps> = ({
     status: filterStatus,
     priority: filterPriority as 'all' | Task['priority'],
     query: searchQuery,
+    projects,
+    goals,
   });
 
   return (
