@@ -118,3 +118,8 @@ This helper is not yet integrated into TOTP or provider-token storage. No live e
 A forward-only migration adds an expected-revision precondition to the server-only snapshot RPC. The API and browser adapter can supply the revision last observed by the client. The database serializes writes per owner and rejects a mismatch with a conflict rather than silently accepting a stale overwrite. The HTTP layer maps that conflict to 409. CI statically checks that the revision-aware function remains inaccessible to anon/authenticated and executable only by service_role.
 
 The precondition is optional for compatibility; clients that omit it do not receive stale-write protection. The application has not yet enabled automatic cloud writes. The migration must be applied and tested in staging, including simultaneous writers, before cloud sync can be enabled.
+
+
+## Feature-branch provider update — 20 November 2026
+
+The Security & Privacy provider selector now supports an optional openai-server mode in addition to local rules and the existing Gemini mode. The central Jarvis chat route uses the server-only OpenAI Responses adapter when OpenAI is explicitly selected and the existing workspace consent check passes. Configuration is supplied through server-only OPENAI_API_KEY and OPENAI_MODEL environment variables. Missing configuration/provider errors fall back to deterministic local responses. This is not a claim that OpenAI is configured or that every specialized AI route has migrated: planning, goal breakdown and idea analysis remain on their prior paths. Provider selection/permissions are still in-memory pending durable identity/settings storage. No live provider request has been made or billed as part of this implementation.
