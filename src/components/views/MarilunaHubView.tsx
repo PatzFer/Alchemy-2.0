@@ -209,6 +209,7 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
   const [editingOfferingId, setEditingOfferingId] = useState<string | null>(null);
   const [offeringSearchQuery, setOfferingSearchQuery] = useState('');
   const [offeringTypeFilter, setOfferingTypeFilter] = useState<string>('all');
+  const [offeringStatusFilter, setOfferingStatusFilter] = useState<'all' | MarilunaOffering['status']>('all');
   const [offeringTitle, setOfferingTitle] = useState('');
   const [offeringType, setOfferingType] = useState<MarilunaOffering['type']>('service');
   const [offeringPrice, setOfferingPrice] = useState<number | ''>('');
@@ -1050,6 +1051,29 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
               </div>
             </div>
           )}
+          {offerings.length > 0 && (
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-[10px] uppercase tracking-wider text-[var(--text-muted)]">{isNl ? 'Status' : 'Status'}</span>
+              {(['all', 'active', 'draft', 'archived'] as const).map((status) => (
+                <button
+                  key={status}
+                  type="button"
+                  onClick={() => setOfferingStatusFilter(status)}
+                  aria-pressed={offeringStatusFilter === status}
+                  className={`px-2.5 py-1 rounded-full border text-[11px] transition cursor-pointer ${
+                    offeringStatusFilter === status
+                      ? 'border-[var(--accent-secondary)] bg-[var(--accent-secondary)]/15 text-[var(--text-primary)]'
+                      : 'border-[var(--border-subtle)] text-[var(--text-secondary)] hover:bg-[var(--surface-2)]'
+                  }`}
+                >
+                  {status === 'all' ? (isNl ? 'Alle statussen' : 'All statuses')
+                    : status === 'active' ? (isNl ? 'Actief' : 'Active')
+                    : status === 'draft' ? (isNl ? 'Concept' : 'Draft')
+                    : (isNl ? 'Archief' : 'Archived')}
+                </button>
+              ))}
+            </div>
+          )}
 
           {offerings.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-[#DCD3C4] p-10 text-center space-y-2">
@@ -1072,7 +1096,8 @@ export const MarilunaHubView: React.FC<MarilunaHubViewProps> = ({
                   off.title.toLowerCase().includes(offeringSearchQuery.toLowerCase()) ||
                   (off.description && off.description.toLowerCase().includes(offeringSearchQuery.toLowerCase()));
                 const matchesType = offeringTypeFilter === 'all' || off.type === offeringTypeFilter;
-                return matchesSearch && matchesType;
+                const matchesStatus = offeringStatusFilter === 'all' || (off.status || 'draft') === offeringStatusFilter;
+                return matchesSearch && matchesType && matchesStatus;
               });
 
               if (filteredOfferings.length === 0) {
