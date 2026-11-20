@@ -133,5 +133,6 @@ Do not mark a test as passed based only on source inspection or a successful com
 - [x] Milestones can be added and removed manually.
 - [x] Jarvis milestone suggestions preserve manual entries and are bounded before use.
 - [x] Automated tests cover task and goal validation boundaries.
+- [x] Goal search covers descriptions, notes and milestone titles and combines with workspace/timeframe filters.
 - [ ] Manually verify task and goal creation/editing on Android and desktop.
 - [ ] Verify Jarvis milestone suggestions with a configured AI provider.
