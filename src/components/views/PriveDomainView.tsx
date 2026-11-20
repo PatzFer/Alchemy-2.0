@@ -538,7 +538,7 @@ export const PriveDomainView: React.FC<PriveDomainViewProps> = ({
           </div>
 
           {personalGoals.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-[#DCD3C4] p-10 text-center space-y-2">
+            <div className="rounded-2xl border border-dashed border-[var(--border-subtle)] p-10 text-center space-y-2">
               <p className="text-xs text-[var(--text-secondary)] italic">
                 {isNl ? 'Nog geen persoonlijke doelen.' : 'No personal goals recorded yet.'}
               </p>
@@ -571,14 +571,14 @@ export const PriveDomainView: React.FC<PriveDomainViewProps> = ({
                   {goal.milestones && goal.milestones.length > 0 && (
                     <div className="space-y-1.5 pt-2 border-t border-[var(--border-subtle)]">
                       {goal.milestones.map((m) => (
-                        <div key={m.id} className="flex items-center gap-2 text-xs text-[#524B43]">
+                        <div key={m.id} className="flex items-center gap-2 text-xs text-[var(--text-primary)]">
                           <button
                             type="button"
                             onClick={() => onToggleMilestone && onToggleMilestone(goal.id, m.id)}
                             className="text-[var(--accent-secondary)] hover:text-[var(--text-primary)]"
                           >
                             {m.completed ? (
-                              <CheckCircle2 className="w-3.5 h-3.5 text-[#3A6B35]" />
+                              <CheckCircle2 className="w-3.5 h-3.5 text-[var(--status-success)]" />
                             ) : (
                               <Circle className="w-3.5 h-3.5" />
                             )}
@@ -662,7 +662,7 @@ export const PriveDomainView: React.FC<PriveDomainViewProps> = ({
               {lifeProfile.routines.map((routine) => (
                 <div
                   key={routine.id}
-                  className="p-3 rounded-xl bg-[var(--surface-2)] border border-[#E5DDD0] flex items-center justify-between text-xs"
+                  className="p-3 rounded-xl bg-[var(--surface-2)] border border-[var(--border-subtle)] flex items-center justify-between text-xs"
                 >
                   <div className="flex items-center gap-2.5">
                     <Clock className="w-3.5 h-3.5 text-[var(--accent-secondary)]" />
@@ -674,7 +674,7 @@ export const PriveDomainView: React.FC<PriveDomainViewProps> = ({
                   <button
                     type="button"
                     onClick={() => handleRemoveRoutine(routine.id)}
-                    className="p-1 text-[#A89E90] hover:text-[#B44335] transition"
+                    className="p-1 text-[#A89E90] hover:text-[var(--status-danger)] transition"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
