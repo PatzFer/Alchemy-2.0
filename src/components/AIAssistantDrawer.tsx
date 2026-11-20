@@ -404,7 +404,7 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
             </button>
           </form>
           <div className="flex items-center justify-between mt-2 text-[10px] text-[#9A9084] px-1">
-            <span>Server-Side Gemini 3.8 Flash • Contextual Memory Active</span>
+            <span>Jarvis • Privacy-first context • Server-side AI when permitted</span>
             <span>Focus: {assistantWorld === 'all' ? 'kies een domein' : assistantWorld === 'mariluna' ? 'Mariluna' : 'Privé'}</span>
           </div>
         </div> : <div className="p-4 border-t border-[#E8E2D6] bg-[#FAF8F4] text-center text-xs text-[#7A7167]">Kies Privé of Mariluna om een gesprek te starten.</div>}
