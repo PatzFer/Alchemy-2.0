@@ -1156,7 +1156,7 @@ export const SecurityPrivacyCenter: React.FC<SecurityPrivacyCenterProps> = ({
               <option value="gemini-server">Gemini — only with separate consent and server key</option>
             </select>
             <p className="text-[11px] text-[#6E655A] font-light leading-relaxed">
-              The selected provider is used only when the relevant workspace permission is enabled. Local mode uses on-server rules. Gemini and OpenAI keys stay on the server; usage limits and possible charges depend on the provider and account tier.
+              Selecting Gemini or OpenAI allows Jarvis to send your chat messages to that provider for an actual AI reply. The separate Privé and Mariluna permissions control whether extra app records (such as tasks, calendar items, ideas or services) may be added to the prompt. If those permissions are off, Jarvis can still chat but receives no records from that workspace. Local mode does not contact an external AI. Provider keys stay on the server; free-tier data-use terms, usage limits and possible charges depend on the provider and account tier.
             </p>
             <div role="status" className="rounded-lg border border-[#E3D9C9] bg-white px-3 py-2 text-[11px] text-[#655D53]">
               {status?.permissions.activeAiProvider === 'gemini-server'
