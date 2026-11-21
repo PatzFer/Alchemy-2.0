@@ -99,28 +99,30 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
 
     try {
       const result = await requestGoalBreakdown(formTitle, formRealm, formTimeframe);
-      if (result && Array.isArray(result.milestones)) {
-        const generated: Milestone[] = result.milestones
-          .filter((milestone: any) =>
-            typeof milestone?.title === 'string' &&
-            milestone.title.trim().length > 0 &&
-            milestone.title.trim().length <= 160
-          )
-          .slice(0, 50)
-          .map((milestone: any, index: number) => ({
-            id: 'm-gen-' + Date.now() + '-' + index,
-            title: milestone.title.trim(),
-            completed: false,
-            suggestedDay: typeof milestone.suggestedDay === 'string' ? milestone.suggestedDay.slice(0, 80) : 'Binnenkort',
-            durationMins: Number.isFinite(milestone.durationMins)
-              ? Math.max(5, Math.min(1440, Math.round(milestone.durationMins)))
-              : 45,
-          }));
-        if (generated.length === 0) throw new Error('Jarvis gaf geen bruikbare tussenstappen terug. Probeer het opnieuw.');
-        setFormMilestones((current) => [...current, ...generated].slice(0, 50));
-      } else {
-        throw new Error('Jarvis gaf geen geldig stappenplan terug. Probeer het opnieuw.');
+      if (!result || !Array.isArray(result.milestones) ||
+          result.milestones.length < 3 || result.milestones.length > 5) {
+        throw new Error('Jarvis gaf geen geldig stappenplan terug. Je bestaande tussenstappen zijn behouden.');
       }
+      const generated: Milestone[] = result.milestones.map((milestone: any, index: number) => {
+        const title = typeof milestone?.title === 'string' ? milestone.title.trim() : '';
+        const durationMins = milestone?.durationMins;
+        if (!title || title.length > 160 ||
+            typeof durationMins !== 'number' || !Number.isFinite(durationMins) ||
+            durationMins < 5 || durationMins > 240) {
+          throw new Error('Jarvis gaf een onvolledige tussenstap terug. Je bestaande tussenstappen zijn behouden.');
+        }
+        return {
+          id: 'm-gen-' + Date.now() + '-' + index,
+          title,
+          completed: false,
+          suggestedDay: typeof milestone.suggestedDay === 'string' ? milestone.suggestedDay.slice(0, 80) : 'Binnenkort',
+          durationMins: Math.round(durationMins),
+        };
+      });
+      if (formMilestones.length + generated.length > 50) {
+        throw new Error('Er is onvoldoende ruimte: verwijder eerst enkele tussenstappen (maximaal 50).');
+      }
+      setFormMilestones((current) => [...current, ...generated]);
     } catch (err) {
       console.warn('AI breakdown error:', err);
       setAiBreakdownError(err instanceof Error ? err.message : 'Jarvis kon dit doel niet opdelen. Probeer het opnieuw.');
