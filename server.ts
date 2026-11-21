@@ -3,7 +3,7 @@ import path from "path";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import { GoogleGenAI } from "@google/genai";
-import { requestOpenAIResponse } from "./server/openaiProvider";
+import { requestConfiguredAiResponse, type AiTextMessage } from "./server/aiProvider";
 import { createServer as createViteServer } from "vite";
 import securityRouter from "./server/securityRoutes";
 import integrationsRouter from "./server/integrationsRoutes";
@@ -361,17 +361,6 @@ app.post("/api/ai/chat", requireAppAuth, requireAiRateLimit, async (req: Request
       });
     }
 
-    const ai = getAI();
-
-    if (!ai) {
-      // Fallback intelligent response when API key is not configured yet
-      const fallbackResponse = buildIntentAwareResponse(intentObj, lastUserMsg, sanitizedContext, world);
-      return res.json({
-        role: "assistant",
-        content: `[${isDutch ? 'Lokale modus — Gemini API-sleutel ontbreekt' : 'Local mode — Gemini API key is not configured'}] ${fallbackResponse}`,
-      });
-    }
-
     const systemPrompt = `You are "JARVIS", the personal AI operating system and strategic thinking partner in "P & M Alchemy" for Patricia ("Patz").
 
 STRICT LANGUAGE MANDATE (CRITICAL):
@@ -429,50 +418,47 @@ REAL SYSTEM CONTEXT PROVIDED:
 - Confirmed Memories: ${JSON.stringify(sanitizedContext?.memoryItems || [])}
 `;
 
-    // OpenAI is an optional, explicitly selected server-side provider.
-    // Missing configuration or provider failure falls back locally without losing the request.
-    if (permissions.activeAiProvider === "openai-server") {
-      const openAiResult = await requestOpenAIResponse([
-        { role: "system", content: systemPrompt },
-        ...messages,
-      ], {
-        apiKey: process.env.OPENAI_API_KEY,
-        model: process.env.OPENAI_MODEL,
-      });
-      if (openAiResult.available && openAiResult.text) {
-        return res.json({
-          role: "assistant",
-          content: openAiResult.text,
-          provider: "openai",
-        });
-      }
-      const fallbackResponse = buildIntentAwareResponse(intentObj, lastUserMsg, sanitizedContext, world);
+    // One provider boundary keeps Gemini and OpenAI behavior consistent.
+    // Credentials remain server-only; an unavailable provider is clearly labelled as local fallback.
+    const provider = permissions.activeAiProvider;
+    const providerMessages: AiTextMessage[] = [
+      { role: "system", content: systemPrompt },
+      ...messages.map((message: { role: string; content: string }) => ({
+        role: message.role === "user" ? "user" as const : "assistant" as const,
+        content: message.content,
+      })),
+    ];
+    const aiResult = provider === "local-rules" ? null : await requestConfiguredAiResponse(
+      providerMessages,
+      {
+        provider,
+        geminiApiKey: process.env.GEMINI_API_KEY,
+        geminiModel: process.env.GEMINI_MODEL || "gemini-3.8-flash",
+        openAiApiKey: process.env.OPENAI_API_KEY,
+        openAiModel: process.env.OPENAI_MODEL,
+      },
+    );
+
+    if (aiResult?.available && aiResult.text) {
       return res.json({
         role: "assistant",
-        content: `[${isDutch ? 'Lokale modus — OpenAI niet geconfigureerd of tijdelijk niet beschikbaar' : 'Local mode — OpenAI is not configured or temporarily unavailable'}] ${fallbackResponse}`,
-        provider: "local",
+        content: aiResult.text,
+        provider: aiResult.provider === "gemini-server" ? "gemini" : "openai",
+        model: aiResult.model,
       });
     }
 
-    // Format conversation history for Gemini 3.8 Flash
-    const formattedContents = messages.map((m: { role: string; content: string }) => ({
-      role: m.role === "user" ? "user" : "model",
-      parts: [{ text: m.content }],
-    }));
-
-    const response = await ai.models.generateContent({
-      model: "gemini-3.8-flash",
-      contents: formattedContents,
-      config: {
-        systemInstruction: systemPrompt,
-        temperature: 0.3,
-      },
-    });
-
-    const text = response.text || buildIntentAwareResponse(intentObj, lastUserMsg, sanitizedContext, world);
-    res.json({
+    const fallbackResponse = buildIntentAwareResponse(intentObj, lastUserMsg, sanitizedContext, world);
+    const unavailableLabel = provider === "openai-server"
+      ? (isDutch ? "Lokale modus — OpenAI niet geconfigureerd of tijdelijk niet beschikbaar" : "Local mode — OpenAI is not configured or temporarily unavailable")
+      : provider === "gemini-server"
+        ? (isDutch ? "Lokale modus — Gemini niet geconfigureerd of tijdelijk niet beschikbaar" : "Local mode — Gemini is not configured or temporarily unavailable")
+        : (isDutch ? "Lokale privacymodus actief" : "Local privacy mode active");
+    return res.json({
       role: "assistant",
-      content: text,
+      content: `[${unavailableLabel}] ${fallbackResponse}`,
+      provider: "local",
+      providerStatus: aiResult?.reason || "local_privacy_mode",
     });
   } catch (error: any) {
     console.error("AI Chat Error:", error);
