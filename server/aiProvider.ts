@@ -61,7 +61,7 @@ export async function requestConfiguredAiResponse(
   }
 
   const apiKey = options.geminiApiKey?.trim();
-  const model = options.geminiModel?.trim() || 'gemini-3.5-flash-lite';
+  const model = options.geminiModel?.trim() || 'gemini-3.8-flash';
   if (!apiKey || apiKey.length > 4096 || /\s/.test(apiKey) ||
       !/^[a-zA-Z0-9.-]{1,128}$/.test(model)) {
     return { available: false, text: null, provider: 'gemini-server', reason: 'missing_configuration' };
