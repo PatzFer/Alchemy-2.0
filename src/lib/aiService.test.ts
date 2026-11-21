@@ -62,3 +62,12 @@ test('Jarvis discards incomplete action fences and array payloads', async () => 
   assert.equal(result.suggestedAction, undefined);
   assert.equal(result.content, 'Ik heb een voorstel.');
 });
+
+
+test('Jarvis preserves a safe, actionable provider diagnostic from the server', async () => {
+  const diagnostic = 'Jarvis kon geen echt AI-antwoord ophalen via Gemini: de AI-provider antwoordde niet op tijd. Er is niets gewijzigd.';
+  mockFetch(async () => new Response(JSON.stringify({ error: diagnostic, providerStatus: 'provider_timeout' }), { status: 503 }));
+  const result = await sendChatMessage([{ role: 'user', content: 'Hallo Jarvis' }], {}, 'personal');
+  assert.equal(result.content, diagnostic);
+  assert.equal(result.suggestedAction, undefined);
+});
