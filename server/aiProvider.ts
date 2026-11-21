@@ -56,6 +56,7 @@ export async function requestConfiguredAiResponse(
       apiKey: options.openAiApiKey,
       model: options.openAiModel,
       fetcher: options.fetcher,
+      timeoutMs: options.timeoutMs,
     });
     return { ...result, provider: 'openai-server', model: options.openAiModel?.trim() || undefined };
   }
