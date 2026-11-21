@@ -596,60 +596,51 @@ app.post("/api/ai/analyze-idea", requireAppAuth, requireAiRateLimit, async (req:
     if (realm !== 'personal' && realm !== 'mariluna') {
       return res.status(400).json({ error: 'A valid Personal or Mariluna realm is required.' });
     }
-    const safeRawIdea = typeof rawIdea === 'string' ? rawIdea.slice(0, 5000) : '';
+    const safeRawIdea = typeof rawIdea === 'string' ? rawIdea.trim().slice(0, 5000) : '';
+    if (!safeRawIdea) return res.status(400).json({ error: 'Add an idea before requesting analysis.' });
     const permissions = securityVault.getPermissions();
-    const ai = permissions.activeAiProvider === 'gemini-server' &&
-      hasAiWorkspaceConsent(realm, permissions) ? getAI() : null;
-
-    if (!ai) {
-      return res.json({
-        summary: `Strategic concept: ${safeRawIdea.slice(0, 60)}...`,
-        category: realm === "mariluna" ? "Strategy & Offering" : "Personal Vision",
-        suggestedNextAction: "Frame a 1-page outline or exploratory brainstorm",
-        potentialProjectName: "Exploration: " + safeRawIdea.slice(0, 30),
-        followUpQuestions: [
-          "What is the primary transformation this brings?",
-          "Does this align with your current quarterly theme?",
-        ],
-      });
+    if (permissions.activeAiProvider === 'local-rules' || !hasAiWorkspaceConsent(realm, permissions)) {
+      return res.status(503).json({ error: 'Live AI idea analysis is disabled by the current provider or workspace privacy settings. Your original idea can still be saved.' });
     }
 
     const prompt = `Analyze this raw brain dump idea:
 "${safeRawIdea}"
-World: ${realm}
+Workspace: ${realm}
 
-Provide thoughtful synthesis in JSON:
+Understand the idea before categorizing it. Preserve the author's intent and voice.
+Provide a thoughtful synthesis in valid JSON:
 {
-  "summary": "refined 1-sentence essence",
-  "category": "category name",
-  "suggestedNextAction": "concrete small next step",
-  "potentialProjectName": "clear project title if turned into one",
-  "followUpQuestions": ["question 1 to spark thinking", "question 2"]
+  "summary": "clear one-sentence essence",
+  "category": "specific useful category",
+  "suggestedNextAction": "one concrete small next step",
+  "potentialProjectName": "clear project title, or empty string",
+  "followUpQuestions": ["one useful question", "a second useful question"]
 }`;
-
-    const response = await ai.models.generateContent({
-      model: "gemini-3.8-flash",
-      contents: prompt,
-      config: {
-        responseMimeType: "application/json",
-      },
+    const result = await requestConfiguredAiResponse([
+      { role: 'system', content: 'You are Jarvis, a perceptive and practical creative thinking partner. Return only valid JSON.' },
+      { role: 'user', content: prompt },
+    ], {
+      provider: permissions.activeAiProvider,
+      geminiApiKey: process.env.GEMINI_API_KEY,
+      geminiModel: process.env.GEMINI_MODEL || 'gemini-3.8-flash',
+      openAiApiKey: process.env.OPENAI_API_KEY,
+      openAiModel: process.env.OPENAI_MODEL,
     });
-
-    const parsed = JSON.parse(response.text || "{}");
-    res.json(parsed);
+    if (!result.available || !result.text) {
+      return res.status(503).json({ error: 'Jarvis could not reach the selected AI provider. Your original idea can still be saved.' });
+    }
+    const parsed = JSON.parse(result.text);
+    if (!parsed || typeof parsed.summary !== 'string' || !parsed.summary.trim() ||
+        typeof parsed.category !== 'string' || !parsed.category.trim() ||
+        typeof parsed.suggestedNextAction !== 'string' ||
+        !Array.isArray(parsed.followUpQuestions) ||
+        parsed.followUpQuestions.some((question: unknown) => typeof question !== 'string')) {
+      return res.status(502).json({ error: 'Jarvis returned an incomplete idea analysis. Your original idea can still be saved.' });
+    }
+    return res.json({ ...parsed, provider: result.provider, model: result.model });
   } catch (error: any) {
-    console.error("Analyze Idea Error (transient fallback):", error);
-    const { rawIdea, realm } = req.body;
-    res.json({
-      summary: `Strategic concept: ${(rawIdea || "").slice(0, 60)}...`,
-      category: realm === "mariluna" ? "Strategy & Offering" : "Personal Vision",
-      suggestedNextAction: "Frame a 1-page outline or exploratory brainstorm",
-      potentialProjectName: "Exploration: " + (rawIdea || "").slice(0, 30),
-      followUpQuestions: [
-        "What is the primary transformation this brings?",
-        "Does this align with your current quarterly theme?",
-      ],
-    });
+    console.error("Analyze Idea Error:", error);
+    return res.status(502).json({ error: 'Jarvis could not complete the idea analysis. Your original idea can still be saved.' });
   }
 });
 
