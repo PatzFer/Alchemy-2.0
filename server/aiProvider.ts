@@ -12,7 +12,7 @@ export interface ConfiguredAiResult {
   text: string | null;
   provider: ConfiguredAiProvider;
   model?: string;
-  reason?: 'missing_configuration' | 'provider_error' | 'invalid_response' | 'provider_timeout' | 'rate_limited' | 'provider_unavailable' | 'provider_auth';
+  reason?: 'missing_configuration' | 'provider_error' | 'invalid_response' | 'provider_timeout' | 'rate_limited' | 'provider_unavailable' | 'provider_auth' | 'provider_model';
 }
 
 export interface ConfiguredAiOptions {
@@ -122,6 +122,7 @@ export async function requestConfiguredAiResponse(
     if (!response.ok) {
       const reason = response.status === 429 ? 'rate_limited'
         : response.status === 401 || response.status === 403 ? 'provider_auth'
+        : response.status === 404 ? 'provider_model'
         : response.status === 502 || response.status === 503 || response.status === 504 ? 'provider_unavailable'
         : 'provider_error';
       return { available: false, text: null, provider: 'gemini-server', model, reason };
