@@ -327,11 +327,15 @@ app.post("/api/ai/chat", requireAppAuth, requireAiRateLimit, async (req: Request
       role: message?.role === 'user' ? 'user' : 'assistant',
       content: typeof message?.content === 'string' ? message.content.slice(0, 8000) : '',
     })).filter((message: { content: string }) => message.content.length > 0);
+    const lastUserMsg = [...messages].reverse().find((message) => message.role === 'user')?.content.trim() || '';
+    if (!lastUserMsg) {
+      return res.status(400).json({ error: 'Stuur eerst een bericht naar Jarvis.' });
+    }
+
     const world = resolveAiWorkspace(req.body.world);
     const permissions = securityVault.getPermissions();
 
     const sanitizedContext = securityVault.sanitizeContextForAi(context, world);
-    const lastUserMsg = [...messages].reverse().find((message) => message.role === 'user')?.content || '';
     const isDutch = isDutchMessage(lastUserMsg);
     const intentObj = classifyIntent(lastUserMsg, messages, sanitizedContext);
 
