@@ -133,32 +133,32 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
       season: northernSeason,
       activeWorld: scope,
       activeContextItem: safeContextItem,
-      calendarEvents: (calendarEvents || []).filter(inScope).map((e) => ({
+      calendarEvents: (calendarEvents || []).filter(inScope).slice(0, 100).map((e) => ({
         id: e.id, title: e.title, date: e.date, startTime: e.startTime,
         endTime: e.endTime, category: e.category, realm: e.realm,
       })),
-      tasks: (tasks || []).filter(inScope).map((t) => ({
+      tasks: (tasks || []).filter(inScope).slice(0, 100).map((t) => ({
         id: t.id, title: t.title, dueDate: t.dueDate, status: t.status,
         priority: t.priority, realm: t.realm, goalId: t.goalId,
         projectId: t.projectId, estimatedDuration: t.estimatedDuration,
       })),
-      projects: (projects || []).filter(inScope).map((p) => ({
+      projects: (projects || []).filter(inScope).slice(0, 50).map((p) => ({
         id: p.id, title: p.title, status: p.status, realm: p.realm,
         goalId: p.goalId, taskIds: p.taskIds || [], targetDate: p.targetDate,
         description: p.description,
       })),
-      ideas: (ideas || []).filter(inScope).map((i) => ({
+      ideas: (ideas || []).filter(inScope).slice(0, 50).map((i) => ({
         id: i.id, title: i.title, content: i.content, pillar: i.contentPillar,
         status: i.status, realm: i.realm,
       })),
-      goals: (goals || []).filter(inScope).map((g) => ({
+      goals: (goals || []).filter(inScope).slice(0, 50).map((g) => ({
         id: g.id, title: g.title, description: g.description, progress: g.progress,
         timeframe: g.timeframe, startDate: g.startDate, endDate: g.endDate,
         targetDate: g.targetDate, realm: g.realm, status: g.status,
         connectedProjectIds: g.connectedProjectIds || [],
         connectedTaskIds: g.connectedTaskIds || [],
       })),
-      intentions: (intentions || []).filter(inScope).map((i) => ({
+      intentions: (intentions || []).filter(inScope).slice(0, 30).map((i) => ({
         id: i.id, title: i.title, date: i.date, realm: i.realm,
         status: i.status, completed: i.completed,
       })),
@@ -174,13 +174,13 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
         pillars: contentPlan.pillars,
         recentPosts: contentPlan.posts?.slice(-5).map((p) => ({ title: p.title, status: p.status, pillar: p.pillar })),
       } : undefined,
-      offerings: isMariluna ? (offerings || []).map((o) => ({
+      offerings: isMariluna ? (offerings || []).slice(0, 50).map((o) => ({
         id: o.id, title: o.title, type: o.type, price: o.price,
         description: o.description, status: o.status,
       })) : [],
       workingHours: isPersonal ? `${lifeProfile.workingHoursStart} - ${lifeProfile.workingHoursEnd}` : undefined,
       preferences: isPersonal ? lifeProfile.preferences : undefined,
-      memoryItems: (memories || []).filter(inScope).map((m) => ({
+      memoryItems: (memories || []).filter(inScope).slice(0, 20).map((m) => ({
         content: m.content, category: m.category, realm: m.realm,
         type: m.type, status: m.status, confidence: m.confidence, expiresAt: m.expiresAt,
       })),
