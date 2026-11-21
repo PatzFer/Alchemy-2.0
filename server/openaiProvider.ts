@@ -7,12 +7,13 @@ export interface OpenAIProviderConfig {
   apiKey?: string;
   model?: string;
   fetcher?: typeof fetch;
+  timeoutMs?: number;
 }
 
 export interface OpenAIProviderResult {
   available: boolean;
   text: string | null;
-  reason?: 'missing_configuration' | 'provider_error' | 'invalid_response';
+  reason?: 'missing_configuration' | 'provider_error' | 'invalid_response' | 'provider_timeout' | 'rate_limited' | 'provider_unavailable' | 'provider_auth';
 }
 
 /**
@@ -39,9 +40,13 @@ export async function requestOpenAIResponse(
   }
 
   const fetcher = config.fetcher || fetch;
+  const controller = new AbortController();
+  const timeoutMs = Math.max(1000, Math.min(config.timeoutMs ?? 11500, 14000));
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
   try {
     const response = await fetcher('https://api.openai.com/v1/responses', {
       method: 'POST',
+      signal: controller.signal,
       headers: {
         Authorization: `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
@@ -56,7 +61,11 @@ export async function requestOpenAIResponse(
     });
     if (!response.ok) {
       // Never return provider response bodies: they may contain operational details.
-      return { available: false, text: null, reason: 'provider_error' };
+      const reason = response.status === 429 ? 'rate_limited'
+        : response.status === 401 || response.status === 403 ? 'provider_auth'
+        : response.status === 502 || response.status === 503 || response.status === 504 ? 'provider_unavailable'
+        : 'provider_error';
+      return { available: false, text: null, reason };
     }
     const payload = await response.json() as {
       output_text?: unknown;
@@ -73,6 +82,8 @@ export async function requestOpenAIResponse(
     }
     return { available: true, text };
   } catch {
-    return { available: false, text: null, reason: 'provider_error' };
+    return { available: false, text: null, reason: controller.signal.aborted ? 'provider_timeout' : 'provider_error' };
+  } finally {
+    clearTimeout(timeout);
   }
 }
