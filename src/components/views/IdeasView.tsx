@@ -62,6 +62,7 @@ export const IdeasView: React.FC<IdeasViewProps> = ({
   const [editTags, setEditTags] = useState('');
   const [quickRealm, setQuickRealm] = useState<Realm>(activeWorld === 'mariluna' ? 'mariluna' : 'personal');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analysisNotice, setAnalysisNotice] = useState<string | null>(null);
 
   useEffect(() => {
     setQuickRealm(activeWorld === 'mariluna' ? 'mariluna' : 'personal');
@@ -109,6 +110,7 @@ export const IdeasView: React.FC<IdeasViewProps> = ({
     if (!quickIdeaText.trim()) return;
 
     setIsAnalyzing(true);
+    setAnalysisNotice(null);
     let analysis: { category?: string; summary?: string; suggestedNextAction?: string; followUpQuestions?: string[] } = {};
     try {
       const analysisInput = quickIdeaTheme.trim()
@@ -117,6 +119,9 @@ export const IdeasView: React.FC<IdeasViewProps> = ({
       analysis = await requestIdeaAnalysis(analysisInput, quickRealm);
     } catch (error) {
       console.warn('Idea analysis unavailable; keeping the original brain dump.', error);
+      setAnalysisNotice(error instanceof Error
+        ? `Je idee is bewaard. Jarvis heeft de analyse overgeslagen: ${error.message}`
+        : 'Je idee is bewaard. Jarvis kon de analyse niet uitvoeren.');
     } finally {
       setIsAnalyzing(false);
     }
@@ -288,6 +293,12 @@ export const IdeasView: React.FC<IdeasViewProps> = ({
             placeholder="Schrijf hier je gedachte, inspiratie of Mariluna-idee..."
             className="w-full bg-[var(--surface-1)] border border-[var(--border-subtle)] rounded-xl p-3 text-xs sm:text-sm text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-hidden focus:border-[var(--accent-secondary)]"
           />
+
+          {analysisNotice && (
+            <p role="status" className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-[var(--text-secondary)]">
+              {analysisNotice}
+            </p>
+          )}
 
           <div className="flex items-center justify-between pt-1">
             <span className="text-[11px] text-[var(--text-muted)] flex items-center gap-1">
