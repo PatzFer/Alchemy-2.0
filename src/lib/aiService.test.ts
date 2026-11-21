@@ -86,7 +86,7 @@ test('goal breakdown reports server failures instead of returning fabricated AI 
   mockFetch(async () => new Response(JSON.stringify({ error: 'AI provider unavailable' }), { status: 503 }));
   await assert.rejects(
     () => requestGoalBreakdown('Launch a project', 'mariluna', 'quarterly'),
-    /Jarvis is momenteel niet beschikbaar/,
+    /AI provider unavailable/,
   );
 });
 
