@@ -453,6 +453,7 @@ REAL SYSTEM CONTEXT PROVIDED:
       rate_limited: { nl: "de tijdelijke gebruikslimiet van de AI-provider is bereikt", en: "the provider rate limit has been reached" },
       provider_unavailable: { nl: "de AI-provider is tijdelijk niet beschikbaar", en: "the AI provider is temporarily unavailable" },
       provider_auth: { nl: "de AI-provider heeft de serverconfiguratie geweigerd", en: "the provider rejected the server configuration" },
+      provider_model: { nl: "het ingestelde Gemini-model is niet beschikbaar voor deze API-configuratie; controleer GEMINI_MODEL", en: "the configured Gemini model is not available for this API configuration; check GEMINI_MODEL" },
       invalid_response: { nl: "de AI-provider gaf geen bruikbaar tekstantwoord terug", en: "the AI provider returned no usable text response" },
       provider_error: { nl: "er ging iets mis bij de AI-provider", en: "the AI provider returned an error" },
     };
