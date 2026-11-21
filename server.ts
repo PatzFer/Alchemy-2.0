@@ -576,19 +576,18 @@ app.post("/api/ai/breakdown-goal", requireAppAuth, requireAiRateLimit, async (re
     if (realm !== 'personal' && realm !== 'mariluna') {
       return res.status(400).json({ error: 'A valid Personal or Mariluna realm is required.' });
     }
-    const safeGoalTitle = typeof goalTitle === 'string' ? goalTitle.slice(0, 500) : '';
-    const safeTimeframe = typeof timeframe === 'string' ? timeframe.slice(0, 100) : '';
+    const safeGoalTitle = typeof goalTitle === 'string' ? goalTitle.trim().slice(0, 500) : '';
+    const safeTimeframe = typeof timeframe === 'string' ? timeframe.trim().slice(0, 100) : '';
+    if (!safeGoalTitle) {
+      return res.status(400).json({ error: 'A goal title is required.' });
+    }
     const permissions = securityVault.getPermissions();
     const ai = permissions.activeAiProvider === 'gemini-server' &&
       hasAiWorkspaceConsent(realm, permissions) ? getAI() : null;
 
     if (!ai) {
-      return res.json({
-        milestones: [
-          { title: `Clarify core outcome for ${safeGoalTitle}`, durationMins: 30, suggestedDay: "Tomorrow" },
-          { title: "First incremental execution sprint", durationMins: 45, suggestedDay: "Thursday" },
-          { title: "Review progress and adjust cadence", durationMins: 20, suggestedDay: "Sunday" },
-        ],
+      return res.status(503).json({
+        error: 'Jarvis-doelplanning is niet beschikbaar. Schakel een AI-provider in en geef toestemming voor deze omgeving.',
       });
     }
 
@@ -611,14 +610,9 @@ Return a JSON array of objects with keys: title, durationMins, suggestedDay.`;
     const parsed = JSON.parse(response.text || "[]");
     res.json({ milestones: Array.isArray(parsed) ? parsed : parsed.milestones || [] });
   } catch (error: any) {
-    console.error("Breakdown Goal Error (transient fallback):", error);
-    const { goalTitle } = req.body;
-    res.json({
-      milestones: [
-        { title: `Clarify core outcome for ${goalTitle || "goal"}`, durationMins: 30, suggestedDay: "Tomorrow" },
-        { title: "First incremental execution sprint", durationMins: 45, suggestedDay: "Thursday" },
-        { title: "Review progress and adjust cadence", durationMins: 20, suggestedDay: "Sunday" },
-      ],
+    console.error("Breakdown Goal Error:", error);
+    return res.status(502).json({
+      error: 'Jarvis kon dit doel momenteel niet opdelen. Probeer het later opnieuw.',
     });
   }
 });
