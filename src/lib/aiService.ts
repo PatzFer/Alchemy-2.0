@@ -131,24 +131,16 @@ export async function requestGoalBreakdown(
   realm: string,
   timeframe: string
 ): Promise<any> {
-  try {
-    const res = await fetch('/api/ai/breakdown-goal', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ goalTitle, realm, timeframe }),
-    });
-    if (!res.ok) throw new Error('Goal breakdown failed');
-    return await res.json();
-  } catch (err) {
-    console.warn('Goal breakdown fallback:', err);
-    return {
-      milestones: [
-        { title: `Clarify outcome for ${goalTitle}`, durationMins: 30, suggestedDay: 'Tomorrow' },
-        { title: 'Core milestone execution sprint', durationMins: 60, suggestedDay: 'Thursday' },
-        { title: 'Integrate into workflow and review', durationMins: 20, suggestedDay: 'Sunday' },
-      ],
-    };
+  const res = await fetch('/api/ai/breakdown-goal', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ goalTitle, realm, timeframe }),
+  });
+  if (!res.ok) {
+    // Never present generic hard-coded suggestions as if Jarvis generated them.
+    throw new Error('Jarvis is momenteel niet beschikbaar. Controleer je verbinding en probeer het opnieuw.');
   }
+  return await res.json();
 }
 
 export async function requestIdeaAnalysis(rawIdea: string, realm: string): Promise<any> {
