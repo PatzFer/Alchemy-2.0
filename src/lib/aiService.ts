@@ -50,7 +50,7 @@ export async function sendChatMessage(
 
 
     if (!data || typeof data.content !== 'string' || !data.content.trim()) {
-      throw new Error('Jarvis returned an empty or invalid response.');
+      throw new Error('Empty or invalid response received from the Jarvis endpoint.');
     }
 
     let content = data.content;
