@@ -136,11 +136,17 @@ export async function requestGoalBreakdown(
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ goalTitle, realm, timeframe }),
   });
+  const payload = await res.json().catch(() => null);
   if (!res.ok) {
-    // Never present generic hard-coded suggestions as if Jarvis generated them.
-    throw new Error('Jarvis is momenteel niet beschikbaar. Controleer je verbinding en probeer het opnieuw.');
+    const message = payload && typeof payload.error === 'string'
+      ? payload.error
+      : 'Jarvis is momenteel niet beschikbaar. Controleer je verbinding en probeer het opnieuw.';
+    throw new Error(message);
   }
-  return await res.json();
+  if (!payload || !Array.isArray(payload.milestones)) {
+    throw new Error('Jarvis gaf geen geldig stappenplan terug. Je doel is niet gewijzigd.');
+  }
+  return payload;
 }
 
 export async function requestIdeaAnalysis(rawIdea: string, realm: string): Promise<any> {
