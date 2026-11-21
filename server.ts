@@ -2,7 +2,6 @@ import express, { Request, Response } from "express";
 import path from "path";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
-import { GoogleGenAI } from "@google/genai";
 import { requestConfiguredAiResponse, type AiTextMessage } from "./server/aiProvider";
 import { createServer as createViteServer } from "vite";
 import securityRouter from "./server/securityRoutes";
@@ -36,22 +35,6 @@ app.use("/api/integrations", integrationsRouter);
 app.use("/api/brain", brainRouter);
 // Supabase-backed owner snapshot endpoints; require a verified Supabase bearer token.
 app.use("/api/persistence", persistenceRouter);
-
-// Initialize Gemini SDK lazily / safely with User-Agent telemetry
-let aiClient: GoogleGenAI | null = null;
-function getAI(): GoogleGenAI | null {
-  if (!aiClient && process.env.GEMINI_API_KEY) {
-    aiClient = new GoogleGenAI({
-      apiKey: process.env.GEMINI_API_KEY,
-      httpOptions: {
-        headers: {
-          "User-Agent": "aistudio-build",
-        },
-      },
-    });
-  }
-  return aiClient;
-}
 
 type AiWorkspace = 'personal' | 'mariluna' | 'all';
 
@@ -467,9 +450,12 @@ REAL SYSTEM CONTEXT PROVIDED:
     const sanitizedContext = securityVault.sanitizeContextForAi(req.body.context, safeWorld);
     const safeMessages = Array.isArray(req.body.messages) ? req.body.messages : [];
     const intentObj = classifyIntent(lastUserMsg, safeMessages, sanitizedContext);
-    res.json({
-      role: "assistant",
-      content: `[${isDutchMessage(lastUserMsg) ? 'Lokale modus — Gemini tijdelijk niet beschikbaar' : 'Local mode — Gemini temporarily unavailable'}] ${buildIntentAwareResponse(intentObj, lastUserMsg, sanitizedContext, safeWorld)}`,
+    const selectedProvider = securityVault.getPermissions().activeAiProvider;
+    const providerName = selectedProvider === 'openai-server' ? 'OpenAI' : selectedProvider === 'gemini-server' ? 'Gemini' : 'lokale AI';
+    res.status(502).json({
+      error: isDutchMessage(lastUserMsg)
+        ? `Jarvis kon ${providerName} niet bereiken. Er is niets gewijzigd; probeer het opnieuw.`
+        : `Jarvis could not reach ${providerName}. Nothing was changed; please try again.`,
     });
   }
 });
