@@ -41,11 +41,14 @@ export async function sendChatMessage(
       body: JSON.stringify({ messages, context, world }),
     });
 
+    const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      throw new Error(`Jarvis endpoint returned HTTP ${res.status}`);
+      throw new Error(typeof data?.error === 'string' && data.error.trim()
+        ? data.error.slice(0, 1200)
+        : `Jarvis kon geen antwoord ophalen (HTTP ${res.status}). Probeer het opnieuw.`);
     }
 
-    const data = await res.json();
+
     if (!data || typeof data.content !== 'string' || !data.content.trim()) {
       throw new Error('Jarvis returned an empty or invalid response.');
     }
@@ -88,9 +91,12 @@ export async function sendChatMessage(
   } catch (error) {
     console.warn('Jarvis is temporarily unavailable:', error);
     const isDutch = /\b(wat|is|er|op|mijn|planning|vrijdag|hoe|waar|moet|ik|me|richten|sparren|bespreek|idee|taken|project|welke|kun je|wil je)\b/i.test(lastMsg);
-    const fallbackText = isDutch
-      ? 'Jarvis is momenteel niet bereikbaar. Je bericht blijft in dit gesprek staan, maar ik heb je agenda of gegevens niet kunnen raadplegen en er is niets gewijzigd. Controleer je verbinding of probeer het straks opnieuw.'
-      : 'Jarvis is temporarily unavailable. Your message remains in this conversation, but I could not access your schedule or data and nothing has been changed. Check your connection or try again shortly.';
+    const serverMessage = error instanceof Error ? error.message : '';
+    const fallbackText = serverMessage.startsWith('Jarvis ')
+      ? serverMessage
+      : isDutch
+        ? 'Jarvis is momenteel niet bereikbaar. Je bericht blijft in dit gesprek staan, maar er is geen AI-antwoord ontvangen en er is niets gewijzigd. Controleer je verbinding of probeer het straks opnieuw.'
+        : 'Jarvis is temporarily unavailable. Your message remains in this conversation, but no AI response was received and nothing was changed. Check your connection or try again shortly.';
     return createAssistantMessage(fallbackText, world);
   }
 }
