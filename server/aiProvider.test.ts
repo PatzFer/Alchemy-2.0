@@ -120,3 +120,20 @@ test('Gemini adapter defaults to the currently configured Flash model', async ()
   });
   assert.equal(requestUrl, 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent');
 });
+
+
+test('Unified provider boundary forwards timeout to the OpenAI adapter', async () => {
+  const started = Date.now();
+  const result = await requestConfiguredAiResponse([{ role: 'user', content: 'Hallo' }], {
+    provider: 'openai-server',
+    openAiApiKey: 'server-secret',
+    openAiModel: 'test-model',
+    timeoutMs: 1000,
+    fetcher: ((_input, init) => new Promise((_resolve, reject) => {
+      init?.signal?.addEventListener('abort', () => reject(new Error('aborted')), { once: true });
+    })) as typeof fetch,
+  });
+  assert.equal(result.available, false);
+  assert.equal(result.reason, 'provider_timeout');
+  assert.ok(Date.now() - started < 3000);
+});
