@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { sendChatMessage, requestGoalBreakdown } from './aiService';
+import { sendChatMessage, requestGoalBreakdown, requestIdeaAnalysis } from './aiService';
 
 const originalFetch = globalThis.fetch;
 
@@ -95,5 +95,21 @@ test('goal breakdown propagates network failures instead of disguising them as A
   await assert.rejects(
     () => requestGoalBreakdown('Launch a project', 'mariluna', 'quarterly'),
     /Network offline/,
+  );
+});
+
+test('idea analysis preserves the server error instead of inventing a generic analysis', async () => {
+  mockFetch(async () => new Response(JSON.stringify({ error: 'Jarvis-ideeanalyse is niet beschikbaar.' }), { status: 503 }));
+  await assert.rejects(
+    () => requestIdeaAnalysis('Een nieuw Mariluna-concept', 'mariluna'),
+    /Jarvis-ideeanalyse is niet beschikbaar/,
+  );
+});
+
+test('idea analysis rejects malformed success payloads', async () => {
+  mockFetch(async () => new Response(JSON.stringify({ summary: 'Only half an answer' }), { status: 200 }));
+  await assert.rejects(
+    () => requestIdeaAnalysis('Een nieuw idee', 'personal'),
+    /geen geldige analyse terug/,
   );
 });
