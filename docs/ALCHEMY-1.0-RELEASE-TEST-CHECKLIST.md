@@ -193,3 +193,10 @@ Do not mark a test as passed based only on source inspection or a successful com
 - [x] Overdue tasks are visibly marked.
 - [x] Task deadlines use a readable local date format.
 - [ ] Verify overdue labels with real dates on Android and desktop.
+
+## 16. Jarvis goal breakdown integrity
+
+- [ ] Automated validation tests for model-generated milestones pass in CI.
+- [ ] Server rejects malformed, incomplete, overlong or implausible AI milestone output.
+- [ ] Missing AI provider or workspace consent is shown as unavailable, never as a fabricated plan.
+- [ ] Android and desktop display a useful recovery message when goal planning is unavailable.
