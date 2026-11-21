@@ -12,7 +12,7 @@ export interface ConfiguredAiResult {
   text: string | null;
   provider: ConfiguredAiProvider;
   model?: string;
-  reason?: 'missing_configuration' | 'provider_error' | 'invalid_response';
+  reason?: 'missing_configuration' | 'provider_error' | 'invalid_response' | 'provider_timeout' | 'rate_limited' | 'provider_unavailable' | 'provider_auth';
 }
 
 export interface ConfiguredAiOptions {
@@ -22,6 +22,7 @@ export interface ConfiguredAiOptions {
   openAiApiKey?: string;
   openAiModel?: string;
   fetcher?: typeof fetch;
+  timeoutMs?: number;
 }
 
 function validMessages(messages: AiTextMessage[]): boolean {
@@ -60,7 +61,7 @@ export async function requestConfiguredAiResponse(
   }
 
   const apiKey = options.geminiApiKey?.trim();
-  const model = options.geminiModel?.trim() || 'gemini-3.8-flash';
+  const model = options.geminiModel?.trim() || 'gemini-3.5-flash-lite';
   if (!apiKey || apiKey.length > 4096 || /\s/.test(apiKey) ||
       !/^[a-zA-Z0-9.-]{1,128}$/.test(model)) {
     return { available: false, text: null, provider: 'gemini-server', reason: 'missing_configuration' };
@@ -82,11 +83,15 @@ export async function requestConfiguredAiResponse(
   }
 
   const fetcher = options.fetcher || fetch;
+  const controller = new AbortController();
+  const timeoutMs = Math.max(1000, Math.min(options.timeoutMs ?? 11500, 14000));
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
   try {
     const response = await fetcher(
       `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,
       {
         method: 'POST',
+        signal: controller.signal,
         headers: {
           'Content-Type': 'application/json',
           'x-goog-api-key': apiKey,
@@ -94,13 +99,17 @@ export async function requestConfiguredAiResponse(
         body: JSON.stringify({
           ...(systemInstruction ? { systemInstruction: { parts: [{ text: systemInstruction }] } } : {}),
           contents,
-          generationConfig: { temperature: 0.3, maxOutputTokens: 4096 },
+          generationConfig: { temperature: 0.3, maxOutputTokens: 2048 },
         }),
       },
     );
 
     if (!response.ok) {
-      return { available: false, text: null, provider: 'gemini-server', model, reason: 'provider_error' };
+      const reason = response.status === 429 ? 'rate_limited'
+        : response.status === 401 || response.status === 403 ? 'provider_auth'
+        : response.status === 502 || response.status === 503 || response.status === 504 ? 'provider_unavailable'
+        : 'provider_error';
+      return { available: false, text: null, provider: 'gemini-server', model, reason };
     }
 
     const payload = await response.json() as {
@@ -116,6 +125,14 @@ export async function requestConfiguredAiResponse(
     }
     return { available: true, text, provider: 'gemini-server', model };
   } catch {
-    return { available: false, text: null, provider: 'gemini-server', model, reason: 'provider_error' };
+    return {
+      available: false,
+      text: null,
+      provider: 'gemini-server',
+      model,
+      reason: controller.signal.aborted ? 'provider_timeout' : 'provider_error',
+    };
+  } finally {
+    clearTimeout(timeout);
   }
 }
