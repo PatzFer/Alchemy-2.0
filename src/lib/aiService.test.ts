@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { sendChatMessage } from './aiService';
+import { sendChatMessage, requestGoalBreakdown } from './aiService';
 
 const originalFetch = globalThis.fetch;
 
@@ -61,4 +61,39 @@ test('Jarvis discards incomplete action fences and array payloads', async () => 
   const result = await sendChatMessage([{ role: 'user', content: 'Maak een voorstel' }], {}, 'personal');
   assert.equal(result.suggestedAction, undefined);
   assert.equal(result.content, 'Ik heb een voorstel.');
+});
+
+
+test('goal breakdown returns only the server-generated milestone response', async () => {
+  const expected = {
+    milestones: [
+      { title: 'Define the outcome', durationMins: 30, suggestedDay: 'Tomorrow' },
+      { title: 'Complete the first draft', durationMins: 45, suggestedDay: 'Friday' },
+    ],
+  };
+  mockFetch(async (input, init) => {
+    assert.equal(String(input), '/api/ai/breakdown-goal');
+    assert.equal(init?.method, 'POST');
+    const body = JSON.parse(String(init?.body));
+    assert.deepEqual(body, { goalTitle: 'Launch a project', realm: 'mariluna', timeframe: 'quarterly' });
+    return new Response(JSON.stringify(expected), { status: 200, headers: { 'Content-Type': 'application/json' } });
+  });
+
+  assert.deepEqual(await requestGoalBreakdown('Launch a project', 'mariluna', 'quarterly'), expected);
+});
+
+test('goal breakdown reports server failures instead of returning fabricated AI milestones', async () => {
+  mockFetch(async () => new Response(JSON.stringify({ error: 'AI provider unavailable' }), { status: 503 }));
+  await assert.rejects(
+    () => requestGoalBreakdown('Launch a project', 'mariluna', 'quarterly'),
+    /Jarvis is momenteel niet beschikbaar/,
+  );
+});
+
+test('goal breakdown propagates network failures instead of disguising them as AI output', async () => {
+  mockFetch(async () => { throw new Error('Network offline'); });
+  await assert.rejects(
+    () => requestGoalBreakdown('Launch a project', 'mariluna', 'quarterly'),
+    /Network offline/,
+  );
 });
