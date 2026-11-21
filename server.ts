@@ -411,7 +411,7 @@ REAL SYSTEM CONTEXT PROVIDED:
         content: message.content,
       })),
     ];
-    const aiResult = provider === "local-rules" ? null : await requestConfiguredAiResponse(
+    const aiResult = await requestConfiguredAiResponse(
       providerMessages,
       {
         provider,
