@@ -33,7 +33,7 @@ test('Gemini adapter sends a server-only key and extracts generated text', async
 
   assert.equal(result.available, true);
   assert.equal(result.text, 'Hallo! Waarmee kan ik helpen?');
-  assert.equal(requestUrl, 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent');
+  assert.equal(requestUrl, 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent');
   assert.equal(new Headers(requestInit?.headers).get('x-goog-api-key'), 'server-secret');
   assert.equal(JSON.parse(String(requestInit?.body)).systemInstruction.parts[0].text, 'Antwoord in het Nederlands.');
 });
