@@ -339,12 +339,16 @@ app.post("/api/ai/chat", requireAppAuth, requireAiRateLimit, async (req: Request
     const isDutch = isDutchMessage(lastUserMsg);
     const intentObj = classifyIntent(lastUserMsg, messages, sanitizedContext);
 
-    // The workspace privacy switches are enforced here, not trusted to the browser.
-    if (permissions.activeAiProvider === "local-rules" || !hasAiWorkspaceConsent(world, permissions)) {
+    // Selecting Gemini/OpenAI explicitly enables provider processing of chat text.
+    // Workspace consent switches only control which additional app records enter context;
+    // sanitizeContextForAi enforces those boundaries server-side.
+    if (permissions.activeAiProvider === "local-rules") {
       const localResp = buildIntentAwareResponse(intentObj, lastUserMsg, sanitizedContext, world);
       return res.json({
         role: "assistant",
-        content: `[Local Privacy Mode Active] ${localResp}`,
+        content: `[Lokale privacymodus — geen externe AI gebruikt] ${localResp}`,
+        provider: "local",
+        providerStatus: "local_privacy_mode",
       });
     }
 
@@ -435,17 +439,24 @@ REAL SYSTEM CONTEXT PROVIDED:
       });
     }
 
-    const fallbackResponse = buildIntentAwareResponse(intentObj, lastUserMsg, sanitizedContext, world);
-    const unavailableLabel = provider === "openai-server"
-      ? (isDutch ? "Lokale modus — OpenAI niet geconfigureerd of tijdelijk niet beschikbaar" : "Local mode — OpenAI is not configured or temporarily unavailable")
-      : provider === "gemini-server"
-        ? (isDutch ? "Lokale modus — Gemini niet geconfigureerd of tijdelijk niet beschikbaar" : "Local mode — Gemini is not configured or temporarily unavailable")
-        : (isDutch ? "Lokale privacymodus actief" : "Local privacy mode active");
-    return res.json({
-      role: "assistant",
-      content: `[${unavailableLabel}] ${fallbackResponse}`,
-      provider: "local",
-      providerStatus: aiResult?.reason || "local_privacy_mode",
+    const reason = aiResult?.reason || "provider_error";
+    const providerLabel = provider === "openai-server" ? "OpenAI" : "Gemini";
+    const reasonText: Record<string, { nl: string; en: string }> = {
+      missing_configuration: { nl: "de server mist de providerconfiguratie of API-sleutel", en: "the server is missing provider configuration or an API key" },
+      provider_timeout: { nl: "de AI-provider antwoordde niet op tijd", en: "the AI provider did not respond in time" },
+      rate_limited: { nl: "de tijdelijke gebruikslimiet van de AI-provider is bereikt", en: "the provider rate limit has been reached" },
+      provider_unavailable: { nl: "de AI-provider is tijdelijk niet beschikbaar", en: "the AI provider is temporarily unavailable" },
+      provider_auth: { nl: "de AI-provider heeft de serverconfiguratie geweigerd", en: "the provider rejected the server configuration" },
+      invalid_response: { nl: "de AI-provider gaf geen bruikbaar tekstantwoord terug", en: "the AI provider returned no usable text response" },
+      provider_error: { nl: "er ging iets mis bij de AI-provider", en: "the AI provider returned an error" },
+    };
+    const explanation = reasonText[reason] || reasonText.provider_error;
+    return res.status(503).json({
+      error: isDutch
+        ? `Jarvis kon geen echt AI-antwoord ophalen via ${providerLabel}: ${explanation.nl}. Je bericht is niet verwerkt door een lokale nep-AI en er is niets gewijzigd. Probeer het straks opnieuw.`
+        : `Jarvis could not get a real AI response from ${providerLabel}: ${explanation.en}. Your message was not answered by a local fallback and nothing was changed. Please try again.`,
+      provider: provider === "gemini-server" ? "gemini" : "openai",
+      providerStatus: reason,
     });
   } catch (error: any) {
     console.error("AI Chat Error:", error);
