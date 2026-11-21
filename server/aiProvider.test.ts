@@ -104,3 +104,19 @@ test('Gemini adapter aborts a stalled request within its configured timeout', as
   assert.equal(result.reason, 'provider_timeout');
   assert.ok(Date.now() - started < 3000);
 });
+
+
+test('Gemini adapter defaults to the currently configured Flash model', async () => {
+  let requestUrl = '';
+  await requestConfiguredAiResponse([{ role: 'user', content: 'Hallo' }], {
+    provider: 'gemini-server',
+    geminiApiKey: 'server-secret',
+    fetcher: (async (input) => {
+      requestUrl = String(input);
+      return new Response(JSON.stringify({
+        candidates: [{ content: { parts: [{ text: 'OK' }] } }],
+      }), { status: 200 });
+    }) as typeof fetch,
+  });
+  assert.equal(requestUrl, 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent');
+});
