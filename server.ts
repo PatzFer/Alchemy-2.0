@@ -492,66 +492,50 @@ app.post("/api/ai/plan-day", requireAppAuth, requireAiRateLimit, async (req: Req
     const safeWorkingHours = safeContext.workingHours;
     const safePreferences = safeContext.preferences;
     const permissions = securityVault.getPermissions();
-    const ai = permissions.activeAiProvider === 'gemini-server' &&
-      hasAiWorkspaceConsent(realm, permissions) ? getAI() : null;
-
-    if (!ai) {
-      // Return smart algorithmic heuristic recommendations
-      return res.json({
-        summary: "Balanced schedule calculated. Allocated 4.5 hours to active commitments and 3.0 hours of open cognitive space.",
-        suggestions: [
-          {
-            type: "focus",
-            title: "Prime Morning Window",
-            recommendation: "Focus on your single highest-priority Mariluna deliverable before 13:00.",
-          },
-          {
-            type: "pacing",
-            title: "Evening Decompression",
-            recommendation: "Preserve 17:00 onwards for personal restoration rather than late administrative spillover.",
-          },
-        ],
-      });
+    if (permissions.activeAiProvider === 'local-rules' || !hasAiWorkspaceConsent(realm, permissions)) {
+      return res.status(503).json({ error: 'Live AI planning is disabled by the current provider or workspace privacy settings.' });
     }
 
     const prompt = `Analyze this day's schedule and tasks:
-Tasks: ${JSON.stringify(tasks)}
-Events: ${JSON.stringify(calendarEvents)}
-Working Hours: ${JSON.stringify(workingHours)}
-Preferences: ${JSON.stringify(preferences)}
+Tasks: ${JSON.stringify(safeTasks)}
+Events: ${JSON.stringify(safeCalendarEvents)}
+Working Hours: ${JSON.stringify(safeWorkingHours)}
+Preferences: ${JSON.stringify(safePreferences)}
 
-Produce a realistic, non-punitive day plan following our balance-first philosophy.
-Do NOT pack every hour. Ensure there is realistic buffer time.
-Return a concise JSON with:
+Produce a realistic, non-punitive day plan following a balance-first philosophy.
+Do not pack every hour. Preserve realistic buffer time. Use only the supplied data.
+Return valid JSON with:
 {
-  "summary": "1-2 sentence calm overview of the day's realistic capacity",
+  "summary": "1-2 sentence realistic overview",
   "availableDeepWorkHours": number,
   "availableRestHours": number,
   "topThreePriorities": ["Task 1", "Task 2", "Task 3"],
   "gentleAdjustments": [
-    { "taskTitle": "...", "advice": "Move to Thursday because workday ends at 16:30", "action": "reschedule" }
+    { "taskTitle": "...", "advice": "...", "action": "reschedule" }
   ]
 }`;
-
-    const response = await ai.models.generateContent({
-      model: "gemini-3.8-flash",
-      contents: prompt,
-      config: {
-        responseMimeType: "application/json",
-      },
+    const result = await requestConfiguredAiResponse([
+      { role: 'system', content: 'You are Jarvis, a careful planning assistant. Return only valid JSON. Never invent tasks or calendar events.' },
+      { role: 'user', content: prompt },
+    ], {
+      provider: permissions.activeAiProvider,
+      geminiApiKey: process.env.GEMINI_API_KEY,
+      geminiModel: process.env.GEMINI_MODEL || 'gemini-3.8-flash',
+      openAiApiKey: process.env.OPENAI_API_KEY,
+      openAiModel: process.env.OPENAI_MODEL,
     });
-
-    const parsed = JSON.parse(response.text || "{}");
-    res.json(parsed);
+    if (!result.available || !result.text) {
+      return res.status(503).json({ error: 'Live AI planning is temporarily unavailable. No plan was generated.' });
+    }
+    const parsed = JSON.parse(result.text);
+    if (!parsed || typeof parsed.summary !== 'string' || !Array.isArray(parsed.topThreePriorities) ||
+        !Array.isArray(parsed.gentleAdjustments)) {
+      return res.status(502).json({ error: 'Jarvis returned an invalid day plan. No changes were made.' });
+    }
+    return res.json({ ...parsed, provider: result.provider, model: result.model });
   } catch (error: any) {
-    console.error("Plan Day Error (transient fallback):", error);
-    res.json({
-      summary: "Balanced schedule calculated. Guarding your 16:30 threshold and maintaining healthy buffer space.",
-      availableDeepWorkHours: 3.5,
-      availableRestHours: 2.5,
-      topThreePriorities: ["Review core deliverables", "Preserve afternoon reset"],
-      gentleAdjustments: [],
-    });
+    console.error("Plan Day Error:", error);
+    return res.status(502).json({ error: 'Jarvis could not create a reliable day plan. Please try again.' });
   }
 });
 
@@ -562,50 +546,46 @@ app.post("/api/ai/breakdown-goal", requireAppAuth, requireAiRateLimit, async (re
     if (realm !== 'personal' && realm !== 'mariluna') {
       return res.status(400).json({ error: 'A valid Personal or Mariluna realm is required.' });
     }
-    const safeGoalTitle = typeof goalTitle === 'string' ? goalTitle.slice(0, 500) : '';
+    const safeGoalTitle = typeof goalTitle === 'string' ? goalTitle.trim().slice(0, 500) : '';
     const safeTimeframe = typeof timeframe === 'string' ? timeframe.slice(0, 100) : '';
+    if (!safeGoalTitle) return res.status(400).json({ error: 'A goal title is required.' });
     const permissions = securityVault.getPermissions();
-    const ai = permissions.activeAiProvider === 'gemini-server' &&
-      hasAiWorkspaceConsent(realm, permissions) ? getAI() : null;
-
-    if (!ai) {
-      return res.json({
-        milestones: [
-          { title: `Clarify core outcome for ${safeGoalTitle}`, durationMins: 30, suggestedDay: "Tomorrow" },
-          { title: "First incremental execution sprint", durationMins: 45, suggestedDay: "Thursday" },
-          { title: "Review progress and adjust cadence", durationMins: 20, suggestedDay: "Sunday" },
-        ],
-      });
+    if (permissions.activeAiProvider === 'local-rules' || !hasAiWorkspaceConsent(realm, permissions)) {
+      return res.status(503).json({ error: 'Live AI goal planning is disabled by the current provider or workspace privacy settings.' });
     }
 
-    const prompt = `Break down the following goal into 3 to 5 realistic, gentle, and actionable micro-tasks.
+    const prompt = `Break down this goal into 3 to 5 realistic, gentle, actionable milestones.
 Goal: "${safeGoalTitle}"
-Realm: "${realm}" (Personal or Mariluna Business)
+Realm: "${realm}"
 Timeframe: "${safeTimeframe}"
-
-Ensure the tasks feel approachable and do not overwhelm.
-Return a JSON array of objects with keys: title, durationMins, suggestedDay.`;
-
-    const response = await ai.models.generateContent({
-      model: "gemini-3.8-flash",
-      contents: prompt,
-      config: {
-        responseMimeType: "application/json",
-      },
+Avoid generic filler. Make each step specific to the stated goal.
+Return only valid JSON as an array of objects with keys: title, durationMins, suggestedDay.`;
+    const result = await requestConfiguredAiResponse([
+      { role: 'system', content: 'You are Jarvis, a precise goal-planning assistant. Return only valid JSON.' },
+      { role: 'user', content: prompt },
+    ], {
+      provider: permissions.activeAiProvider,
+      geminiApiKey: process.env.GEMINI_API_KEY,
+      geminiModel: process.env.GEMINI_MODEL || 'gemini-3.8-flash',
+      openAiApiKey: process.env.OPENAI_API_KEY,
+      openAiModel: process.env.OPENAI_MODEL,
     });
-
-    const parsed = JSON.parse(response.text || "[]");
-    res.json({ milestones: Array.isArray(parsed) ? parsed : parsed.milestones || [] });
+    if (!result.available || !result.text) {
+      return res.status(503).json({ error: 'Jarvis could not reach the selected AI provider. No milestones were generated.' });
+    }
+    const parsed = JSON.parse(result.text);
+    const milestones = Array.isArray(parsed) ? parsed : parsed?.milestones;
+    if (!Array.isArray(milestones) || milestones.length < 3 || milestones.length > 5 ||
+        milestones.some((item: any) => !item || typeof item.title !== 'string' ||
+          !item.title.trim() || item.title.length > 160 ||
+          typeof item.durationMins !== 'number' || !Number.isFinite(item.durationMins) ||
+          item.durationMins < 5 || item.durationMins > 240)) {
+      return res.status(502).json({ error: 'Jarvis returned an invalid goal breakdown. Your existing goal remains unchanged.' });
+    }
+    return res.json({ milestones, provider: result.provider, model: result.model });
   } catch (error: any) {
-    console.error("Breakdown Goal Error (transient fallback):", error);
-    const { goalTitle } = req.body;
-    res.json({
-      milestones: [
-        { title: `Clarify core outcome for ${goalTitle || "goal"}`, durationMins: 30, suggestedDay: "Tomorrow" },
-        { title: "First incremental execution sprint", durationMins: 45, suggestedDay: "Thursday" },
-        { title: "Review progress and adjust cadence", durationMins: 20, suggestedDay: "Sunday" },
-      ],
-    });
+    console.error("Breakdown Goal Error:", error);
+    return res.status(502).json({ error: 'Jarvis returned an invalid response. Your existing goal remains unchanged.' });
   }
 });
 
