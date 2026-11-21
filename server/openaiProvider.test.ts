@@ -53,3 +53,30 @@ test('OpenAI adapter rejects oversized or malformed input before network access'
   assert.equal(called, false);
   assert.equal(result.reason, 'invalid_response');
 });
+
+
+test('OpenAI adapter classifies rate limits without exposing provider response bodies', async () => {
+  const result = await requestOpenAIResponse([{ role: 'user', content: 'Hallo' }], {
+    apiKey: 'server-secret',
+    model: 'test-model',
+    fetcher: (async () => new Response('private provider detail', { status: 429 })) as typeof fetch,
+  });
+  assert.equal(result.available, false);
+  assert.equal(result.reason, 'rate_limited');
+  assert.equal(JSON.stringify(result).includes('private provider detail'), false);
+});
+
+test('OpenAI adapter aborts a stalled provider request within its configured timeout', async () => {
+  const started = Date.now();
+  const result = await requestOpenAIResponse([{ role: 'user', content: 'Hallo' }], {
+    apiKey: 'server-secret',
+    model: 'test-model',
+    timeoutMs: 1000,
+    fetcher: ((_input, init) => new Promise((_resolve, reject) => {
+      init?.signal?.addEventListener('abort', () => reject(new Error('aborted')), { once: true });
+    })) as typeof fetch,
+  });
+  assert.equal(result.available, false);
+  assert.equal(result.reason, 'provider_timeout');
+  assert.ok(Date.now() - started < 3000);
+});
