@@ -608,8 +608,12 @@ Return a JSON array of objects with keys: title, durationMins, suggestedDay.`;
       },
     });
 
-    const parsed = JSON.parse(response.text || "[]");
-    res.json({ milestones: Array.isArray(parsed) ? parsed : parsed.milestones || [] });
+    const parsed = JSON.parse(response.text || "null");
+    const milestones = validateGoalBreakdown(parsed);
+    if (!milestones) {
+      return res.status(502).json({ error: 'Jarvis gaf geen geldig stappenplan terug. Probeer het opnieuw.' });
+    }
+    return res.json({ milestones });
   } catch (error: any) {
     console.error("Breakdown Goal Error:", error);
     return res.status(502).json({
