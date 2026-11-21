@@ -1,8 +1,8 @@
 # Alchemy 1.0 — Deployment and Preview Gate
 
 Status: preparation only; no hosting provider or Supabase project is connected.
-Branch: `build/phase-2-planner`
-Last reviewed: 18 November 2026
+Branch: `main` (sole active development branch)
+Last reviewed: 21 November 2026
 
 ## Current application shape
 
