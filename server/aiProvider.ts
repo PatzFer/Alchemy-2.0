@@ -114,9 +114,14 @@ export async function requestConfiguredAiResponse(
     }
 
     const payload = await response.json() as {
-      candidates?: Array<{ content?: { parts?: Array<{ text?: unknown }> } }>;
+      promptFeedback?: { blockReason?: string };
+      candidates?: Array<{ finishReason?: string; content?: { parts?: Array<{ text?: unknown; thought?: boolean }> } }>;
     };
-    const text = (payload.candidates?.[0]?.content?.parts || [])
+    const candidate = payload.candidates?.[0];
+    // Gemini may include internal thought parts alongside user-facing text.
+    // Never expose thought parts in the chat transcript.
+    const text = (candidate?.content?.parts || [])
+      .filter((part) => part.thought !== true)
       .map((part) => typeof part.text === 'string' ? part.text : '')
       .join('')
       .trim();
