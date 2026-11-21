@@ -629,21 +629,17 @@ app.post("/api/ai/analyze-idea", requireAppAuth, requireAiRateLimit, async (req:
     if (realm !== 'personal' && realm !== 'mariluna') {
       return res.status(400).json({ error: 'A valid Personal or Mariluna realm is required.' });
     }
-    const safeRawIdea = typeof rawIdea === 'string' ? rawIdea.slice(0, 5000) : '';
+    const safeRawIdea = typeof rawIdea === 'string' ? rawIdea.trim().slice(0, 5000) : '';
+    if (!safeRawIdea) {
+      return res.status(400).json({ error: 'Voeg eerst je idee toe.' });
+    }
     const permissions = securityVault.getPermissions();
     const ai = permissions.activeAiProvider === 'gemini-server' &&
       hasAiWorkspaceConsent(realm, permissions) ? getAI() : null;
 
     if (!ai) {
-      return res.json({
-        summary: `Strategic concept: ${safeRawIdea.slice(0, 60)}...`,
-        category: realm === "mariluna" ? "Strategy & Offering" : "Personal Vision",
-        suggestedNextAction: "Frame a 1-page outline or exploratory brainstorm",
-        potentialProjectName: "Exploration: " + safeRawIdea.slice(0, 30),
-        followUpQuestions: [
-          "What is the primary transformation this brings?",
-          "Does this align with your current quarterly theme?",
-        ],
+      return res.status(503).json({
+        error: 'Jarvis-ideeanalyse is niet beschikbaar. Je ruwe idee kan wel bewaard worden; controleer je AI-instellingen en toestemming.',
       });
     }
 
@@ -671,17 +667,9 @@ Provide thoughtful synthesis in JSON:
     const parsed = JSON.parse(response.text || "{}");
     res.json(parsed);
   } catch (error: any) {
-    console.error("Analyze Idea Error (transient fallback):", error);
-    const { rawIdea, realm } = req.body;
-    res.json({
-      summary: `Strategic concept: ${(rawIdea || "").slice(0, 60)}...`,
-      category: realm === "mariluna" ? "Strategy & Offering" : "Personal Vision",
-      suggestedNextAction: "Frame a 1-page outline or exploratory brainstorm",
-      potentialProjectName: "Exploration: " + (rawIdea || "").slice(0, 30),
-      followUpQuestions: [
-        "What is the primary transformation this brings?",
-        "Does this align with your current quarterly theme?",
-      ],
+    console.error("Analyze Idea Error:", error);
+    return res.status(502).json({
+      error: 'Jarvis kon dit idee momenteel niet analyseren. Je ruwe idee is niet verloren gegaan; probeer het later opnieuw.',
     });
   }
 });
