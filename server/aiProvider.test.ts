@@ -137,3 +137,22 @@ test('Unified provider boundary forwards timeout to the OpenAI adapter', async (
   assert.equal(result.reason, 'provider_timeout');
   assert.ok(Date.now() - started < 3000);
 });
+
+
+test('Gemini adapter excludes internal thought parts from user-visible text', async () => {
+  const result = await requestConfiguredAiResponse([{ role: 'user', content: 'Leg dit kort uit.' }], {
+    provider: 'gemini-server',
+    geminiApiKey: 'server-secret',
+    fetcher: (async () => new Response(JSON.stringify({
+      candidates: [{
+        content: { parts: [
+          { text: 'Private reasoning that must not be shown.', thought: true },
+          { text: 'Hier is het heldere antwoord.' },
+        ] },
+      }],
+    }), { status: 200 })) as typeof fetch,
+  });
+  assert.equal(result.available, true);
+  assert.equal(result.text, 'Hier is het heldere antwoord.');
+  assert.equal(result.text?.includes('Private reasoning'), false);
+});
