@@ -39,6 +39,7 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isAiBreakingDown, setIsAiBreakingDown] = useState(false);
+  const [aiBreakdownError, setAiBreakdownError] = useState<string | null>(null);
   const [editingGoalId, setEditingGoalId] = useState<string | null>(null);
   const [formStatus, setFormStatus] = useState<GoalStatus>('active');
 
@@ -94,6 +95,7 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
   const handleAiBreakdown = async () => {
     if (!formTitle.trim()) return;
     setIsAiBreakingDown(true);
+    setAiBreakdownError(null);
 
     try {
       const result = await requestGoalBreakdown(formTitle, formRealm, formTimeframe);
@@ -114,10 +116,14 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
               ? Math.max(5, Math.min(1440, Math.round(milestone.durationMins)))
               : 45,
           }));
+        if (generated.length === 0) throw new Error('Jarvis gaf geen bruikbare tussenstappen terug. Probeer het opnieuw.');
         setFormMilestones((current) => [...current, ...generated].slice(0, 50));
+      } else {
+        throw new Error('Jarvis gaf geen geldig stappenplan terug. Probeer het opnieuw.');
       }
     } catch (err) {
       console.warn('AI breakdown error:', err);
+      setAiBreakdownError(err instanceof Error ? err.message : 'Jarvis kon dit doel niet opdelen. Probeer het opnieuw.');
     } finally {
       setIsAiBreakingDown(false);
     }
@@ -565,8 +571,13 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
                   </button>
                 </div>
                 <p className="text-[11px] text-[var(--text-secondary)] mt-1 font-light">
-                  Let the assistant divide this aspiration into calm, doable micro-sessions.
+                  Laat Jarvis dit doel opdelen in kleine, haalbare tussenstappen.
                 </p>
+                {aiBreakdownError && (
+                  <p role="alert" className="mt-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
+                    {aiBreakdownError}
+                  </p>
+                )}
 
                 {formMilestones.length > 0 && (
                   <div className="mt-3 space-y-1.5">
