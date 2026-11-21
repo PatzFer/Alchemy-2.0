@@ -16,14 +16,14 @@ Use synthetic or non-sensitive test data only. Do not enter real cycle, health, 
 2. Install the locked dependencies with `bun install --frozen-lockfile`.
 3. Copy `.env.example` to a local `.env`.
 4. For a local-only preview, keep `ENABLE_PREVIEW_AUTH=true`.
-5. Add `GEMINI_API_KEY` only to the server-side `.env` or the host's secret manager. Never put it in a `VITE_` variable or commit it.
+5. Add `GEMINI_API_KEY` only to the server-side `.env` or AI Studio Secrets. Never put it in a `VITE_` variable or commit it. Optionally configure `GEMINI_MODEL` (default `gemini-3.8-flash`). For OpenAI, configure both `OPENAI_API_KEY` and `OPENAI_MODEL` server-side.
 6. Run `bun run dev` and open the local URL printed by the server.
 
 The preview-unlock endpoint is rejected when `NODE_ENV=production`, even if the flag is set. Do not enable preview authentication on a public production deployment.
 
 For a private AI Studio Build preview, configure `ENABLE_PREVIEW_AUTH=true` as a server-side environment variable for the preview runtime. If the flag is not present, Alchemy intentionally stays on the authentication screen. The server still rejects preview unlock when `NODE_ENV=production`.
 
-To test live Gemini, first review the data-use warning in Settings → Security & Privacy, then explicitly choose Gemini and enable only the synthetic-data workspace scopes you intend to test. Local privacy mode is the default.
+To test live Jarvis, configure the server-side secret for the provider you intend to use. In Settings → Security & Privacy, explicitly choose Gemini or OpenAI and enable only the synthetic-data workspace scopes you intend to test. The screen now reports whether the selected provider key/model is detected. Local privacy mode is the default. A detected key does not mean the provider has been tested successfully; send a simple test message to verify it.
 
 
 ## Google AI Studio handoff
@@ -35,7 +35,7 @@ The GitHub branch is the source of truth. For the visual preview, update/import 
 3. Confirm the imported commit matches the latest branch head shown in GitHub.
 4. Run the app in AI Studio's full-stack preview. Alchemy requires both the Vite/React client and its Express server; a client-only preview is insufficient.
 5. For a private synthetic-data preview only, set `ENABLE_PREVIEW_AUTH=true` as a server-side environment variable. Do not use preview authentication when `NODE_ENV=production`.
-6. Leave `GEMINI_API_KEY` unset unless you deliberately want to test live Gemini. If configured, add it only through server-side secrets, then review the provider consent controls inside Alchemy.
+6. Configure `GEMINI_API_KEY` (and optionally `GEMINI_MODEL`) or both `OPENAI_API_KEY` and `OPENAI_MODEL` only through server-side secrets. Then review the provider and workspace consent controls inside Alchemy.
 7. Verify the app opens, navigate through Privé and Mariluna, and test one task, one idea, one calendar item and a backup export/import.
 
 **Important:** this preview is for visual and workflow testing with synthetic data. Records remain in this browser's local storage; there is no live Supabase sync, durable account session, or native Android Health Connect bridge. Do not enter confidential personal, health, financial or client information. Export a backup before testing reset/restore.
@@ -62,7 +62,7 @@ The GitHub branch is the source of truth. For the visual preview, update/import 
 - Health Connect is not yet implemented as a native Android integration. The wellbeing module supports manual entries and Renpho CSV import as an interim path.
 - Renpho CSV import maps date, weight, body-fat, skeletal-muscle and body-water columns. It supports kg/lb and comma- or semicolon-delimited exports, and merges by date while retaining existing manual notes and measurements.
 - Instagram Graph API refresh and native Android Health Connect remain unavailable; the UI must not be interpreted as a live connection.
-- Jarvis defaults to Local privacy mode. Gemini requires server-side configuration plus explicit provider and workspace consent. When unavailable or not consented, it uses the local privacy-mode response instead of sending workspace data to Gemini.\n- Google states that content submitted through the free Gemini API tier may be used to improve Google products; the paid tier states submitted content is not used for product improvement but may incur costs. Keep confidential client, health, cycle and financial data in Local privacy mode unless the applicable data terms and tier have been reviewed.
+- Jarvis defaults to Local privacy mode. Gemini and OpenAI require server-side configuration plus explicit provider and workspace consent. Unavailable providers are identified as local fallback or a clear error; generic fallback text is never presented as a live AI result.\n- Google states that content submitted through the free Gemini API tier may be used to improve Google products; the paid tier states submitted content is not used for product improvement but may incur costs. Keep confidential client, health, cycle and financial data in Local privacy mode unless the applicable data terms and tier have been reviewed.
 
 ## Verification commands
 
