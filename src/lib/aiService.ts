@@ -150,26 +150,22 @@ export async function requestGoalBreakdown(
 }
 
 export async function requestIdeaAnalysis(rawIdea: string, realm: string): Promise<any> {
-  try {
-    const res = await fetch('/api/ai/analyze-idea', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ rawIdea, realm }),
-    });
-    if (!res.ok) throw new Error('Idea analysis failed');
-    return await res.json();
-  } catch (err) {
-    console.warn('Idea analysis fallback:', err);
-    return {
-      summary: rawIdea.slice(0, 70) + '...',
-      category: realm === 'mariluna' ? 'Strategy & Offering' : 'Personal Inquiry',
-      suggestedNextAction: 'Refine into a one-paragraph project brief',
-      followUpQuestions: [
-        'How does this serve your core quarterly focus?',
-        'What would be the simplest, most delightful version of this?',
-      ],
-    };
+  const res = await fetch('/api/ai/analyze-idea', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ rawIdea, realm }),
+  });
+  const payload = await res.json().catch(() => null);
+  if (!res.ok) {
+    const message = payload && typeof payload.error === 'string'
+      ? payload.error
+      : 'Jarvis kan dit idee nu niet analyseren. Je ruwe idee kan wel veilig bewaard worden.';
+    throw new Error(message);
   }
+  if (!payload || typeof payload.summary !== 'string' || typeof payload.category !== 'string') {
+    throw new Error('Jarvis gaf geen geldige analyse terug. Je ruwe idee kan wel bewaard worden.');
+  }
+  return payload;
 }
 
 export async function requestStylingEvaluationPhoto(
