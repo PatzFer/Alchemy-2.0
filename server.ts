@@ -11,6 +11,7 @@ import brainRouter from "./server/brainRoutes";
 import persistenceRouter from "./server/persistenceRoutes";
 import { securityVault, requireAppAuth, requireAiRateLimit } from "./server/security";
 import { classifyIntent, buildIntentAwareResponse, isDutchMessage } from "./server/brainEngine";
+import { validateGoalBreakdown } from "./src/lib/goalBreakdownValidation";
 
 dotenv.config();
 
