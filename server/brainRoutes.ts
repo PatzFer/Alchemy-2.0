@@ -1,4 +1,5 @@
 import { Router, Request, Response } from "express";
+import { requestConfiguredAiResponse, type AiTextMessage } from "./aiProvider";
 import { GoogleGenAI } from "@google/genai";
 import { classifyIntent, buildIntentAwareResponse, isDutchMessage } from "./brainEngine";
 import { requireAppAuth, requireAiRateLimit, securityVault } from "./security";
@@ -56,10 +57,8 @@ router.post("/brief", requireAppAuth, requireAiRateLimit, async (req: Request, r
     const worldPermission = world === 'balanced'
       ? permissions.allowPersonalDataToAI && permissions.allowMarilunaDataToAI && permissions.allowWellbeingDataToAI
       : world === 'mariluna' ? permissions.allowMarilunaDataToAI : permissions.allowPersonalDataToAI;
-    const ai = permissions.activeAiProvider === 'gemini-server' && worldPermission ? getAI() : null;
-
-    if (!ai) {
-      return res.json({ brief: safeBrief });
+    if (permissions.activeAiProvider === 'local-rules' || !worldPermission) {
+      return res.json({ brief: safeBrief, provider: 'local' });
     }
 
     const prompt = `Hier is de deterministische dagbriefing van Patricia voor vandaag:
@@ -69,34 +68,29 @@ Herschrijf deze briefing indien nodig zodat hij ultra-kort, rustig en natuurlijk
 Behoud exact deze structuur als JSON:
 {
   "greeting": "Goedemorgen Patz",
-  "bullets": [
-    "Korte bullet over werk/agenda",
-    "Korte bullet over taken",
-    "Korte bullet over maaltijd",
-    "Korte bullet over Mariluna/deadline"
-  ],
+  "bullets": ["Korte bullet over werk/agenda", "Korte bullet over taken"],
   "focusAnchor": "Eén rustige, soevereine focuszin voor vandaag."
 }
-Geen extra tekst, alleen JSON.`;
-
-    const response = await ai.models.generateContent({
-      model: "gemini-3.8-flash",
-      contents: prompt,
-      config: {
-        systemInstruction: BRAIN_SYSTEM_PROMPT,
-        temperature: 0.4,
-        responseMimeType: "application/json",
-      },
+Gebruik uitsluitend de aangeleverde gegevens. Geen extra tekst, alleen JSON.`;
+    const result = await requestConfiguredAiResponse([
+      { role: 'system', content: BRAIN_SYSTEM_PROMPT + '\\nReturn only valid JSON.' },
+      { role: 'user', content: prompt },
+    ], {
+      provider: permissions.activeAiProvider,
+      geminiApiKey: process.env.GEMINI_API_KEY,
+      geminiModel: process.env.GEMINI_MODEL || 'gemini-3.8-flash',
+      openAiApiKey: process.env.OPENAI_API_KEY,
+      openAiModel: process.env.OPENAI_MODEL,
     });
-
-    const text = response.text?.trim() || "";
-    const parsed = JSON.parse(text);
-    return res.json({
-      brief: {
-        ...safeBrief,
-        ...parsed,
-      },
-    });
+    if (!result.available || !result.text) {
+      return res.json({ brief: safeBrief, provider: 'local', providerStatus: result.reason });
+    }
+    const parsed = JSON.parse(result.text);
+    if (!parsed || typeof parsed.greeting !== 'string' || !Array.isArray(parsed.bullets) ||
+        typeof parsed.focusAnchor !== 'string') {
+      return res.json({ brief: safeBrief, provider: 'local', providerStatus: 'invalid_response' });
+    }
+    return res.json({ brief: { ...safeBrief, ...parsed }, provider: result.provider, model: result.model });
   } catch (err) {
     // Return deterministic brief gracefully
     return res.json({ brief: securityVault.sanitizeContextForAi(req.body.deterministicBrief || {}, req.body.world === 'mariluna' ? 'mariluna' : req.body.world === 'balanced' ? 'balanced' : 'personal') });
@@ -113,22 +107,15 @@ router.post("/split-task", requireAppAuth, requireAiRateLimit, async (req: Reque
     const world = req.body.world === 'mariluna' ? 'mariluna' : 'personal';
     const permissions = securityVault.getPermissions();
     const worldPermission = world === 'mariluna' ? permissions.allowMarilunaDataToAI : permissions.allowPersonalDataToAI;
-    const ai = permissions.activeAiProvider === 'gemini-server' && worldPermission ? getAI() : null;
-
-    if (!ai) {
-      return res.json({
-        subtasks: [
-          { title: `Voorbereiden en materiaal klaarzetten voor: ${taskTitle}`, durationMinutes: 15 },
-          { title: `Eerste kernstap uitvoeren voor: ${taskTitle}`, durationMinutes: 30 },
-          { title: `Afronden en nakijken van: ${taskTitle}`, durationMinutes: 15 },
-        ],
-        rationale: "Opgesplitst in praktische stappen.",
-      });
+    if (permissions.activeAiProvider === 'local-rules' || !worldPermission) {
+      return res.status(503).json({ error: 'Live AI task splitting is disabled by the selected provider or workspace privacy settings.' });
     }
 
-    const prompt = `Taak: "${taskTitle}" (geschatte duur: ${estimatedDuration || 60} minuten).
+    const safeTaskTitle = typeof taskTitle === 'string' ? taskTitle.trim().slice(0, 300) : '';
+    if (!safeTaskTitle) return res.status(400).json({ error: 'A task title is required.' });
+    const prompt = `Taak: "${safeTaskTitle}" (geschatte duur: ${Number.isFinite(estimatedDuration) ? Math.max(5, Math.min(1440, estimatedDuration)) : 60} minuten).
 Splits deze taak op in 3 tot 5 concrete, behapbare micro-stappen met realistische minuten per stap.
-Geef een JSON terug in dit format:
+Geef uitsluitend geldige JSON terug:
 {
   "subtasks": [
     { "title": "stap 1", "durationMinutes": 15 },
@@ -136,19 +123,28 @@ Geef een JSON terug in dit format:
   ],
   "rationale": "Korte toelichting waarom deze volgorde natuurlijk werkt."
 }`;
-
-    const response = await ai.models.generateContent({
-      model: "gemini-3.8-flash",
-      contents: prompt,
-      config: {
-        systemInstruction: BRAIN_SYSTEM_PROMPT,
-        temperature: 0.3,
-        responseMimeType: "application/json",
-      },
+    const result = await requestConfiguredAiResponse([
+      { role: 'system', content: BRAIN_SYSTEM_PROMPT + '\\nReturn only valid JSON.' },
+      { role: 'user', content: prompt },
+    ], {
+      provider: permissions.activeAiProvider,
+      geminiApiKey: process.env.GEMINI_API_KEY,
+      geminiModel: process.env.GEMINI_MODEL || 'gemini-3.8-flash',
+      openAiApiKey: process.env.OPENAI_API_KEY,
+      openAiModel: process.env.OPENAI_MODEL,
     });
-
-    const parsed = JSON.parse(response.text?.trim() || "{}");
-    return res.json(parsed);
+    if (!result.available || !result.text) {
+      return res.status(503).json({ error: 'Jarvis could not reach the selected AI provider. No task steps were generated.' });
+    }
+    const parsed = JSON.parse(result.text);
+    if (!parsed || !Array.isArray(parsed.subtasks) || parsed.subtasks.length < 3 ||
+        parsed.subtasks.length > 5 || parsed.subtasks.some((step: any) =>
+          typeof step?.title !== 'string' || !step.title.trim() ||
+          typeof step.durationMinutes !== 'number' || !Number.isFinite(step.durationMinutes) ||
+          step.durationMinutes < 5 || step.durationMinutes > 240)) {
+      return res.status(502).json({ error: 'Jarvis returned an invalid task breakdown. Your task remains unchanged.' });
+    }
+    return res.json({ ...parsed, provider: result.provider, model: result.model });
   } catch (err) {
     return res.json({
       subtasks: [
@@ -173,13 +169,12 @@ router.post("/query", requireAppAuth, requireAiRateLimit, async (req: Request, r
     const safeContext = securityVault.sanitizeContextForAi(context, world);
     const permissions = securityVault.getPermissions();
     const worldPermission = world === 'mariluna' ? permissions.allowMarilunaDataToAI : permissions.allowPersonalDataToAI;
-    const ai = permissions.activeAiProvider === 'gemini-server' && worldPermission ? getAI() : null;
-
     const intentObj = classifyIntent(query, [], safeContext);
 
-    if (!ai) {
+    if (permissions.activeAiProvider === 'local-rules' || !worldPermission) {
       return res.json({
         answer: buildIntentAwareResponse(intentObj, query, safeContext, world),
+        provider: 'local',
       });
     }
 
@@ -206,18 +201,20 @@ INTENTIE-SPECIFIEKE REGELS:
 
 Geef een kort, doordacht, warm en praktisch antwoord in ${isDutch ? "helder Nederlands" : "het Engels"}.`;
 
-    const response = await ai.models.generateContent({
-      model: "gemini-3.8-flash",
-      contents: prompt,
-      config: {
-        systemInstruction: BRAIN_SYSTEM_PROMPT,
-        temperature: 0.3,
-      },
+    const result = await requestConfiguredAiResponse([
+      { role: 'system', content: BRAIN_SYSTEM_PROMPT },
+      { role: 'user', content: prompt },
+    ], {
+      provider: permissions.activeAiProvider,
+      geminiApiKey: process.env.GEMINI_API_KEY,
+      geminiModel: process.env.GEMINI_MODEL || 'gemini-3.8-flash',
+      openAiApiKey: process.env.OPENAI_API_KEY,
+      openAiModel: process.env.OPENAI_MODEL,
     });
-
-    return res.json({
-      answer: response.text?.trim() || buildIntentAwareResponse(intentObj, query, safeContext, world),
-    });
+    if (!result.available || !result.text) {
+      return res.status(503).json({ error: 'Jarvis is tijdelijk niet beschikbaar. Er zijn geen gegevens gewijzigd.' });
+    }
+    return res.json({ answer: result.text, provider: result.provider, model: result.model });
   } catch (err: any) {
     console.error("Brain query error:", err);
     return res.json({
