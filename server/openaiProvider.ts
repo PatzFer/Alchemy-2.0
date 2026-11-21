@@ -29,7 +29,7 @@ export async function requestOpenAIResponse(
   if (!apiKey || !model) {
     return { available: false, text: null, reason: 'missing_configuration' };
   }
-  if (apiKey.length > 4096 || /\\s/.test(apiKey) || model.length > 128) {
+  if (apiKey.length > 4096 || /\s/.test(apiKey) || model.length > 128) {
     return { available: false, text: null, reason: 'missing_configuration' };
   }
   if (!Array.isArray(messages) || messages.length === 0 || messages.length > 30 ||
