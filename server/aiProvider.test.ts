@@ -33,7 +33,7 @@ test('Gemini adapter sends a server-only key and extracts generated text', async
 
   assert.equal(result.available, true);
   assert.equal(result.text, 'Hallo! Waarmee kan ik helpen?');
-  assert.equal(requestUrl, 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent');
+  assert.equal(requestUrl, 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent');
   assert.equal(new Headers(requestInit?.headers).get('x-goog-api-key'), 'server-secret');
   assert.equal(JSON.parse(String(requestInit?.body)).systemInstruction.parts[0].text, 'Antwoord in het Nederlands.');
 });
@@ -75,4 +75,32 @@ test('Both providers reject malformed messages before network access', async () 
   });
   assert.equal(called, false);
   assert.equal(result.reason, 'invalid_response');
+});
+
+
+test('Gemini adapter classifies provider rate limits without leaking response bodies', async () => {
+  const result = await requestConfiguredAiResponse([{ role: 'user', content: 'Hallo' }], {
+    provider: 'gemini-server',
+    geminiApiKey: 'server-secret',
+    fetcher: (async () => new Response('private provider details', { status: 429 })) as typeof fetch,
+  });
+  assert.equal(result.available, false);
+  assert.equal(result.reason, 'rate_limited');
+  assert.equal(JSON.stringify(result).includes('private provider details'), false);
+});
+
+test('Gemini adapter aborts a stalled request within its configured timeout', async () => {
+  const started = Date.now();
+  const result = await requestConfiguredAiResponse([{ role: 'user', content: 'Hallo' }], {
+    provider: 'gemini-server',
+    geminiApiKey: 'server-secret',
+    timeoutMs: 1000,
+    fetcher: ((_input, init) => new Promise((_resolve, reject) => {
+      const signal = init?.signal;
+      signal?.addEventListener('abort', () => reject(new Error('aborted')), { once: true });
+    })) as typeof fetch,
+  });
+  assert.equal(result.available, false);
+  assert.equal(result.reason, 'provider_timeout');
+  assert.ok(Date.now() - started < 3000);
 });
