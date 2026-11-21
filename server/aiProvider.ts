@@ -72,14 +72,28 @@ export async function requestConfiguredAiResponse(
     .filter((message) => message.role === 'system')
     .map((message) => message.content)
     .join('\n\n');
-  const contents = messages
+  const rawContents = messages
     .filter((message) => message.role !== 'system')
     .map((message) => ({
-      role: message.role === 'assistant' ? 'model' : 'user',
+      role: message.role === 'assistant' ? 'model' as const : 'user' as const,
       parts: [{ text: message.content }],
     }));
 
-  if (contents.length === 0) {
+  // Gemini chat history must start with a user turn and alternate user/model.
+  // The app can include an introductory assistant bubble or adjacent messages
+  // of the same role, so normalize the transcript before calling the API.
+  while (rawContents[0]?.role === 'model') rawContents.shift();
+  const contents: Array<{ role: 'user' | 'model'; parts: Array<{ text: string }> }> = [];
+  for (const message of rawContents) {
+    const previous = contents[contents.length - 1];
+    if (previous?.role === message.role) {
+      previous.parts[0].text += `\\n\\n${message.parts[0].text}`;
+    } else {
+      contents.push({ role: message.role, parts: [{ text: message.parts[0].text }] });
+    }
+  }
+
+  if (contents.length === 0 || contents[0].role !== 'user' || contents[contents.length - 1].role !== 'user') {
     return { available: false, text: null, provider: 'gemini-server', model, reason: 'invalid_response' };
   }
 
