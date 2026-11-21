@@ -156,3 +156,50 @@ test('Gemini adapter excludes internal thought parts from user-visible text', as
   assert.equal(result.text, 'Hier is het heldere antwoord.');
   assert.equal(result.text?.includes('Private reasoning'), false);
 });
+
+
+test('Gemini adapter removes an introductory assistant turn and starts with the first user message', async () => {
+  let sentBody: any;
+  const result = await requestConfiguredAiResponse([
+    { role: 'system', content: 'Antwoord in het Nederlands.' },
+    { role: 'assistant', content: 'Welkom bij Jarvis.' },
+    { role: 'user', content: 'Hallo.' },
+  ], {
+    provider: 'gemini-server',
+    geminiApiKey: 'server-secret',
+    fetcher: (async (_input, init) => {
+      sentBody = JSON.parse(String(init?.body));
+      return new Response(JSON.stringify({
+        candidates: [{ content: { parts: [{ text: 'Hallo! Fijn dat je er bent.' }] } }],
+      }), { status: 200 });
+    }) as typeof fetch,
+  });
+  assert.equal(result.available, true);
+  assert.equal(sentBody.contents.length, 1);
+  assert.equal(sentBody.contents[0].role, 'user');
+  assert.equal(sentBody.contents[0].parts[0].text, 'Hallo.');
+});
+
+test('Gemini adapter merges adjacent turns with the same role into a valid alternating transcript', async () => {
+  let sentBody: any;
+  const result = await requestConfiguredAiResponse([
+    { role: 'user', content: 'Eerste vraag.' },
+    { role: 'user', content: 'Nog een detail.' },
+    { role: 'assistant', content: 'Ik begrijp het.' },
+    { role: 'assistant', content: 'Ik zal dit meenemen.' },
+    { role: 'user', content: 'Wat raad je aan?' },
+  ], {
+    provider: 'gemini-server',
+    geminiApiKey: 'server-secret',
+    fetcher: (async (_input, init) => {
+      sentBody = JSON.parse(String(init?.body));
+      return new Response(JSON.stringify({
+        candidates: [{ content: { parts: [{ text: 'Mijn advies is...' }] } }],
+      }), { status: 200 });
+    }) as typeof fetch,
+  });
+  assert.equal(result.available, true);
+  assert.deepEqual(sentBody.contents.map((turn: any) => turn.role), ['user', 'model', 'user']);
+  assert.equal(sentBody.contents[0].parts[0].text, 'Eerste vraag.\\n\\nNog een detail.');
+  assert.equal(sentBody.contents[1].parts[0].text, 'Ik begrijp het.\\n\\nIk zal dit meenemen.');
+});
