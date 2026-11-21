@@ -146,14 +146,8 @@ Geef uitsluitend geldige JSON terug:
     }
     return res.json({ ...parsed, provider: result.provider, model: result.model });
   } catch (err) {
-    return res.json({
-      subtasks: [
-        { title: `Voorbereiden van: ${req.body.taskTitle}`, durationMinutes: 15 },
-        { title: `Uitvoeren van de kern: ${req.body.taskTitle}`, durationMinutes: 30 },
-        { title: `Afronden en controleren: ${req.body.taskTitle}`, durationMinutes: 15 },
-      ],
-      rationale: "Standaard opdeling.",
-    });
+    console.error("Brain task split error:", err);
+    return res.status(502).json({ error: 'Jarvis kon deze taak niet betrouwbaar opdelen. De bestaande taak is ongewijzigd.' });
   }
 });
 
@@ -217,9 +211,7 @@ Geef een kort, doordacht, warm en praktisch antwoord in ${isDutch ? "helder Nede
     return res.json({ answer: result.text, provider: result.provider, model: result.model });
   } catch (err: any) {
     console.error("Brain query error:", err);
-    return res.json({
-      answer: "Alchemy Brain is momenteel bezig met herijken. Je agenda en prioriteiten blijven veilig lokaal bewaard.",
-    });
+    return res.status(502).json({ error: 'Jarvis kon je vraag niet betrouwbaar verwerken. Probeer het opnieuw.' });
   }
 });
 
@@ -235,7 +227,11 @@ router.post("/evaluate-styling", requireAppAuth, requireAiRateLimit, async (req:
       return res.status(403).json({ error: 'Personal AI access is disabled. Enable personal data sharing in Security & Privacy to use image-based styling analysis.' });
     }
     const safeProfileContext = securityVault.sanitizeContextForAi(profileContext, 'personal');
-    const ai = permissions.activeAiProvider === 'gemini-server' ? getAI() : null;
+    if (permissions.activeAiProvider !== 'gemini-server' || !process.env.GEMINI_API_KEY) {
+      return res.status(503).json({ error: 'Image-based styling analysis currently requires a configured Gemini provider. No visual assessment was generated.' });
+    }
+    const ai = getAI();
+    if (!ai) return res.status(503).json({ error: 'Gemini image analysis is not available. No visual assessment was generated.' });
 
     const STYLING_SYSTEM_PROMPT = `Je bent ALCHEMY PERSONAL STYLING PARTNER voor Patricia ("Patz").
 
@@ -333,24 +329,7 @@ Opgeslagen profielcontext: ${JSON.stringify(safeProfileContext)}`;
     return res.json(parsed);
   } catch (err: any) {
     console.error("Styling evaluation error:", err);
-    return res.json({
-      verdict: "JA",
-      verdictLabel: "JA — dit past goed bij jouw stijl.",
-      garmentType: "Jurk",
-      descriptiveTitle: "het kledingstuk op je foto",
-      whyReasons: [
-        "Sluit aan bij je vrouwelijke, zachte en romantische silhouetvoorkeur.",
-        "De snit geeft voldoende ruimte om de taille als natuurlijk rustpunt te accentueren."
-      ],
-      considerations: [
-        "Controleer de stofval en roklengte bij een petite lengte (1.57m)."
-      ],
-      combos: [
-        "Combineer met suède laarzen voor een stoer-vrouwelijk contrast.",
-        "Draag met gouden sieraden voor een warm accent."
-      ],
-      fitAdvice: "Accentueer de taille om de verhoudingen optimaal te laten uitkomen."
-    });
+    return res.status(502).json({ error: 'De visuele analyse is niet gelukt. Er is geen kledingadvies gegenereerd.' });
   }
 });
 
