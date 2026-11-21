@@ -203,3 +203,14 @@ test('Gemini adapter merges adjacent turns with the same role into a valid alter
   assert.equal(sentBody.contents[0].parts[0].text, 'Eerste vraag.\\n\\nNog een detail.');
   assert.equal(sentBody.contents[1].parts[0].text, 'Ik begrijp het.\\n\\nIk zal dit meenemen.');
 });
+
+
+test('Gemini adapter identifies a model that is unavailable to the configured API key', async () => {
+  const result = await requestConfiguredAiResponse([{ role: 'user', content: 'Hallo' }], {
+    provider: 'gemini-server',
+    geminiApiKey: 'server-secret',
+    fetcher: (async () => new Response('model not found', { status: 404 })) as typeof fetch,
+  });
+  assert.equal(result.available, false);
+  assert.equal(result.reason, 'provider_model');
+});
