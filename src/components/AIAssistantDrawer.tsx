@@ -372,7 +372,7 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
           {isThinking && (
             <div className="flex items-center gap-2 p-3 bg-[#FFFFFF] border border-[#EAE3D5] rounded-2xl w-fit text-xs text-[#7A7167]">
               <Sparkles className="w-3.5 h-3.5 text-[#C5A880] animate-spin" />
-              <span>Contemplating schedule and strategic context...</span>
+              <span>Jarvis denkt even met je mee...</span>
             </div>
           )}
           <div ref={messagesEndRef} />
@@ -391,7 +391,7 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
               type="text"
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
-              placeholder="Ask for strategic advice, plan adjustments, ideas..."
+              placeholder="Stel Jarvis een vraag of denk samen een idee uit..."
               className="flex-1 bg-[#FFFFFF] border border-[#D8D0C2] rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-[#2C2825] placeholder-[#9E958B] focus:outline-hidden focus:border-[#8C7654] focus:ring-1 focus:ring-[#8C7654]/40 transition"
             />
             <button
