@@ -55,7 +55,7 @@ The existing repository contains an owner-scoped snapshot API, SQL schema/RLS/RP
 Still required:
 - Supabase password login is connected to the configured single owner and creates a hashed durable app session. Supabase refresh-token handling is not used by the app session; session lifetime and revocation are managed by the server-side opaque cookie session.
 - Server-side JWT verification on every protected request and owner ID derived only from the verified subject.
-- Durable, owner-bound passkey/TOTP/recovery-code/session/rate-limit storage. Durable app sessions are connected to login, protected requests, restart rehydration and logout revocation. Passkey/TOTP/recovery credentials, step-up grants and rate-limit state remain process-memory only; they are not enabled as durable production factors.
+- Durable, owner-bound passkey/TOTP/recovery-code storage and persistent rate limiting. Durable password-authenticated app sessions are connected to login, protected requests, restart rehydration and logout revocation. Passkey/TOTP/recovery credentials, step-up grants and rate-limit state remain process-memory only; those factors are disabled when Supabase owner auth is active.
 - Integrate AES-GCM encryption into TOTP and provider-token persistence, including a tested key rotation/recovery procedure.
 - Wire snapshot reads/writes to the app only after authenticated staging tests and a non-destructive local-data migration/rollback path.
 - Verify readiness probes actual Supabase connectivity and permissions; a configured URL/key alone is not readiness.
