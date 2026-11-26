@@ -680,7 +680,8 @@ test('Gemini provider never exposes API keys in return payloads, formatted error
     }
 
     assert.equal(capturedLogs.join('\n').includes(secretKey), false);
-    assert.equal(capturedLogs.length, 0);
+    assert.ok(capturedLogs.length > 0, 'safe provider diagnostics should be emitted for failed requests');
+    assert.ok(capturedLogs.every((entry) => !entry.includes('Hallo')), 'diagnostics must not contain user prompts');
   } finally {
     console.log = origLog;
     console.warn = origWarn;
