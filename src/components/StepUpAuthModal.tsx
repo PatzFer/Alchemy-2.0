@@ -211,7 +211,7 @@ export const StepUpAuthModal: React.FC<StepUpAuthModalProps> = ({
                 className="w-full text-center tracking-wider text-sm py-2 rounded-xl bg-[#FFFFFF] border border-[#D5CCBE] focus:outline-none focus:border-[#7E694E]"
                 placeholder="Voer je wachtwoord opnieuw in"
               />
-              <p className="text-[10px] text-[#8C8377]">Je wachtwoord wordt rechtstreeks geverifieerd bij Supabase en niet opgeslagen.</p>
+              <p className="text-[10px] text-[#8C8377]">Je wachtwoord wordt veilig op de server gecontroleerd en niet opgeslagen.</p>
             </div>
             <button
               type="submit"
