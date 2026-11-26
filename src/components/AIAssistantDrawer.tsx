@@ -346,7 +346,7 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
                   {(msg.content.includes('[Local Privacy Mode Active]') || msg.content.includes('[Lokale modus')) && (
                     <div className="mt-3 pt-3 border-t border-[#EAE3D5]">
                       <p className="text-[11px] text-[#7A7167] mb-2">Jarvis gebruikt momenteel lokale regels. Kies Gemini en geef afzonderlijk toestemming voor deze werkruimte om echte AI-antwoorden te ontvangen.</p>
-                      <button type="button" onClick={onOpenSecuritySettings} className="w-full flex items-center justify-center gap-2 rounded-xl bg-[#5A3548] text-white px-3 py-2.5 text-xs font-medium hover:bg-[#70445A] transition">
+                      <button type="button" onClick={(event) => { event.preventDefault(); event.stopPropagation(); onOpenSecuritySettings(); }} className="relative z-10 w-full flex items-center justify-center gap-2 rounded-xl bg-[#5A3548] text-white px-3 py-2.5 text-xs font-medium hover:bg-[#70445A] transition cursor-pointer">
                         <ShieldCheck className="w-3.5 h-3.5" /> Configureer Gemini & privacy
                       </button>
                     </div>
