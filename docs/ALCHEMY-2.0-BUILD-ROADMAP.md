@@ -1207,3 +1207,16 @@ A user can reliably open Alchemy without a startup security interstitial; captur
 - Added adapter and permission allowlist regression tests to the standard CI test command.
 - Scope limitation: this provider adapter currently covers the central Jarvis chat endpoint only. Day planning, goal breakdown, idea analysis and other specialized AI endpoints remain on their existing local/Gemini paths until separately migrated and tested. Provider selection and security permissions remain in-memory and reset on server restart; durable owner-scoped settings and live credentials are still release blockers.
 - CI result for this change is pending; no automated pass is claimed until GitHub Actions completes.
+
+
+## Progress log — 26 November 2026 (Supabase setup preparation)
+
+- Prepared the Supabase owner-password authentication adapter and owner-bound durable session store. Browser session tokens are represented in Postgres only by SHA-256 hashes.
+- Connected the optional Supabase owner-login path to app unlock, durable session creation, protected-request verification, activity heartbeat, restart rehydration and logout revocation. The legacy local password path remains available until the explicit Supabase cutover flag is enabled.
+- Added durable owner-scoped AI provider/privacy preference storage through a service-role-only RPC. Mandatory Jarvis confirmation safeguards are validated before persistence.
+- Added regression tests for owner matching, session token hashing, durable session lifecycle, preference validation, snapshot client transport and unauthenticated snapshot access. Added the new preference tests to the standard test command.
+- Added a Supabase/Render setup guide and environment template entries. No project, account, API key or secret has been created or connected. No migrations have been applied.
+- Corrected the Supabase migration safety-check regular expressions and manually checked that the checked-in session-auth and preferences migrations match the expected schema/RPC patterns. This is a source-level check, not a database migration execution.
+- The snapshot storage adapter still writes JSONB payloads without application-level encryption. Do not enable or use cloud snapshot storage for real private or Mariluna data until encryption, key rotation and restore tests are implemented.
+- Durable passkey/TOTP/recovery credentials and persistent rate limiting remain incomplete. OAuth integrations and full Jarvis provider/runtime validation remain separate release gates.
+- GitHub Actions status, TypeScript, full tests, production build and Render deployment have not been verified for the latest changes. No green CI or production-ready claim is made.
