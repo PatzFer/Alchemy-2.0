@@ -43,6 +43,12 @@ export async function sendChatMessage(
 
     if (!res.ok) {
       const errPayload = await res.json().catch(() => null);
+      if (res.status === 401 || errPayload?.authenticationRequired === true) {
+        return createAssistantMessage(
+          'Je Alchemy-sessie is vergrendeld of verlopen. Ontgrendel de app opnieuw en verstuur je bericht daarna nogmaals. Je bericht is niet verwerkt en er zijn geen gegevens gewijzigd.',
+          world,
+        );
+      }
       const serverMessage = errPayload && typeof errPayload.error === 'string' ? errPayload.error.trim() : '';
       if (serverMessage.length > 20 && /\s/.test(serverMessage)) {
         return createAssistantMessage(serverMessage, world);
