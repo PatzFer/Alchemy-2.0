@@ -129,4 +129,12 @@ if (!/code_hash\s+text\s+not\s+null/i.test(recoveryTable) || !/used_at\s+timesta
   throw new Error('Recovery codes must be stored as one-time hashes, never plaintext values.');
 }
 
+
+const sessionAuthMethods = sql.match(/alter\\s+table\\s+public\\.security_sessions[\\s\\S]*?add\\s+constraint\\s+security_sessions_authenticated_with_check[\\s\\S]*?check\\s*\\(authenticated_with\\s+in\\s*\\(([^)]*)\\)\\)/i)?.[1] || '';
+for (const method of ['passkey', 'totp', 'recovery_code', 'password']) {
+  if (!sessionAuthMethods.includes(`'${method}'`)) {
+    throw new Error(`Durable session schema is missing the ${method} authentication method.`);
+  }
+}
+
 process.stdout.write(`Supabase migration checks passed: ${files.length} migration(s), unique versions, required tables, RLS and server-only grants.\n`);
