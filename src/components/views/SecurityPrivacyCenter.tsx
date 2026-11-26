@@ -736,7 +736,7 @@ export const SecurityPrivacyCenter: React.FC<SecurityPrivacyCenterProps> = ({
               </a>
             </div>
             <p className="text-[11px] text-[#6E6457] font-light leading-relaxed">
-              Browser security policies restrict device biometric authentication (Touch ID, Face ID, Windows Hello) inside cross-origin iframe previews. In this preview frame, you can test elevated authentication using the <strong>TOTP Authenticator</strong> or <strong>Single-Use Recovery Codes</strong> (sandbox code: <code className="font-mono bg-[#EAE3D5] px-1 py-0.5 rounded">PMAL-DEMO-2026</code>). Open the app in a new browser tab to experience direct hardware biometric sensor prompts.
+              Browser security policies restrict device biometric authentication (Touch ID, Face ID, Windows Hello) inside cross-origin iframe previews. Use a genuinely configured authenticator or recovery code; no demo credentials are accepted. Open the app in a new browser tab to experience direct hardware biometric sensor prompts.
             </p>
           </div>
         )}
