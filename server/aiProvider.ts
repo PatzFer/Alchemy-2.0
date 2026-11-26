@@ -80,7 +80,7 @@ export interface GeminiVisionOptions {
 }
 
 export const DEFAULT_GEMINI_MODEL = 'gemini-3.8-flash';
-export const DEFAULT_AI_TIMEOUT_MS = 20_000;
+export const DEFAULT_AI_TIMEOUT_MS = 45_000;
 export const MAX_AI_RETRIES = 2;
 // Gemini 503s indicate temporary service capacity pressure. Start with a meaningful
 // pause and use bounded exponential backoff rather than immediately repeating requests.
