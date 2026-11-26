@@ -60,6 +60,18 @@ Still required:
 - Verify readiness probes actual Supabase connectivity and permissions; a configured URL/key alone is not readiness.
 - Validate Render restart, redeploy, multiple-instance behavior, Android browser and desktop.
 
+
+### Durable session adapter checkpoint
+
+A server-only Supabase session-store adapter is now prepared in `server/supabaseDurableSessions.ts`. It:
+- hashes the opaque 256-bit browser cookie token with SHA-256 before storage;
+- accepts an owner UUID only from a caller that has already verified Supabase Auth;
+- supports create, active-session lookup, activity touch and revocation;
+- uses the service-role key only in server-side requests and never returns it to the client;
+- fails closed on malformed database records and Supabase errors.
+
+Regression tests are included in the standard test command. This adapter is deliberately **not yet wired into the existing in-memory security middleware**. It is not production authentication by itself; Supabase Auth login/PKCE, verified owner propagation, durable credential storage and restart tests are still required before switching the app over.
+
 ## 5. Release gate
 
 Until the above is implemented and tested, keep the app private and use synthetic data only. Do not ask the owner to perform a Jarvis live test yet. A green build alone does not prove authentication, persistence, privacy isolation or AI connectivity.
