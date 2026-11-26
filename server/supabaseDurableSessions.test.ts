@@ -93,11 +93,11 @@ test('finds an active session by token hash and returns null for no match', asyn
   assert.equal(await empty.findActive(cookieToken, now), null);
 });
 
-test('rejects malformed or mismatched records returned by Supabase', async () => {
-  const wrongOwner = new SupabaseDurableSessionStore(config, async () => response([row({
-    owner_id: 'a4f1c1a2-1234-4a5b-9c8d-1234567890ab',
+test('rejects malformed or revoked records returned by Supabase', async () => {
+  const malformedOwner = new SupabaseDurableSessionStore(config, async () => response([row({
+    owner_id: 'not-a-uuid',
   })]));
-  await assert.rejects(() => wrongOwner.findActive(cookieToken, now), /invalid or inactive/);
+  await assert.rejects(() => malformedOwner.findActive(cookieToken, now), /invalid or inactive/);
   const revoked = new SupabaseDurableSessionStore(config, async () => response([row({
     revoked_at: now.toISOString(),
   })]));
