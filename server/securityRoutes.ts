@@ -68,10 +68,13 @@ router.get('/status', (req: Request, res: Response) => {
   const recoveryStatus = securityVault.getRecoveryCodesStatus();
   const permissions = securityVault.getPermissions();
   let supabasePasswordLoginEnabled = false;
+  let supabaseConfigured = false;
   try {
-    supabasePasswordLoginEnabled = Boolean(process.env.SUPABASE_OWNER_EMAIL?.trim() && readSupabaseServerConfig());
+    supabaseConfigured = Boolean(readSupabaseServerConfig());
+    supabasePasswordLoginEnabled = Boolean(process.env.SUPABASE_OWNER_EMAIL?.trim() && supabaseConfigured);
   } catch {
     supabasePasswordLoginEnabled = false;
+    supabaseConfigured = true; // Invalid partial config must never enable legacy fallback.
   }
 
   const now = Date.now();
@@ -94,7 +97,7 @@ router.get('/status', (req: Request, res: Response) => {
     isAppAuthenticated: session.isAppAuthenticated,
     passwordLoginEnabled: supabasePasswordLoginEnabled || Boolean(
       process.env.SUPABASE_AUTH_REQUIRED !== 'true' &&
-      !readSupabaseServerConfig() &&
+      !supabaseConfigured &&
       process.env.ALCHEMY_APP_PASSWORD &&
       process.env.ALCHEMY_APP_PASSWORD.length >= 14
     ),
