@@ -23,6 +23,8 @@ export const TaskSplitModal: React.FC<TaskSplitModalProps> = ({
 }) => {
   const [subtasks, setSubtasks] = useState<{ title: string; durationMinutes: number; selected: boolean }[]>([]);
   const [loading, setLoading] = useState(false);
+  const [splitNotice, setSplitNotice] = useState<string | null>(null);
+  const [splitError, setSplitError] = useState<string | null>(null);
   const [newSubtaskTitle, setNewSubtaskTitle] = useState('');
   const [newSubtaskDuration, setNewSubtaskDuration] = useState(15);
 
@@ -30,8 +32,13 @@ export const TaskSplitModal: React.FC<TaskSplitModalProps> = ({
     if (!isOpen || !taskTitle) return;
 
     setLoading(true);
+    setSplitNotice(null);
+    setSplitError(null);
     splitTaskWithBrain(taskTitle, 60, world === 'mariluna' ? 'mariluna' : 'personal')
       .then((res) => {
+        if (res.mode === 'local-deterministic') {
+          setSplitNotice(res.notice || res.rationale || (isNl ? 'Lokale deterministische richtlijn (externe AI niet actief).' : 'Local deterministic steps (external AI inactive).'));
+        }
         setSubtasks(
           (res.subtasks || []).map((s) => ({
             title: s.title,
@@ -40,17 +47,14 @@ export const TaskSplitModal: React.FC<TaskSplitModalProps> = ({
           }))
         );
       })
-      .catch(() => {
-        setSubtasks([
-          { title: `Voorbereiding voor: ${taskTitle}`, durationMinutes: 15, selected: true },
-          { title: `Kernuitvoering voor: ${taskTitle}`, durationMinutes: 30, selected: true },
-          { title: `Afronden en controleren: ${taskTitle}`, durationMinutes: 15, selected: true },
-        ]);
+      .catch((err) => {
+        setSubtasks([]);
+        setSplitError(err instanceof Error ? err.message : (isNl ? 'Jarvis kon geen voorstel genereren. Voeg zelf een stap toe.' : 'Could not generate task split. Add custom steps below.'));
       })
       .finally(() => {
         setLoading(false);
       });
-  }, [isOpen, taskTitle, world]);
+  }, [isOpen, taskTitle, world, isNl]);
 
   if (!isOpen) return null;
 
@@ -133,6 +137,17 @@ export const TaskSplitModal: React.FC<TaskSplitModalProps> = ({
                 {totalMinutes} min totaal
               </span>
             </div>
+
+            {splitNotice && !loading && (
+              <p role="status" className="rounded-xl border border-[#E4D6B8] bg-[#FAF6ED] px-3 py-2 text-[11px] text-[#6E5C41]">
+                {splitNotice}
+              </p>
+            )}
+            {splitError && !loading && (
+              <p role="alert" className="rounded-xl border border-amber-500/30 bg-amber-50 px-3 py-2 text-[11px] text-[#8A442E]">
+                {splitError}
+              </p>
+            )}
 
             {loading ? (
               <div className="py-8 flex flex-col items-center justify-center gap-2 text-xs text-[#8A8175]">

@@ -215,11 +215,13 @@ export const PersonalStylingView: React.FC<PersonalStylingViewProps> = ({
   };
 
   const [showOptionalDetails, setShowOptionalDetails] = useState(false);
+  const [evalError, setEvalError] = useState<string | null>(null);
 
   // Run Evaluation
   const handleRunEvaluation = async () => {
     if (!evalInput.imageUrl && !evalInput.itemTitle.trim() && !evalInput.productUrl) return;
     setIsEvaluating(true);
+    setEvalError(null);
 
     try {
       if (evalInput.imageUrl) {
@@ -275,7 +277,7 @@ export const PersonalStylingView: React.FC<PersonalStylingViewProps> = ({
         }
       }
 
-      // Local fallback evaluation
+      // Local text-only evaluation only when no uploaded photo requires vision
       const localEval = evaluateGarment(
         evalInput,
         foundationStyling,
@@ -284,14 +286,22 @@ export const PersonalStylingView: React.FC<PersonalStylingViewProps> = ({
       );
       setCurrentEvaluation(localEval);
     } catch (err) {
-      console.warn('Evaluation fallback error:', err);
-      const localEval = evaluateGarment(
-        evalInput,
-        foundationStyling,
-        latestMeasurement,
-        learnedFeedbackList
-      );
-      setCurrentEvaluation(localEval);
+      console.warn('Evaluation failed:', err);
+      if (evalInput.imageUrl) {
+        setEvalError(
+          err instanceof Error
+            ? err.message
+            : 'Visuele kledinganalyse is momenteel niet beschikbaar. Controleer je Gemini-instelling en persoonlijke AI-toestemming.'
+        );
+      } else {
+        const localEval = evaluateGarment(
+          evalInput,
+          foundationStyling,
+          latestMeasurement,
+          learnedFeedbackList
+        );
+        setCurrentEvaluation(localEval);
+      }
     } finally {
       setIsEvaluating(false);
     }
@@ -715,6 +725,11 @@ export const PersonalStylingView: React.FC<PersonalStylingViewProps> = ({
                       </>
                     )}
                   </button>
+                  {evalError && (
+                    <p role="alert" className="mt-3 rounded-xl border border-amber-500/30 bg-amber-50 px-3.5 py-2.5 text-xs text-[#8A442E] text-left">
+                      {evalError}
+                    </p>
+                  )}
                 </div>
 
                 {/* Optional Product Info Expander */}

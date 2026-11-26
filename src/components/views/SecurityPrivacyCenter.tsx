@@ -63,6 +63,12 @@ interface SecurityStatusResponse {
   totpEnabled: boolean;
   recoveryCodesRemaining: number;
   recoveryCodesTotal: number;
+  aiProviderStatus?: {
+    geminiConfigured: boolean;
+    openAiConfigured: boolean;
+    geminiModel: string;
+    openAiModel: string | null;
+  };
   permissions: {
     calendarRead: boolean;
     calendarWrite: boolean;
@@ -1146,14 +1152,25 @@ export const SecurityPrivacyCenter: React.FC<SecurityPrivacyCenterProps> = ({
               className="w-full rounded-xl border border-[#DDD4C5] bg-white px-3 py-2 text-xs text-[#2C2825] outline-none focus:border-[#8C7654]"
             >
               <option value="local-rules">Local privacy mode — no external AI processing</option>
-              <option value="openai-server">OpenAI — only with separate consent and server key</option>
-              <option value="gemini-server">Gemini — only with separate consent and server key</option>
+              <option value="gemini-server">Gemini (Primary) — only with separate consent and server key</option>
+              <option value="openai-server">OpenAI (Optional) — only with separate consent and server key</option>
             </select>
             <p className="text-[11px] text-[#6E655A] font-light leading-relaxed">
-              The selected provider is used only when the relevant workspace and data permissions are also enabled. Local mode keeps Jarvis on deterministic, on-server rules. OpenAI and Gemini require a server-side API key and may incur usage charges.
+              The selected provider is used only when the relevant workspace permission is enabled. Local mode uses deterministic on-server rules. Gemini and OpenAI keys stay on the server; usage limits and possible charges depend on the provider and account tier.
             </p>
+            <div role="status" className="rounded-lg border border-[#E3D9C9] bg-white px-3 py-2 text-[11px] text-[#655D53]">
+              {status?.permissions.activeAiProvider === 'gemini-server'
+                ? status.aiProviderStatus?.geminiConfigured
+                  ? `Gemini key detected · ${status.aiProviderStatus.geminiModel}`
+                  : 'Gemini selected · server key not configured'
+                : status?.permissions.activeAiProvider === 'openai-server'
+                  ? status.aiProviderStatus?.openAiConfigured
+                    ? `OpenAI key and model detected · ${status.aiProviderStatus.openAiModel}`
+                    : 'OpenAI selected · server key/model not configured'
+                  : `Local privacy mode · deterministic on-server rules${status?.aiProviderStatus?.geminiConfigured ? ` (Gemini ready: ${status.aiProviderStatus.geminiModel})` : ''}`}
+            </div>
             <div role="note" className="rounded-lg border border-[#E4D6B8] bg-[#F7F1E5] p-3 text-[11px] leading-relaxed text-[#65553F]">
-              <strong>Privacy warning / Privacywaarschuwing:</strong> External AI providers receive the prompt and any workspace context permitted by your separate consent settings. Do not send sensitive client, health, cycle or financial data unless you have reviewed the provider's terms and explicitly accepted the risks. API usage may incur costs. <a href="https://openai.com/policies/privacy-policy/" target="_blank" rel="noreferrer" className="underline font-medium">OpenAI privacy policy</a> · <a href="https://ai.google.dev/gemini-api/docs/pricing" target="_blank" rel="noreferrer" className="underline font-medium">Gemini pricing & data use</a>.
+              <strong>Privacy warning / Privacywaarschuwing:</strong> External AI providers receive the prompt and any workspace context permitted by your separate consent settings. Google may use content submitted through the Gemini free tier to improve its products. Use synthetic data for testing and do not send sensitive client, health, cycle or financial data unless you have reviewed the provider's terms and explicitly accepted the risks. Paid provider tiers may incur costs. <a href="https://openai.com/policies/privacy-policy/" target="_blank" rel="noreferrer" className="underline font-medium">OpenAI privacy policy</a> · <a href="https://ai.google.dev/gemini-api/docs/pricing" target="_blank" rel="noreferrer" className="underline font-medium">Gemini pricing & data use</a>.
             </div>
           </div>
 

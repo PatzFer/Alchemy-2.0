@@ -1,6 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { sendChatMessage, requestGoalBreakdown, requestIdeaAnalysis } from './aiService';
+import {
+  sendChatMessage,
+  requestGoalBreakdown,
+  requestIdeaAnalysis,
+  requestStylingEvaluationPhoto,
+} from './aiService';
 
 const originalFetch = globalThis.fetch;
 
@@ -112,4 +117,24 @@ test('idea analysis rejects malformed success payloads', async () => {
     () => requestIdeaAnalysis('Een nieuw idee', 'personal'),
     /geen geldige analyse terug/,
   );
+});
+
+test('styling photo evaluation propagates server unavailability instead of falling back to fake advice', async () => {
+  mockFetch(async () => new Response(JSON.stringify({ error: 'Visuele kledinganalyse vereist Gemini.' }), { status: 503 }));
+  await assert.rejects(
+    () => requestStylingEvaluationPhoto('data:image/jpeg;base64,abc', { heightMeters: 1.57 }),
+    /Visuele kledinganalyse vereist Gemini/,
+  );
+});
+
+test('styling photo evaluation rejects invalid verdicts and accepts valid qualitative results', async () => {
+  mockFetch(async () => new Response(JSON.stringify({ verdict: 'MAYBE_72%' }), { status: 200 }));
+  await assert.rejects(
+    () => requestStylingEvaluationPhoto('data:image/png;base64,abc', {}),
+    /geen geldig resultaat terug/,
+  );
+
+  const valid = { verdict: 'JA', descriptiveTitle: 'Witte blouse', whyReasons: ['Taillefocus'], combos: ['Suède laars'] };
+  mockFetch(async () => new Response(JSON.stringify(valid), { status: 200 }));
+  assert.deepEqual(await requestStylingEvaluationPhoto('data:image/png;base64,abc', {}), valid);
 });

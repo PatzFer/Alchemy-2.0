@@ -85,6 +85,12 @@ router.get('/status', (req: Request, res: Response) => {
     recoveryCodesRemaining: session.isAppAuthenticated ? recoveryStatus.remaining : undefined,
     recoveryCodesTotal: session.isAppAuthenticated ? recoveryStatus.total : undefined,
     permissions: session.isAppAuthenticated ? permissions : undefined,
+    aiProviderStatus: session.isAppAuthenticated ? {
+      geminiConfigured: Boolean(process.env.GEMINI_API_KEY?.trim()),
+      openAiConfigured: Boolean(process.env.OPENAI_API_KEY?.trim() && process.env.OPENAI_MODEL?.trim()),
+      geminiModel: process.env.GEMINI_MODEL?.trim() || 'gemini-3.8-flash',
+      openAiModel: process.env.OPENAI_MODEL?.trim() || null,
+    } : undefined,
   });
 });
 

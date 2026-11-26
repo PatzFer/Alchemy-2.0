@@ -12,6 +12,18 @@ test('OpenAI adapter makes no request without explicit server configuration', as
   assert.equal(result.reason, 'missing_configuration');
 });
 
+test('OpenAI adapter rejects API keys containing whitespace before network access', async () => {
+  let called = false;
+  const result = await requestOpenAIResponse([{ role: 'user', content: 'Hello' }], {
+    apiKey: 'sk-bad key',
+    model: 'test-model',
+    fetcher: (async () => { called = true; throw new Error('should not run'); }) as typeof fetch,
+  });
+  assert.equal(called, false);
+  assert.equal(result.available, false);
+  assert.equal(result.reason, 'missing_configuration');
+});
+
 test('OpenAI adapter sends server-side key and extracts Responses API output', async () => {
   let requestUrl = '';
   let requestInit: RequestInit | undefined;
@@ -52,4 +64,25 @@ test('OpenAI adapter rejects oversized or malformed input before network access'
   });
   assert.equal(called, false);
   assert.equal(result.reason, 'invalid_response');
+});
+
+test('OpenAI adapter aborts and returns timeout when request exceeds timeoutMs', async () => {
+  let aborted = false;
+  const result = await requestOpenAIResponse([{ role: 'user', content: 'Hello' }], {
+    apiKey: 'server-secret',
+    model: 'test-model',
+    timeoutMs: 15,
+    fetcher: ((_input, init) =>
+      new Promise((_resolve, reject) => {
+        init?.signal?.addEventListener('abort', () => {
+          aborted = true;
+          const err = new Error('aborted');
+          err.name = 'AbortError';
+          reject(err);
+        });
+      })) as typeof fetch,
+  });
+
+  assert.equal(aborted, true);
+  assert.deepEqual(result, { available: false, text: null, reason: 'timeout' });
 });

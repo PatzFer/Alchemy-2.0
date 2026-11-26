@@ -1,25 +1,15 @@
 import { Router, Request, Response } from "express";
-import { GoogleGenAI } from "@google/genai";
+import {
+  DEFAULT_GEMINI_MODEL,
+  formatAiFailureResponse,
+  parseAiJsonResponse,
+  requestConfiguredAiResponse,
+  requestGeminiVisionResponse,
+} from "./aiProvider";
 import { classifyIntent, buildIntentAwareResponse, isDutchMessage } from "./brainEngine";
 import { requireAppAuth, requireAiRateLimit, securityVault } from "./security";
 
 const router = Router();
-
-// Initialize Gemini SDK safely with User-Agent telemetry
-let aiClient: GoogleGenAI | null = null;
-function getAI(): GoogleGenAI | null {
-  if (!aiClient && process.env.GEMINI_API_KEY) {
-    aiClient = new GoogleGenAI({
-      apiKey: process.env.GEMINI_API_KEY,
-      httpOptions: {
-        headers: {
-          "User-Agent": "aistudio-build",
-        },
-      },
-    });
-  }
-  return aiClient;
-}
 
 const BRAIN_SYSTEM_PROMPT = `Je bent ALCHEMY BRAIN, de centrale intelligence-, context- en planninglaag van ALCHEMY voor Patricia ("Patz").
 
@@ -47,23 +37,25 @@ router.post("/brief", requireAppAuth, requireAiRateLimit, async (req: Request, r
   const world = req.body.world === 'mariluna'
     ? 'mariluna'
     : req.body.world === 'balanced' ? 'balanced' : 'personal';
+  const safeFallbackBrief = securityVault.sanitizeContextForAi(req.body.deterministicBrief || {}, world);
   try {
-    const { deterministicBrief } = req.body;
-    const safeBrief = securityVault.sanitizeContextForAi(deterministicBrief || {}, world);
     const permissions = securityVault.getPermissions();
     // The Today brief deliberately combines personal, wellbeing and Mariluna signals.
     // Require consent for every included domain before sending the combined summary.
     const worldPermission = world === 'balanced'
       ? permissions.allowPersonalDataToAI && permissions.allowMarilunaDataToAI && permissions.allowWellbeingDataToAI
       : world === 'mariluna' ? permissions.allowMarilunaDataToAI : permissions.allowPersonalDataToAI;
-    const ai = permissions.activeAiProvider === 'gemini-server' && worldPermission ? getAI() : null;
 
-    if (!ai) {
-      return res.json({ brief: safeBrief });
+    if (permissions.activeAiProvider === 'local-rules' || !worldPermission) {
+      return res.json({
+        brief: safeFallbackBrief,
+        provider: 'local',
+        providerStatus: permissions.activeAiProvider === 'local-rules' ? 'local_privacy_mode' : 'missing_workspace_consent',
+      });
     }
 
     const prompt = `Hier is de deterministische dagbriefing van Patricia voor vandaag:
-${JSON.stringify(safeBrief)}
+${JSON.stringify(safeFallbackBrief)}
 
 Herschrijf deze briefing indien nodig zodat hij ultra-kort, rustig en natuurlijk klinkt.
 Behoud exact deze structuur als JSON:
@@ -77,29 +69,60 @@ Behoud exact deze structuur als JSON:
   ],
   "focusAnchor": "Eén rustige, soevereine focuszin voor vandaag."
 }
-Geen extra tekst, alleen JSON.`;
+Gebruik uitsluitend de aangeleverde gegevens. Geen extra tekst, alleen JSON.`;
 
-    const response = await ai.models.generateContent({
-      model: "gemini-3.8-flash",
-      contents: prompt,
-      config: {
-        systemInstruction: BRAIN_SYSTEM_PROMPT,
-        temperature: 0.4,
-        responseMimeType: "application/json",
-      },
+    const result = await requestConfiguredAiResponse([
+      { role: 'system', content: `${BRAIN_SYSTEM_PROMPT}\nGeef uitsluitend geldige JSON terug.` },
+      { role: 'user', content: prompt },
+    ], {
+      provider: permissions.activeAiProvider,
+      geminiApiKey: process.env.GEMINI_API_KEY,
+      geminiModel: process.env.GEMINI_MODEL || DEFAULT_GEMINI_MODEL,
+      openAiApiKey: process.env.OPENAI_API_KEY,
+      openAiModel: process.env.OPENAI_MODEL,
+      responseFormat: 'json',
+      temperature: 0.4,
     });
 
-    const text = response.text?.trim() || "";
-    const parsed = JSON.parse(text);
+    if (!result.available || !result.text) {
+      return res.json({
+        brief: safeFallbackBrief,
+        provider: 'local',
+        providerStatus: result.reason || 'provider_error',
+      });
+    }
+
+    const parsed = parseAiJsonResponse<{ greeting?: unknown; bullets?: unknown; focusAnchor?: unknown }>(result.text);
+    if (
+      !parsed ||
+      typeof parsed.greeting !== 'string' ||
+      !parsed.greeting.trim() ||
+      !Array.isArray(parsed.bullets) ||
+      parsed.bullets.some((item) => typeof item !== 'string') ||
+      typeof parsed.focusAnchor !== 'string' ||
+      !parsed.focusAnchor.trim()
+    ) {
+      return res.json({
+        brief: safeFallbackBrief,
+        provider: 'local',
+        providerStatus: 'invalid_response',
+      });
+    }
+
     return res.json({
       brief: {
-        ...safeBrief,
+        ...safeFallbackBrief,
         ...parsed,
       },
+      provider: result.provider,
+      model: result.model,
     });
-  } catch (err) {
-    // Return deterministic brief gracefully
-    return res.json({ brief: securityVault.sanitizeContextForAi(req.body.deterministicBrief || {}, req.body.world === 'mariluna' ? 'mariluna' : req.body.world === 'balanced' ? 'balanced' : 'personal') });
+  } catch {
+    return res.json({
+      brief: safeFallbackBrief,
+      provider: 'local',
+      providerStatus: 'provider_error',
+    });
   }
 });
 
@@ -113,22 +136,25 @@ router.post("/split-task", requireAppAuth, requireAiRateLimit, async (req: Reque
     const world = req.body.world === 'mariluna' ? 'mariluna' : 'personal';
     const permissions = securityVault.getPermissions();
     const worldPermission = world === 'mariluna' ? permissions.allowMarilunaDataToAI : permissions.allowPersonalDataToAI;
-    const ai = permissions.activeAiProvider === 'gemini-server' && worldPermission ? getAI() : null;
 
-    if (!ai) {
-      return res.json({
-        subtasks: [
-          { title: `Voorbereiden en materiaal klaarzetten voor: ${taskTitle}`, durationMinutes: 15 },
-          { title: `Eerste kernstap uitvoeren voor: ${taskTitle}`, durationMinutes: 30 },
-          { title: `Afronden en nakijken van: ${taskTitle}`, durationMinutes: 15 },
-        ],
-        rationale: "Opgesplitst in praktische stappen.",
+    const safeTaskTitle = typeof taskTitle === 'string' ? taskTitle.trim().slice(0, 300) : '';
+    if (!safeTaskTitle) {
+      return res.status(400).json({ error: 'A task title is required.' });
+    }
+
+    if (permissions.activeAiProvider === 'local-rules' || !worldPermission) {
+      return res.status(503).json({
+        error: 'Live AI task splitting is disabled by the selected provider or workspace privacy settings.',
       });
     }
 
-    const prompt = `Taak: "${taskTitle}" (geschatte duur: ${estimatedDuration || 60} minuten).
+    const safeDuration = Number.isFinite(estimatedDuration)
+      ? Math.max(5, Math.min(1440, Number(estimatedDuration)))
+      : 60;
+
+    const prompt = `Taak: "${safeTaskTitle}" (geschatte duur: ${safeDuration} minuten).
 Splits deze taak op in 3 tot 5 concrete, behapbare micro-stappen met realistische minuten per stap.
-Geef een JSON terug in dit format:
+Geef uitsluitend geldige JSON terug:
 {
   "subtasks": [
     { "title": "stap 1", "durationMinutes": 15 },
@@ -137,26 +163,58 @@ Geef een JSON terug in dit format:
   "rationale": "Korte toelichting waarom deze volgorde natuurlijk werkt."
 }`;
 
-    const response = await ai.models.generateContent({
-      model: "gemini-3.8-flash",
-      contents: prompt,
-      config: {
-        systemInstruction: BRAIN_SYSTEM_PROMPT,
-        temperature: 0.3,
-        responseMimeType: "application/json",
-      },
+    const result = await requestConfiguredAiResponse([
+      { role: 'system', content: `${BRAIN_SYSTEM_PROMPT}\nReturn only valid JSON.` },
+      { role: 'user', content: prompt },
+    ], {
+      provider: permissions.activeAiProvider,
+      geminiApiKey: process.env.GEMINI_API_KEY,
+      geminiModel: process.env.GEMINI_MODEL || DEFAULT_GEMINI_MODEL,
+      openAiApiKey: process.env.OPENAI_API_KEY,
+      openAiModel: process.env.OPENAI_MODEL,
+      responseFormat: 'json',
+      temperature: 0.3,
     });
 
-    const parsed = JSON.parse(response.text?.trim() || "{}");
-    return res.json(parsed);
-  } catch (err) {
-    return res.json({
-      subtasks: [
-        { title: `Voorbereiden van: ${req.body.taskTitle}`, durationMinutes: 15 },
-        { title: `Uitvoeren van de kern: ${req.body.taskTitle}`, durationMinutes: 30 },
-        { title: `Afronden en controleren: ${req.body.taskTitle}`, durationMinutes: 15 },
-      ],
-      rationale: "Standaard opdeling.",
+    if (!result.available || !result.text) {
+      const failure = formatAiFailureResponse(result.reason, {
+        providerLabel: permissions.activeAiProvider === 'openai-server' ? 'OpenAI' : 'Gemini',
+        language: 'nl',
+        target: 'split',
+      });
+      return res.status(failure.statusCode).json({
+        error: failure.message,
+        providerStatus: result.reason,
+      });
+    }
+
+    const parsed = parseAiJsonResponse<{ subtasks?: unknown; rationale?: unknown }>(result.text);
+    if (
+      !parsed ||
+      !Array.isArray(parsed.subtasks) ||
+      parsed.subtasks.length < 3 ||
+      parsed.subtasks.length > 5 ||
+      parsed.subtasks.some((step: any) =>
+        !step ||
+        typeof step.title !== 'string' ||
+        !step.title.trim() ||
+        step.title.length > 160 ||
+        typeof step.durationMinutes !== 'number' ||
+        !Number.isFinite(step.durationMinutes) ||
+        step.durationMinutes < 5 ||
+        step.durationMinutes > 240
+      )
+    ) {
+      return res.status(502).json({
+        error: 'Jarvis returned an invalid task breakdown. Your task remains unchanged.',
+      });
+    }
+
+    return res.json({ ...parsed, provider: result.provider, model: result.model });
+  } catch (err: unknown) {
+    console.error("Brain task split error:", err instanceof Error ? err.name : "UnknownError");
+    return res.status(502).json({
+      error: 'Jarvis kon deze taak niet betrouwbaar opdelen. De bestaande taak is ongewijzigd.',
     });
   }
 });
@@ -168,24 +226,25 @@ Geef een JSON terug in dit format:
 router.post("/query", requireAppAuth, requireAiRateLimit, async (req: Request, res: Response) => {
   try {
     const { query = '', context = {} } = req.body;
+    const safeQuery = typeof query === 'string' ? query.trim().slice(0, 4000) : '';
     const world = req.body.world === 'mariluna' ? 'mariluna' : 'personal';
     // Client-side filtering is useful for UX, but the server is the actual privacy boundary.
     const safeContext = securityVault.sanitizeContextForAi(context, world);
     const permissions = securityVault.getPermissions();
     const worldPermission = world === 'mariluna' ? permissions.allowMarilunaDataToAI : permissions.allowPersonalDataToAI;
-    const ai = permissions.activeAiProvider === 'gemini-server' && worldPermission ? getAI() : null;
 
-    const intentObj = classifyIntent(query, [], safeContext);
+    const intentObj = classifyIntent(safeQuery, [], safeContext);
 
-    if (!ai) {
+    if (permissions.activeAiProvider === 'local-rules' || !worldPermission) {
       return res.json({
-        answer: buildIntentAwareResponse(intentObj, query, safeContext, world),
+        answer: buildIntentAwareResponse(intentObj, safeQuery, safeContext, world),
+        provider: 'local',
       });
     }
 
-    const isDutch = isDutchMessage(query);
+    const isDutch = isDutchMessage(safeQuery);
 
-    const prompt = `Patricia vraagt: "${query}"
+    const prompt = `Patricia vraagt: "${safeQuery}"
 
 GECLASSIFICEERDE INTENTIE: ${intentObj.intent.toUpperCase()}
 TARGET TIMEFRAME/DAG: ${intentObj.resolvedTargetDay || "N/A"}
@@ -206,22 +265,35 @@ INTENTIE-SPECIFIEKE REGELS:
 
 Geef een kort, doordacht, warm en praktisch antwoord in ${isDutch ? "helder Nederlands" : "het Engels"}.`;
 
-    const response = await ai.models.generateContent({
-      model: "gemini-3.8-flash",
-      contents: prompt,
-      config: {
-        systemInstruction: BRAIN_SYSTEM_PROMPT,
-        temperature: 0.3,
-      },
+    const result = await requestConfiguredAiResponse([
+      { role: 'system', content: BRAIN_SYSTEM_PROMPT },
+      { role: 'user', content: prompt },
+    ], {
+      provider: permissions.activeAiProvider,
+      geminiApiKey: process.env.GEMINI_API_KEY,
+      geminiModel: process.env.GEMINI_MODEL || DEFAULT_GEMINI_MODEL,
+      openAiApiKey: process.env.OPENAI_API_KEY,
+      openAiModel: process.env.OPENAI_MODEL,
+      temperature: 0.3,
     });
 
-    return res.json({
-      answer: response.text?.trim() || buildIntentAwareResponse(intentObj, query, safeContext, world),
-    });
-  } catch (err: any) {
-    console.error("Brain query error:", err);
-    return res.json({
-      answer: "Alchemy Brain is momenteel bezig met herijken. Je agenda en prioriteiten blijven veilig lokaal bewaard.",
+    if (!result.available || !result.text) {
+      const failure = formatAiFailureResponse(result.reason, {
+        providerLabel: permissions.activeAiProvider === 'openai-server' ? 'OpenAI' : 'Gemini',
+        language: isDutch ? 'nl' : 'en',
+        target: 'query',
+      });
+      return res.status(failure.statusCode).json({
+        error: failure.message,
+        providerStatus: result.reason,
+      });
+    }
+
+    return res.json({ answer: result.text, provider: result.provider, model: result.model });
+  } catch (err: unknown) {
+    console.error("Brain query error:", err instanceof Error ? err.name : "UnknownError");
+    return res.status(502).json({
+      error: 'Jarvis kon je vraag niet betrouwbaar verwerken. Probeer het opnieuw.',
     });
   }
 });
@@ -237,8 +309,16 @@ router.post("/evaluate-styling", requireAppAuth, requireAiRateLimit, async (req:
     if (!permissions.allowPersonalDataToAI) {
       return res.status(403).json({ error: 'Personal AI access is disabled. Enable personal data sharing in Security & Privacy to use image-based styling analysis.' });
     }
+    if (typeof imageBase64 !== 'string' || !imageBase64.trim()) {
+      return res.status(400).json({ error: 'Voeg eerst een foto toe voor een visuele kledingbeoordeling.' });
+    }
+    if (permissions.activeAiProvider !== 'gemini-server' || !process.env.GEMINI_API_KEY?.trim()) {
+      return res.status(503).json({
+        error: 'Visuele kledinganalyse vereist Gemini met een server-side API-sleutel. Er is geen nepbeoordeling gegenereerd.',
+      });
+    }
+
     const safeProfileContext = securityVault.sanitizeContextForAi(profileContext, 'personal');
-    const ai = permissions.activeAiProvider === 'gemini-server' ? getAI() : null;
 
     const STYLING_SYSTEM_PROMPT = `Je bent ALCHEMY PERSONAL STYLING PARTNER voor Patricia ("Patz").
 
@@ -277,82 +357,71 @@ STRIKT JSON FORMAT:
   "fitAdvice": "Kort pasvormadvies voor 1.57m en taillebalans"
 }`;
 
-    if (!ai) {
-      return res.json({
-        verdict: "JA",
-        verdictLabel: "JA — dit past goed bij jouw stijl.",
-        garmentType: "Jurk",
-        descriptiveTitle: "het kledingstuk op je foto",
-        whyReasons: [
-          "De duidelijke taille-accentuering sluit goed aan bij jouw voorkeur voor taillebalans.",
-          "De soepele, vrouwelijke vorm past bij je romantische en bohemian Stijl-DNA."
-        ],
-        considerations: [
-          "Let bij 1.57m op de lengte zodat de zoom de verticale lijn niet onderbreekt."
-        ],
-        combos: [
-          "Combineer met een suède westernlaars voor direct meer karakter.",
-          "Draag eventueel met een mooie ceintuur om de taille extra te accentueren.",
-          "Draag met gelaagde gouden kettingen voor een verfijnde afwerking."
-        ],
-        fitAdvice: "Aansluitend op de taille met vloeiende val rond heupen en benen."
-      });
-    }
-
-    const contents: any[] = [];
-    if (imageBase64) {
-      const cleanBase64 = imageBase64.replace(/^data:image\/\w+;base64,/, '');
-      contents.push({
-        inlineData: {
-          mimeType: mimeType || "image/jpeg",
-          data: cleanBase64,
-        },
-      });
-    }
+    const safeNotes = typeof optionalNotes === 'string' ? optionalNotes.trim().slice(0, 1000) : '';
+    const safeUrl = typeof optionalUrl === 'string' ? optionalUrl.trim().slice(0, 500) : '';
 
     let userPromptText = `Beoordeel dit kledingstuk op de foto voor Patricia.
 Opgeslagen profielcontext: ${JSON.stringify(safeProfileContext)}`;
 
-    if (optionalNotes) {
-      userPromptText += `\nExtra opmerking: "${optionalNotes}"`;
+    if (safeNotes) {
+      userPromptText += `\nExtra opmerking: "${safeNotes}"`;
     }
-    if (optionalUrl) {
-      userPromptText += `\nProductlink (alleen ter referentie): ${optionalUrl}`;
+    if (safeUrl) {
+      userPromptText += `\nProductlink (alleen ter referentie): ${safeUrl}`;
     }
 
-    contents.push({ text: userPromptText });
-
-    const response = await ai.models.generateContent({
-      model: "gemini-3.8-flash",
-      contents,
-      config: {
-        systemInstruction: STYLING_SYSTEM_PROMPT,
-        temperature: 0.2,
-        responseMimeType: "application/json",
-      },
+    const result = await requestGeminiVisionResponse({
+      geminiApiKey: process.env.GEMINI_API_KEY,
+      geminiModel: process.env.GEMINI_MODEL || DEFAULT_GEMINI_MODEL,
+      imageBase64,
+      mimeType,
+      promptText: userPromptText,
+      systemInstruction: STYLING_SYSTEM_PROMPT,
+      responseFormat: 'json',
+      temperature: 0.2,
     });
 
-    const parsed = JSON.parse(response.text?.trim() || "{}");
-    return res.json(parsed);
-  } catch (err: any) {
-    console.error("Styling evaluation error:", err);
-    return res.json({
-      verdict: "JA",
-      verdictLabel: "JA — dit past goed bij jouw stijl.",
-      garmentType: "Jurk",
-      descriptiveTitle: "het kledingstuk op je foto",
-      whyReasons: [
-        "Sluit aan bij je vrouwelijke, zachte en romantische silhouetvoorkeur.",
-        "De snit geeft voldoende ruimte om de taille als natuurlijk rustpunt te accentueren."
-      ],
-      considerations: [
-        "Controleer de stofval en roklengte bij een petite lengte (1.57m)."
-      ],
-      combos: [
-        "Combineer met suède laarzen voor een stoer-vrouwelijk contrast.",
-        "Draag met gouden sieraden voor een warm accent."
-      ],
-      fitAdvice: "Accentueer de taille om de verhoudingen optimaal te laten uitkomen."
+    if (!result.available || !result.text) {
+      const failure = formatAiFailureResponse(result.reason, {
+        providerLabel: 'Gemini',
+        language: 'nl',
+        target: 'vision',
+      });
+      return res.status(failure.statusCode).json({
+        error: failure.message,
+        providerStatus: result.reason,
+      });
+    }
+
+    const parsed = parseAiJsonResponse<{
+      verdict?: unknown;
+      verdictLabel?: unknown;
+      garmentType?: unknown;
+      descriptiveTitle?: unknown;
+      whyReasons?: unknown;
+      considerations?: unknown;
+      combos?: unknown;
+      fitAdvice?: unknown;
+    }>(result.text);
+
+    if (
+      !parsed ||
+      (parsed.verdict !== 'JA' && parsed.verdict !== 'TWIJFEL' && parsed.verdict !== 'NEE') ||
+      typeof parsed.descriptiveTitle !== 'string' ||
+      !parsed.descriptiveTitle.trim() ||
+      !Array.isArray(parsed.whyReasons) ||
+      !Array.isArray(parsed.combos)
+    ) {
+      return res.status(502).json({
+        error: 'De visuele analyse gaf een onvolledig resultaat terug. Er is geen kledingadvies gegenereerd.',
+      });
+    }
+
+    return res.json({ ...parsed, provider: result.provider, model: result.model });
+  } catch (err: unknown) {
+    console.error("Styling evaluation error:", err instanceof Error ? err.name : "UnknownError");
+    return res.status(502).json({
+      error: 'De visuele analyse is niet gelukt. Er is geen kledingadvies gegenereerd.',
     });
   }
 });

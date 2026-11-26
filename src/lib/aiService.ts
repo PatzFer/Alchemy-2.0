@@ -42,6 +42,11 @@ export async function sendChatMessage(
     });
 
     if (!res.ok) {
+      const errPayload = await res.json().catch(() => null);
+      const serverMessage = errPayload && typeof errPayload.error === 'string' ? errPayload.error.trim() : '';
+      if (serverMessage.length > 20 && /\s/.test(serverMessage)) {
+        return createAssistantMessage(serverMessage, world);
+      }
       throw new Error(`Jarvis endpoint returned HTTP ${res.status}`);
     }
 
@@ -174,29 +179,33 @@ export async function requestStylingEvaluationPhoto(
   optionalNotes?: string,
   optionalUrl?: string
 ): Promise<any> {
-  try {
-    const mimeType = imageBase64.startsWith('data:image/png')
-      ? 'image/png'
-      : imageBase64.startsWith('data:image/webp')
-      ? 'image/webp'
-      : 'image/jpeg';
+  const mimeType = imageBase64.startsWith('data:image/png')
+    ? 'image/png'
+    : imageBase64.startsWith('data:image/webp')
+    ? 'image/webp'
+    : 'image/jpeg';
 
-    const res = await fetch('/api/brain/evaluate-styling', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        imageBase64,
-        mimeType,
-        profileContext,
-        optionalNotes,
-        optionalUrl,
-      }),
-    });
+  const res = await fetch('/api/brain/evaluate-styling', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      imageBase64,
+      mimeType,
+      profileContext,
+      optionalNotes,
+      optionalUrl,
+    }),
+  });
 
-    if (!res.ok) throw new Error(`Styling evaluation failed: ${res.status}`);
-    return await res.json();
-  } catch (err) {
-    console.warn('Styling evaluation API fallback:', err);
-    return null;
+  const payload = await res.json().catch(() => null);
+  if (!res.ok) {
+    const message = payload && typeof payload.error === 'string'
+      ? payload.error
+      : 'Visuele kledinganalyse is momenteel niet beschikbaar. Controleer je Gemini-instelling en persoonlijke AI-toestemming.';
+    throw new Error(message);
   }
+  if (!payload || !['JA', 'TWIJFEL', 'NEE'].includes(payload.verdict)) {
+    throw new Error('De visuele analyse gaf geen geldig resultaat terug. Probeer het opnieuw.');
+  }
+  return payload;
 }

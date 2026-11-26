@@ -15,6 +15,8 @@ import { ContextPrivacyScope } from './types';
 export interface SplitTaskResponse {
   subtasks: { title: string; durationMinutes: number }[];
   rationale?: string;
+  mode: 'ai' | 'local-deterministic';
+  notice?: string;
 }
 
 export async function splitTaskWithBrain(
@@ -22,34 +24,45 @@ export async function splitTaskWithBrain(
   estimatedDuration: number = 60,
   world: 'personal' | 'mariluna' = 'personal'
 ): Promise<SplitTaskResponse> {
-  try {
-    const res = await fetch('/api/brain/split-task', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ taskTitle, estimatedDuration, world }),
-    });
+  const res = await fetch('/api/brain/split-task', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ taskTitle, estimatedDuration, world }),
+  });
 
-    if (res.ok) {
-      const data = await res.json();
-      if (data && Array.isArray(data.subtasks) && data.subtasks.length > 0) {
-        return data;
-      }
-    }
-  } catch (err) {
-    console.warn('Fallback to local task splitter:', err);
+  const payload = await res.json().catch(() => null);
+  if (res.ok && payload && Array.isArray(payload.subtasks) && payload.subtasks.length > 0) {
+    return {
+      subtasks: payload.subtasks,
+      rationale: payload.rationale,
+      mode: 'ai',
+    };
   }
 
-  // Graceful deterministic fallback
-  return {
-    subtasks: generateTaskSplits(taskTitle),
-    rationale: 'Opgesplitst in logische stappen op basis van praktische taakpatronen.',
-  };
+  if (res.status === 503) {
+    // Explicit deterministic fallback when AI provider or consent is intentionally off/unavailable
+    return {
+      subtasks: generateTaskSplits(taskTitle),
+      rationale: 'Lokale deterministische taakopdeling (externe AI niet actief).',
+      mode: 'local-deterministic',
+      notice: typeof payload?.error === 'string'
+        ? payload.error
+        : 'Externe AI is niet actief; lokale richtlijnstappen getoond.',
+    };
+  }
+
+  const message = payload && typeof payload.error === 'string'
+    ? payload.error
+    : 'Jarvis kon deze taak niet betrouwbaar opdelen. Probeer het opnieuw of voeg zelf stappen toe.';
+  throw new Error(message);
 }
 
 export interface BrainQueryResponse {
   answer: string;
   scopeUsed: ContextPrivacyScope;
   relevantDomainsUsed: string[];
+  mode: 'ai' | 'local-deterministic';
+  error?: string;
 }
 
 export async function queryBrainAdvisor(
@@ -73,24 +86,36 @@ export async function queryBrainAdvisor(
       }),
     });
 
-    if (res.ok) {
-      const data = await res.json();
-      if (data && data.answer) {
-        return {
-          answer: data.answer,
-          scopeUsed: effectiveScope,
-          relevantDomainsUsed: relevance.relevantDomains,
-        };
-      }
+    const data = await res.json().catch(() => null);
+    if (res.ok && data && typeof data.answer === 'string' && data.answer.trim()) {
+      return {
+        answer: data.answer,
+        scopeUsed: effectiveScope,
+        relevantDomainsUsed: relevance.relevantDomains,
+        mode: data.provider === 'local' ? 'local-deterministic' : 'ai',
+      };
     }
-  } catch (err) {
-    console.warn('Fallback to local brain advisor:', err);
-  }
 
-  // Grounded editorial fallback
-  return {
-    answer: `Op basis van je huidige dagritme en voorkeuren: houd vandaag je focus op 1 prioriteit en bewaar voldoende ademruimte. (${relevance.privacyRationale})`,
-    scopeUsed: effectiveScope,
-    relevantDomainsUsed: relevance.relevantDomains,
-  };
+    const errorMessage = data && typeof data.error === 'string'
+      ? data.error
+      : 'Jarvis Brain is tijdelijk niet beschikbaar. Er zijn geen gegevens gewijzigd.';
+    return {
+      answer: errorMessage,
+      scopeUsed: effectiveScope,
+      relevantDomainsUsed: relevance.relevantDomains,
+      mode: 'local-deterministic',
+      error: errorMessage,
+    };
+  } catch (err) {
+    const errorMessage = err instanceof Error && err.message
+      ? `Jarvis Brain is niet bereikbaar (${err.message}). Er zijn geen gegevens gewijzigd.`
+      : 'Jarvis Brain is momenteel niet bereikbaar. Controleer je verbinding en probeer het opnieuw.';
+    return {
+      answer: errorMessage,
+      scopeUsed: effectiveScope,
+      relevantDomainsUsed: relevance.relevantDomains,
+      mode: 'local-deterministic',
+      error: errorMessage,
+    };
+  }
 }

@@ -2,8 +2,13 @@ import express, { Request, Response } from "express";
 import path from "path";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
-import { GoogleGenAI } from "@google/genai";
-import { requestOpenAIResponse } from "./server/openaiProvider";
+import {
+  DEFAULT_GEMINI_MODEL,
+  formatAiFailureResponse,
+  parseAiJsonResponse,
+  requestConfiguredAiResponse,
+  type AiTextMessage,
+} from "./server/aiProvider";
 import { createServer as createViteServer } from "vite";
 import securityRouter from "./server/securityRoutes";
 import integrationsRouter from "./server/integrationsRoutes";
@@ -37,22 +42,6 @@ app.use("/api/integrations", integrationsRouter);
 app.use("/api/brain", brainRouter);
 // Supabase-backed owner snapshot endpoints; require a verified Supabase bearer token.
 app.use("/api/persistence", persistenceRouter);
-
-// Initialize Gemini SDK lazily / safely with User-Agent telemetry
-let aiClient: GoogleGenAI | null = null;
-function getAI(): GoogleGenAI | null {
-  if (!aiClient && process.env.GEMINI_API_KEY) {
-    aiClient = new GoogleGenAI({
-      apiKey: process.env.GEMINI_API_KEY,
-      httpOptions: {
-        headers: {
-          "User-Agent": "aistudio-build",
-        },
-      },
-    });
-  }
-  return aiClient;
-}
 
 type AiWorkspace = 'personal' | 'mariluna' | 'all';
 
@@ -359,17 +348,8 @@ app.post("/api/ai/chat", requireAppAuth, requireAiRateLimit, async (req: Request
       return res.json({
         role: "assistant",
         content: `[Local Privacy Mode Active] ${localResp}`,
-      });
-    }
-
-    const ai = getAI();
-
-    if (!ai) {
-      // Fallback intelligent response when API key is not configured yet
-      const fallbackResponse = buildIntentAwareResponse(intentObj, lastUserMsg, sanitizedContext, world);
-      return res.json({
-        role: "assistant",
-        content: `[${isDutch ? 'Lokale modus — Gemini API-sleutel ontbreekt' : 'Local mode — Gemini API key is not configured'}] ${fallbackResponse}`,
+        provider: "local",
+        providerStatus: permissions.activeAiProvider === "local-rules" ? "local_privacy_mode" : "missing_workspace_consent",
       });
     }
 
@@ -430,61 +410,53 @@ REAL SYSTEM CONTEXT PROVIDED:
 - Confirmed Memories: ${JSON.stringify(sanitizedContext?.memoryItems || [])}
 `;
 
-    // OpenAI is an optional, explicitly selected server-side provider.
-    // Missing configuration or provider failure falls back locally without losing the request.
-    if (permissions.activeAiProvider === "openai-server") {
-      const openAiResult = await requestOpenAIResponse([
-        { role: "system", content: systemPrompt },
-        ...messages,
-      ], {
-        apiKey: process.env.OPENAI_API_KEY,
-        model: process.env.OPENAI_MODEL,
-      });
-      if (openAiResult.available && openAiResult.text) {
-        return res.json({
-          role: "assistant",
-          content: openAiResult.text,
-          provider: "openai",
-        });
-      }
-      const fallbackResponse = buildIntentAwareResponse(intentObj, lastUserMsg, sanitizedContext, world);
+    // Single server-side provider boundary keeps Gemini and optional OpenAI consistent.
+    // API keys stay on the server; an unavailable provider falls back explicitly to deterministic local mode.
+    const provider = permissions.activeAiProvider;
+    const providerMessages: AiTextMessage[] = [
+      { role: "system", content: systemPrompt },
+      ...messages.map((message: { role: string; content: string }) => ({
+        role: message.role === "user" ? ("user" as const) : ("assistant" as const),
+        content: message.content,
+      })),
+    ];
+    const aiResult = await requestConfiguredAiResponse(providerMessages, {
+      provider,
+      geminiApiKey: process.env.GEMINI_API_KEY,
+      geminiModel: process.env.GEMINI_MODEL || DEFAULT_GEMINI_MODEL,
+      openAiApiKey: process.env.OPENAI_API_KEY,
+      openAiModel: process.env.OPENAI_MODEL,
+    });
+
+    if (aiResult.available && aiResult.text) {
       return res.json({
         role: "assistant",
-        content: `[${isDutch ? 'Lokale modus — OpenAI niet geconfigureerd of tijdelijk niet beschikbaar' : 'Local mode — OpenAI is not configured or temporarily unavailable'}] ${fallbackResponse}`,
-        provider: "local",
+        content: aiResult.text,
+        provider: aiResult.provider === "gemini-server" ? "gemini" : "openai",
+        model: aiResult.model,
       });
     }
 
-    // Format conversation history for Gemini 3.8 Flash
-    const formattedContents = messages.map((m: { role: string; content: string }) => ({
-      role: m.role === "user" ? "user" : "model",
-      parts: [{ text: m.content }],
-    }));
-
-    const response = await ai.models.generateContent({
-      model: "gemini-3.8-flash",
-      contents: formattedContents,
-      config: {
-        systemInstruction: systemPrompt,
-        temperature: 0.3,
-      },
+    const failure = formatAiFailureResponse(aiResult.reason, {
+      providerLabel: provider === "openai-server" ? "OpenAI" : "Gemini",
+      language: isDutch ? "nl" : "en",
+      target: "chat",
     });
 
-    const text = response.text || buildIntentAwareResponse(intentObj, lastUserMsg, sanitizedContext, world);
-    res.json({
-      role: "assistant",
-      content: text,
+    return res.status(failure.statusCode).json({
+      error: failure.message,
+      provider: "unavailable",
+      providerStatus: aiResult.reason || "provider_error",
     });
-  } catch (error: any) {
-    console.error("AI Chat Error:", error);
+  } catch (error: unknown) {
+    console.error("AI Chat Error:", error instanceof Error ? error.name : "UnknownError");
     const lastUserMsg = req.body.messages?.slice(-1)[0]?.content || "";
-    const safeWorld = resolveAiWorkspace(req.body.world);
-    const sanitizedContext = securityVault.sanitizeContextForAi(req.body.context, safeWorld);
-    const safeMessages = Array.isArray(req.body.messages) ? req.body.messages : [];
-    const intentObj = classifyIntent(lastUserMsg, safeMessages, sanitizedContext);
-    res.json({
-      role: "assistant",
-      content: `[${isDutchMessage(lastUserMsg) ? 'Lokale modus — Gemini tijdelijk niet beschikbaar' : 'Local mode — Gemini temporarily unavailable'}] ${buildIntentAwareResponse(intentObj, lastUserMsg, sanitizedContext, safeWorld)}`,
+    const selectedProvider = securityVault.getPermissions().activeAiProvider;
+    const providerName = selectedProvider === 'openai-server' ? 'OpenAI' : selectedProvider === 'gemini-server' ? 'Gemini' : 'lokale AI';
+    return res.status(502).json({
+      error: isDutchMessage(lastUserMsg)
+        ? `Jarvis kon ${providerName} niet bereiken. Er is niets gewijzigd; probeer het opnieuw.`
+        : `Jarvis could not reach ${providerName}. Nothing was changed; please try again.`,
     });
   }
 });
@@ -507,66 +479,68 @@ app.post("/api/ai/plan-day", requireAppAuth, requireAiRateLimit, async (req: Req
     const safeWorkingHours = safeContext.workingHours;
     const safePreferences = safeContext.preferences;
     const permissions = securityVault.getPermissions();
-    const ai = permissions.activeAiProvider === 'gemini-server' &&
-      hasAiWorkspaceConsent(realm, permissions) ? getAI() : null;
 
-    if (!ai) {
-      // Return smart algorithmic heuristic recommendations
-      return res.json({
-        summary: "Balanced schedule calculated. Allocated 4.5 hours to active commitments and 3.0 hours of open cognitive space.",
-        suggestions: [
-          {
-            type: "focus",
-            title: "Prime Morning Window",
-            recommendation: "Focus on your single highest-priority Mariluna deliverable before 13:00.",
-          },
-          {
-            type: "pacing",
-            title: "Evening Decompression",
-            recommendation: "Preserve 17:00 onwards for personal restoration rather than late administrative spillover.",
-          },
-        ],
+    if (permissions.activeAiProvider === 'local-rules' || !hasAiWorkspaceConsent(realm, permissions)) {
+      return res.status(503).json({
+        error: 'Live AI planning is disabled by the current provider or workspace privacy settings.',
       });
     }
 
     const prompt = `Analyze this day's schedule and tasks:
-Tasks: ${JSON.stringify(tasks)}
-Events: ${JSON.stringify(calendarEvents)}
-Working Hours: ${JSON.stringify(workingHours)}
-Preferences: ${JSON.stringify(preferences)}
+Tasks: ${JSON.stringify(safeTasks)}
+Events: ${JSON.stringify(safeCalendarEvents)}
+Working Hours: ${JSON.stringify(safeWorkingHours)}
+Preferences: ${JSON.stringify(safePreferences)}
 
-Produce a realistic, non-punitive day plan following our balance-first philosophy.
-Do NOT pack every hour. Ensure there is realistic buffer time.
-Return a concise JSON with:
+Produce a realistic, non-punitive day plan following a balance-first philosophy.
+Do not pack every hour. Preserve realistic buffer time. Use only the supplied data.
+Return valid JSON with:
 {
-  "summary": "1-2 sentence calm overview of the day's realistic capacity",
+  "summary": "1-2 sentence realistic overview",
   "availableDeepWorkHours": number,
   "availableRestHours": number,
   "topThreePriorities": ["Task 1", "Task 2", "Task 3"],
   "gentleAdjustments": [
-    { "taskTitle": "...", "advice": "Move to Thursday because workday ends at 16:30", "action": "reschedule" }
+    { "taskTitle": "...", "advice": "...", "action": "reschedule" }
   ]
 }`;
 
-    const response = await ai.models.generateContent({
-      model: "gemini-3.8-flash",
-      contents: prompt,
-      config: {
-        responseMimeType: "application/json",
-      },
+    const result = await requestConfiguredAiResponse([
+      { role: 'system', content: 'You are Jarvis, a careful planning assistant. Return only valid JSON. Never invent tasks or calendar events.' },
+      { role: 'user', content: prompt },
+    ], {
+      provider: permissions.activeAiProvider,
+      geminiApiKey: process.env.GEMINI_API_KEY,
+      geminiModel: process.env.GEMINI_MODEL || DEFAULT_GEMINI_MODEL,
+      openAiApiKey: process.env.OPENAI_API_KEY,
+      openAiModel: process.env.OPENAI_MODEL,
+      responseFormat: 'json',
     });
 
-    const parsed = JSON.parse(response.text || "{}");
-    res.json(parsed);
-  } catch (error: any) {
-    console.error("Plan Day Error (transient fallback):", error);
-    res.json({
-      summary: "Balanced schedule calculated. Guarding your 16:30 threshold and maintaining healthy buffer space.",
-      availableDeepWorkHours: 3.5,
-      availableRestHours: 2.5,
-      topThreePriorities: ["Review core deliverables", "Preserve afternoon reset"],
-      gentleAdjustments: [],
-    });
+    if (!result.available || !result.text) {
+      const failure = formatAiFailureResponse(result.reason, {
+        providerLabel: permissions.activeAiProvider === 'openai-server' ? 'OpenAI' : 'Gemini',
+        language: 'nl',
+        target: 'plan',
+      });
+      return res.status(failure.statusCode).json({ error: failure.message, providerStatus: result.reason });
+    }
+
+    const parsed = parseAiJsonResponse<Record<string, unknown>>(result.text);
+    if (
+      !parsed ||
+      typeof parsed.summary !== 'string' ||
+      !parsed.summary.trim() ||
+      !Array.isArray(parsed.topThreePriorities) ||
+      !Array.isArray(parsed.gentleAdjustments)
+    ) {
+      return res.status(502).json({ error: 'Jarvis returned an invalid day plan. No changes were made.' });
+    }
+
+    return res.json({ ...parsed, provider: result.provider, model: result.model });
+  } catch (error: unknown) {
+    console.error("Plan Day Error:", error instanceof Error ? error.name : "UnknownError");
+    return res.status(502).json({ error: 'Live AI planning failed. No schedule changes were made.' });
   }
 });
 
@@ -583,10 +557,8 @@ app.post("/api/ai/breakdown-goal", requireAppAuth, requireAiRateLimit, async (re
       return res.status(400).json({ error: 'A goal title is required.' });
     }
     const permissions = securityVault.getPermissions();
-    const ai = permissions.activeAiProvider === 'gemini-server' &&
-      hasAiWorkspaceConsent(realm, permissions) ? getAI() : null;
 
-    if (!ai) {
+    if (permissions.activeAiProvider === 'local-rules' || !hasAiWorkspaceConsent(realm, permissions)) {
       return res.status(503).json({
         error: 'Jarvis-doelplanning is niet beschikbaar. Schakel een AI-provider in en geef toestemming voor deze omgeving.',
       });
@@ -597,25 +569,41 @@ Goal: "${safeGoalTitle}"
 Realm: "${realm}" (Personal or Mariluna Business)
 Timeframe: "${safeTimeframe}"
 
-Ensure the tasks feel approachable and do not overwhelm.
-Return a JSON array of objects with keys: title, durationMins, suggestedDay.`;
+Avoid generic filler. Make each step specific to the stated goal.
+Return only valid JSON as an array of objects with keys: title, durationMins, suggestedDay.`;
 
-    const response = await ai.models.generateContent({
-      model: "gemini-3.8-flash",
-      contents: prompt,
-      config: {
-        responseMimeType: "application/json",
-      },
+    const result = await requestConfiguredAiResponse([
+      { role: 'system', content: 'You are Jarvis, a precise goal-planning assistant. Return only valid JSON.' },
+      { role: 'user', content: prompt },
+    ], {
+      provider: permissions.activeAiProvider,
+      geminiApiKey: process.env.GEMINI_API_KEY,
+      geminiModel: process.env.GEMINI_MODEL || DEFAULT_GEMINI_MODEL,
+      openAiApiKey: process.env.OPENAI_API_KEY,
+      openAiModel: process.env.OPENAI_MODEL,
+      responseFormat: 'json',
     });
 
-    const parsed = JSON.parse(response.text || "null");
+    if (!result.available || !result.text) {
+      const failure = formatAiFailureResponse(result.reason, {
+        providerLabel: permissions.activeAiProvider === 'openai-server' ? 'OpenAI' : 'Gemini',
+        language: 'nl',
+        target: 'goal',
+      });
+      return res.status(failure.statusCode).json({
+        error: failure.message,
+        providerStatus: result.reason,
+      });
+    }
+
+    const parsed = parseAiJsonResponse(result.text);
     const milestones = validateGoalBreakdown(parsed);
     if (!milestones) {
       return res.status(502).json({ error: 'Jarvis gaf geen geldig stappenplan terug. Probeer het opnieuw.' });
     }
-    return res.json({ milestones });
-  } catch (error: any) {
-    console.error("Breakdown Goal Error:", error);
+    return res.json({ milestones, provider: result.provider, model: result.model });
+  } catch (error: unknown) {
+    console.error("Breakdown Goal Error:", error instanceof Error ? error.name : "UnknownError");
     return res.status(502).json({
       error: 'Jarvis kon dit doel momenteel niet opdelen. Probeer het later opnieuw.',
     });
@@ -634,10 +622,8 @@ app.post("/api/ai/analyze-idea", requireAppAuth, requireAiRateLimit, async (req:
       return res.status(400).json({ error: 'Voeg eerst je idee toe.' });
     }
     const permissions = securityVault.getPermissions();
-    const ai = permissions.activeAiProvider === 'gemini-server' &&
-      hasAiWorkspaceConsent(realm, permissions) ? getAI() : null;
 
-    if (!ai) {
+    if (permissions.activeAiProvider === 'local-rules' || !hasAiWorkspaceConsent(realm, permissions)) {
       return res.status(503).json({
         error: 'Jarvis-ideeanalyse is niet beschikbaar. Je ruwe idee kan wel bewaard worden; controleer je AI-instellingen en toestemming.',
       });
@@ -645,29 +631,61 @@ app.post("/api/ai/analyze-idea", requireAppAuth, requireAiRateLimit, async (req:
 
     const prompt = `Analyze this raw brain dump idea:
 "${safeRawIdea}"
-World: ${realm}
+Workspace: ${realm}
 
-Provide thoughtful synthesis in JSON:
+Understand the idea before categorizing it. Preserve the author's intent and voice.
+Provide thoughtful synthesis in valid JSON:
 {
-  "summary": "refined 1-sentence essence",
-  "category": "category name",
-  "suggestedNextAction": "concrete small next step",
-  "potentialProjectName": "clear project title if turned into one",
-  "followUpQuestions": ["question 1 to spark thinking", "question 2"]
+  "summary": "clear one-sentence essence",
+  "category": "specific useful category",
+  "suggestedNextAction": "one concrete small next step",
+  "potentialProjectName": "clear project title, or empty string",
+  "followUpQuestions": ["one useful question", "a second useful question"]
 }`;
 
-    const response = await ai.models.generateContent({
-      model: "gemini-3.8-flash",
-      contents: prompt,
-      config: {
-        responseMimeType: "application/json",
-      },
+    const result = await requestConfiguredAiResponse([
+      { role: 'system', content: 'You are Jarvis, a perceptive and practical creative thinking partner. Return only valid JSON.' },
+      { role: 'user', content: prompt },
+    ], {
+      provider: permissions.activeAiProvider,
+      geminiApiKey: process.env.GEMINI_API_KEY,
+      geminiModel: process.env.GEMINI_MODEL || DEFAULT_GEMINI_MODEL,
+      openAiApiKey: process.env.OPENAI_API_KEY,
+      openAiModel: process.env.OPENAI_MODEL,
+      responseFormat: 'json',
     });
 
-    const parsed = JSON.parse(response.text || "{}");
-    res.json(parsed);
-  } catch (error: any) {
-    console.error("Analyze Idea Error:", error);
+    if (!result.available || !result.text) {
+      const failure = formatAiFailureResponse(result.reason, {
+        providerLabel: permissions.activeAiProvider === 'openai-server' ? 'OpenAI' : 'Gemini',
+        language: 'nl',
+        target: 'idea',
+      });
+      return res.status(failure.statusCode).json({
+        error: failure.message,
+        providerStatus: result.reason,
+      });
+    }
+
+    const parsed = parseAiJsonResponse<Record<string, unknown>>(result.text);
+    if (
+      !parsed ||
+      typeof parsed.summary !== 'string' ||
+      !parsed.summary.trim() ||
+      typeof parsed.category !== 'string' ||
+      !parsed.category.trim() ||
+      typeof parsed.suggestedNextAction !== 'string' ||
+      !Array.isArray(parsed.followUpQuestions) ||
+      parsed.followUpQuestions.some((question: unknown) => typeof question !== 'string')
+    ) {
+      return res.status(502).json({
+        error: 'Jarvis gaf geen geldige analyse terug. Je ruwe idee kan wel bewaard worden.',
+      });
+    }
+
+    return res.json({ ...parsed, provider: result.provider, model: result.model });
+  } catch (error: unknown) {
+    console.error("Analyze Idea Error:", error instanceof Error ? error.name : "UnknownError");
     return res.status(502).json({
       error: 'Jarvis kon dit idee momenteel niet analyseren. Je ruwe idee is niet verloren gegaan; probeer het later opnieuw.',
     });

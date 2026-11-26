@@ -3,16 +3,27 @@ export interface OpenAIChatMessage {
   content: string;
 }
 
+export const DEFAULT_OPENAI_TIMEOUT_MS = 15_000;
+
 export interface OpenAIProviderConfig {
   apiKey?: string;
   model?: string;
+  responseFormat?: 'text' | 'json';
+  timeoutMs?: number;
   fetcher?: typeof fetch;
 }
 
 export interface OpenAIProviderResult {
   available: boolean;
   text: string | null;
-  reason?: 'missing_configuration' | 'provider_error' | 'invalid_response';
+  reason?: 'missing_configuration' | 'provider_error' | 'invalid_response' | 'timeout';
+}
+
+function resolveTimeoutMs(timeoutMs: number | undefined): number {
+  if (typeof timeoutMs !== 'number' || !Number.isFinite(timeoutMs)) {
+    return DEFAULT_OPENAI_TIMEOUT_MS;
+  }
+  return Math.max(1, Math.min(60_000, Math.floor(timeoutMs)));
 }
 
 /**
@@ -29,7 +40,7 @@ export async function requestOpenAIResponse(
   if (!apiKey || !model) {
     return { available: false, text: null, reason: 'missing_configuration' };
   }
-  if (apiKey.length > 4096 || /\\s/.test(apiKey) || model.length > 128) {
+  if (apiKey.length > 4096 || /\s/.test(apiKey) || model.length > 128) {
     return { available: false, text: null, reason: 'missing_configuration' };
   }
   if (!Array.isArray(messages) || messages.length === 0 || messages.length > 30 ||
@@ -39,9 +50,25 @@ export async function requestOpenAIResponse(
   }
 
   const fetcher = config.fetcher || fetch;
+  const timeoutMs = resolveTimeoutMs(config.timeoutMs);
+  const controller = new AbortController();
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  let timedOut = false;
+
   try {
-    const response = await fetcher('https://api.openai.com/v1/responses', {
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      timer = setTimeout(() => {
+        timedOut = true;
+        const err = new Error('OpenAI request timed out');
+        err.name = 'AbortError';
+        controller.abort(err);
+        reject(err);
+      }, timeoutMs);
+    });
+
+    const fetchPromise = fetcher('https://api.openai.com/v1/responses', {
       method: 'POST',
+      signal: controller.signal,
       headers: {
         Authorization: `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
@@ -52,16 +79,23 @@ export async function requestOpenAIResponse(
           role: message.role,
           content: message.content,
         })),
+        ...(config.responseFormat === 'json' ? { text: { format: { type: 'json_object' } } } : {}),
       }),
     });
+    fetchPromise.catch(() => {});
+
+    const response = await Promise.race([fetchPromise, timeoutPromise]);
     if (!response.ok) {
       // Never return provider response bodies: they may contain operational details.
       return { available: false, text: null, reason: 'provider_error' };
     }
-    const payload = await response.json() as {
-      output_text?: unknown;
-      output?: Array<{ content?: Array<{ type?: string; text?: unknown }> }>;
-    };
+    const payload = await Promise.race([
+      response.json() as Promise<{
+        output_text?: unknown;
+        output?: Array<{ content?: Array<{ type?: string; text?: unknown }> }>;
+      }>,
+      timeoutPromise,
+    ]);
     let text = typeof payload.output_text === 'string' ? payload.output_text.trim() : '';
     if (!text && Array.isArray(payload.output)) {
       text = payload.output.flatMap((item) => Array.isArray(item.content) ? item.content : [])
@@ -72,7 +106,14 @@ export async function requestOpenAIResponse(
       return { available: false, text: null, reason: 'invalid_response' };
     }
     return { available: true, text };
-  } catch {
+  } catch (err: any) {
+    if (timedOut || err?.name === 'AbortError') {
+      return { available: false, text: null, reason: 'timeout' };
+    }
     return { available: false, text: null, reason: 'provider_error' };
+  } finally {
+    if (timer !== undefined) {
+      clearTimeout(timer);
+    }
   }
 }

@@ -170,6 +170,7 @@ export const TasksView: React.FC<TasksViewProps> = ({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          world: formRealm,
           messages: [
             {
               role: 'user',
@@ -182,6 +183,11 @@ export const TasksView: React.FC<TasksViewProps> = ({
       {
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Jarvis kon geen subtaken maken.');
+        if (data.provider === 'local') {
+          throw new Error(
+            'Jarvis staat in lokale modus of mist werkruimte-toestemming. Schakel Gemini in bij Beveiliging & Privacy of voeg subtaken zelf toe.'
+          );
+        }
         const responseText = typeof data.content === 'string' ? data.content : '';
         const lines = responseText
           .split('\n')
