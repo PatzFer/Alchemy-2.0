@@ -175,7 +175,10 @@ router.post('/unlock-app', async (req: Request, res: Response) => {
       );
       ownerId = owner.id;
       verified = true;
-    } catch {
+    } catch (error) {
+      if (error instanceof Error && /Supabase owner authentication failed|fetch failed|timed out|aborted/i.test(error.message)) {
+        return res.status(503).json({ error: 'Supabase-aanmelding is tijdelijk niet bereikbaar. Probeer het opnieuw.' });
+      }
       verified = false;
     }
   } else {
