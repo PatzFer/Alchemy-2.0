@@ -52,6 +52,25 @@ test('Jarvis reports an unavailable endpoint without inventing a successful resu
   assert.equal(result.suggestedAction, undefined);
 });
 
+test('Jarvis explains expired app authentication without disguising it as a Gemini outage', async () => {
+  mockFetch(async () => new Response(JSON.stringify({
+    error: 'Application authentication required.',
+    authenticationRequired: true,
+  }), { status: 401, headers: { 'Content-Type': 'application/json' } }));
+
+  const result = await sendChatMessage(
+    [{ role: 'user', content: 'Antwoord uitsluitend met: JARVIS ONLINE' }],
+    {},
+    'mariluna',
+  );
+
+  assert.equal(result.world, 'mariluna');
+  assert.match(result.content, /sessie is vergrendeld of verlopen/i);
+  assert.match(result.content, /ontgrendel de app opnieuw/i);
+  assert.match(result.content, /geen gegevens gewijzigd/i);
+  assert.doesNotMatch(result.content, /Gemini/i);
+});
+
 test('Jarvis rejects empty server responses and returns a clear recovery message', async () => {
   mockFetch(async () => new Response(JSON.stringify({ content: '   ' }), { status: 200 }));
   const result = await sendChatMessage([{ role: 'user', content: 'Help me' }], {}, 'personal');
