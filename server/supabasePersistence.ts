@@ -162,6 +162,19 @@ export class SupabasePersistence {
       throw new Error('expectedRevision must be a non-negative integer.');
     }
     const owner = await this.verifyOwner(accessToken);
+    return this.saveSnapshotForOwner(owner.id, payload, schemaVersion, source, expectedRevision);
+  }
+
+  async saveSnapshotForOwner(
+    ownerId: string,
+    payload: Record<string, unknown>,
+    schemaVersion = 1,
+    source: 'migration' | 'autosave' | 'manual_backup' | 'restore' = 'autosave',
+    expectedRevision?: number,
+  ): Promise<SnapshotRecord> {
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(ownerId)) {
+      throw new Error('A verified Supabase owner UUID is required.');
+    }
     if (!isValidAlchemySnapshotPayload(payload)) {
       throw new Error('Snapshot payload does not match the required Alchemy state structure.');
     }
@@ -179,7 +192,7 @@ export class SupabasePersistence {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        p_owner_id: owner.id,
+        p_owner_id: ownerId,
         p_schema_version: schemaVersion,
         p_payload: payload,
         p_payload_sha256: payloadSha256,
@@ -191,7 +204,7 @@ export class SupabasePersistence {
       throw new Error('Supabase did not return the saved snapshot.');
     }
     const saved = rows[0];
-    if (!isValidSnapshotRecord(saved, owner.id) ||
+    if (!isValidSnapshotRecord(saved, ownerId) ||
         saved.schema_version !== schemaVersion ||
         saved.source !== source ||
         saved.payload_sha256 !== payloadSha256) {
@@ -206,8 +219,15 @@ export class SupabasePersistence {
 
   async loadLatestSnapshot(accessToken: string): Promise<SnapshotRecord | null> {
     const owner = await this.verifyOwner(accessToken);
+    return this.loadLatestSnapshotForOwner(ownerId);
+  }
+
+  async loadLatestSnapshotForOwner(ownerId: string): Promise<SnapshotRecord | null> {
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(ownerId)) {
+      throw new Error('A verified Supabase owner UUID is required.');
+    }
     const rows = await this.request<SnapshotRecord[]>(
-      `/rest/v1/app_state_snapshots?owner_id=eq.${owner.id}&select=id,owner_id,schema_version,revision,payload,payload_sha256,source,created_at&order=revision.desc&limit=1`,
+      `/rest/v1/app_state_snapshots?owner_id=eq.${ownerId}&select=id,owner_id,schema_version,revision,payload,payload_sha256,source,created_at&order=revision.desc&limit=1`,
       {
         method: 'GET',
         headers: this.serviceHeaders(),
@@ -218,10 +238,10 @@ export class SupabasePersistence {
     }
     const snapshot = rows[0] ?? null;
     if (!snapshot) return null;
-    if (snapshot.owner_id !== owner.id) {
+    if (snapshot.owner_id !== ownerId) {
       throw new Error('Stored Alchemy snapshot owner does not match the authenticated owner.');
     }
-    if (!isValidSnapshotRecord(snapshot, owner.id)) {
+    if (!isValidSnapshotRecord(snapshot, ownerId)) {
       throw new Error('Stored Alchemy snapshot metadata is invalid.');
     }
     const actualHash = createHash('sha256').update(stableJson(snapshot.payload)).digest('hex');
