@@ -371,7 +371,14 @@ router.post('/unlock-sensitive', async (req: Request, res: Response) => {
       verified = false;
     }
   } else {
-    if (method === 'totp' && credential) {
+    if (method === 'password' && typeof credential === 'string') {
+      const configuredPassword = process.env.ALCHEMY_APP_PASSWORD;
+      if (configuredPassword && configuredPassword.length >= 14 && credential.length <= 1024) {
+        const expectedDigest = crypto.createHash('sha256').update(configuredPassword, 'utf8').digest();
+        const suppliedDigest = crypto.createHash('sha256').update(credential, 'utf8').digest();
+        verified = crypto.timingSafeEqual(expectedDigest, suppliedDigest);
+      }
+    } else if (method === 'totp' && credential) {
       verified = securityVault.verifyTotp(String(credential));
     } else if (method === 'recovery_code' && credential) {
       verified = securityVault.verifyAndConsumeRecoveryCode(String(credential));
