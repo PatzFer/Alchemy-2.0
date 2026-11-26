@@ -110,6 +110,58 @@ export async function saveAlchemySnapshot(
   return result.snapshot;
 }
 
+
+/**
+ * Cookie-authenticated persistence for the Alchemy app session.
+ * The browser never handles a Supabase access token or service-role key.
+ */
+export async function saveAlchemyAppSnapshot(
+  state: AppState,
+  fetcher: PersistenceFetch = fetch,
+  source: SnapshotSource = 'autosave',
+  expectedRevision?: number,
+): Promise<AlchemySnapshot> {
+  if (!isCompleteAlchemyPayload(state)) {
+    throw new Error('De lokale Alchemy-gegevens zijn onvolledig en zijn niet verzonden.');
+  }
+  if (expectedRevision !== undefined && (!Number.isInteger(expectedRevision) || expectedRevision < 0)) {
+    throw new Error('De verwachte cloudversie moet een niet-negatief geheel getal zijn.');
+  }
+  const response = await fetcher('/api/persistence/app-snapshot', {
+    method: 'POST',
+    credentials: 'same-origin',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      payload: state,
+      schemaVersion: 1,
+      source,
+      expectedRevision: expectedRevision ?? null,
+    }),
+  });
+  const result = await readResponse<{ snapshot?: AlchemySnapshot }>(response);
+  if (!isValidSnapshot(result.snapshot) || result.snapshot.schema_version !== 1 ||
+      result.snapshot.source !== source) {
+    throw new Error('De opslagserver heeft geen geldige Alchemy-back-up bevestigd.');
+  }
+  return result.snapshot;
+}
+
+export async function loadAlchemyAppSnapshot(
+  fetcher: PersistenceFetch = fetch,
+): Promise<AlchemySnapshot | null> {
+  const response = await fetcher('/api/persistence/app-snapshot', {
+    method: 'GET',
+    credentials: 'same-origin',
+    cache: 'no-store',
+  });
+  const result = await readResponse<{ snapshot: AlchemySnapshot | null }>(response);
+  if (result.snapshot === null) return null;
+  if (!isValidSnapshot(result.snapshot)) {
+    throw new Error('De opgeslagen Alchemy-back-up is ongeldig of onvolledig.');
+  }
+  return result.snapshot;
+}
+
 export async function loadAlchemySnapshot(
   accessToken: string,
   fetcher: PersistenceFetch = fetch,
