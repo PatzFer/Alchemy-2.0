@@ -253,8 +253,13 @@ function classifyGeminiError(error: unknown): ClassifiedGeminiError {
     return { retryable: false, reason: 'provider_error', statusCode };
   }
 
-  // Transient capacity/rate-limit errors (503/429) may be retried up to MAX_AI_RETRIES.
-  if (statusCode === 503 || /\bUNAVAILABLE\b/i.test(statusLabel)) {
+  // Transient capacity and gateway errors (503/504) may be retried with bounded backoff.
+  // A 504 is an upstream gateway timeout, not a permanent request/configuration error.
+  if (
+    statusCode === 503 ||
+    statusCode === 504 ||
+    /\b(UNAVAILABLE|GATEWAY_TIMEOUT|DEADLINE_EXCEEDED)\b/i.test(statusLabel)
+  ) {
     return { retryable: true, reason: 'provider_unavailable', statusCode };
   }
 
