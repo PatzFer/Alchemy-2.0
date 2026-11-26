@@ -13,7 +13,11 @@ import {
   requireStepUpAuth,
   requireAppAuth,
   ActiveSession,
+  restoreDurableSession,
 } from './security';
+import { readSupabaseServerConfig } from './supabasePersistence';
+import { SupabaseDurableSessionStore } from './supabaseDurableSessions';
+import { SupabaseOwnerAuth } from './supabaseOwnerAuth';
 
 const router = Router();
 
@@ -25,6 +29,7 @@ router.use((_req: Request, res: Response, next) => {
   res.setHeader('Vary', 'Cookie');
   next();
 });
+router.use(restoreDurableSession);
 
 // Never infer production WebAuthn trust from the incoming Host or Origin headers.
 function getRPInfo(req: Request) {
@@ -63,7 +68,10 @@ router.get('/status', (req: Request, res: Response) => {
   res.json({
     authenticated: session.isAppAuthenticated,
     isAppAuthenticated: session.isAppAuthenticated,
-    passwordLoginEnabled: Boolean(process.env.ALCHEMY_APP_PASSWORD && process.env.ALCHEMY_APP_PASSWORD.length >= 14),
+    passwordLoginEnabled: Boolean(
+      process.env.SUPABASE_OWNER_EMAIL?.trim() && readSupabaseServerConfig() ||
+      process.env.NODE_ENV !== 'production' && process.env.ALCHEMY_APP_PASSWORD && process.env.ALCHEMY_APP_PASSWORD.length >= 14
+    ),
     isPreviewMode: session.isPreviewMode || false,
     authenticatedWith: session.authenticatedWith || 'unauthenticated',
     inactivityTimeoutMinutes: session.inactivityTimeoutMinutes || 15,
@@ -99,9 +107,8 @@ router.get('/status', (req: Request, res: Response) => {
 // ----------------------------------------------------
 router.post('/unlock-app', async (req: Request, res: Response) => {
   const session = getOrCreateSession(req, res);
-  const { method, credential } = req.body;
+  const { method, credential } = req.body ?? {};
 
-  // Check rate limiting
   const rateLimit = securityVault.checkRateLimit(session.ip);
   if (!rateLimit.allowed) {
     return res.status(429).json({
@@ -111,42 +118,91 @@ router.post('/unlock-app', async (req: Request, res: Response) => {
   }
 
   let verified = false;
-  if (method === 'password') {
-    const configuredPassword = process.env.ALCHEMY_APP_PASSWORD;
-    if (!configuredPassword || configuredPassword.length < 14) {
-      return res.status(503).json({
-        error: 'Eerste toegang is nog niet ingesteld. Configureer ALCHEMY_APP_PASSWORD in de Render-omgeving.',
-        passwordLoginEnabled: false,
-      });
-    }
-    const suppliedPassword = typeof credential === 'string' ? credential : '';
-    if (suppliedPassword.length > 1024) {
-      return res.status(401).json({ error: 'Ongeldig wachtwoord.' });
-    }
-    const expectedDigest = crypto.createHash('sha256').update(configuredPassword, 'utf8').digest();
-    const suppliedDigest = crypto.createHash('sha256').update(suppliedPassword, 'utf8').digest();
-    verified = crypto.timingSafeEqual(expectedDigest, suppliedDigest);
-  } else if (method === 'totp' && credential) {
-    verified = securityVault.verifyTotp(String(credential));
-  } else if (method === 'recovery_code' && credential) {
-    verified = securityVault.verifyAndConsumeRecoveryCode(String(credential));
+  let ownerId: string | null = null;
+  let authMethod: 'password' | 'totp' | 'recovery_code' = 'password';
+
+  let supabaseConfig;
+  try {
+    supabaseConfig = readSupabaseServerConfig();
+  } catch {
+    return res.status(503).json({ error: 'Supabase authentication configuration is invalid.' });
   }
 
-  if (verified) {
-    securityVault.clearFailedAttempts(session.ip);
-    securityVault.authenticateApp(session.id, method);
-    return res.json({
-      success: true,
-      isAppAuthenticated: true,
-      authenticatedWith: method,
-      message: 'P & M Alchemy unlocked. Welcome back.',
-    });
+  if (supabaseConfig) {
+    // Once Supabase is configured, it is the sole production identity provider.
+    // Legacy in-memory TOTP/recovery credentials are deliberately not accepted.
+    if (method !== 'password') {
+      return res.status(503).json({
+        error: 'Deze aanmeldmethode wordt pas opnieuw geactiveerd zodra de beveiligingsgegevens duurzaam zijn opgeslagen.',
+      });
+    }
+    const ownerEmail = process.env.SUPABASE_OWNER_EMAIL?.trim();
+    if (!ownerEmail) {
+      return res.status(503).json({ error: 'Configureer SUPABASE_OWNER_EMAIL voor het eigenaarsaccount.' });
+    }
+    try {
+      const owner = await new SupabaseOwnerAuth(supabaseConfig, { ownerEmail }).authenticate(
+        typeof credential === 'string' ? credential : '',
+      );
+      ownerId = owner.id;
+      verified = true;
+    } catch {
+      verified = false;
+    }
   } else {
-    securityVault.recordFailedAttempt(session.ip);
-    return res.status(401).json({
-      error: 'Invalid authentication credential.',
-    });
+    if (process.env.NODE_ENV === 'production') {
+      return res.status(503).json({ error: 'Supabase-authenticatie is niet geconfigureerd. Inloggen is uitgeschakeld.' });
+    }
+    if (method === 'password') {
+      const configuredPassword = process.env.ALCHEMY_APP_PASSWORD;
+      if (!configuredPassword || configuredPassword.length < 14) {
+        return res.status(503).json({
+          error: 'Eerste toegang is nog niet ingesteld. Configureer ALCHEMY_APP_PASSWORD in de ontwikkelomgeving.',
+          passwordLoginEnabled: false,
+        });
+      }
+      const suppliedPassword = typeof credential === 'string' ? credential : '';
+      if (suppliedPassword.length <= 1024) {
+        const expectedDigest = crypto.createHash('sha256').update(configuredPassword, 'utf8').digest();
+        const suppliedDigest = crypto.createHash('sha256').update(suppliedPassword, 'utf8').digest();
+        verified = crypto.timingSafeEqual(expectedDigest, suppliedDigest);
+      }
+    } else if (method === 'totp' && credential) {
+      authMethod = 'totp';
+      verified = securityVault.verifyTotp(String(credential));
+    } else if (method === 'recovery_code' && credential) {
+      authMethod = 'recovery_code';
+      verified = securityVault.verifyAndConsumeRecoveryCode(String(credential));
+    }
   }
+
+  if (!verified) {
+    securityVault.recordFailedAttempt(session.ip);
+    return res.status(401).json({ error: 'Invalid authentication credential.' });
+  }
+
+  try {
+    if (supabaseConfig && ownerId) {
+      await new SupabaseDurableSessionStore(supabaseConfig).create(
+        ownerId,
+        session.id,
+        'password',
+        new Date(session.expiresAt),
+      );
+    }
+  } catch {
+    securityVault.lockApp(session.id);
+    return res.status(503).json({ error: 'De sessie kon niet veilig worden opgeslagen. Probeer later opnieuw.' });
+  }
+
+  securityVault.clearFailedAttempts(session.ip);
+  securityVault.authenticateApp(session.id, authMethod);
+  return res.json({
+    success: true,
+    isAppAuthenticated: true,
+    authenticatedWith: authMethod,
+    message: 'P & M Alchemy unlocked. Welcome back.',
+  });
 });
 
 // ----------------------------------------------------
@@ -171,10 +227,23 @@ router.post('/preview-unlock', (req: Request, res: Response) => {
   });
 });
 
-router.post('/lock-app', (req: Request, res: Response) => {
+router.post('/lock-app', async (req: Request, res: Response) => {
   const session = getOrCreateSession(req, res);
+  try {
+    const config = readSupabaseServerConfig();
+    if (config && req.cookies?.pm_alchemy_session) {
+      await new SupabaseDurableSessionStore(config).revoke(req.cookies.pm_alchemy_session);
+    }
+  } catch {
+    return res.status(503).json({ error: 'The session could not be safely revoked. Please retry.' });
+  }
   securityVault.lockApp(session.id);
-  res.json({
+  res.clearCookie('pm_alchemy_session', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+  });
+  return res.json({
     success: true,
     isAppAuthenticated: false,
     message: 'Alchemy locked at application perimeter.',
