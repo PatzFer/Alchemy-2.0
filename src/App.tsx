@@ -1466,6 +1466,7 @@ export default function App() {
           setIsAssistantOpen(false);
           setActiveContextItem(null);
         }}
+        onOpenSecuritySettings={() => { setIsAssistantOpen(false); setCurrentTab('security'); }}
         messages={state.chatHistory}
         onAddMessage={handleAddAssistantMessage}
         tasks={state.tasks}
