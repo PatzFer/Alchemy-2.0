@@ -329,7 +329,7 @@ router.post('/lock-sensitive', (req: Request, res: Response) => {
   res.json({ success: true, message: 'Sensitive personal sanctuary locked.' });
 });
 
-router.post('/unlock-sensitive', requireLegacySecurityFactors, async (req: Request, res: Response) => {
+router.post('/unlock-sensitive', async (req: Request, res: Response) => {
   const session = getOrCreateSession(req, res);
   if (!session.isAppAuthenticated) {
     return res.status(403).json({ error: 'Unlock the application before accessing sensitive personal data.' });
@@ -346,16 +346,41 @@ router.post('/unlock-sensitive', requireLegacySecurityFactors, async (req: Reque
   }
 
   let verified = false;
+  let config;
+  try {
+    config = readSupabaseServerConfig();
+  } catch {
+    return res.status(503).json({ error: 'Authentication storage configuration is invalid.' });
+  }
 
-  if (method === 'totp' && credential) {
-    verified = securityVault.verifyTotp(String(credential));
-  } else if (method === 'recovery_code' && credential) {
-    verified = securityVault.verifyAndConsumeRecoveryCode(String(credential));
-  } else if (method === 'passkey') {
-    // Never trust a client-supplied method flag; require a live server-verified passkey step-up.
-    verified = session.isAppAuthenticated &&
-      session.authenticatedWith === 'passkey' &&
-      session.stepUpExpiresAt > Date.now();
+  if (config) {
+    // Re-authenticate the same configured owner before opening sensitive data.
+    // The app session owner is checked independently to prevent account switching.
+    const ownerEmail = process.env.SUPABASE_OWNER_EMAIL?.trim();
+    const token = req.cookies?.pm_alchemy_session;
+    if (method !== 'password' || !ownerEmail || typeof token !== 'string') {
+      return res.status(503).json({ error: 'Gebruik je eigenaarswachtwoord om gevoelige privégegevens opnieuw te ontgrendelen.' });
+    }
+    try {
+      const owner = await new SupabaseOwnerAuth(config, { ownerEmail }).authenticate(
+        typeof credential === 'string' ? credential : '',
+      );
+      const durableSession = await new SupabaseDurableSessionStore(config).findActive(token);
+      verified = Boolean(durableSession && durableSession.owner_id === owner.id);
+    } catch {
+      verified = false;
+    }
+  } else {
+    if (method === 'totp' && credential) {
+      verified = securityVault.verifyTotp(String(credential));
+    } else if (method === 'recovery_code' && credential) {
+      verified = securityVault.verifyAndConsumeRecoveryCode(String(credential));
+    } else if (method === 'passkey') {
+      // Never trust a client-supplied method flag; require a live server-verified passkey step-up.
+      verified = session.isAppAuthenticated &&
+        session.authenticatedWith === 'passkey' &&
+        session.stepUpExpiresAt > Date.now();
+    }
   }
 
   if (verified) {
