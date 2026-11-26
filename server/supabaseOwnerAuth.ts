@@ -29,6 +29,7 @@ export class SupabaseOwnerAuth {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ email, password }),
+        signal: AbortSignal.timeout(10_000),
       },
     );
 
