@@ -32,6 +32,23 @@ router.use((_req: Request, res: Response, next) => {
 router.use(restoreDurableSession);
 
 // Never infer production WebAuthn trust from the incoming Host or Origin headers.
+function requireLegacySecurityFactors(req: Request, res: Response, next: () => void) {
+  try {
+    if (readSupabaseServerConfig()) {
+      return res.status(503).json({
+        error: 'Passkeys, TOTP and recovery codes are temporarily unavailable until their credentials are stored durably.',
+      });
+    }
+    return next();
+  } catch {
+    return res.status(503).json({ error: 'Security credential storage is not available.' });
+  }
+}
+
+router.use('/webauthn', requireLegacySecurityFactors);
+router.use('/totp', requireLegacySecurityFactors);
+router.use('/recovery', requireLegacySecurityFactors);
+
 function getRPInfo(req: Request) {
   return resolveWebAuthnRelyingParty({
     host: req.get('host'),
@@ -97,8 +114,8 @@ router.get('/status', (req: Request, res: Response) => {
     // Do not disclose private security configuration to an unauthenticated session.
     // The lock screen only needs the available unlock methods; detailed settings and
     // recovery inventory are returned after the app has been unlocked.
-    recoveryCodesRemaining: session.isAppAuthenticated ? recoveryStatus.remaining : undefined,
-    recoveryCodesTotal: session.isAppAuthenticated ? recoveryStatus.total : undefined,
+    recoveryCodesRemaining: session.isAppAuthenticated && !supabasePasswordLoginEnabled ? recoveryStatus.remaining : undefined,
+    recoveryCodesTotal: session.isAppAuthenticated && !supabasePasswordLoginEnabled ? recoveryStatus.total : undefined,
     permissions: session.isAppAuthenticated ? permissions : undefined,
     aiProviderStatus: session.isAppAuthenticated ? {
       geminiConfigured: Boolean(process.env.GEMINI_API_KEY?.trim()),
@@ -305,7 +322,7 @@ router.post('/lock-sensitive', (req: Request, res: Response) => {
   res.json({ success: true, message: 'Sensitive personal sanctuary locked.' });
 });
 
-router.post('/unlock-sensitive', async (req: Request, res: Response) => {
+router.post('/unlock-sensitive', requireLegacySecurityFactors, async (req: Request, res: Response) => {
   const session = getOrCreateSession(req, res);
   if (!session.isAppAuthenticated) {
     return res.status(403).json({ error: 'Unlock the application before accessing sensitive personal data.' });
@@ -353,7 +370,7 @@ router.post('/unlock-sensitive', async (req: Request, res: Response) => {
 // ----------------------------------------------------
 // 3. Step-Up Authentication (Level 3)
 // ----------------------------------------------------
-router.post('/step-up', requireAppAuth, async (req: Request, res: Response) => {
+router.post('/step-up', requireAppAuth, requireLegacySecurityFactors, async (req: Request, res: Response) => {
   const session = getOrCreateSession(req, res);
   const { method, credential } = req.body;
 
