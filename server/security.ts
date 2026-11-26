@@ -33,7 +33,7 @@ export interface ActiveSession {
   expiresAt: number;
   lastActive: string;
   lastActivityMs: number;
-  authenticatedWith: 'passkey' | 'totp' | 'recovery_code' | 'preview_test_mode' | 'unauthenticated';
+  authenticatedWith: 'passkey' | 'totp' | 'recovery_code' | 'password' | 'preview_test_mode' | 'unauthenticated';
   isAppAuthenticated: boolean;
   isPreviewMode?: boolean;
   appAuthenticatedAt?: number;
@@ -269,7 +269,7 @@ class SecurityVault {
 
   public authenticateApp(
     sessionId: string,
-    method: 'passkey' | 'totp' | 'recovery_code' | 'preview_test_mode'
+    method: 'passkey' | 'totp' | 'recovery_code' | 'password' | 'preview_test_mode'
   ): ActiveSession | undefined {
     const session = this.sessions.get(sessionId);
     if (session) {
