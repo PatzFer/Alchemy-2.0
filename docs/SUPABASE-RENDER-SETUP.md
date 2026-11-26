@@ -52,9 +52,9 @@ Copy the output directly into Render's secret environment setting. Do not send i
 The existing repository contains an owner-scoped snapshot API, SQL schema/RLS/RPC migrations, a typed browser persistence adapter and an AES-256-GCM helper. These are preparation pieces, not a complete live integration.
 
 Still required:
-- Supabase Auth PKCE/BFF login, callback, refresh and logout lifecycle.
+- Supabase Auth login adapter is prepared for the configured single owner; the app route/cookie lifecycle, refresh-token handling and logout revocation are not yet wired.
 - Server-side JWT verification on every protected request and owner ID derived only from the verified subject.
-- Durable, owner-bound passkey/TOTP/recovery-code/session/rate-limit storage. Current security vault is process memory and must not be treated as production authentication.
+- Durable, owner-bound passkey/TOTP/recovery-code/session/rate-limit storage. The durable session adapter is prepared but not connected to the current process-memory security vault. Current security vault must not be treated as production authentication.
 - Integrate AES-GCM encryption into TOTP and provider-token persistence, including a tested key rotation/recovery procedure.
 - Wire snapshot reads/writes to the app only after authenticated staging tests and a non-destructive local-data migration/rollback path.
 - Verify readiness probes actual Supabase connectivity and permissions; a configured URL/key alone is not readiness.
@@ -72,6 +72,6 @@ A server-only Supabase session-store adapter is now prepared in `server/supabase
 
 Regression tests are included in the standard test command. This adapter is deliberately **not yet wired into the existing in-memory security middleware**. It is not production authentication by itself; Supabase Auth login/PKCE, verified owner propagation, durable credential storage and restart tests are still required before switching the app over.
 
-## 5. Release gate
+## 5. Supabase owner account\n\nCreate exactly one owner account from the Supabase Auth dashboard/invite process and set its email in \`SUPABASE_OWNER_EMAIL\`. Public sign-up must remain disabled. The server-side password-auth adapter compares the returned verified email and UUID against this configured owner. The app login endpoint is not yet connected to this adapter; do not assume Supabase Auth is active until the route, refresh and revocation lifecycle are implemented and tested.\n\n## 6. Release gate
 
 Until the above is implemented and tested, keep the app private and use synthetic data only. Do not ask the owner to perform a Jarvis live test yet. A green build alone does not prove authentication, persistence, privacy isolation or AI connectivity.
