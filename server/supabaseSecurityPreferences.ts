@@ -24,7 +24,14 @@ const BOOLEAN_KEYS = [
 export function isDurableSecurityPreferences(value: unknown): value is DurableSecurityPreferences {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
   const item = value as Record<string, unknown>;
-  return BOOLEAN_KEYS.every((key) => typeof item[key] === 'boolean') &&
+  const allowedKeys = new Set<string>([
+    ...BOOLEAN_KEYS,
+    'aiRequiresConfirmationForModifications',
+    'aiRequiresConfirmationForDestructive',
+    'activeAiProvider',
+  ]);
+  return Object.keys(item).every((key) => allowedKeys.has(key)) &&
+    BOOLEAN_KEYS.every((key) => typeof item[key] === 'boolean') &&
     item.aiRequiresConfirmationForModifications === true &&
     item.aiRequiresConfirmationForDestructive === true &&
     ['openai-server', 'gemini-server', 'local-rules'].includes(String(item.activeAiProvider));
