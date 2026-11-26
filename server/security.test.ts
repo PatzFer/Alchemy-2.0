@@ -693,3 +693,39 @@ test('OpenAI is an explicitly allowlisted provider and unknown provider values a
   assert.equal(unchanged.activeAiProvider, 'openai-server');
   securityVault.updatePermissions({ activeAiProvider: 'local-rules' });
 });
+
+
+test('restored durable password sessions preserve the opaque token but never restore step-up privileges', () => {
+  const token = 'b'.repeat(64);
+  const createdAt = new Date(Date.now() - 60_000).toISOString();
+  const lastActivityAt = new Date(Date.now() - 5_000).toISOString();
+  const expiresAt = new Date(Date.now() + 60_000).toISOString();
+  const restored = securityVault.restoreAuthenticatedSession({
+    ip: '127.0.0.11',
+    headers: { 'user-agent': 'Alchemy durable restore test' },
+    socket: { remoteAddress: '127.0.0.11' },
+  } as any, token, 'password', createdAt, lastActivityAt, expiresAt);
+  assert.equal(restored.id, token);
+  assert.equal(restored.isAppAuthenticated, true);
+  assert.equal(restored.stepUpExpiresAt, 0);
+  assert.equal(restored.sensitiveUnlockedUntil, 0);
+  assert.equal(restored.expiresAt, Date.parse(expiresAt));
+  securityVault.lockApp(token);
+});
+
+test('restored durable sessions reject malformed or expired timestamps', () => {
+  const token = 'c'.repeat(64);
+  const req = {
+    ip: '127.0.0.12',
+    headers: { 'user-agent': 'Alchemy durable restore invalid test' },
+    socket: { remoteAddress: '127.0.0.12' },
+  } as any;
+  assert.throws(() => securityVault.restoreAuthenticatedSession(
+    req, token, 'password', 'invalid', new Date().toISOString(),
+    new Date(Date.now() + 60_000).toISOString(),
+  ), /timestamps are invalid or expired/);
+  assert.throws(() => securityVault.restoreAuthenticatedSession(
+    req, token, 'password', new Date().toISOString(), new Date().toISOString(),
+    new Date(Date.now() - 1).toISOString(),
+  ), /timestamps are invalid or expired/);
+});
