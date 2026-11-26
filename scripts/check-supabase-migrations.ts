@@ -130,14 +130,14 @@ if (!/code_hash\s+text\s+not\s+null/i.test(recoveryTable) || !/used_at\s+timesta
 }
 
 
-const sessionAuthMethods = sql.match(/alter\\s+table\\s+public\\.security_sessions[\\s\\S]*?add\\s+constraint\\s+security_sessions_authenticated_with_check[\\s\\S]*?check\\s*\\(authenticated_with\\s+in\\s*\\(([^)]*)\\)\\)/i)?.[1] || '';
+const sessionAuthMethods = sql.match(/alter\s+table\s+public\.security_sessions[\s\S]*?add\s+constraint\s+security_sessions_authenticated_with_check[\s\S]*?check\s*\(authenticated_with\s+in\s*\(([^)]*)\)\)/i)?.[1] || '';
 for (const method of ['passkey', 'totp', 'recovery_code', 'password']) {
   if (!sessionAuthMethods.includes(`'${method}'`)) {
     throw new Error(`Durable session schema is missing the ${method} authentication method.`);
   }
 }
 
-const securityPreferencesRpc = /create\\s+or\\s+replace\\s+function\\s+public\\.save_alchemy_security_preferences\\s*\\([\\s\\S]*?security\\s+definer[\\s\\S]*?set\\s+search_path\\s*=\\s*''[\\s\\S]*?revoke\\s+all\\s+on\\s+function\\s+public\\.save_alchemy_security_preferences\\s*\\(uuid,\\s*jsonb\\)\\s+from\\s+public,\\s*anon,\\s*authenticated[\\s\\S]*?grant\\s+execute\\s+on\\s+function\\s+public\\.save_alchemy_security_preferences\\s*\\(uuid,\\s*jsonb\\)\\s+to\\s+service_role/i;
+const securityPreferencesRpc = /create\s+or\s+replace\s+function\s+public\.save_alchemy_security_preferences\s*\([\s\S]*?security\s+definer[\s\S]*?set\s+search_path\s*=\s*''[\s\S]*?revoke\s+all\s+on\s+function\s+public\.save_alchemy_security_preferences\s*\(uuid,\s*jsonb\)\s+from\s+public,\s*anon,\s*authenticated[\s\S]*?grant\s+execute\s+on\s+function\s+public\.save_alchemy_security_preferences\s*\(uuid,\s*jsonb\)\s+to\s+service_role/i;
 if (!securityPreferencesRpc.test(sql)) {
   throw new Error('Owner security preferences RPC must be pinned, server-only and executable by service_role.');
 }
