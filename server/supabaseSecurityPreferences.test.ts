@@ -28,6 +28,7 @@ test('validates known preferences and requires immutable confirmation safeguards
   assert.equal(isDurableSecurityPreferences({ ...preferences, aiRequiresConfirmationForDestructive: false }), false);
   assert.equal(isDurableSecurityPreferences({ ...preferences, activeAiProvider: 'unknown' }), false);
   assert.equal(isDurableSecurityPreferences({ ...preferences, allowCycleDataToAI: 'yes' }), false);
+  assert.equal(isDurableSecurityPreferences({ ...preferences, arbitraryPrivateData: 'unexpected' }), false);
 });
 
 test('loads security preferences from the authenticated owner profile only', async () => {
