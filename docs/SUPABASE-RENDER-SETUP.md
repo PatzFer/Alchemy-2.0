@@ -51,14 +51,14 @@ Copy the output directly into Render's secret environment setting. Do not send i
 
 ## 4. What is still required in code before Supabase can be enabled
 
-The existing repository contains an owner-scoped snapshot API, SQL schema/RLS/RPC migrations, a typed browser persistence adapter and an AES-256-GCM helper. These are preparation pieces, not a complete live integration.
+The existing repository contains an owner-scoped snapshot schema/RLS/RPC, a typed browser persistence adapter and an AES-256-GCM helper. Snapshot HTTP routes are intentionally locked until application-level encryption is implemented. These are preparation pieces, not a complete live integration.
 
 Still required:
 - When Supabase is configured, password login is connected to the configured single owner and creates a hashed durable app session. Until then, the existing `ALCHEMY_APP_PASSWORD` path remains available as a compatibility mode unless `SUPABASE_AUTH_REQUIRED=true`. Supabase refresh-token handling is not used by the app session; session lifetime and revocation are managed by the server-side opaque cookie session.
 - The Supabase owner UUID is derived from the verified Supabase Auth password-login response and bound to the server-created durable session. Protected requests verify the opaque session hash against the owner-bound database record.
 - Durable, owner-bound passkey/TOTP/recovery-code storage and persistent rate limiting. Durable password-authenticated app sessions are connected to login, protected requests, restart rehydration and logout revocation. Passkey/TOTP/recovery credentials, step-up grants and rate-limit state remain process-memory only; those factors are disabled when Supabase owner auth is active.
 - Integrate AES-GCM encryption into TOTP and provider-token persistence, including a tested key rotation/recovery procedure.
-- Encrypt complete Alchemy snapshots at application level before enabling cloud backup. The current snapshot adapter validates integrity and owner isolation but stores the JSON payload as JSONB; do not upload real personal or Mariluna data through it yet. Then wire snapshot reads/writes to the app only after authenticated staging tests and a non-destructive local-data migration/rollback path.
+- Encrypt complete Alchemy snapshots at application level before enabling cloud backup. The current snapshot adapter validates integrity and owner isolation but the database schema stores JSONB; all snapshot HTTP endpoints now deliberately return `503 snapshot_encryption_not_ready`, even when Supabase is configured. Do not remove this guard until AES-256-GCM envelope storage, owner-bound authentication, key rotation and restore tests are complete. Then wire snapshot reads/writes to the app only after authenticated staging tests and a non-destructive local-data migration/rollback path.
 - Verify readiness probes actual Supabase connectivity and permissions; a configured URL/key alone is not readiness.
 - Validate Render restart, redeploy, multiple-instance behavior, Android browser and desktop.
 
