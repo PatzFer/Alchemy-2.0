@@ -47,7 +47,7 @@ export const StepUpAuthModal: React.FC<StepUpAuthModalProps> = ({
         }
       });
     }
-  }, [isOpen]);
+  }, [isOpen, securityLevel]);
 
   if (!isOpen) return null;
 
