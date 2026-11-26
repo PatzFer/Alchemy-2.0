@@ -327,3 +327,55 @@ test('snapshot save sends the expected revision for stale-write protection', asy
     /expectedRevision must be a non-negative integer/,
   );
 });
+
+
+test('verified durable owner can load a snapshot without a browser Supabase bearer token', async () => {
+  const payload = { ...validPayload, tasks: [{ id: 'durable-task', title: 'Keep local context' }] };
+  const digest = createHash('sha256').update(canonicalJson(payload)).digest('hex');
+  const calls: string[] = [];
+  const fetcher: FetchLike = async (input) => {
+    calls.push(String(input));
+    return new Response(JSON.stringify([{
+      id: 'd4f1c1a2-1234-4a5b-9c8d-1234567890ab',
+      owner_id: ownerId,
+      schema_version: 1,
+      revision: 7,
+      payload,
+      payload_sha256: digest,
+      source: 'autosave',
+      created_at: new Date().toISOString(),
+    }]), { status: 200 });
+  };
+  const store = new SupabasePersistence(readSupabaseServerConfig(env)!, fetcher);
+  const loaded = await store.loadLatestSnapshotForOwner(ownerId);
+  assert.equal(loaded?.revision, 7);
+  assert.equal(loaded?.payload.tasks instanceof Array, true);
+  assert.equal(calls.length, 1);
+  assert.match(calls[0], /owner_id=eq./);
+});
+
+test('verified durable owner can save a snapshot without exposing a Supabase access token', async () => {
+  let request: RequestInit | undefined;
+  const fetcher: FetchLike = async (input, init) => {
+    request = init;
+    const body = JSON.parse(String(init?.body));
+    return new Response(JSON.stringify([{
+      id: 'd4f1c1a2-1234-4a5b-9c8d-1234567890ab',
+      owner_id: ownerId,
+      schema_version: 1,
+      revision: 8,
+      payload: body.p_payload,
+      payload_sha256: body.p_payload_sha256,
+      source: body.p_source,
+      created_at: new Date().toISOString(),
+    }]), { status: 200 });
+  };
+  const store = new SupabasePersistence(readSupabaseServerConfig(env)!, fetcher);
+  const saved = await store.saveSnapshotForOwner(ownerId, validPayload, 1, 'autosave', 7);
+  assert.equal(saved.revision, 8);
+  const headers = new Headers(request?.headers);
+  assert.equal(headers.get('Authorization'), `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`);
+  assert.equal(headers.has('apikey'), true);
+  assert.equal(String(request?.body).includes('access_token'), false);
+  await assert.rejects(() => store.saveSnapshotForOwner('not-a-uuid', validPayload), /verified Supabase owner/);
+});
