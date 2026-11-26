@@ -1,4 +1,4 @@
-import { Router, Request, Response } from 'express';
+import { Router, Request, Response, NextFunction } from 'express';
 import { resolveWebAuthnRelyingParty } from './webauthnOrigin';
 import crypto from 'crypto';
 import {
@@ -33,7 +33,7 @@ router.use((_req: Request, res: Response, next) => {
 router.use(restoreDurableSession);
 
 // Never infer production WebAuthn trust from the incoming Host or Origin headers.
-function requireLegacySecurityFactors(req: Request, res: Response, next: () => void) {
+function requireLegacySecurityFactors(req: Request, res: Response, next: NextFunction) {
   try {
     if (readSupabaseServerConfig()) {
       return res.status(503).json({
