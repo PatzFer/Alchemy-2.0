@@ -103,7 +103,7 @@ if (!/grant\s+execute\s+on\s+function\s+public\.save_app_state_snapshot\s*\(uuid
 const durableSessionTable = sql.match(/create\s+table\s+(?:if\s+not\s+exists\s+)?public\.security_sessions\s*\(([\s\S]*?)\);/i)?.[1] || '';
 for (const column of ['owner_id', 'session_hash', 'authenticated_with', 'expires_at', 'revoked_at']) {
   if (!new RegExp('\\b' + column + '\\b', 'i').test(durableSessionTable)) {
-    throw new Error(\`Durable security_sessions schema is missing required column: \${column}\`);
+    throw new Error(`Durable security_sessions schema is missing required column: ${column}`);
   }
 }
 if (!/session_hash\s+text\s+not\s+null\s+unique/i.test(durableSessionTable)) {
