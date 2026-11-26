@@ -53,9 +53,9 @@ Copy the output directly into Render's secret environment setting. Do not send i
 The existing repository contains an owner-scoped snapshot API, SQL schema/RLS/RPC migrations, a typed browser persistence adapter and an AES-256-GCM helper. These are preparation pieces, not a complete live integration.
 
 Still required:
-- Supabase Auth login adapter is prepared for the configured single owner; the app route/cookie lifecycle, refresh-token handling and logout revocation are not yet wired.
+- Supabase password login is connected to the configured single owner and creates a hashed durable app session. Supabase refresh-token handling is not used by the app session; session lifetime and revocation are managed by the server-side opaque cookie session.
 - Server-side JWT verification on every protected request and owner ID derived only from the verified subject.
-- Durable, owner-bound passkey/TOTP/recovery-code/session/rate-limit storage. The durable session adapter is prepared but not connected to the current process-memory security vault. Current security vault must not be treated as production authentication.
+- Durable, owner-bound passkey/TOTP/recovery-code/session/rate-limit storage. Durable app sessions are connected to login, protected requests, restart rehydration and logout revocation. Passkey/TOTP/recovery credentials, step-up grants and rate-limit state remain process-memory only; they are not enabled as durable production factors.
 - Integrate AES-GCM encryption into TOTP and provider-token persistence, including a tested key rotation/recovery procedure.
 - Wire snapshot reads/writes to the app only after authenticated staging tests and a non-destructive local-data migration/rollback path.
 - Verify readiness probes actual Supabase connectivity and permissions; a configured URL/key alone is not readiness.
@@ -71,7 +71,7 @@ A server-only Supabase session-store adapter is now prepared in `server/supabase
 - uses the service-role key only in server-side requests and never returns it to the client;
 - fails closed on malformed database records and Supabase errors.
 
-Regression tests are included in the standard test command. This adapter is deliberately **not yet wired into the existing in-memory security middleware**. It is not production authentication by itself; Supabase Auth login/PKCE, verified owner propagation, durable credential storage and restart tests are still required before switching the app over.
+Regression tests are included in the standard test command. This adapter is connected to the app's password-login and protected-session path. The existing passkey/TOTP/recovery credential vault and security rate limits remain in memory and are deliberately not represented as durable. Do not enable those factors in production until their owner-scoped storage and tests are complete.
 
 ## 5. Supabase owner account
 
