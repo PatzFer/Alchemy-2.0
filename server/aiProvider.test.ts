@@ -512,7 +512,7 @@ test('Gemini never retries invalid API key, permission denied, or other permanen
   const permanentCases: Array<{
     label: string;
     makeError: () => Error;
-    expectedReason: 'invalid_api_key' | 'permission_denied' | 'provider_error';
+    expectedReason: 'invalid_api_key' | 'permission_denied' | 'provider_error' | 'quota_exceeded';
   }> = [
     {
       label: '400 API_KEY_INVALID',
@@ -550,6 +550,23 @@ test('Gemini never retries invalid API key, permission denied, or other permanen
       },
       expectedReason: 'provider_error',
     },
+    {
+      label: '429 exhausted daily quota',
+      makeError: () => {
+        const err = new Error(JSON.stringify({
+          error: {
+            code: 429,
+            message: 'Quota exceeded',
+            status: 'RESOURCE_EXHAUSTED',
+            details: [{ reason: 'QUOTA_EXCEEDED' }],
+          },
+        }));
+        (err as any).status = 429;
+        return err;
+      },
+      expectedReason: 'quota_exceeded',
+    },
+
   ];
 
   for (const testCase of permanentCases) {
@@ -579,6 +596,13 @@ test('Gemini never retries invalid API key, permission denied, or other permanen
     assert.equal(result.available, false);
     assert.equal(result.reason, testCase.expectedReason);
   }
+});
+
+test('exhausted Gemini quota returns a clear non-retryable 429 response', async () => {
+  const failure = formatAiFailureResponse('quota_exceeded', { language: 'nl' });
+  assert.equal(failure.statusCode, 429);
+  assert.match(failure.message, /quota/i);
+  assert.match(failure.message, /Google AI Studio/i);
 });
 
 test('Gemini vision retries transient 503 errors with backoff and respects timeouts', async () => {
