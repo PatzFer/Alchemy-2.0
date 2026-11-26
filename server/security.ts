@@ -1113,7 +1113,12 @@ export async function requireAppAuth(req: Request, res: Response, next: NextFunc
     return res.status(401).json({ error: 'Session expired due to inactivity.', authenticationRequired: true });
   }
 
-  const config = readSupabaseServerConfig();
+  let config;
+  try {
+    config = readSupabaseServerConfig();
+  } catch {
+    return res.status(503).json({ error: 'Authentication storage configuration is invalid.' });
+  }
   if (config) {
     try {
       const cookieToken = req.cookies?.pm_alchemy_session;
