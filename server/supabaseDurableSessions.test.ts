@@ -66,6 +66,9 @@ test('creates an owner-bound session and sends only the session hash to Supabase
   assert.equal(body.authenticated_with, 'password');
   assert.equal(created.owner_id, ownerId);
   assert.equal((requestInit?.headers as Record<string, string>).Authorization, 'Bearer server-only-key');
+
+  const forgedResponse = new SupabaseDurableSessionStore(config, async () => response([row({ session_hash: 'f'.repeat(64) })]));
+  await assert.rejects(() => forgedResponse.create(ownerId, cookieToken, 'password', future), /valid owner-bound session/);
 });
 
 test('rejects unverified owners, unsupported methods and invalid expiries before writing', async () => {
