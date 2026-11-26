@@ -11,6 +11,7 @@ import {
 import { generateSecret, generateURI, verifySync } from 'otplib';
 import { readSupabaseServerConfig } from './supabasePersistence';
 import { SupabaseDurableSessionStore } from './supabaseDurableSessions';
+import { SupabaseSecurityPreferencesStore } from './supabaseSecurityPreferences';
 
 export interface PasskeyCredential {
   id: string; // Base64URL string
@@ -1049,6 +1050,8 @@ export async function restoreDurableSession(req: Request, res: Response, next: N
       record.last_activity_at,
       record.expires_at,
     );
+    const preferences = await new SupabaseSecurityPreferencesStore(config).load(record.owner_id);
+    if (preferences) securityVault.updatePermissions(preferences);
     const timeoutMs = (session.inactivityTimeoutMinutes || 15) * 60 * 1000;
     if (Date.now() - session.lastActivityMs > timeoutMs) securityVault.lockApp(cookieToken);
     return next();
@@ -1089,6 +1092,8 @@ export async function requireAppAuth(req: Request, res: Response, next: NextFunc
               req, cookieToken, record.authenticated_with,
               record.created_at, record.last_activity_at, record.expires_at,
             );
+            const preferences = await new SupabaseSecurityPreferencesStore(config).load(record.owner_id);
+            if (preferences) securityVault.updatePermissions(preferences);
           }
         }
       }
