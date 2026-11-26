@@ -31,7 +31,7 @@ Add these under the Render service's Environment settings. Use secret values fro
 |---|---|
 | `SUPABASE_URL` | Supabase Project URL |
 | `SUPABASE_ANON_KEY` | Supabase publishable/anon key |
-| `SUPABASE_SERVICE_ROLE_KEY` | Supabase secret/service-role key; server only, never `VITE_*` |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase secret/service-role key; server only, never `VITE_*` |\n| `SUPABASE_OWNER_EMAIL` | Exact email address of the one owner account provisioned in Supabase Auth |
 | `APP_ENCRYPTION_KEY` | Base64-encoded random 32-byte key (generate once, store securely, back it up) |
 | `APP_ENCRYPTION_KEY_VERSION` | Start with `v1`; coordinate key rotation with encrypted data migration |
 | `APP_URL` | Exact deployed Render HTTPS origin |
