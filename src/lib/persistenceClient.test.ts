@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { INITIAL_STATE } from './storage';
-import { loadAlchemySnapshot, saveAlchemySnapshot, type PersistenceFetch } from './persistenceClient';
+import { loadAlchemySnapshot, saveAlchemySnapshot, loadAlchemyAppSnapshot, saveAlchemyAppSnapshot, type PersistenceFetch } from './persistenceClient';
 
 test('client persistence requires an explicit access token and makes no request without one', async () => {
   let called = false;
@@ -133,5 +133,55 @@ test('snapshot save rejects invalid expected revision without sending local data
     () => saveAlchemySnapshot('user-access-token', INITIAL_STATE, fetcher, 'autosave', -1),
     /verwachte cloudversie moet een niet-negatief geheel getal zijn/,
   );
+  assert.equal(called, false);
+});
+
+
+test('cookie-based app snapshot save uses same-origin credentials and no bearer or API key', async () => {
+  let url = '';
+  let request: RequestInit | undefined;
+  const fetcher: PersistenceFetch = async (input, init) => {
+    url = String(input);
+    request = init;
+    return new Response(JSON.stringify({
+      snapshot: {
+        id: 'snapshot-id',
+        owner_id: 'd4f1c1a2-1234-4a5b-9c8d-1234567890ab',
+        schema_version: 1,
+        revision: 4,
+        payload: INITIAL_STATE,
+        payload_sha256: 'b'.repeat(64),
+        source: 'autosave',
+        created_at: new Date().toISOString(),
+      },
+    }), { status: 201 });
+  };
+  const saved = await saveAlchemyAppSnapshot(INITIAL_STATE, fetcher);
+  assert.equal(saved.revision, 4);
+  assert.equal(url, '/api/persistence/app-snapshot');
+  assert.equal(request?.credentials, 'same-origin');
+  assert.equal(new Headers(request?.headers).has('Authorization'), false);
+  assert.equal(new Headers(request?.headers).has('apikey'), false);
+});
+
+test('cookie-based app snapshot loading uses no-store and same-origin cookies', async () => {
+  const fetcher: PersistenceFetch = async (input, init) => {
+    assert.equal(String(input), '/api/persistence/app-snapshot');
+    assert.equal(init?.method, 'GET');
+    assert.equal(init?.credentials, 'same-origin');
+    assert.equal(init?.cache, 'no-store');
+    assert.equal(new Headers(init?.headers).has('Authorization'), false);
+    return new Response(JSON.stringify({ snapshot: null }), { status: 200 });
+  };
+  assert.equal(await loadAlchemyAppSnapshot(fetcher), null);
+});
+
+test('cookie-based app snapshot save refuses incomplete local state', async () => {
+  let called = false;
+  const fetcher: PersistenceFetch = async () => {
+    called = true;
+    return new Response('{}', { status: 200 });
+  };
+  await assert.rejects(() => saveAlchemyAppSnapshot({ tasks: [] } as any, fetcher), /lokale Alchemy-gegevens zijn onvolledig/);
   assert.equal(called, false);
 });
