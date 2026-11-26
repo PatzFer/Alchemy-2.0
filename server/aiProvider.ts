@@ -79,9 +79,11 @@ export interface GeminiVisionOptions {
 }
 
 export const DEFAULT_GEMINI_MODEL = 'gemini-3.8-flash';
-export const DEFAULT_AI_TIMEOUT_MS = 15_000;
+export const DEFAULT_AI_TIMEOUT_MS = 20_000;
 export const MAX_AI_RETRIES = 2;
-export const DEFAULT_RETRY_BASE_DELAY_MS = 500;
+// Gemini 503s indicate temporary service capacity pressure. Start with a meaningful
+// pause and use bounded exponential backoff rather than immediately repeating requests.
+export const DEFAULT_RETRY_BASE_DELAY_MS = 1_500;
 
 const ALLOWED_IMAGE_MIME_TYPES = new Set([
   'image/jpeg',
@@ -342,7 +344,12 @@ async function executeGeminiWithResilience(
       }
 
       const backoffMs = baseDelayMs * Math.pow(2, attempt);
-      await sleep(backoffMs);
+      // Jitter prevents multiple Alchemy sessions from retrying in lockstep.
+      // Keep injected test sleeps deterministic.
+      const retryDelayMs = options.sleep
+        ? backoffMs
+        : Math.round(backoffMs * (0.8 + Math.random() * 0.4));
+      await sleep(retryDelayMs);
     }
   }
 
