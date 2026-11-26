@@ -32,6 +32,7 @@ export type AiFailureReason =
   | 'permission_denied'
   | 'provider_unavailable'
   | 'rate_limited'
+  | 'quota_exceeded'
   | 'timeout'
   | 'provider_error'
   | 'invalid_response';
@@ -168,7 +169,7 @@ interface ClassifiedGeminiError {
   reason: AiFailureReason;
 }
 
-function parseEmbeddedErrorPayload(message: string): { code?: number; status?: string; reason?: string } | null {
+function parseEmbeddedErrorPayload(message: string): { code?: number; status?: string; reason?: string; quotaReason?: string } | null {
   const trimmed = message.trim();
   if (!trimmed.startsWith('{')) return null;
   try {
@@ -182,13 +183,17 @@ function parseEmbeddedErrorPayload(message: string): { code?: number; status?: s
       status?: unknown;
     };
     const inner = parsed?.error && typeof parsed.error === 'object' ? parsed.error : parsed;
-    const detailReason = Array.isArray(parsed?.error?.details)
-      ? parsed.error.details.find((item) => typeof item?.reason === 'string')?.reason
-      : undefined;
+    const details = Array.isArray(parsed?.error?.details) ? parsed.error.details : [];
+    const detailReason = details.find((item) => typeof item?.reason === 'string')?.reason;
+    const quotaReason = details.find((item) =>
+      typeof item?.reason === 'string' &&
+      /QUOTA_EXCEEDED|QUOTA_EXHAUSTED|DAILY_LIMIT/i.test(item.reason)
+    )?.reason;
     return {
       code: typeof inner?.code === 'number' ? inner.code : undefined,
       status: typeof inner?.status === 'string' ? inner.status : undefined,
       reason: typeof detailReason === 'string' ? detailReason : undefined,
+      quotaReason: typeof quotaReason === 'string' ? quotaReason : undefined,
     };
   } catch {
     return null;
@@ -225,6 +230,7 @@ function classifyGeminiError(error: unknown): ClassifiedGeminiError {
   );
 
   const statusLabel = [
+    typeof embedded?.quotaReason === 'string' ? embedded.quotaReason : '',
     typeof errObj?.error?.status === 'string' ? errObj.error.status : '',
     typeof embedded?.status === 'string' ? embedded.status : '',
     typeof embedded?.reason === 'string' ? embedded.reason : '',
@@ -251,6 +257,10 @@ function classifyGeminiError(error: unknown): ClassifiedGeminiError {
   // Transient capacity/rate-limit errors (503/429) may be retried up to MAX_AI_RETRIES.
   if (statusCode === 503 || /\bUNAVAILABLE\b/i.test(statusLabel)) {
     return { retryable: true, reason: 'provider_unavailable' };
+  }
+
+  if (/\b(QUOTA_EXCEEDED|QUOTA_EXHAUSTED|DAILY_LIMIT)\b/i.test(statusLabel)) {
+    return { retryable: false, reason: 'quota_exceeded' };
   }
 
   if (statusCode === 429 || /\b(RESOURCE_EXHAUSTED|TOO_MANY_REQUESTS)\b/i.test(statusLabel)) {
@@ -403,6 +413,15 @@ export function formatAiFailureResponse(
       message: isDutch
         ? `Jarvis is momenteel niet bereikbaar: ${providerLabel} geeft ${busyDetailNl}. Er is niets gewijzigd; probeer het straks opnieuw of gebruik expliciet de lokale modus.`
         : `Jarvis is temporarily unavailable: ${providerLabel} reported ${busyDetailEn}. Nothing was changed; please try again shortly or switch explicitly to local mode.`,
+    };
+  }
+
+  if (reason === 'quota_exceeded') {
+    return {
+      statusCode: 429,
+      message: isDutch
+        ? `${providerLabel} heeft de beschikbare API-quota bereikt. Opnieuw proberen helpt pas wanneer de limiet is gereset of aangepast. Controleer je gratis gebruikslimiet in Google AI Studio. Er is niets gewijzigd.`
+        : `${providerLabel} has reached the available API quota. Retrying will only help after the limit resets or changes. Check your free usage limits in Google AI Studio. Nothing was changed.`,
     };
   }
 
