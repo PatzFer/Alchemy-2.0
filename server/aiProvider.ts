@@ -157,8 +157,41 @@ function createGeminiClient(apiKey: string, injected?: GeminiClientLike): Gemini
   return new GoogleGenAI({
     apiKey,
     httpOptions: {
-      headers: {
-        'User-Agent': 'aistudio-build',
+      // Observe the actual outbound request boundary without recording credentials,
+      // query strings, request bodies, prompts, or response bodies.
+      fetch: async (input, init) => {
+        const startedAt = Date.now();
+        let safeEndpoint = 'unknown';
+        try {
+          const requestUrl = input instanceof URL
+            ? input
+            : new URL(typeof input === 'string' ? input : input.url);
+          safeEndpoint = `${requestUrl.host}${requestUrl.pathname}`;
+        } catch {
+          // Keep diagnostics useful without ever logging the raw input URL.
+        }
+
+        console.info('[Alchemy AI] Gemini outbound request started', {
+          endpoint: safeEndpoint,
+        });
+
+        try {
+          const response = await fetch(input, init);
+          console.info('[Alchemy AI] Gemini outbound response received', {
+            endpoint: safeEndpoint,
+            status: response.status,
+            elapsedMs: Date.now() - startedAt,
+            ok: response.ok,
+          });
+          return response;
+        } catch (error) {
+          console.warn('[Alchemy AI] Gemini outbound request failed', {
+            endpoint: safeEndpoint,
+            elapsedMs: Date.now() - startedAt,
+            errorName: error instanceof Error ? error.name : 'UnknownError',
+          });
+          throw error;
+        }
       },
     },
   });
