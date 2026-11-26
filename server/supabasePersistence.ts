@@ -172,8 +172,14 @@ export class SupabasePersistence {
     source: 'migration' | 'autosave' | 'manual_backup' | 'restore' = 'autosave',
     expectedRevision?: number,
   ): Promise<SnapshotRecord> {
-    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(ownerId)) {
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{12}$/i.test(ownerId)) {
       throw new Error('A verified Supabase owner UUID is required.');
+    }
+    if (!Number.isInteger(schemaVersion) || schemaVersion < 1) {
+      throw new Error('schemaVersion must be a positive integer.');
+    }
+    if (expectedRevision !== undefined && (!Number.isInteger(expectedRevision) || expectedRevision < 0)) {
+      throw new Error('expectedRevision must be a non-negative integer.');
     }
     if (!isValidAlchemySnapshotPayload(payload)) {
       throw new Error('Snapshot payload does not match the required Alchemy state structure.');
