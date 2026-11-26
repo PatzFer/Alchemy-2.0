@@ -40,7 +40,7 @@ app.use("/api/security", securityRouter);
 app.use("/api/integrations", integrationsRouter);
 // Mount Alchemy Brain 1.0 Endpoints
 app.use("/api/brain", brainRouter);
-// Supabase-backed owner snapshot endpoints; require a verified Supabase bearer token.
+// Supabase-backed snapshot endpoints: legacy verified bearer-token API plus the app's owner-bound HttpOnly session API.
 app.use("/api/persistence", persistenceRouter);
 
 type AiWorkspace = 'personal' | 'mariluna' | 'all';
