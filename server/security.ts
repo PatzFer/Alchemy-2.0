@@ -996,13 +996,12 @@ export function getOrCreateSession(req: Request, res: Response): ActiveSession {
   // The opaque session token is accepted only from the HttpOnly cookie.
   // A caller-controlled header must never act as an alternate session credential.
   const sessionId = req.cookies?.pm_alchemy_session;
-  // Session IDs are 256-bit random hex values. Reject malformed or oversized
-  // cookie values before consulting the in-memory session registry.
+  // Preserve a well-formed cookie token across process restarts. A durable
+  // session is restored from Supabase by restoreDurableSession/requireAppAuth.
   if (typeof sessionId === 'string' && /^[a-f0-9]{64}$/i.test(sessionId)) {
     const existing = securityVault.getSession(sessionId);
-    if (existing) {
-      return existing;
-    }
+    if (existing) return existing;
+    return securityVault.createSession(req, 'unauthenticated', false, sessionId);
   }
 
   const newSession = securityVault.createSession(req, 'unauthenticated', false);
@@ -1013,6 +1012,46 @@ export function getOrCreateSession(req: Request, res: Response): ActiveSession {
     maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
   });
   return newSession;
+}
+
+/**
+ * Rehydrate authenticated sessions from Supabase after a server restart.
+ * No session cookie is trusted until its SHA-256 hash resolves to an active,
+ * owner-bound database row. Step-up privileges are deliberately not restored.
+ */
+export async function restoreDurableSession(req: Request, res: Response, next: NextFunction) {
+  const cookieToken = req.cookies?.pm_alchemy_session;
+  if (typeof cookieToken !== 'string' || !/^[a-f0-9]{64}$/i.test(cookieToken)) return next();
+  if (securityVault.getSession(cookieToken)?.isAppAuthenticated) return next();
+
+  let config;
+  try {
+    config = readSupabaseServerConfig();
+  } catch {
+    return res.status(503).json({ error: 'Authentication storage configuration is invalid.' });
+  }
+  if (!config) return next();
+
+  try {
+    const record = await new SupabaseDurableSessionStore(config).findActive(cookieToken);
+    if (!record) {
+      securityVault.lockApp(cookieToken);
+      return next();
+    }
+    const session = securityVault.restoreAuthenticatedSession(
+      req,
+      cookieToken,
+      record.authenticated_with,
+      record.created_at,
+      record.last_activity_at,
+      record.expires_at,
+    );
+    const timeoutMs = (session.inactivityTimeoutMinutes || 15) * 60 * 1000;
+    if (Date.now() - session.lastActivityMs > timeoutMs) securityVault.lockApp(cookieToken);
+    return next();
+  } catch {
+    return res.status(503).json({ error: 'Authentication storage is temporarily unavailable.' });
+  }
 }
 
 /**
@@ -1035,13 +1074,34 @@ export function requireAiRateLimit(req: Request, res: Response, next: NextFuncti
 export async function requireAppAuth(req: Request, res: Response, next: NextFunction) {
   const session = getOrCreateSession(req, res);
   if (!session.isAppAuthenticated) {
+    let config;
+    try {
+      config = readSupabaseServerConfig();
+      if (config) {
+        const cookieToken = req.cookies?.pm_alchemy_session;
+        if (typeof cookieToken === 'string' && cookieToken === session.id) {
+          const record = await new SupabaseDurableSessionStore(config).findActive(cookieToken);
+          if (record) {
+            securityVault.restoreAuthenticatedSession(
+              req, cookieToken, record.authenticated_with,
+              record.created_at, record.last_activity_at, record.expires_at,
+            );
+          }
+        }
+      }
+    } catch {
+      return res.status(503).json({ error: 'Authentication storage is temporarily unavailable.' });
+    }
+  }
+  const activeSession = securityVault.getSession(session.id);
+  if (!activeSession?.isAppAuthenticated) {
     return res.status(401).json({ error: 'Application authentication required.', authenticationRequired: true });
   }
 
-  const timeoutMs = (session.inactivityTimeoutMinutes || 15) * 60 * 1000;
-  const lastActivity = session.lastActivityMs || 0;
+  const timeoutMs = (activeSession.inactivityTimeoutMinutes || 15) * 60 * 1000;
+  const lastActivity = activeSession.lastActivityMs || 0;
   if (!lastActivity || Date.now() - lastActivity > timeoutMs) {
-    securityVault.lockApp(session.id);
+    securityVault.lockApp(activeSession.id);
     return res.status(401).json({ error: 'Session expired due to inactivity.', authenticationRequired: true });
   }
 
@@ -1059,7 +1119,7 @@ export async function requireAppAuth(req: Request, res: Response, next: NextFunc
     }
   }
 
-  securityVault.touchActivity(session.id);
+  securityVault.touchActivity(activeSession.id);
   return next();
 }
 
