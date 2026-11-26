@@ -63,6 +63,7 @@ router.get('/status', (req: Request, res: Response) => {
   res.json({
     authenticated: session.isAppAuthenticated,
     isAppAuthenticated: session.isAppAuthenticated,
+    passwordLoginEnabled: Boolean(process.env.ALCHEMY_APP_PASSWORD && process.env.ALCHEMY_APP_PASSWORD.length >= 14),
     isPreviewMode: session.isPreviewMode || false,
     authenticatedWith: session.authenticatedWith || 'unauthenticated',
     inactivityTimeoutMinutes: session.inactivityTimeoutMinutes || 15,
@@ -104,7 +105,22 @@ router.post('/unlock-app', async (req: Request, res: Response) => {
   }
 
   let verified = false;
-  if (method === 'totp' && credential) {
+  if (method === 'password') {
+    const configuredPassword = process.env.ALCHEMY_APP_PASSWORD;
+    if (!configuredPassword || configuredPassword.length < 14) {
+      return res.status(503).json({
+        error: 'Eerste toegang is nog niet ingesteld. Configureer ALCHEMY_APP_PASSWORD in de Render-omgeving.',
+        passwordLoginEnabled: false,
+      });
+    }
+    const suppliedPassword = typeof credential === 'string' ? credential : '';
+    if (suppliedPassword.length > 1024) {
+      return res.status(401).json({ error: 'Ongeldig wachtwoord.' });
+    }
+    const expectedDigest = crypto.createHash('sha256').update(configuredPassword, 'utf8').digest();
+    const suppliedDigest = crypto.createHash('sha256').update(suppliedPassword, 'utf8').digest();
+    verified = crypto.timingSafeEqual(expectedDigest, suppliedDigest);
+  } else if (method === 'totp' && credential) {
     verified = securityVault.verifyTotp(String(credential));
   } else if (method === 'recovery_code' && credential) {
     verified = securityVault.verifyAndConsumeRecoveryCode(String(credential));
