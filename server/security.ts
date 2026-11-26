@@ -314,8 +314,11 @@ class SecurityVault {
       session.appAuthenticatedAt = now;
       session.lastActivityMs = now;
       session.lastActive = new Date().toISOString();
-      session.stepUpExpiresAt = now + 10 * 60 * 1000; // 10 minutes grace for immediate administrative tasks
-      session.sensitiveUnlockedUntil = now + 60 * 60 * 1000;
+      const strongFactor = method === 'passkey' || method === 'totp' || method === 'recovery_code';
+      // Password login establishes Level 2 only. Critical actions require a
+      // separately verified strong factor and never inherit step-up privileges.
+      session.stepUpExpiresAt = strongFactor ? now + 10 * 60 * 1000 : 0;
+      session.sensitiveUnlockedUntil = strongFactor ? now + 15 * 60 * 1000 : 0;
     }
     return session;
   }
