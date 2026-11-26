@@ -50,36 +50,45 @@ test('persistence routes fail closed when Supabase is not configured', async () 
   });
 });
 
-test('persistence routes require a Supabase bearer token', async () => {
+test('persistence routes keep cloud snapshots disabled until application encryption is ready', async () => {
   await withPersistenceServer(configured, async (baseUrl) => {
     const response = await fetch(`${baseUrl}/api/persistence/snapshot`);
-    assert.equal(response.status, 401);
-    assert.deepEqual(await response.json(), { error: 'A Supabase access token is required.' });
+    assert.equal(response.status, 503);
+    assert.deepEqual(await response.json(), {
+      error: 'Cloud snapshots are disabled until application-level encryption and key-rotation tests are complete.',
+      code: 'snapshot_encryption_not_ready',
+    });
   });
 });
 
 
-test('persistence routes reject oversized and whitespace-bearing bearer tokens', async () => {
+test('persistence routes never accept writes while cloud snapshot encryption is disabled', async () => {
   await withPersistenceServer(configured, async (baseUrl) => {
     for (const token of ['x'.repeat(8193), 'token with spaces']) {
       const response = await fetch(`${baseUrl}/api/persistence/snapshot`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      assert.equal(response.status, 401);
-      assert.deepEqual(await response.json(), { error: 'A Supabase access token is required.' });
+      assert.equal(response.status, 503);
+      assert.deepEqual(await response.json(), {
+        error: 'Cloud snapshots are disabled until application-level encryption and key-rotation tests are complete.',
+        code: 'snapshot_encryption_not_ready',
+      });
     }
   });
 });
 
-test('snapshot write route rejects malformed payloads before contacting Supabase', async () => {
+test('snapshot write route remains locked even when a caller supplies a payload', async () => {
   await withPersistenceServer(configured, async (baseUrl) => {
     const response = await fetch(`${baseUrl}/api/persistence/snapshot`, {
       method: 'POST',
       headers: { Authorization: 'Bearer test-token', 'Content-Type': 'application/json' },
       body: JSON.stringify({ payload: [] }),
     });
-    assert.equal(response.status, 400);
-    assert.deepEqual(await response.json(), { error: 'A valid Alchemy state object is required.' });
+    assert.equal(response.status, 503);
+    assert.deepEqual(await response.json(), {
+      error: 'Cloud snapshots are disabled until application-level encryption and key-rotation tests are complete.',
+      code: 'snapshot_encryption_not_ready',
+    });
   });
 });
 
@@ -107,20 +116,23 @@ test('persistence routes fail closed on malformed Supabase configuration', async
 });
 
 
-test('snapshot write route rejects incomplete Alchemy state objects', async () => {
+test('snapshot write route cannot store incomplete or unencrypted state', async () => {
   await withPersistenceServer(configured, async (baseUrl) => {
     const response = await fetch(`${baseUrl}/api/persistence/snapshot`, {
       method: 'POST',
       headers: { Authorization: 'Bearer test-token', 'Content-Type': 'application/json' },
       body: JSON.stringify({ payload: { tasks: [], foundation: {}, integrations: {} } }),
     });
-    assert.equal(response.status, 400);
-    assert.deepEqual(await response.json(), { error: 'A valid Alchemy state object is required.' });
+    assert.equal(response.status, 503);
+    assert.deepEqual(await response.json(), {
+      error: 'Cloud snapshots are disabled until application-level encryption and key-rotation tests are complete.',
+      code: 'snapshot_encryption_not_ready',
+    });
   });
 });
 
 
-test('snapshot write route rejects invalid expected revisions before contacting Supabase', async () => {
+test('snapshot write route remains locked regardless of supplied revision metadata', async () => {
   await withPersistenceServer(configured, async (baseUrl) => {
     const response = await fetch(`${baseUrl}/api/persistence/snapshot`, {
       method: 'POST',
@@ -133,8 +145,11 @@ test('snapshot write route rejects invalid expected revisions before contacting 
         foundation: { aboutYou: {} }, integrations: { calendar: {}, gmail: {} },
       }, expectedRevision: -1 }),
     });
-    assert.equal(response.status, 400);
-    assert.deepEqual(await response.json(), { error: 'expectedRevision must be a non-negative integer.' });
+    assert.equal(response.status, 503);
+    assert.deepEqual(await response.json(), {
+      error: 'Cloud snapshots are disabled until application-level encryption and key-rotation tests are complete.',
+      code: 'snapshot_encryption_not_ready',
+    });
   });
 });
 
