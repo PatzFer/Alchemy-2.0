@@ -420,12 +420,32 @@ REAL SYSTEM CONTEXT PROVIDED:
         content: message.content,
       })),
     ];
+    const aiRequestStartedAt = Date.now();
+    const requestId = `jarvis-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
+    console.info('[Alchemy AI] Chat request started', {
+      requestId,
+      provider,
+      model: provider === 'gemini-server'
+        ? (process.env.GEMINI_MODEL || DEFAULT_GEMINI_MODEL)
+        : (process.env.OPENAI_MODEL || 'configured'),
+      workspace: world,
+      messageCount: providerMessages.length,
+      contextBytes: Buffer.byteLength(JSON.stringify(sanitizedContext || {}), 'utf8'),
+    });
     const aiResult = await requestConfiguredAiResponse(providerMessages, {
       provider,
       geminiApiKey: process.env.GEMINI_API_KEY,
       geminiModel: process.env.GEMINI_MODEL || DEFAULT_GEMINI_MODEL,
       openAiApiKey: process.env.OPENAI_API_KEY,
       openAiModel: process.env.OPENAI_MODEL,
+    });
+    console.info('[Alchemy AI] Chat request completed', {
+      requestId,
+      provider: aiResult.provider,
+      model: aiResult.model || null,
+      durationMs: Date.now() - aiRequestStartedAt,
+      available: aiResult.available,
+      failureReason: aiResult.reason || null,
     });
 
     if (aiResult.available && aiResult.text) {
