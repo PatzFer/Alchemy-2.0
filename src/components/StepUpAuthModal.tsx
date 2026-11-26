@@ -19,7 +19,8 @@ export const StepUpAuthModal: React.FC<StepUpAuthModalProps> = ({
   actionDescription = 'This critical operation requires Level 3 Step-Up Authentication to protect your data.',
   securityLevel = 3,
 }) => {
-  const [authMethod, setAuthMethod] = useState<'passkey' | 'totp' | 'recovery'>('recovery');
+  const [authMethod, setAuthMethod] = useState<'passkey' | 'totp' | 'recovery' | 'password'>('password');
+  const [password, setPassword] = useState('');
   const [totpCode, setTotpCode] = useState('');
   const [recoveryCode, setRecoveryCode] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -29,6 +30,11 @@ export const StepUpAuthModal: React.FC<StepUpAuthModalProps> = ({
   const [canUseWebAuthn, setCanUseWebAuthn] = useState(true);
 
   useEffect(() => {
+    if (isOpen && securityLevel === 2) {
+      setAuthMethod('password');
+      setErrorMessage(null);
+      return;
+    }
     if (isOpen) {
       checkWebAuthnCapability().then((cap) => {
         setIsInIframe(cap.isInIframe);
@@ -70,7 +76,9 @@ export const StepUpAuthModal: React.FC<StepUpAuthModalProps> = ({
 
     const endpoint = securityLevel === 3 ? '/api/auth/step-up' : '/api/auth/unlock-sensitive';
     const payload =
-      authMethod === 'totp'
+      authMethod === 'password'
+        ? { method: 'password', credential: password }
+        : authMethod === 'totp'
         ? { method: 'totp', credential: totpCode.trim() }
         : { method: 'recovery_code', credential: recoveryCode.trim().toUpperCase() };
 
@@ -85,6 +93,7 @@ export const StepUpAuthModal: React.FC<StepUpAuthModalProps> = ({
       if (res.ok && data.success) {
         setTotpCode('');
         setRecoveryCode('');
+        setPassword('');
         onSuccess();
         onClose();
       } else {
@@ -132,7 +141,7 @@ export const StepUpAuthModal: React.FC<StepUpAuthModalProps> = ({
         <p className="text-xs text-[#524B43] leading-relaxed font-light">{actionDescription}</p>
 
         {/* Method selector tabs */}
-        <div className="grid grid-cols-3 gap-1.5 p-1 rounded-xl bg-[#EFE9DD] border border-[#DDD4C5] text-xs">
+        {securityLevel === 3 && <div className="grid grid-cols-3 gap-1.5 p-1 rounded-xl bg-[#EFE9DD] border border-[#DDD4C5] text-xs">
           <button
             type="button"
             onClick={() => {
@@ -178,7 +187,7 @@ export const StepUpAuthModal: React.FC<StepUpAuthModalProps> = ({
             <KeyRound className="w-3.5 h-3.5" />
             <span>Recovery</span>
           </button>
-        </div>
+        </div>}
 
         {/* Error / Lockout Alert */}
         {errorMessage && (
@@ -186,6 +195,32 @@ export const StepUpAuthModal: React.FC<StepUpAuthModalProps> = ({
             <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
             <div className="leading-relaxed">{errorMessage}</div>
           </div>
+        )}
+
+        {/* Password reauthentication for sensitive personal data */}
+        {authMethod === 'password' && securityLevel === 2 && (
+          <form onSubmit={handleCredentialSubmit} className="space-y-4 py-2">
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-[#484037]">Eigenaarswachtwoord</label>
+              <input
+                type="password"
+                autoFocus
+                autoComplete="current-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full text-center tracking-wider text-sm py-2 rounded-xl bg-[#FFFFFF] border border-[#D5CCBE] focus:outline-none focus:border-[#7E694E]"
+                placeholder="Voer je wachtwoord opnieuw in"
+              />
+              <p className="text-[10px] text-[#8C8377]">Je wachtwoord wordt rechtstreeks geverifieerd bij Supabase en niet opgeslagen.</p>
+            </div>
+            <button
+              type="submit"
+              disabled={isLoading || password.length === 0}
+              className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-[#2C2825] text-[#F9F7F2] text-xs font-medium hover:bg-[#433D37] transition cursor-pointer disabled:opacity-50"
+            >
+              {isLoading ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <span>Ontgrendel gevoelige gegevens</span>}
+            </button>
+          </form>
         )}
 
         {/* Passkey Flow */}
@@ -289,13 +324,7 @@ export const StepUpAuthModal: React.FC<StepUpAuthModalProps> = ({
                 <label className="text-xs font-medium text-[#484037]">
                   Single-Use Recovery Code
                 </label>
-                <button
-                  type="button"
-                  onClick={() => setRecoveryCode('PMAL-DEMO-2026')}
-                  className="text-[10px] text-[#7E694E] underline hover:text-[#2C2825] cursor-pointer"
-                >
-                  Fill sandbox code (PMAL-DEMO-2026)
-                </button>
+
               </div>
               <input
                 type="text"
