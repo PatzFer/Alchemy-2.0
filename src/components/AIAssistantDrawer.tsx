@@ -20,6 +20,7 @@ import { getAstronomicalMoonPhase } from '../lib/celestialUtils';
 interface AIAssistantDrawerProps {
   isOpen: boolean;
   onClose: () => void;
+  onOpenSecuritySettings: () => void;
   messages: AssistantMessage[];
   onAddMessage: (msg: AssistantMessage) => void;
   tasks: Task[];
@@ -45,6 +46,7 @@ interface AIAssistantDrawerProps {
 export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
   isOpen,
   onClose,
+  onOpenSecuritySettings,
   messages,
   onAddMessage,
   tasks,
@@ -340,6 +342,15 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
                   }`}
                 >
                   <div className="whitespace-pre-wrap">{msg.content}</div>
+
+                  {(msg.content.includes('[Local Privacy Mode Active]') || msg.content.includes('[Lokale modus')) && (
+                    <div className="mt-3 pt-3 border-t border-[#EAE3D5]">
+                      <p className="text-[11px] text-[#7A7167] mb-2">Jarvis gebruikt momenteel lokale regels. Kies Gemini en geef afzonderlijk toestemming voor deze werkruimte om echte AI-antwoorden te ontvangen.</p>
+                      <button type="button" onClick={onOpenSecuritySettings} className="w-full flex items-center justify-center gap-2 rounded-xl bg-[#5A3548] text-white px-3 py-2.5 text-xs font-medium hover:bg-[#70445A] transition">
+                        <ShieldCheck className="w-3.5 h-3.5" /> Configureer Gemini & privacy
+                      </button>
+                    </div>
+                  )}
 
                   {/* Render Suggested Action Card if provided by AI */}
                   {msg.suggestedAction && (
