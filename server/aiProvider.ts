@@ -167,6 +167,7 @@ function createGeminiClient(apiKey: string, injected?: GeminiClientLike): Gemini
 interface ClassifiedGeminiError {
   retryable: boolean;
   reason: AiFailureReason;
+  statusCode?: number;
 }
 
 function parseEmbeddedErrorPayload(message: string): { code?: number; status?: string; reason?: string; quotaReason?: string } | null {
@@ -243,31 +244,31 @@ function classifyGeminiError(error: unknown): ClassifiedGeminiError {
     /\b(API_KEY_INVALID|INVALID_API_KEY|UNAUTHENTICATED)\b/i.test(statusLabel) ||
     /API key not valid/i.test(statusLabel)
   ) {
-    return { retryable: false, reason: 'invalid_api_key' };
+    return { retryable: false, reason: 'invalid_api_key', statusCode };
   }
 
   if (statusCode === 403 || /\bPERMISSION_DENIED\b/i.test(statusLabel)) {
-    return { retryable: false, reason: 'permission_denied' };
+    return { retryable: false, reason: 'permission_denied', statusCode };
   }
 
   if (statusCode === 400 || statusCode === 404) {
-    return { retryable: false, reason: 'provider_error' };
+    return { retryable: false, reason: 'provider_error', statusCode };
   }
 
   // Transient capacity/rate-limit errors (503/429) may be retried up to MAX_AI_RETRIES.
   if (statusCode === 503 || /\bUNAVAILABLE\b/i.test(statusLabel)) {
-    return { retryable: true, reason: 'provider_unavailable' };
+    return { retryable: true, reason: 'provider_unavailable', statusCode };
   }
 
   if (/\b(QUOTA_EXCEEDED|QUOTA_EXHAUSTED|DAILY_LIMIT)\b/i.test(statusLabel)) {
-    return { retryable: false, reason: 'quota_exceeded' };
+    return { retryable: false, reason: 'quota_exceeded', statusCode };
   }
 
   if (statusCode === 429 || /\b(RESOURCE_EXHAUSTED|TOO_MANY_REQUESTS)\b/i.test(statusLabel)) {
-    return { retryable: true, reason: 'rate_limited' };
+    return { retryable: true, reason: 'rate_limited', statusCode };
   }
 
-  return { retryable: false, reason: 'provider_error' };
+  return { retryable: false, reason: 'provider_error', statusCode };
 }
 
 async function runWithTimeout<T>(
@@ -316,6 +317,7 @@ async function executeGeminiWithResilience(
   let lastReason: AiFailureReason = 'provider_error';
 
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    const attemptStartedAt = Date.now();
     try {
       const response = await runWithTimeout(
         (signal) => client.models.generateContent(buildRequest(signal)),
@@ -340,8 +342,19 @@ async function executeGeminiWithResilience(
         model,
       };
     } catch (error) {
+      const elapsedMs = Date.now() - attemptStartedAt;
       const classified = classifyGeminiError(error);
       lastReason = classified.reason;
+
+      // Safe diagnostics only: never log prompts, response bodies, API keys or raw SDK errors.
+      console.warn('[Alchemy AI] Gemini request failed', {
+        model,
+        attempt: attempt + 1,
+        elapsedMs,
+        reason: classified.reason,
+        upstreamStatus: classified.statusCode ?? null,
+        retryable: classified.retryable,
+      });
 
       if (!classified.retryable || attempt >= maxRetries) {
         return {
@@ -359,6 +372,12 @@ async function executeGeminiWithResilience(
       const retryDelayMs = options.sleep
         ? backoffMs
         : Math.round(backoffMs * (0.8 + Math.random() * 0.4));
+      console.info('[Alchemy AI] Retrying Gemini request', {
+        model,
+        nextAttempt: attempt + 2,
+        delayMs: retryDelayMs,
+        previousReason: classified.reason,
+      });
       await sleep(retryDelayMs);
     }
   }
