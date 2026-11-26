@@ -402,6 +402,40 @@ test('Gemini stops after max 2 retries on persistent HTTP 503 and returns clear 
   assert.match(httpFailure.message, /niets gewijzigd/i);
 });
 
+test('Gemini retries transient HTTP 504 gateway timeouts and succeeds on the next attempt', async () => {
+  let attempts = 0;
+  const backoffDelays: number[] = [];
+
+  const result = await requestConfiguredAiResponse(
+    [{ role: 'user', content: 'Antwoord uitsluitend met: Jarvis online.' }],
+    {
+      provider: 'gemini-server',
+      geminiApiKey: 'server-gemini-key',
+      maxRetries: 2,
+      retryBaseDelayMs: 25,
+      sleep: async (ms) => { backoffDelays.push(ms); },
+      geminiClient: {
+        models: {
+          generateContent: async () => {
+            attempts += 1;
+            if (attempts === 1) {
+              const err = new Error('Gateway Timeout');
+              (err as any).status = 504;
+              throw err;
+            }
+            return { text: 'Jarvis online.' };
+          },
+        },
+      },
+    },
+  );
+
+  assert.equal(attempts, 2);
+  assert.deepEqual(backoffDelays, [25]);
+  assert.equal(result.available, true);
+  assert.equal(result.text, 'Jarvis online.');
+});
+
 test('Gemini retries transient HTTP 429 rate-limit errors with exponential backoff (max 2 retries)', async () => {
   let attempts = 0;
   const backoffDelays: number[] = [];
