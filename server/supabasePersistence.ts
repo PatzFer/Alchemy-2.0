@@ -219,7 +219,7 @@ export class SupabasePersistence {
 
   async loadLatestSnapshot(accessToken: string): Promise<SnapshotRecord | null> {
     const owner = await this.verifyOwner(accessToken);
-    return this.loadLatestSnapshotForOwner(ownerId);
+    return this.loadLatestSnapshotForOwner(owner.id);
   }
 
   async loadLatestSnapshotForOwner(ownerId: string): Promise<SnapshotRecord | null> {
