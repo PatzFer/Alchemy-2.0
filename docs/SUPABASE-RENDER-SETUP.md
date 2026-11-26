@@ -33,6 +33,7 @@ Add these under the Render service's Environment settings. Use secret values fro
 | `SUPABASE_ANON_KEY` | Supabase publishable/anon key |
 | `SUPABASE_SERVICE_ROLE_KEY` | Supabase secret/service-role key; server only, never `VITE_*` |
 | `SUPABASE_OWNER_EMAIL` | Exact email address of the one owner account provisioned in Supabase Auth |
+| `SUPABASE_AUTH_REQUIRED` | Set to `true` only after Supabase Auth and all required environment variables/migrations have been verified; otherwise omit during migration |
 | `APP_ENCRYPTION_KEY` | Base64-encoded random 32-byte key (generate once, store securely, back it up) |
 | `APP_ENCRYPTION_KEY_VERSION` | Start with `v1`; coordinate key rotation with encrypted data migration |
 | `APP_URL` | Exact deployed Render HTTPS origin |
@@ -53,7 +54,7 @@ Copy the output directly into Render's secret environment setting. Do not send i
 The existing repository contains an owner-scoped snapshot API, SQL schema/RLS/RPC migrations, a typed browser persistence adapter and an AES-256-GCM helper. These are preparation pieces, not a complete live integration.
 
 Still required:
-- Supabase password login is connected to the configured single owner and creates a hashed durable app session. Supabase refresh-token handling is not used by the app session; session lifetime and revocation are managed by the server-side opaque cookie session.
+- When Supabase is configured, password login is connected to the configured single owner and creates a hashed durable app session. Until then, the existing `ALCHEMY_APP_PASSWORD` path remains available as a compatibility mode unless `SUPABASE_AUTH_REQUIRED=true`. Supabase refresh-token handling is not used by the app session; session lifetime and revocation are managed by the server-side opaque cookie session.
 - Server-side JWT verification on every protected request and owner ID derived only from the verified subject.
 - Durable, owner-bound passkey/TOTP/recovery-code storage and persistent rate limiting. Durable password-authenticated app sessions are connected to login, protected requests, restart rehydration and logout revocation. Passkey/TOTP/recovery credentials, step-up grants and rate-limit state remain process-memory only; those factors are disabled when Supabase owner auth is active.
 - Integrate AES-GCM encryption into TOTP and provider-token persistence, including a tested key rotation/recovery procedure.
