@@ -93,7 +93,8 @@ router.get('/status', (req: Request, res: Response) => {
     authenticated: session.isAppAuthenticated,
     isAppAuthenticated: session.isAppAuthenticated,
     passwordLoginEnabled: supabasePasswordLoginEnabled || Boolean(
-      process.env.NODE_ENV !== 'production' &&
+      process.env.SUPABASE_AUTH_REQUIRED !== 'true' &&
+      !readSupabaseServerConfig() &&
       process.env.ALCHEMY_APP_PASSWORD &&
       process.env.ALCHEMY_APP_PASSWORD.length >= 14
     ),
@@ -175,8 +176,8 @@ router.post('/unlock-app', async (req: Request, res: Response) => {
       verified = false;
     }
   } else {
-    if (process.env.NODE_ENV === 'production') {
-      return res.status(503).json({ error: 'Supabase-authenticatie is niet geconfigureerd. Inloggen is uitgeschakeld.' });
+    if (process.env.SUPABASE_AUTH_REQUIRED === 'true') {
+      return res.status(503).json({ error: 'Supabase-authenticatie is verplicht maar nog niet geconfigureerd.' });
     }
     if (method === 'password') {
       const configuredPassword = process.env.ALCHEMY_APP_PASSWORD;
