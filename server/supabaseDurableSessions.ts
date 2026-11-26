@@ -83,7 +83,8 @@ export class SupabaseDurableSessionStore {
       }),
     });
     const rows = await this.readRows(response);
-    if (!rows[0] || !isSessionRecord(rows[0]) || rows[0].owner_id !== verifiedOwnerId) {
+    if (!rows[0] || !isSessionRecord(rows[0]) || rows[0].owner_id !== verifiedOwnerId ||
+        rows[0].session_hash !== hashSessionToken(cookieToken)) {
       throw new Error('Supabase did not return a valid owner-bound session.');
     }
     return rows[0];
