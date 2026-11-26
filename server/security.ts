@@ -9,6 +9,8 @@ import {
   VerifiedAuthenticationResponse,
 } from '@simplewebauthn/server';
 import { generateSecret, generateURI, verifySync } from 'otplib';
+import { readSupabaseServerConfig } from './supabasePersistence';
+import { SupabaseDurableSessionStore } from './supabaseDurableSessions';
 
 export interface PasskeyCredential {
   id: string; // Base64URL string
@@ -188,9 +190,11 @@ class SecurityVault {
   public createSession(
     req: Request,
     authMethod: ActiveSession['authenticatedWith'] = 'unauthenticated',
-    isAppAuthenticated: boolean = false
+    isAppAuthenticated: boolean = false,
+    sessionIdOverride?: string,
   ): ActiveSession {
-    const sessionId = crypto.randomBytes(32).toString('hex');
+    const sessionId = sessionIdOverride || crypto.randomBytes(32).toString('hex');
+    if (!/^[a-f0-9]{64}$/i.test(sessionId)) throw new Error('A valid opaque session token is required.');
     const ip = req.ip || req.socket.remoteAddress || '127.0.0.1';
     const userAgent = req.headers['user-agent'] || 'Modern Web Platform';
 
@@ -234,6 +238,36 @@ class SecurityVault {
     }
 
     this.sessions.set(sessionId, session);
+    return session;
+  }
+
+  /** Rehydrate a verified, owner-bound durable session after a process restart. */
+  public restoreAuthenticatedSession(
+    req: Request,
+    sessionId: string,
+    authMethod: ActiveSession['authenticatedWith'],
+    createdAt: string,
+    lastActivityAt: string,
+    expiresAt: string,
+  ): ActiveSession {
+    if (!['password', 'passkey', 'totp', 'recovery_code'].includes(authMethod)) {
+      throw new Error('Unsupported durable authentication method.');
+    }
+    const createdMs = Date.parse(createdAt);
+    const activityMs = Date.parse(lastActivityAt);
+    const expiryMs = Date.parse(expiresAt);
+    if (![createdMs, activityMs, expiryMs].every(Number.isFinite) ||
+        expiryMs <= Date.now() || activityMs > Date.now() + 60_000) {
+      throw new Error('Durable session timestamps are invalid or expired.');
+    }
+    const session = this.createSession(req, authMethod, true, sessionId);
+    session.createdAt = new Date(createdMs).toISOString();
+    session.lastActivityMs = activityMs;
+    session.lastActive = new Date(activityMs).toISOString();
+    session.expiresAt = expiryMs;
+    // A restored session must re-authenticate before sensitive/administrative actions.
+    session.stepUpExpiresAt = 0;
+    session.sensitiveUnlockedUntil = 0;
     return session;
   }
 
@@ -998,7 +1032,7 @@ export function requireAiRateLimit(req: Request, res: Response, next: NextFuncti
   return next();
 }
 
-export function requireAppAuth(req: Request, res: Response, next: NextFunction) {
+export async function requireAppAuth(req: Request, res: Response, next: NextFunction) {
   const session = getOrCreateSession(req, res);
   if (!session.isAppAuthenticated) {
     return res.status(401).json({ error: 'Application authentication required.', authenticationRequired: true });
@@ -1009,6 +1043,20 @@ export function requireAppAuth(req: Request, res: Response, next: NextFunction) 
   if (!lastActivity || Date.now() - lastActivity > timeoutMs) {
     securityVault.lockApp(session.id);
     return res.status(401).json({ error: 'Session expired due to inactivity.', authenticationRequired: true });
+  }
+
+  const config = readSupabaseServerConfig();
+  if (config) {
+    try {
+      const cookieToken = req.cookies?.pm_alchemy_session;
+      if (!cookieToken || cookieToken !== session.id ||
+          !await new SupabaseDurableSessionStore(config).touch(cookieToken)) {
+        securityVault.lockApp(session.id);
+        return res.status(401).json({ error: 'Durable session is no longer active.', authenticationRequired: true });
+      }
+    } catch {
+      return res.status(503).json({ error: 'Authentication storage is temporarily unavailable.' });
+    }
   }
 
   securityVault.touchActivity(session.id);
