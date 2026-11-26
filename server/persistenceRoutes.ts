@@ -5,6 +5,11 @@ import { requireAppAuth } from './security';
 
 const router = Router();
 
+const SNAPSHOT_ENCRYPTION_BLOCKED = {
+  error: 'Cloud snapshots are disabled until application-level encryption and key-rotation tests are complete.',
+  code: 'snapshot_encryption_not_ready',
+};
+
 function getBearerToken(req: Request): string | null {
   const authorization = req.get('authorization') || '';
   const match = authorization.match(/^Bearer\s+(.+)$/i);
@@ -22,6 +27,7 @@ router.get('/snapshot', async (req: Request, res: Response) => {
   if (!persistence) {
     return res.status(503).json({ error: 'Supabase persistence is not configured.' });
   }
+  return res.status(503).json(SNAPSHOT_ENCRYPTION_BLOCKED);
   const token = getBearerToken(req);
   if (!token) {
     return res.status(401).json({ error: 'A Supabase access token is required.' });
@@ -86,6 +92,7 @@ router.post('/snapshot', async (req: Request, res: Response) => {
  * Supabase Auth verified the configured owner. No browser bearer token needed.
  */
 router.get('/app-snapshot', requireAppAuth, async (req: Request, res: Response) => {
+  return res.status(503).json(SNAPSHOT_ENCRYPTION_BLOCKED);
   try {
     const config = readSupabaseServerConfig();
     if (!config) return res.status(503).json({ error: 'Supabase persistence is not configured.' });
@@ -103,6 +110,7 @@ router.get('/app-snapshot', requireAppAuth, async (req: Request, res: Response) 
 });
 
 router.post('/app-snapshot', requireAppAuth, async (req: Request, res: Response) => {
+  return res.status(503).json(SNAPSHOT_ENCRYPTION_BLOCKED);
   try {
     const config = readSupabaseServerConfig();
     if (!config) return res.status(503).json({ error: 'Supabase persistence is not configured.' });
