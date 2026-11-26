@@ -49,6 +49,12 @@ router.get('/status', (req: Request, res: Response) => {
   const totpEnabled = securityVault.isTotpEnabled();
   const recoveryStatus = securityVault.getRecoveryCodesStatus();
   const permissions = securityVault.getPermissions();
+  let supabasePasswordLoginEnabled = false;
+  try {
+    supabasePasswordLoginEnabled = Boolean(process.env.SUPABASE_OWNER_EMAIL?.trim() && readSupabaseServerConfig());
+  } catch {
+    supabasePasswordLoginEnabled = false;
+  }
 
   const now = Date.now();
   const isStepUpActive = session.stepUpExpiresAt > now;
@@ -68,9 +74,10 @@ router.get('/status', (req: Request, res: Response) => {
   res.json({
     authenticated: session.isAppAuthenticated,
     isAppAuthenticated: session.isAppAuthenticated,
-    passwordLoginEnabled: Boolean(
-      process.env.SUPABASE_OWNER_EMAIL?.trim() && readSupabaseServerConfig() ||
-      process.env.NODE_ENV !== 'production' && process.env.ALCHEMY_APP_PASSWORD && process.env.ALCHEMY_APP_PASSWORD.length >= 14
+    passwordLoginEnabled: supabasePasswordLoginEnabled || Boolean(
+      process.env.NODE_ENV !== 'production' &&
+      process.env.ALCHEMY_APP_PASSWORD &&
+      process.env.ALCHEMY_APP_PASSWORD.length >= 14
     ),
     isPreviewMode: session.isPreviewMode || false,
     authenticatedWith: session.authenticatedWith || 'unauthenticated',
