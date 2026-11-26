@@ -297,9 +297,22 @@ router.post('/lock-app', async (req: Request, res: Response) => {
   });
 });
 
-router.post('/activity', (req: Request, res: Response) => {
+router.post('/activity', async (req: Request, res: Response) => {
   const session = getOrCreateSession(req, res);
   if (session.isAppAuthenticated) {
+    try {
+      const config = readSupabaseServerConfig();
+      if (config) {
+        const token = req.cookies?.pm_alchemy_session;
+        if (typeof token !== 'string' || token !== session.id ||
+            !await new SupabaseDurableSessionStore(config).touch(token)) {
+          securityVault.lockApp(session.id);
+          return res.status(401).json({ success: false, isAppAuthenticated: false, authenticationRequired: true });
+        }
+      }
+    } catch {
+      return res.status(503).json({ error: 'Authentication storage is temporarily unavailable.' });
+    }
     securityVault.touchActivity(session.id);
     const now = Date.now();
     const timeoutMs = (session.inactivityTimeoutMinutes || 15) * 60 * 1000;
