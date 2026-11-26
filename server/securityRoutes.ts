@@ -181,22 +181,38 @@ router.post('/unlock-app', async (req: Request, res: Response) => {
     return res.status(401).json({ error: 'Invalid authentication credential.' });
   }
 
+  // Rotate the pre-authentication cookie on every successful login to prevent
+  // fixation and to avoid reusing a previously revoked durable-session hash.
+  securityVault.lockApp(session.id);
+  const authenticatedSession = securityVault.createSession(req, 'unauthenticated', false);
+  res.cookie('pm_alchemy_session', authenticatedSession.id, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: 30 * 24 * 60 * 60 * 1000,
+  });
+
   try {
     if (supabaseConfig && ownerId) {
       await new SupabaseDurableSessionStore(supabaseConfig).create(
         ownerId,
-        session.id,
+        authenticatedSession.id,
         'password',
-        new Date(session.expiresAt),
+        new Date(authenticatedSession.expiresAt),
       );
     }
   } catch {
-    securityVault.lockApp(session.id);
+    securityVault.lockApp(authenticatedSession.id);
+    res.clearCookie('pm_alchemy_session', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+    });
     return res.status(503).json({ error: 'De sessie kon niet veilig worden opgeslagen. Probeer later opnieuw.' });
   }
 
   securityVault.clearFailedAttempts(session.ip);
-  securityVault.authenticateApp(session.id, authMethod);
+  securityVault.authenticateApp(authenticatedSession.id, authMethod);
   return res.json({
     success: true,
     isAppAuthenticated: true,
