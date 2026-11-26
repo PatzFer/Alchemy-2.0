@@ -76,7 +76,7 @@ Regression tests are included in the standard test command. This adapter is conn
 
 ## 5. Supabase owner account
 
-Create exactly one owner account from the Supabase Auth dashboard/invite process and set its email in `SUPABASE_OWNER_EMAIL`. Public sign-up must remain disabled. The server-side password-auth adapter compares the returned verified email and UUID against this configured owner. The app login endpoint is not yet connected to this adapter; do not assume Supabase Auth is active until the route, refresh and revocation lifecycle are implemented and tested.
+Create exactly one owner account from the Supabase Auth dashboard/invite process and set its email in `SUPABASE_OWNER_EMAIL`. Public sign-up must remain disabled. The app password-login route now authenticates against this configured owner, then creates an opaque, hashed durable application session. Refresh tokens are not stored in the browser or server session; the app uses its own bounded session lifetime and explicit server-side revocation. Apply and test the checked-in migrations before enabling this path in Render.
 
 ## 6. Release gate
 
