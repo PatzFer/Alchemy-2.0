@@ -137,3 +137,17 @@ test('snapshot write route rejects invalid expected revisions before contacting 
     assert.deepEqual(await response.json(), { error: 'expectedRevision must be a non-negative integer.' });
   });
 });
+
+
+test('cookie-authenticated app snapshot endpoints reject unauthenticated callers', async () => {
+  await withPersistenceServer({}, async (baseUrl) => {
+    const read = await fetch(`${baseUrl}/api/persistence/app-snapshot`);
+    assert.equal(read.status, 401);
+    const write = await fetch(`${baseUrl}/api/persistence/app-snapshot`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ payload: { tasks: [] } }),
+    });
+    assert.equal(write.status, 401);
+  });
+});
