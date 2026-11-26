@@ -99,4 +99,34 @@ if (!/grant\s+execute\s+on\s+function\s+public\.save_app_state_snapshot\s*\(uuid
   throw new Error('Revision-aware snapshot RPC must be restricted to service_role.');
 }
 
+
+const durableSessionTable = sql.match(/create\\s+table\\s+(?:if\\s+not\\s+exists\\s+)?public\\.security_sessions\\s*\\(([\\s\\S]*?)\\);/i)?.[1] || '';
+for (const column of ['owner_id', 'session_hash', 'authenticated_with', 'expires_at', 'revoked_at']) {
+  if (!new RegExp('\\\\b' + column + '\\\\b', 'i').test(durableSessionTable)) {
+    throw new Error(`Durable security_sessions schema is missing required column: ${column}`);
+  }
+}
+if (!/session_hash\\s+text\\s+not\\s+null\\s+unique/i.test(durableSessionTable)) {
+  throw new Error('Durable sessions must store a unique hash, never the raw browser session token.');
+}
+if (!/owner_id\\s+uuid\\s+not\\s+null\\s+references\\s+auth\\.users\\(id\\)\\s+on\\s+delete\\s+cascade/i.test(durableSessionTable)) {
+  throw new Error('Durable sessions must be bound to a verified Supabase Auth owner.');
+}
+
+const totpTable = sql.match(/create\\s+table\\s+(?:if\\s+not\\s+exists\\s+)?public\\.security_totp\\s*\\(([\\s\\S]*?)\\);/i)?.[1] || '';
+if (!/secret_ciphertext\\s+bytea\\s+not\\s+null/i.test(totpTable) ||
+    !/encryption_key_version\\s+text\\s+not\\s+null/i.test(totpTable)) {
+  throw new Error('TOTP secrets must be encrypted at rest and retain an encryption key version.');
+}
+const integrationTable = sql.match(/create\\s+table\\s+(?:if\\s+not\\s+exists\\s+)?public\\.integration_connections\\s*\\(([\\s\\S]*?)\\);/i)?.[1] || '';
+if (!/access_token_ciphertext\\s+bytea/i.test(integrationTable) ||
+    !/refresh_token_ciphertext\\s+bytea/i.test(integrationTable) ||
+    !/encryption_key_version\\s+text/i.test(integrationTable)) {
+  throw new Error('Integration credentials must use encrypted token columns and a key version.');
+}
+const recoveryTable = sql.match(/create\\s+table\\s+(?:if\\s+not\\s+exists\\s+)?public\\.security_recovery_codes\\s*\\(([\\s\\S]*?)\\);/i)?.[1] || '';
+if (!/code_hash\\s+text\\s+not\\s+null/i.test(recoveryTable) || !/used_at\\s+timestamptz/i.test(recoveryTable)) {
+  throw new Error('Recovery codes must be stored as one-time hashes, never plaintext values.');
+}
+
 process.stdout.write(`Supabase migration checks passed: ${files.length} migration(s), unique versions, required tables, RLS and server-only grants.\\n`);
