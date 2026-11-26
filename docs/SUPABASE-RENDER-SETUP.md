@@ -31,7 +31,8 @@ Add these under the Render service's Environment settings. Use secret values fro
 |---|---|
 | `SUPABASE_URL` | Supabase Project URL |
 | `SUPABASE_ANON_KEY` | Supabase publishable/anon key |
-| `SUPABASE_SERVICE_ROLE_KEY` | Supabase secret/service-role key; server only, never `VITE_*` |\n| `SUPABASE_OWNER_EMAIL` | Exact email address of the one owner account provisioned in Supabase Auth |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase secret/service-role key; server only, never `VITE_*` |
+| `SUPABASE_OWNER_EMAIL` | Exact email address of the one owner account provisioned in Supabase Auth |
 | `APP_ENCRYPTION_KEY` | Base64-encoded random 32-byte key (generate once, store securely, back it up) |
 | `APP_ENCRYPTION_KEY_VERSION` | Start with `v1`; coordinate key rotation with encrypted data migration |
 | `APP_URL` | Exact deployed Render HTTPS origin |
@@ -72,6 +73,10 @@ A server-only Supabase session-store adapter is now prepared in `server/supabase
 
 Regression tests are included in the standard test command. This adapter is deliberately **not yet wired into the existing in-memory security middleware**. It is not production authentication by itself; Supabase Auth login/PKCE, verified owner propagation, durable credential storage and restart tests are still required before switching the app over.
 
-## 5. Supabase owner account\n\nCreate exactly one owner account from the Supabase Auth dashboard/invite process and set its email in \`SUPABASE_OWNER_EMAIL\`. Public sign-up must remain disabled. The server-side password-auth adapter compares the returned verified email and UUID against this configured owner. The app login endpoint is not yet connected to this adapter; do not assume Supabase Auth is active until the route, refresh and revocation lifecycle are implemented and tested.\n\n## 6. Release gate
+## 5. Supabase owner account
+
+Create exactly one owner account from the Supabase Auth dashboard/invite process and set its email in `SUPABASE_OWNER_EMAIL`. Public sign-up must remain disabled. The server-side password-auth adapter compares the returned verified email and UUID against this configured owner. The app login endpoint is not yet connected to this adapter; do not assume Supabase Auth is active until the route, refresh and revocation lifecycle are implemented and tested.
+
+## 6. Release gate
 
 Until the above is implemented and tested, keep the app private and use synthetic data only. Do not ask the owner to perform a Jarvis live test yet. A green build alone does not prove authentication, persistence, privacy isolation or AI connectivity.
