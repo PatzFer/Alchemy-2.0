@@ -1026,7 +1026,7 @@ export function getOrCreateSession(req: Request, res: Response): ActiveSession {
 export async function restoreDurableSession(req: Request, res: Response, next: NextFunction) {
   const cookieToken = req.cookies?.pm_alchemy_session;
   if (typeof cookieToken !== 'string' || !/^[a-f0-9]{64}$/i.test(cookieToken)) return next();
-  if (securityVault.getSession(cookieToken)?.isAppAuthenticated) return next();
+  const existingSession = securityVault.getSession(cookieToken);
 
   let config;
   try {
@@ -1042,6 +1042,10 @@ export async function restoreDurableSession(req: Request, res: Response, next: N
       securityVault.lockApp(cookieToken);
       return next();
     }
+    // Verify revocation/expiry on every security-router request, but preserve
+    // in-memory step-up and sensitive-unlock windows while the durable session lives.
+    if (existingSession?.isAppAuthenticated) return next();
+
     const session = securityVault.restoreAuthenticatedSession(
       req,
       cookieToken,
