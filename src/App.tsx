@@ -20,6 +20,7 @@ import { WellbeingView } from './components/views/WellbeingView';
 import { MyLifeView } from './components/views/MyLifeView';
 import { SettingsView } from './components/views/SettingsView';
 import { SecurityPrivacyCenter } from './components/views/SecurityPrivacyCenter';
+import { PasswordLogin } from './components/PasswordLogin';
 import { FirstTimeSetup } from './components/onboarding/FirstTimeSetup';
 import { getNextRecurringTaskDate } from './lib/taskRecurrence';
 import {
@@ -83,7 +84,9 @@ export default function App() {
   const [isNotificationCenterOpen, setIsNotificationCenterOpen] = useState(false);
 
   // FINAL SECURITY ARCHITECTURE: Perimeter Lock & Session Management
-  const [isAppAuthenticated, setIsAppAuthenticated] = useState<boolean>(true);
+  const [isAppAuthenticated, setIsAppAuthenticated] = useState<boolean>(false);
+  const [authChecked, setAuthChecked] = useState(false);
+  const [passwordLoginEnabled, setPasswordLoginEnabled] = useState(false);
   const [isPreviewMode, setIsPreviewMode] = useState(false);
   const [inactivityLocked, setInactivityLocked] = useState<boolean>(false);
   const [securityLevel, setSecurityLevel] = useState<1 | 2 | 3>(2);
@@ -93,32 +96,26 @@ export default function App() {
 
   const checkAuthStatus = async () => {
     try {
-      let res = await fetch('/api/auth/status');
+      const res = await fetch('/api/auth/status', { credentials: 'same-origin', cache: 'no-store' });
       if (!res.ok) throw new Error('Authentication status unavailable.');
-      let data = await res.json();
-
-      // The server permits this one-click preview session only when
-      // ENABLE_PREVIEW_AUTH=true and NODE_ENV is not production.
-      // Production never accepts this route; all normal credentials remain required.
-      if (!data.isAppAuthenticated) {
-        const preview = await fetch('/api/auth/preview-unlock', { method: 'POST' });
-        if (preview.ok) {
-          res = await fetch('/api/auth/status');
-          if (!res.ok) throw new Error('Authentication status unavailable after preview unlock.');
-          data = await res.json();
-        }
-      }
-
+      const data = await res.json();
       setIsAppAuthenticated(!!data.isAppAuthenticated);
       setIsPreviewMode(!!data.isPreviewMode);
+      setPasswordLoginEnabled(!!data.passwordLoginEnabled);
       if (data.currentSecurityLevel) setSecurityLevel(data.currentSecurityLevel);
       if (data.isSensitiveUnlocked !== undefined) setIsSensitiveUnlocked(data.isSensitiveUnlocked);
       if (data.inactivityTimeoutMinutes) setInactivityTimeoutMins(data.inactivityTimeoutMinutes);
     } catch {
-      // Fail closed: a missing API, disabled preview or auth outage never unlocks private data.
       setIsAppAuthenticated(false);
+      setPasswordLoginEnabled(false);
+    } finally {
+      setAuthChecked(true);
     }
   };
+
+  useEffect(() => {
+    void checkAuthStatus();
+  }, []);
 
 
   // No automatic startup or inactivity lock in this personal-use v1.
@@ -1024,6 +1021,26 @@ export default function App() {
   };
 
   // Optional First-Time Setup Wizard (launched when requested by user)
+  if (!authChecked) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[var(--app-bg)] text-[var(--text-primary)]">
+        <div className="text-center space-y-3">
+          <div className="font-serif tracking-[0.3em] text-lg">P&M ALCHEMY</div>
+          <p className="text-sm opacity-70">Beveiligde sessie controleren…</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAppAuthenticated) {
+    return (
+      <PasswordLogin
+        passwordLoginEnabled={passwordLoginEnabled}
+        onAuthenticated={() => { void checkAuthStatus(); }}
+      />
+    );
+  }
+
   if (isSetupWizardOpen) {
     return (
       <div className="relative min-h-screen bg-[var(--app-bg)]">
