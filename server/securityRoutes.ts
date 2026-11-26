@@ -18,6 +18,7 @@ import {
 import { readSupabaseServerConfig } from './supabasePersistence';
 import { SupabaseDurableSessionStore } from './supabaseDurableSessions';
 import { SupabaseOwnerAuth } from './supabaseOwnerAuth';
+import { SupabaseSecurityPreferencesStore } from './supabaseSecurityPreferences';
 
 const router = Router();
 
@@ -224,6 +225,8 @@ router.post('/unlock-app', async (req: Request, res: Response) => {
         'password',
         new Date(authenticatedSession.expiresAt),
       );
+      const savedPreferences = await new SupabaseSecurityPreferencesStore(supabaseConfig).load(ownerId);
+      if (savedPreferences) securityVault.updatePermissions(savedPreferences);
     }
   } catch {
     securityVault.lockApp(authenticatedSession.id);
@@ -725,10 +728,25 @@ router.get('/permissions', requireAppAuth, (_req: Request, res: Response) => {
   res.json(permissions);
 });
 
-router.put('/permissions', requireAppAuth, requireStepUpAuth, (req: Request, res: Response) => {
-  const updates = req.body;
-  const updated = securityVault.updatePermissions(updates);
-  res.json({ success: true, permissions: updated });
+router.put('/permissions', requireAppAuth, async (req: Request, res: Response) => {
+  const previous = securityVault.getPermissions();
+  const updated = securityVault.updatePermissions(req.body ?? {});
+  try {
+    const config = readSupabaseServerConfig();
+    if (config) {
+      const token = req.cookies?.pm_alchemy_session;
+      if (typeof token !== 'string') throw new Error('An active app session is required.');
+      const session = await new SupabaseDurableSessionStore(config).findActive(token);
+      if (!session) throw new Error('The durable app session is no longer active.');
+      await new SupabaseSecurityPreferencesStore(config).save(session.owner_id, updated);
+    } else if (process.env.NODE_ENV === 'production') {
+      throw new Error('Durable security preference storage is required in production.');
+    }
+    return res.json({ success: true, permissions: updated });
+  } catch {
+    securityVault.updatePermissions(previous);
+    return res.status(503).json({ error: 'De AI-privacyinstellingen konden niet veilig worden opgeslagen. Er is niets gewijzigd.' });
+  }
 });
 
 // ----------------------------------------------------
