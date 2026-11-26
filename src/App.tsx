@@ -117,8 +117,43 @@ export default function App() {
     void checkAuthStatus();
   }, []);
 
+  // Keep the server-side inactivity clock accurate while the authenticated app is active.
+  // The server persists this heartbeat for Supabase-backed sessions so a Render restart
+  // does not incorrectly expire a session that was actively used.
+  useEffect(() => {
+    if (!isAppAuthenticated) return;
+    let disposed = false;
+    const heartbeat = async () => {
+      try {
+        const response = await fetch('/api/auth/activity', {
+          method: 'POST',
+          credentials: 'same-origin',
+          cache: 'no-store',
+        });
+        if (disposed) return;
+        if (response.status === 401) {
+          setIsAppAuthenticated(false);
+          setInactivityLocked(true);
+          return;
+        }
+        if (!response.ok) return;
+        const data = await response.json();
+        if (!data.isAppAuthenticated) {
+          setIsAppAuthenticated(false);
+          setInactivityLocked(true);
+        }
+      } catch {
+        // A transient network failure does not locally unlock or mutate anything.
+      }
+    };
+    void heartbeat();
+    const intervalId = window.setInterval(() => { void heartbeat(); }, 60_000);
+    return () => {
+      disposed = true;
+      window.clearInterval(intervalId);
+    };
+  }, [isAppAuthenticated]);
 
-  // No automatic startup or inactivity lock in this personal-use v1.
   // Keep the explicit manual lock action available from Settings if desired.
 
   const handleLockApp = async () => {
